@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<menu
-  xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menuitem_digital_mode_input_floating" android:title="@string/digital_mode_input_floating_text"></item>
-    
-    <item android:title="@string/digital_mode_input_pullup_text" android:id="@+id/menuitem_digital_mode_input_pullup"></item>
-    <item android:title="@string/digital_mode_input_pulldown_text" android:id="@+id/menuitem_digital_mode_input_pulldown"></item><item android:id="@+id/menuitem_digital_mode_output" android:title="@string/digital_mode_output_text"></item>
-</menu>

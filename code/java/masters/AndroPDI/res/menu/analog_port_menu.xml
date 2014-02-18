@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<menu
-  xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:title="@string/analog_set_value" android:id="@+id/menuitem_analog_set_value"></item><item android:title="@string/analog_set_mode" android:id="@+id/menuitem_analog_set_mode"></item>
-    <item android:title="@string/analog_set_resolution" android:id="@+id/menuitem_analog_set_resolution"></item>
-    <item android:title="@string/analog_set_reference" android:id="@+id/menuitem_analog_set_reference"></item>
-    
-</menu>

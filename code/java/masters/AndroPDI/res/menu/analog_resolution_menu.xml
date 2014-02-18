@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<menu
-  xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:title="@string/analog_res_8bit" android:id="@+id/menuitem_analog_res_8bit"></item>
-    <item android:title="@string/analog_res_9bit" android:id="@+id/menuitem_analog_res_9bit"></item>
-    <item android:title="@string/analog_res_10bit" android:id="@+id/menuitem_analog_res_10bit"></item>
-    <item android:title="@string/analog_res_11bit" android:id="@+id/menuitem_analog_res_11bit"></item>
-    <item android:title="@string/analog_res_12bit" android:id="@+id/menuitem_analog_res_12bit"></item>
-</menu>
