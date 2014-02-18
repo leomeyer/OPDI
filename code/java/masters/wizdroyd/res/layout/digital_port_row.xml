@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:padding="6dip"
+    android:background="#FFFFFF">
+    <ImageView android:src="@drawable/icon" android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/port_icon" android:paddingRight="5dip"></ImageView>
+    <LinearLayout android:id="@+id/linearLayout1" android:layout_weight="1" android:layout_width="0dip" android:orientation="vertical" android:layout_height="wrap_content">
+        <TextView style="@style/ListTitleFont" android:layout_weight="1" android:gravity="center_vertical" android:id="@+id/toptext" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/text_querying"></TextView>
+        <TextView style="@style/ListSubFont" android:layout_weight="1" android:id="@+id/bottomtext" android:ellipsize="none" android:layout_width="fill_parent" android:layout_height="wrap_content" android:scrollHorizontally="false" android:text="@string/text_querying"></TextView>
+    </LinearLayout>
+    <ImageView android:src="@drawable/icon" android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/state_icon" android:paddingLeft="5dip"></ImageView>
+</LinearLayout>

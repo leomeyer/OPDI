@@ -1,0 +1,1 @@
+Platform specific code for 32 bit Windows

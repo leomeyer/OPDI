@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <!-- OPDI string constants -->
+	<string name="opdi_disconnected">DISCONNECTED</string>
+	<string name="opdi_connecting">CONNECTING...</string>
+	<string name="opdi_connected">CONNECTED</string>
+	<string name="opdi_disconnecting">DISCONNECTING...</string>
+	<string name="opdi_error">ERROR</string>
+	<string name="opdi_io_failure">I/O failure</string>
+	<string name="opdi_operation_aborted">The operation was aborted</string>
+	<string name="opdi_device_did_not_respond">The device did not respond</string>
+	<string name="opdi_device_closed_connection">The device closed the connection</string>
+	<string name="opdi_authentication_failed">Authentication failed</string>
+	<string name="opdi_protocol_error">Protocol error</string>
+	<string name="opdi_connection_optional_encryption">Connected: {0}{1}</string>
+	<string name="opdi_secured_with_encryption_0"> (secured with {0})</string>
+	
+	<!-- Application -->
+    <string name="app_name">Wizdroyd Remote Controller</string>
+    <string name="add_device">Add a new device</string>
+    <string name="remove_devices">Remove all devices</string>
+    <string name="really_remove_devices">Do you really want to remove all devices? This will also clear all configurations! This operation cannot be undone.</string>
+    <string name="remove_a_device">Remove a device</string>
+    <string name="really_remove_device">Do you really want to remove {0}? This will also remove the device from all configurations! This operation cannot be undone.</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="add_tcpip_device">Add a TCP/IP device</string>
+    <string name="add_bluetooth_device">Add a Bluetooth device</string>
+    <string name="really_connect_device">Do you want to connect to {0} now?</string>
+    <string name="really_connect_bluetooth_pin">Do you want to connect to {0} now? If a Bluetooth pairing request shows up, enter the following PIN: {1}</string>
+    <string name="psk">PSK:</string>
+    <string name="psk_hint">The PSK is a pre-shared key that is used to encrypt communication with the device. It is usually found on the device.</string>
+    <string name="network_not_available">No network connection available</string>
+    
+    <!-- AddBluetoothDevice activity -->
+    <string name="add_bluetooth">Add a Bluetooth device</string>
+    <string name="bluetooth_address">Address:</string>
+    <string name="bluetooth_invalid_address">The specified bluetooth address is not valid.</string>
+    <string name="add_device_button">Add device</string>
+    <string name="bt_not_enabled_leaving">Bluetooth was not enabled.</string>
+    
+    <!-- DeviceListActivity -->
+    <string name="scanning">scanning for devices...</string>
+    <string name="select_device">select a device to connect</string>
+    <string name="none_paired">No devices have been paired</string>
+    <string name="none_found">No devices found</string>
+    <string name="title_paired_devices">Paired Devices</string>
+    <string name="title_other_devices">Other Available Devices</string>
+    <string name="button_scan">Scan for devices</string>
+    <string name="bluetooth">Bluetooth</string>
+    <string name="bluetooth_secure">Secure connection</string>
+    <string name="bluetooth_name">Name:</string>
+    <string name="bluetooth_list_devices">List available devices</string>
+    <string name="connect_device">Connect</string>
+    <string name="remove_device">Remove device</string>
+    <string name="abort_connect_device">Abort connection</string>
+    <string name="disconnect_device">Disconnect</string>
+
+    <!-- AddTCPIPDevice activity -->
+    <string name="tcpip_name">Name:</string>
+    <string name="tcpip_host_ip">Host/IP:</string>
+    <string name="tcpip_port">Port:</string>
+    <string name="tcpip_invalid_address">Please enter a host name or IP address.</string>
+    <string name="tcpip_invalid_port">Please enter a valid port number between 0 and 65535.</string>
+    <string name="devicecaps_loading">Loading device capabilities...</string>
+
+    <!-- ShowDeviceCaps activity -->
+    <string name="devicecaps_no_device">No device selected</string>
+    <string name="devicecaps_not_supported">The selected device does not support basic capabilities</string>
+    <string name="devicecaps_not_loaded">The device capabilities could not be loaded.</string>
+    <string name="device_not_connected">The device is not connected</string>
+    
+    <string name="connect_all_devices">Connect all devices</string>
+    <string name="disconnect_all_devices">Disconnect all devices</string>
+    <string name="text_querying">Querying...</string>
+    <string name="analog_set_direction">Set direction</string>
+    <string name="analog_set_resolution">Set resolution</string>
+    <string name="analog_set_reference">Set reference</string>
+    <string name="analog_set_value">Set value</string>
+    <string name="digital_set_mode">Set mode</string>
+    <string name="digital_set_state">Set state</string>
+    <string name="digital_mode_input_text">Input</string>
+    <string name="digital_mode_output_text">Output</string>
+    <string name="digital_mode_input_floating_text">Floating input</string>
+    <string name="digital_mode_input_pullup_text">Input with pullup</string>
+    <string name="digital_mode_input_pulldown_text">Input with pulldown</string>
+    <string name="digital_line_low_text">Low</string>
+    <string name="digital_line_high_text">High</string>
+    <string name="analog_set_mode">Set mode</string>
+    <string name="analog_mode_input_text">Input</string>
+    <string name="analog_mode_output_text">Output</string>
+    <string name="analog_res_8bit">8-bit</string>
+    <string name="analog_res_9bit">9-bit</string>
+	<string name="analog_res_10bit">10-bit</string>
+    <string name="analog_res_11bit">11-bit</string>
+    <string name="analog_res_12bit">12-bit</string>
+    <string name="analog_ref_internal">Internal</string>
+    <string name="analog_ref_external_text">External</string>
+    <string name="user_pass_text">Please enter user name and password for:</string>
+    <string name="username_text">User name: </string>
+    <string name="password_text">Password: </string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="cred_save">Save</string>
+    <string name="forget_credentials">Forget credentials</string>
+    <string name="text_enter_analog_value">Enter a numeric value</string>
+    <string name="text_value">Value:</string>
+    <string name="portdetails_no_port">The port could not be found</string>
+    <string name="portdetails_not_supported">The port type is not supported</string>
+    <string name="nmeagen_menu_position">Position format</string>
+    <string name="nmeagen_menu_position_degrees">Degrees</string>
+    <string name="nmeagen_menu_position_degrees_minutes">Degrees/Minutes</string>
+    <string name="nmeagen_menu_position_degrees_min_sec">Degrees/Minutes/Seconds</string>
+    <string name="nmeagen_menu_height">Height format</string>
+    <string name="nmeagen_menu_height_meters">Meters</string>
+    <string name="nmeagen_menu_height_feet">Feet</string>
+    <string name="dial_set_value">Set Value</string>
+    <string name="compass_view">Compass View</string>
+    <string name="text_chr6dm_calibrate">Calibrate</string>
+    <string name="title_activity_scan_qrcode">Scan QR Code</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="scan_qr_code">Scan QR Code</string>
+    <string name="add_bluetooth_device2">Add a Bluetooth Device</string>
+    <string name="add_tcpip_device2">Add a TCP/IP device</string>
+    <string name="bluetooth_not_supported">Bluetooth is not supported on this device.</string>
+    <string name="device_already_exists">A device like this already exists.</string>
+    <string name="device_added">The device has been added. Tap it to connect or tap long for additional options.</string>
+    <string name="title_activity_help">Wizdroyd Help</string>
+    <string name="manage_devices_">Manage devices</string>
+    <string name="click_here_to_add_a_new_device_">Click here to add a new device.</string>
+    <string name="scan_instructions">Place a QR code in the viewfinder rectangle to scan it.</string>
+    <string name="options_help">Help</string>
+    <string name="options_quit">Quit</string>
+    <string name="invalid_opdi_url">Invalid OPDI URL. Cannot add a device from this code.</string>
+    <string name="sorry_bluetooth_not_supported">Sorry, Bluetooth is not supported on your device.</string>
+    <string name="connection_attempt_to_0_aborted">Connection attempt to {0} aborted</string>
+    <string name="connection_established_with_0_">Connection established with {0}</string>
+    <string name="connection_to_0_failed_1_">Connection to {0} failed: {1}</string>
+    <string name="error_on_0_1_">Error on {0}: {1}</string>
+    <string name="connection_to_0_closed_">Connection to {0} closed.</string>
+    <string name="authentication_required">Authentication required</string>
+    <string name="bluetooth_pin">PIN:</string>
+    <string name="edit_bluetooth_device">Edit Bluetooth Device</string>
+    <string name="save_button">Save</string>
+    <string name="edit_device">Edit device settings</string>
+    <string name="edit_tcpip_device">Edit TCP/IP device</string>
+    <string name="device_settings_changed">The device settings have been saved.</string>
+    <string name="device_debug">{0} says: {1}</string>
+    <string name="device_error">{0} reports error: {1}</string>
+</resources>

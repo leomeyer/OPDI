@@ -1,0 +1,1 @@
+Platform specific code for 8 bit AVR microprocessors
