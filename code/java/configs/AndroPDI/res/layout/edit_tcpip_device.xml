@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#000044"
+    android:paddingLeft="5dp"
+    android:paddingRight="5dp" >
+
+    <LinearLayout android:layout_width="wrap_content" android:id="@+id/linearLayout2" android:gravity="center" android:layout_height="wrap_content">
+        <ImageView android:id="@+id/imageView1" android:layout_height="50dip" android:layout_width="50dip" android:src="@drawable/tcpip"></ImageView>
+
+        <TextView
+            android:id="@+id/textView"
+            style="@style/ActivityHeader"
+            android:layout_width="match_parent"
+            android:layout_height="30dip"
+            android:gravity="center|bottom"
+            android:text="@string/edit_tcpip_device"
+            android:textColor="#FFFFFF" >
+</TextView>
+    </LinearLayout>
+
+    <TableRow
+        android:id="@+id/tableRow1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tcpip_name" />
+
+        <EditText
+            android:inputType="text"
+            android:id="@+id/etDeviceName"
+            android:layout_weight="6"
+            android:ems="10" >
+
+            <requestFocus />
+
+        </EditText>
+
+    </TableRow>
+
+    <TableRow> 
+
+        <TextView
+            android:text="@string/tcpip_host_ip"
+            android:width="80dp" />
+
+        <EditText
+            android:id="@+id/etDeviceAddress"
+            android:layout_weight="6"
+            android:inputType="text"
+            android:maxLines="1"
+            android:width="160dp" >
+
+        </EditText>
+
+    </TableRow> 
+    <TableRow>
+        <TextView android:layout_height="wrap_content" android:id="@+id/textView2" android:layout_width="wrap_content" android:text="@string/tcpip_port"></TextView>
+
+        <EditText
+            android:id="@+id/etDevicePort"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="6"
+            android:inputType="numberDecimal" >
+</EditText>
+    </TableRow>
+
+    <TableRow>
+        <TextView
+            android:id="@+id/tvPSK"
+            android:layout_weight="2"
+            android:hint="@+id/psk_hint"
+            android:text="@string/psk" />
+
+        <EditText
+            android:id="@+id/etPSK"
+            android:layout_weight="5"
+            android:inputType="text" >
+
+        </EditText>
+    </TableRow>
+    
+    <LinearLayout android:layout_height="wrap_content" android:id="@+id/linearLayout1" android:layout_width="wrap_content" android:layout_gravity="center_horizontal" android:gravity="center">
+
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cancel" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/save_button" >
+</Button>
+    </LinearLayout>
+
+</TableLayout>

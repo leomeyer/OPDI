@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="@string/analog_ref_internal" android:id="@+id/menuitem_analog_ref_internal"></item>
+    <item android:title="@string/analog_ref_external_text" android:id="@+id/menuitem_analog_ref_external"></item>
+</menu>
