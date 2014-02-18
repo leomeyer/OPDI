@@ -32,7 +32,7 @@
 #include "opdi_constants.h"
 #include "opdi_strings.h"
 #include "opdi_messages.h"
-#include "opdi_protocol.h"
+#include "opdi_slave_protocol.h"
 #include "opdi_device.h"
 #include "opdi_platformfuncs.h"
 #include "opdi_platformtypes.h"

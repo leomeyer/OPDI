@@ -87,8 +87,8 @@
     <ClInclude Include="..\..\common\opdi_device.h" />
     <ClInclude Include="..\..\common\opdi_messages.h" />
     <ClInclude Include="..\..\common\opdi_ports.h" />
-    <ClInclude Include="..\..\common\opdi_protocol.h" />
     <ClInclude Include="..\..\common\opdi_rijndael.h" />
+    <ClInclude Include="..\..\common\opdi_slave_protocol.h" />
     <ClInclude Include="..\..\common\opdi_strings.h" />
     <ClInclude Include="..\..\platforms\opdi_platformfuncs.h" />
     <ClInclude Include="..\..\platforms\win32\opdi_platformtypes.h" />
@@ -102,8 +102,8 @@
     <ClCompile Include="..\..\common\opdi_aes.cpp" />
     <ClCompile Include="..\..\common\opdi_ports.c" />
     <ClCompile Include="..\..\common\opdi_messages.c" />
-    <ClCompile Include="..\..\common\opdi_protocol.c" />
     <ClCompile Include="..\..\common\opdi_rijndael.cpp" />
+    <ClCompile Include="..\..\common\opdi_slave_protocol.c" />
     <ClCompile Include="..\..\common\opdi_strings.c" />
     <ClCompile Include="..\..\platforms\win32\opdi_platformfuncs.c" />
     <ClCompile Include="..\test\test.c" />

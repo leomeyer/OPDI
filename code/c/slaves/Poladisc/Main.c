@@ -22,7 +22,7 @@
 #include "opdi_platformfuncs.h"
 #include "opdi_constants.h"
 #include "opdi_messages.h"
-#include "opdi_protocol.h"
+#include "opdi_slave_protocol.h"
 #include "opdi_device.h"
 
 #include "uart.h"
@@ -394,7 +394,7 @@ static uint8_t init_wiz(void) {
 		opdi_add_port(&oscSpeedPort);
 	}
 
-	return opdi_setup(&io_receive, &io_send, NULL);
+	return opdi_message_setup(&io_receive, &io_send, NULL);
 }
 
 static uint8_t start_wiz(void) {	
@@ -648,5 +648,3 @@ int main(void)
 	}	// main loop
 	return 0;
 }
-
-

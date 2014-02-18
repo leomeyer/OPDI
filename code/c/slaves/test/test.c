@@ -12,7 +12,7 @@
 #include "opdi_constants.h"
 #include "opdi_ports.h"
 #include "opdi_messages.h"
-#include "opdi_protocol.h"
+#include "opdi_slave_protocol.h"
 #include "opdi_device.h"
 
 const char *opdi_slave_name;

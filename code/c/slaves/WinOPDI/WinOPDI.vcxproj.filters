@@ -30,9 +30,6 @@
     <ClInclude Include="..\..\common\opdi_constants.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\common\opdi_protocol.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\common\opdi_device.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
@@ -60,6 +57,9 @@
     <ClInclude Include="..\test\test.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\common\opdi_slave_protocol.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="server.cpp">
@@ -80,9 +80,6 @@
     <ClCompile Include="..\..\common\opdi_ports.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\common\opdi_protocol.c">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\common\opdi_rijndael.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
@@ -93,6 +90,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="..\test\test.c">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\opdi_slave_protocol.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

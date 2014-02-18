@@ -24,6 +24,8 @@ extern "C" {
 // maximum length of master's name this device will accept
 #define OPDI_MASTER_NAME_LENGTH	1
 
+#define OPDI_ENCODING_DEFAULT	OPDI_ENCODING_ISO8859_1
+
 // maximum possible ports on this device
 #define OPDI_MAX_DEVICE_PORTS	9
 

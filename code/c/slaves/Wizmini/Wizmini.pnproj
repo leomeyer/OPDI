@@ -1,1 +1,0 @@
-<Project name="Wizmini"><Folder name="timer0"><File path="timer0\timer0.c"></File><File path="timer0\timer0.h"></File></Folder><File path="Main.c"></File><File path="makefile"></File><File path="uart.c"></File><File path="uart.h"></File><File path="opdi_configspecs.h"></File></Project>
