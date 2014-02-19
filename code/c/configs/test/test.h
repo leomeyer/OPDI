@@ -1,5 +1,5 @@
 
-#define OPDI_SLAVE_NAME_LENGTH 32
+#define OPDI_CONFIG_NAME_LENGTH 32
 
 
 // externs defined in test.c

@@ -19,8 +19,7 @@
 // Implements encryption functions using AES.
 
 #include "opdi_constants.h"
-#include "opdi_device.h"
-#include "opdi_configspecs.h"
+#include "opdi_config.h"
 
 #include "opdi_rijndael.h"
 

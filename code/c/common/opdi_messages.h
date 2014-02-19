@@ -16,7 +16,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
-// OPDI slave high level IO functions (messaging subsystem)
+// OPDI high level IO functions (messaging subsystem)
 
 #ifndef __OPDI_MESSAGES_H
 #define __OPDI_MESSAGES_H

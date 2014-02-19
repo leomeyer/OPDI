@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define OPDI_IS_SLAVE	1
+
 // Defines the maximum message length this slave can receive.
 // Consumes this amount of bytes in data and the same amount on the stack.
 #define OPDI_MESSAGE_BUFFER_SIZE		48

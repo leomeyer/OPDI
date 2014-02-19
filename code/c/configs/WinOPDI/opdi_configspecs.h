@@ -27,14 +27,17 @@
 extern "C" {
 #endif
 
-// Sets the default encoding that is used by this slave.
+// This config is a slave
+#define OPDI_IS_SLAVE	1
+
+// Sets the default encoding that is used by this config.
 #define OPDI_ENCODING_DEFAULT		OPDI_ENCODING_ISO8859_1
 
-// Defines the maximum message length this slave can receive.
+// Defines the maximum message length this config can receive.
 // Consumes this amount of bytes in RAM.
 #define OPDI_MESSAGE_BUFFER_SIZE		256
 
-// Defines the maximum message string length this slave can receive.
+// Defines the maximum message string length this config can receive.
 // Consumes this amount of bytes times sizeof(char) in RAM.
 // As the channel identifier and the checksum of a message typically consume a
 // maximum amount of nine bytes, this value may be OPDI_MESSAGE_BUFFER_SIZE - 9

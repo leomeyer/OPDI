@@ -16,10 +16,10 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
-// OPDI protocol level functions
+// OPDI slave protocol level functions
 
-#ifndef __OPDI_PROTOCOL_H
-#define __OPDI_PROTOCOL_H
+#ifndef __OPDI_SLAVE_PROTOCOL_H
+#define __OPDI_SLAVE_PROTOCOL_H
 
 #include "opdi_platformtypes.h"
 #include "opdi_ports.h"
@@ -55,14 +55,14 @@ extern uint8_t opdi_handle_basic_message(opdi_Message *m);
 *   Most importantly, this will disable encryption as it is not used at the beginning
 *   of the handshake.
 */
-extern uint8_t opdi_init(void);
+extern uint8_t opdi_slave_init(void);
 
 /** Starts the OPDI protocol by performing the handshake using the given message.
 *   get_protocol is used to determine extended protocols. It is passed the master's chosen
 *   protocol identifier and may return a protocol handler. It may also be NULL.
 *   If it is NULL, only the basic protocol can be used.
 */
-extern uint8_t opdi_start(opdi_Message *m, opdi_GetProtocol get_protocol, opdi_ProtocolCallback protocol_callback);
+extern uint8_t opdi_slave_start(opdi_Message *m, opdi_GetProtocol get_protocol, opdi_ProtocolCallback protocol_callback);
 
 /** Sends a debug message to the master.
 */
@@ -83,9 +83,8 @@ extern uint8_t opdi_refresh(opdi_Port **ports);
 */
 extern uint8_t opdi_disconnect(void);
 
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif		// __OPDI_PROTOCOL_H
+#endif		// __OPDI_SLAVE_PROTOCOL_H

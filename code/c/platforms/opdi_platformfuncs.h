@@ -18,7 +18,7 @@
     
 // Platform specific functions
 //
-// A slave implementation must provide these functions which are usually
+// A config implementation must provide these functions which are usually
 // platform specific.
 
 #ifndef __OPDI_PLATFORMFUNCS_H

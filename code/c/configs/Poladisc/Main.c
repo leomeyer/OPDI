@@ -23,7 +23,7 @@
 #include "opdi_constants.h"
 #include "opdi_messages.h"
 #include "opdi_slave_protocol.h"
-#include "opdi_device.h"
+#include "opdi_config.h"
 
 #include "uart.h"
 #include "timer0/timer0.h"
@@ -57,7 +57,7 @@ static uint8_t EEMEM oscSpeed_ee;
 
 
 // define device-specific attributes
-const char* opdi_slave_name = "Poladisc";
+const char* opdi_config_name = "Poladisc";
 char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
 const char* opdi_encoding = "";
 const char* opdi_supported_protocols = "BP";
@@ -380,7 +380,7 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t i) {
 }
 
 
-static uint8_t init_wiz(void) {
+static uint8_t init(void) {
 
 	// configure ports
 	if (opdi_get_ports() == NULL) {
@@ -393,11 +393,13 @@ static uint8_t init_wiz(void) {
 		opdi_add_port(&oscRangePort);
 		opdi_add_port(&oscSpeedPort);
 	}
+	
+	opdi_slave_init();
 
 	return opdi_message_setup(&io_receive, &io_send, NULL);
 }
 
-static uint8_t start_wiz(void) {	
+static uint8_t start(void) {	
 	opdi_Message message;
 	uint8_t result;
 
@@ -407,7 +409,7 @@ static uint8_t start_wiz(void) {
 	}
 	
 	// initiate handshake
-	result = opdi_start(&message, NULL, NULL);
+	result = opdi_slave_start(&message, NULL, NULL);
 
 	return result;
 }
@@ -557,8 +559,8 @@ int main(void)
 	uart_bb_putc('T');
 	uart_bb_putc('\n');	
 
-	// initialize wizslave
-	init_wiz();
+	// initialize slave
+	init();
 	
 	// setup PWM timer interrupt
 	timer1_init();
@@ -608,8 +610,8 @@ int main(void)
 	{
 		// data arrived on uart?
 		if (uart_has_data()) {
-			// start wizslave messaging
-			result = start_wiz();
+			// start slave messaging
+			result = start();
 			// show result as blink code
 			if ((result > 0) && (result != 10)) {	// ignore PROTOCOL_ERROR, may lead to much blinking if master is out of sync
 				pwm_on = 0;

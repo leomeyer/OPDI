@@ -84,9 +84,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\common\opdi_constants.h" />
-    <ClInclude Include="..\..\common\opdi_device.h" />
+    <ClInclude Include="..\..\common\opdi_config.h" />
     <ClInclude Include="..\..\common\opdi_messages.h" />
     <ClInclude Include="..\..\common\opdi_ports.h" />
+    <ClInclude Include="..\..\common\opdi_protocol.h" />
     <ClInclude Include="..\..\common\opdi_rijndael.h" />
     <ClInclude Include="..\..\common\opdi_slave_protocol.h" />
     <ClInclude Include="..\..\common\opdi_strings.h" />
@@ -94,7 +95,7 @@
     <ClInclude Include="..\..\platforms\win32\opdi_platformtypes.h" />
     <ClInclude Include="..\test\test.h" />
     <ClInclude Include="opdi_configspecs.h" />
-    <ClInclude Include="server.h" />
+    <ClInclude Include="slave.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -102,13 +103,14 @@
     <ClCompile Include="..\..\common\opdi_aes.cpp" />
     <ClCompile Include="..\..\common\opdi_ports.c" />
     <ClCompile Include="..\..\common\opdi_messages.c" />
+    <ClCompile Include="..\..\common\opdi_protocol.c" />
     <ClCompile Include="..\..\common\opdi_rijndael.cpp" />
     <ClCompile Include="..\..\common\opdi_slave_protocol.c" />
     <ClCompile Include="..\..\common\opdi_strings.c" />
     <ClCompile Include="..\..\platforms\win32\opdi_platformfuncs.c" />
     <ClCompile Include="..\test\test.c" />
-    <ClCompile Include="device.c" />
-    <ClCompile Include="server.cpp" />
+    <ClCompile Include="config.c" />
+    <ClCompile Include="slave.cpp" />
     <ClCompile Include="WinOPDI.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

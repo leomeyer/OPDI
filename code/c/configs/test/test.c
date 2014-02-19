@@ -8,14 +8,13 @@
 #endif
 
 #include "opdi_platformtypes.h"
-#include "opdi_configspecs.h"
+#include "opdi_config.h"
 #include "opdi_constants.h"
 #include "opdi_ports.h"
 #include "opdi_messages.h"
 #include "opdi_slave_protocol.h"
-#include "opdi_device.h"
 
-const char *opdi_slave_name;
+const char *opdi_config_name;
 
 char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
 const char *opdi_encoding = "";

@@ -23,8 +23,7 @@
 
 #include "opdi_platformtypes.h"
 #include "opdi_platformfuncs.h"
-#include "opdi_device.h"
-#include "opdi_configspecs.h"
+#include "opdi_config.h"
 #include "opdi_messages.h"
 #include "opdi_constants.h"
 

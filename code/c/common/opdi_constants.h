@@ -16,7 +16,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
-// Common OPDI slave constants
+// Common OPDI constants
 
 #ifndef __OPDI_CONSTANTS_H
 #define __OPDI_CONSTANTS_H
@@ -129,6 +129,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif
