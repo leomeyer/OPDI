@@ -63,7 +63,7 @@
     <ClInclude Include="slave.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="opdi_protocol_constants.h">
+    <ClInclude Include="..\..\common\opdi_protocol_constants.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
