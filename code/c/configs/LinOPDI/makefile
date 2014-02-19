@@ -14,13 +14,13 @@ PPATH = ../../platforms/$(PLATFORM)
 PPATH1 = ../../platforms
 
 # List C source files of the configuration here.
-SRC = $(TARGET).cpp server.cpp device.c
+SRC = $(TARGET).cpp slave.cpp config.c ../test/test.c
 
 # platform specific files
 SRC += $(PPATH)/opdi_platformfuncs.c
 
 # common files
-SRC += $(CPATH)/opdi_messages.c $(CPATH)/opdi_ports.c $(CPATH)/opdi_protocol.c $(CPATH)/opdi_strings.c $(CPATH)/opdi_aes.cpp  $(CPATH)/opdi_rijndael.cpp
+SRC += $(CPATH)/opdi_messages.c $(CPATH)/opdi_ports.c $(CPATH)/opdi_protocol.c $(CPATH)/opdi_slave_protocol.c $(CPATH)/opdi_strings.c $(CPATH)/opdi_aes.cpp  $(CPATH)/opdi_rijndael.cpp
 
 # The compiler to be used.
 CC = g++

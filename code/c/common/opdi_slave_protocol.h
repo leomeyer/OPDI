@@ -66,7 +66,7 @@ extern uint8_t opdi_slave_start(opdi_Message *m, opdi_GetProtocol get_protocol, 
 
 /** Sends a debug message to the master.
 */
-extern uint8_t opdi_send_debug(char *debugmsg);
+extern uint8_t opdi_send_debug(const char *debugmsg);
 	
 /** Causes the Reconfigure message to be sent which prompts the master to re-read the device capabilities.
 */

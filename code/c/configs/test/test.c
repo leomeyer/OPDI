@@ -7,6 +7,16 @@
 #include <WinBase.h>
 #endif
 
+#ifdef linux
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <errno.h>
+#endif
+
 #include "opdi_platformtypes.h"
 #include "opdi_config.h"
 #include "opdi_constants.h"
@@ -26,7 +36,7 @@ const char *opdi_password = "admin";
 uint16_t opdi_device_flags = OPDI_FLAG_AUTHENTICATION_REQUIRED;
 
 uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
-char *opdi_encryption_key = "0123456789012345";
+const char *opdi_encryption_key = "0123456789012345";
 
 // provide MS-specific encryption buffers
 // (The MS compiler can't do dynamic array allocation on the stack apparently)
@@ -56,9 +66,9 @@ static char anares[] = "1";		// 9 bit
 static char anaref[] = "0";
 static int anavalue = 0;
 
-static char *selectLabels[] = {"Standard Ports", "Streaming Ports", NULL};
+static const char *selectLabels[] = {"Standard Ports", "Streaming Ports", NULL};
 static uint16_t selectPos = 0;
-static char *testLabels[] = {"Normal", "Disconnect", "Crash", "Debug", "Error", NULL};
+static const char *testLabels[] = {"Normal", "Disconnect", "Crash", "Debug", "Error", NULL};
 static uint16_t testPos = 0;
 
 static int dialvalue = 0;
@@ -264,18 +274,7 @@ uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
 }
 
 uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
-	HWAVEOUT i;
-	int error;
-	HWAVEOUT devCount = (HWAVEOUT)waveOutGetNumDevs();
 	if (!strcmp(port->id, dialPort.id)) {
-
-		// set volume of all wave devices
-		for (i = 0; i < devCount; i++) {
-			error = (waveOutSetVolume(i, (0xFFFF / 100) * position));
-			if (error != MMSYSERR_NOERROR) 
-				printf("Volume set error: &d", error);
-		}
-
 		dialvalue = position;
 	} else
 		// unknown port
@@ -357,7 +356,7 @@ void handle_streaming_ports() {
 
 		// send streaming message
 		m.channel = sp2Info.channel;
-		sprintf(clocktext, ctime(&mytime));
+		sprintf(clocktext, "%s", ctime(&mytime));
 		// remove trailing 0x0A (it's the message separator and will prevent the message from being sent)
 		clocktext[strlen(clocktext) - 1] = '\0';
 		m.payload = clocktext;

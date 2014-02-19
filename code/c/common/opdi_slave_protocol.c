@@ -1384,7 +1384,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 
 /** Sends a debug message to the master.
 */
-uint8_t opdi_send_debug(char *debugmsg) {
+uint8_t opdi_send_debug(const char *debugmsg) {
 	opdi_msg_parts[0] = Debug;
 	opdi_msg_parts[1] = debugmsg;
 	opdi_msg_parts[2] = NULL;

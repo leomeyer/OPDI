@@ -75,7 +75,7 @@ extern uint16_t opdi_encryption_blocksize;
 
 /** Specifies the key information for the encryption. Must match the selected encryption method.
 */
-extern char *opdi_encryption_key;
+extern const char *opdi_encryption_key;
 
 #ifdef _MSC_VER
 	// MS Visual C compiler can't handle non-constant-length arrays on the stack

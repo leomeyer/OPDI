@@ -29,7 +29,7 @@
 #include <arpa/inet.h>
 
 #include "opdi_constants.h"
-#include "server.h"
+#include "slave.h"
 
 // Listen to incoming TCP requests. Supply the port you want the server to listen on
 int listen_tcp(int host_port) {

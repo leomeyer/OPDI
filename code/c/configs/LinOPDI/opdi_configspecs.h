@@ -27,6 +27,10 @@
 extern "C" {
 #endif
 
+#define OPDI_IS_SLAVE		1
+
+#define OPDI_ENCODING_DEFAULT	OPDI_ENCODING_ISO8859_1
+
 // Defines the maximum message length this slave can receive.
 // Consumes this amount of bytes in RAM.
 #define OPDI_MESSAGE_BUFFER_SIZE		256
@@ -76,6 +80,8 @@ extern "C" {
 *   A maximum of 2^^16 - 1 is supported.
 */
 #define OPDI_ENCRYPTION_BLOCKSIZE	16
+
+#define OPDI_HAS_MESSAGE_HANDLED
 
 #ifdef __cplusplus
 }
