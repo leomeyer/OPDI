@@ -23,7 +23,7 @@
 #include <ctype.h>
 
 #include "opdi_constants.h"
-#include "../opdi_platformfuncs.h"
+#include "opdi_platformfuncs.h"
 
 uint8_t opdi_str_to_uint8(const char *str, uint8_t *result) {
 	static uint8_t errno;
