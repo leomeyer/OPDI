@@ -1,7 +1,7 @@
 package org.ospdi.opdi.androPDI.bluetooth;
 
-import org.ospdi.opdi.androPDI.AndroPDI;
 import org.ospdi.opdi.androPDI.R;
+import org.ospdi.opdi.androPDI.AndroPDI;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -101,7 +101,7 @@ public class EditBluetoothDevice extends Activity {
 						etPSK.getText().toString(), etPIN.getText().toString(), cbSecure.isChecked());
 				
 				// create the device
-				BluetoothDevice device = new BluetoothDevice(mBluetoothAdapter, etName.getText().toString(), address, etPSK.getText().toString(), etPIN.getText().toString(), cbSecure.isChecked());
+				BluetoothDevice device = new BluetoothDevice(mBluetoothAdapter, etName.getText().toString(), address, etPSK.getText().toString().trim(), etPIN.getText().toString(), cbSecure.isChecked());
 	            // Set result and finish this Activity
         		Intent result = new Intent();
         		result.putExtra(AndroPDI.DEVICE_SERIALIZATION, device.serialize());

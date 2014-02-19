@@ -1,7 +1,7 @@
 package org.ospdi.opdi.androPDI.tcpip;
 
-import org.ospdi.opdi.androPDI.AndroPDI;
 import org.ospdi.opdi.androPDI.R;
+import org.ospdi.opdi.androPDI.AndroPDI;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -70,7 +70,7 @@ public class EditTCPIPDevice extends Activity {
 			public void onClick(View v) {
 				// make a new device object
 				TCPIPDevice resultDevice = new TCPIPDevice(etName.getText().toString(), etAddress.getText().toString(), 
-						Integer.parseInt(etPort.getText().toString()), etPSK.getText().toString());
+						Integer.parseInt(etPort.getText().toString()), etPSK.getText().toString().trim());
 				
 	            // Set result and finish this Activity
         		Intent result = new Intent();
