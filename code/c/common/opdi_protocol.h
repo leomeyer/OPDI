@@ -23,64 +23,6 @@
 
 #include "opdi_platformtypes.h"
 
-#define PARTS_SEPARATOR			':'
-#define MULTIMESSAGE_SEPARATOR	'\r'
-
-#define Handshake 				"OPDI"
-#define Handshake_version 		"0.1"
-
-#define Basic_protocol_magic 	"BP"
-#define Extended_protocol_magic	"EP"
-
-// control channel message identifiers
-#define Error 					"Err"
-#define Disconnect 				"Dis"
-#define Refresh 				"Ref"
-#define Reconfigure 			"Reconf"
-#define Debug 					"Debug"
-
-#define Agreement 				"OK"
-#define Disagreement 			"NOK"
-
-#define Auth 					"Auth"
-
-// protocol message identifiers
-#define getDeviceCaps  			"gDC"
-#define getPortInfo  			"gPI"
-
-#define analogPort  			"AP"
-#define analogPortState  		"AS"
-#define getAnalogPortState  	"gAS"
-#define setAnalogPortValue  	"sAV"
-#define setAnalogPortMode  		"sAM"
-#define setAnalogPortResolution "sAR"
-#define setAnalogPortReference  "sARF"
-
-#define digitalPort  			"DP"
-#define digitalPortState  		"DS"
-#define getDigitalPortState  	"gDS"
-#define setDigitalPortLine  	"sDL"
-#define setDigitalPortMode  	"sDM"
-
-#define selectPort  			"SLP"
-#define getSelectPortLabel  	"gSL"
-#define selectPortLabel  		"SL"
-#define selectPortState  		"SS"
-#define getSelectPortState  	"gSS"
-#define setSelectPortPosition	"sSP"
-
-#define dialPort  				"DL"
-#define dialPortState  			"DLS"
-#define getDialPortState  		"gDLS"
-#define setDialPortPosition  	"sDLP"
-
-#define streamingPort  			"SP"
-#define bindStreamingPort  		"bSP"
-#define unbindStreamingPort  	"uSP"
-
-// extended protocol
-#define getAllPortStates		"gAPS"
-
 // Common functions of the OPDI protocol.
 //
 

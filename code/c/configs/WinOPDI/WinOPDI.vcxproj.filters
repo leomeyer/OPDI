@@ -63,6 +63,9 @@
     <ClInclude Include="slave.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="opdi_protocol_constants.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WinOPDI.cpp">
