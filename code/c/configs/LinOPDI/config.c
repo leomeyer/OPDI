@@ -33,10 +33,49 @@
 #include "opdi_ports.h"
 #include "opdi_messages.h"
 #include "opdi_protocol.h"
-#include "opdi_slave_protocol.h"
-#include "opdi_config.h"
+#include "opdi_device.h"
 
-#include "../test/test.h"
+#define OPDI_SLAVE_NAME_LENGTH 32
+const char *opdi_slave_name;
+
+char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
+const char *opdi_encoding = "";
+const char *opdi_encryption_method = "AES";
+const char *opdi_supported_protocols = "BP";
+const char *opdi_username = "admin";
+const char *opdi_password = "admin";
+
+uint16_t opdi_device_flags = OPDI_FLAG_AUTHENTICATION_REQUIRED;
+
+uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
+uint8_t opdi_encryption_buffer[OPDI_ENCRYPTION_BLOCKSIZE];
+uint8_t opdi_encryption_buffer_2[OPDI_ENCRYPTION_BLOCKSIZE];
+
+/// Ports
+
+static struct opdi_Port digPort = { "DP1", "Digital Port" };
+static struct opdi_Port anaPort = { "AP1", "Analog Port" };
+static struct opdi_Port selectPort = { "SL1", "Switch" };
+static struct opdi_Port dialPort = { "DL1", "Audio Volume" };
+static struct opdi_DialPortInfo dialPortInfo = { 0, 100, 5 };
+static struct opdi_Port streamPort1 = { "SP1", "Temp/Pressure" };
+static struct opdi_StreamingPortInfo sp1Info = { "BMP085", OPDI_MESSAGE_PAYLOAD_LENGTH };
+
+static char digmode[] = "0";		// floating input
+static char digline[] = "0";
+
+static char anamode[] = "1";		// output
+static char anares[] = "1";		// 9 bit
+static char anaref[] = "0";
+static int anavalue = 0;
+
+static const char *selectLabels[] = {"Position A", "Position B", "Position C", NULL};
+static uint16_t selectPos = 0;
+
+static int dialvalue = 0;
+
+static double temperature = 20.0;
+static double pressure = 1000.0;
 
 // global connection mode (TCP or COM)
 #define MODE_TCP 1
@@ -45,19 +84,15 @@
 static int connection_mode = 0;
 static char first_com_byte = 0;
 
-static unsigned long idle_timeout_ms = 20000;
-static unsigned long last_activity = 0;
-
 /** Helper function: Returns current time in milliseconds
 */
 static unsigned long GetTickCount()
 {
-	struct timeval tv;
-	if (gettimeofday(&tv, NULL) != 0) {
-		return 0;
-	}
+  struct timeval tv;
+  if( gettimeofday(&tv, NULL) != 0 )
+    return 0;
 
-	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+  return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
 }
 
 /** For TCP connections, receives a byte from the socket specified in info and places the result in byte.
@@ -80,8 +115,21 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 		if (GetTickCount() - sendTicks >= 830) {
 			if (canSend) {
 				sendTicks = GetTickCount();
+				// channel assigned for streaming port?
+				if (sp1Info.channel > 0) {
 
-				handle_streaming_ports();
+					temperature += (rand() * 10.0 / RAND_MAX) - 5;
+					if (temperature > 100) temperature = 100;
+					if (temperature < -100) temperature = -100;
+					pressure += (rand() * 10.0 / RAND_MAX) - 5;
+
+					// send streaming message
+					m.channel = sp1Info.channel;
+					sprintf(bmp085, "BMP085:%.2f:%.2f", temperature, pressure);
+					m.payload = bmp085;
+					opdi_put_message(&m);
+
+				}
 			}
 		}
 
@@ -181,6 +229,158 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 	return OPDI_STATUS_OK;
 }
 
+// is called by the protocol
+uint8_t opdi_choose_language(const char *languages) {
+	if (!strcmp(languages, "de_DE")) {
+		digPort.name = "Digitaler Port";
+		anaPort.name = "Analoger Port";
+		selectPort.name = "Wahlschalter";
+		dialPort.name = "Lautstärke";
+		streamPort1.name = "Temperatur/Druck";
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], char ref[], int32_t *value) {
+	if (!strcmp(port->id, anaPort.id)) {
+		mode[0] = anamode[0];
+		res[0] = anares[0];
+		ref[0] = anaref[0];
+		*value = anavalue;
+	} else
+		// unknown port
+		return OPDI_PORT_UNKNOWN;
+		
+	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
+	if (!strcmp(port->id, anaPort.id)) {
+		anavalue = value;
+	} else
+		// unknown port
+		return OPDI_PORT_UNKNOWN;
+		
+	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
+	if (!strcmp(port->id, digPort.id)) {
+		mode[0] = digmode[0];
+		line[0] = digline[0];
+	} else
+		// unknown port
+		return OPDI_PORT_UNKNOWN;
+		
+	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
+	if (!strcmp(port->id, anaPort.id)) {
+		anamode[0] = mode[0];
+	} else
+		// unknown port
+		return OPDI_PORT_UNKNOWN;
+		
+	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
+	if (!strcmp(port->id, anaPort.id)) {
+		anares[0] = res[0];
+		// TODO check value in range
+		anavalue = 0;
+	} else
+		// unknown port
+		return OPDI_PORT_UNKNOWN;
+		
+	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
+
+	if (!strcmp(port->id, anaPort.id)) {
+		anaref[0] = ref[0];
+	} else
+		// unknown port
+		return OPDI_PORT_UNKNOWN;
+		
+	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
+	if (!strcmp(port->id, digPort.id)) {
+		digline[0] = line[0];
+	} else
+		// unknown port
+		return OPDI_PORT_UNKNOWN;
+		
+	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
+	if (!strcmp(port->id, digPort.id)) {
+		digmode[0] = mode[0];
+	} else
+		// unknown port
+		return OPDI_PORT_UNKNOWN;
+		
+	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_get_select_port_state(opdi_Port *port, uint16_t *position) {
+	if (!strcmp(port->id, selectPort.id)) {
+		*position = selectPos;
+	} else
+		// unknown port
+		return OPDI_PORT_UNKNOWN;
+		
+	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
+	if (!strcmp(port->id, selectPort.id)) {
+		selectPos = position;
+	} else
+		// unknown port
+		return OPDI_PORT_UNKNOWN;
+		
+	return OPDI_STATUS_OK;
+}
+
+
+uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
+	if (!strcmp(port->id, dialPort.id)) {
+		*position = dialvalue;
+	} else
+		// unknown port
+		return OPDI_PORT_UNKNOWN;
+		
+	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
+/*
+	HWAVEOUT i;
+	int error;
+	HWAVEOUT devCount = (HWAVEOUT)waveOutGetNumDevs();
+	if (!strcmp(port->id, dialPort.id)) {
+
+		// set volume of all wave devices
+		for (i = 0; i < devCount; i++) {
+			error = (waveOutSetVolume(i, (0xFFFF / 100) * position));
+			if (error != MMSYSERR_NOERROR) 
+				printf("Volume set error: &d", error);
+		}
+
+		dialvalue = position;
+	} else
+		// unknown port
+		return OPDI_PORT_UNKNOWN;
+*/		
+	return OPDI_STATUS_OK;
+}
 
 static void my_protocol_callback(uint8_t state) {
 	if (state == OPDI_PROTOCOL_START_HANDSHAKE) {
@@ -199,24 +399,54 @@ void init_device() {
 	char nameBuf[1024];
 	size_t compNameLen = 1024;
 
-	if (opdi_config_name == NULL) {
-		opdi_config_name = (const char*)malloc(OPDI_CONFIG_NAME_LENGTH);
+	if (opdi_slave_name == NULL) {
+		opdi_slave_name = (const char*)malloc(OPDI_SLAVE_NAME_LENGTH);
 	}
 
 	// requires #undef UNICODE to work properly
 	if (0 != gethostname(nameBuf, compNameLen)) {
-		sprintf((char *)opdi_config_name, "LinOPDI (%s)", nameBuf);
+		sprintf((char *)opdi_slave_name, "LinOPDI (%s)", nameBuf);
 	}
 	else {
-		opdi_config_name = "LinOPDI";
+		opdi_slave_name = "LinOPDI";
 	}
 
 	// configure ports
-	configure_ports();
+	if (opdi_get_ports() == NULL) {
+		digPort.type = OPDI_PORTTYPE_DIGITAL;
+		digPort.caps = OPDI_PORTDIRCAP_BIDI;
+		digPort.info.i = (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_HAS_PULLDN);
+		opdi_add_port(&digPort);
 
-	opdi_slave_init();
+		anaPort.type = OPDI_PORTTYPE_ANALOG;
+		anaPort.caps = OPDI_PORTDIRCAP_OUTPUT;
+		anaPort.info.i = (OPDI_ANALOG_PORT_CAN_CHANGE_RES	
+							   | OPDI_ANALOG_PORT_RESOLUTION_8	
+							   | OPDI_ANALOG_PORT_RESOLUTION_9	
+							   | OPDI_ANALOG_PORT_RESOLUTION_10	
+							   | OPDI_ANALOG_PORT_RESOLUTION_11	
+							   | OPDI_ANALOG_PORT_RESOLUTION_12	
+							   | OPDI_ANALOG_PORT_CAN_CHANGE_REF	
+							   | OPDI_ANALOG_PORT_REFERENCE_INT	
+							   | OPDI_ANALOG_PORT_REFERENCE_EXT);
+		opdi_add_port(&anaPort);
+
+		selectPort.type = OPDI_PORTTYPE_SELECT;
+		selectPort.caps = OPDI_PORTDIRCAP_OUTPUT;
+		selectPort.info.ptr = (void*)selectLabels;	// position labels
+		opdi_add_port(&selectPort);
+
+		dialPort.type = OPDI_PORTTYPE_DIAL;
+		dialPort.caps = OPDI_PORTDIRCAP_OUTPUT;
+		dialPort.info.ptr = (void*)&dialPortInfo;
+		opdi_add_port(&dialPort);
+
+		streamPort1.type = OPDI_PORTTYPE_STREAMING;
+		streamPort1.caps = OPDI_PORTDIRCAP_BIDI;
+		streamPort1.info.ptr = (void*)&sp1Info;
+		opdi_add_port(&streamPort1);
+	}
 }
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -245,21 +475,15 @@ int HandleTCPConnection(int csock) {
 		return OPDI_DEVICE_ERROR;
 	}
 
-	opdi_slave_init();
-
 	// info value is the socket handle
-	result = opdi_message_setup(&io_receive, &io_send, (void *)(long)csock);
-	if (result != 0) 
-		return result;
+	opdi_setup(&io_receive, &io_send, (void *)(long)csock);
 
 	result = opdi_get_message(&message, OPDI_CANNOT_SEND);
 	if (result != 0) 
 		return result;
 
-	last_activity = GetTickCount();
-
 	// initiate handshake
-	result = opdi_slave_start(&message, NULL, &my_protocol_callback);
+	result = opdi_start(&message, NULL, &my_protocol_callback);
 
 	// release the socket
 	return result;
@@ -275,21 +499,15 @@ int HandleSerialConnection(char firstByte, int fd) {
 	first_com_byte = firstByte;
 	init_device();
 
-	opdi_slave_init();
-
 	// info value is the serial port handle
-	result = opdi_message_setup(&io_receive, &io_send, (void *)(long)fd);
-	if (result != 0) 
-		return result;
+	opdi_setup(&io_receive, &io_send, (void *)(long)fd);
 
 	result = opdi_get_message(&message, OPDI_CANNOT_SEND);
 	if (result != 0) 
 		return result;
 
-	last_activity = GetTickCount();
-
 	// initiate handshake
-	result = opdi_slave_start(&message, NULL, &my_protocol_callback);
+	result = opdi_start(&message, NULL, &my_protocol_callback);
 
 	return result;
 }
@@ -298,26 +516,11 @@ int HandleSerialConnection(char firstByte, int fd) {
 }
 #endif 
 
-uint8_t opdi_message_handled(channel_t channel, const char **parts) {
-	uint8_t result;
-	if (idle_timeout_ms > 0) {
-		// do not time out if there are bound streaming ports
-		if (channel != 0 || opdi_get_port_bind_count() > 0) {
-			// reset activity time
-			last_activity = GetTickCount();
-		} else {
-			// control channel message
-			if (GetTickCount() - last_activity > idle_timeout_ms) {
-				result = opdi_send_debug("Session timeout!");
-				if (result != OPDI_STATUS_OK)
-					return result;
-				return opdi_disconnect();
-			} else {
-//				printf("Session timeout not yet reached\n");
-			}
-		}
-	}
-
+uint8_t opdi_debug_msg(const uint8_t *str, uint8_t direction) {
+	if (direction == OPDI_DIR_INCOMING)
+		printf(">");
+	else
+		printf("<");
+	printf("%s\n", str);
 	return OPDI_STATUS_OK;
 }
-
