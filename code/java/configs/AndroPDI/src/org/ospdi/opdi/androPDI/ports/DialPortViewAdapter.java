@@ -241,6 +241,20 @@ class DialPortViewAdapter implements IPortViewAdapter {
 			
 			// selectively enable/disable menu items
 			MenuItem item;
+
+			item = menu.findItem(R.id.menuitem_port_reload);
+			item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+				@Override
+				public boolean onMenuItemClick(MenuItem item) {
+					return showDevicePorts.addPortAction(new PortAction(DialPortViewAdapter.this) {
+						@Override
+						void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+							dPort.refresh();
+							queryState();
+						}
+					});
+				}
+			});
 			
 			final int portMinValue = dPort.getMinimum();
 			final int portMaxValue = dPort.getMaximum();

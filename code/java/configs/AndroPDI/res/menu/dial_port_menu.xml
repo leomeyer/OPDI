@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu
   xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/menuitem_port_reload" android:title="@string/menuitem_port_reload"></item>
     <item android:id="@+id/menuitem_dial_set_value" android:title="@string/dial_set_value"></item>
-    
 </menu>

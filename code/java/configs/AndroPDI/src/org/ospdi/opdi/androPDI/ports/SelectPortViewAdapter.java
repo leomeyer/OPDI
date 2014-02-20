@@ -167,8 +167,25 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 			inflater.inflate(R.menu.select_port_menu, menu);
 
 			// add menu items dynamically
-			MenuItem item;
+
+			MenuItem reloadItem = menu.findItem(R.id.menuitem_port_reload);
+			if (reloadItem != null) {
+				reloadItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+					@Override
+					public boolean onMenuItemClick(MenuItem item) {
+						return showDevicePorts.addPortAction(new PortAction(SelectPortViewAdapter.this) {
+							@Override
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+								sPort.refresh();
+								queryState();
+							}
+						});
+					}
+				});
+			}
 			
+			MenuItem item;
+
 			for (int i = 0; i < sPort.getPosCount(); i++) {
 				
 				item = menu.add(sPort.getLabelAt(i));
@@ -193,6 +210,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 					}
 				});
 			}
+
 		} catch (Exception e) {
 			this.showDevicePorts.showError("Can't show the context menu");
 			menu.close();

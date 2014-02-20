@@ -146,4 +146,5 @@
     <string name="device_settings_changed">Die Geräteeinstellungen wurden gespeichert.</string>
     <string name="device_debug">{0} meldet: {1}</string>
     <string name="device_error">{0} meldet Fehler: {1}</string>
+    <string name="menuitem_port_reload">Neu laden</string>
 </resources>

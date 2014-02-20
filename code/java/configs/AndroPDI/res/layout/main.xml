@@ -14,8 +14,10 @@
         <ListView
             android:id="@+id/lvDevices"
             android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
             android:background="@drawable/background"
             android:cacheColorHint="#00000000" >
+
         </ListView>
 
     </TableRow>
@@ -23,13 +25,13 @@
         <TableRow
             android:id="@+id/tableRow2"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/border" >
+            android:layout_height="wrap_content" >
 
             <ScrollView
                 android:id="@+id/svLog"
                 android:layout_width="wrap_content"
                 android:layout_height="100dp"
+                android:background="@drawable/background"
                 android:scrollbarAlwaysDrawVerticalTrack="true" >
 
                 <TextView
@@ -37,7 +39,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:scrollbars="vertical"
+                    android:textAppearance="?android:attr/textAppearanceSmallInverse"
                     android:textSize="10sp" />
+
             </ScrollView>
 
         </TableRow>

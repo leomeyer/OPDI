@@ -249,7 +249,21 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 
 				// selectively enable/disable menu items
 				MenuItem item;
-				
+
+				item = menu.findItem(R.id.menuitem_port_reload);
+				item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+					@Override
+					public boolean onMenuItemClick(MenuItem item) {
+						return showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
+							@Override
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+								dPort.refresh();
+								queryState();
+							}
+						});
+					}
+				});
+
 				// an output only port can't have its mode set
 				boolean canSetMode = dPort.getDirCaps() != PortDirCaps.OUTPUT;
 				item = menu.findItem(R.id.menuitem_digital_set_mode);
