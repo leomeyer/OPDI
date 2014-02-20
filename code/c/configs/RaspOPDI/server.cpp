@@ -1,4 +1,4 @@
-//    This file is part of a OPDI reference implementation.
+//    This file is part of an OPDI reference implementation.
 //    see: Open Protocol for Device Interaction
 //
 //    Copyright (C) 2011 Leo Meyer (leo@leomeyer.de)

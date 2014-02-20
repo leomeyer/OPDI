@@ -1,7 +1,7 @@
 //    This file is part of an OPDI reference implementation.
 //    see: Open Protocol for Device Interaction
 //
-//    Copyright (C) 2011 Leo Meyer (leo@leomeyer.de)
+//    Copyright (C) 2011-2014 Leo Meyer (leo@leomeyer.de)
 //
 //    This program is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -41,8 +41,8 @@
 static int connection_mode = 0;
 static char first_com_byte = 0;
 
-static uint32_t idle_timeout_ms = 20000;
-static uint32_t last_activity = 0;
+static unsigned long idle_timeout_ms = 20000;
+static unsigned long last_activity = 0;
 
 /** For TCP connections, receives a byte from the socket specified in info and places the result in byte.
 *   For COM connections, reads a byte from the file handle specified in info and places the result in byte.

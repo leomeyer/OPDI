@@ -1,3 +1,23 @@
+//    This file is part of an OPDI reference implementation.
+//    see: Open Protocol for Device Interaction
+//
+//    Copyright (C) 2011-2014 Leo Meyer (leo@leomeyer.de)
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    
+// Test functions (platform independent)
+
 #include <stdio.h>
 #include <time.h>
 
@@ -54,9 +74,9 @@ static struct opdi_Port dialPort = { "DL1", "Audio Volume" };
 static struct opdi_DialPortInfo dialPortInfo = { 0, 100, 5 };
 static struct opdi_Port testPort = { "TEST1", "Test cases" };
 static struct opdi_Port streamPort1 = { "SP1", "Temp/Pressure" };
-static struct opdi_StreamingPortInfo sp1Info = { "BMP085", OPDI_STREAMING_NORMAL };
+static struct opdi_StreamingPortInfo sp1Info = { "BMP085", OPDI_STREAMING_PORT_NORMAL };
 static struct opdi_Port streamPort2 = { "SP2", "Clock" };
-static struct opdi_StreamingPortInfo sp2Info = { "TEXT", OPDI_STREAMING_AUTOBIND };
+static struct opdi_StreamingPortInfo sp2Info = { "TEXT", OPDI_STREAMING_PORT_AUTOBIND };
 
 static char digmode[] = "0";		// floating input
 static char digline[] = "0";
@@ -303,11 +323,11 @@ void configure_ports(void) {
 
 		selectPort.type = OPDI_PORTTYPE_SELECT;
 		selectPort.caps = OPDI_PORTDIRCAP_OUTPUT;
-		selectPort.info.ptr = selectLabels;	// position labels
+		selectPort.info.ptr = (char *)selectLabels;	// position labels
 
 		testPort.type = OPDI_PORTTYPE_SELECT;
 		testPort.caps = OPDI_PORTDIRCAP_OUTPUT;
-		testPort.info.ptr = testLabels;		// test case labels
+		testPort.info.ptr = (char *)testLabels;		// test case labels
 
 		dialPort.type = OPDI_PORTTYPE_DIAL;
 		dialPort.caps = OPDI_PORTDIRCAP_OUTPUT;
