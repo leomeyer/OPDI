@@ -26,19 +26,15 @@
 			<include name="*.c"/>
 		</fileset>
 		<fileset dir=".">
-			<include name="*.h"/>
-		    <exclude name="arduino.h"/>
-			<include name="*.c"/>
-			<include name="*.cpp"/>
-		    <exclude name="main.cpp"/>
+			<include name="OPDI.h"/>
+			<include name="OPDI.cpp"/>
 		</fileset>
 		<fileset dir="lib/${target}">
 			<include name="*.h"/>
-			<include name="*.a"/>
 		</fileset>
 	</copy>
 
-    <!-- Create example (does this work in the Arduino IDE?) -->
+    <!-- Create example -->
     <mkdir dir="${dest}/examples/ArduinOPDI"/>
     <copy todir="${dest}/examples/ArduinOPDI">
 		<fileset dir=".">

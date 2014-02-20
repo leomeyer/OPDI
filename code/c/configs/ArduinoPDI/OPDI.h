@@ -182,13 +182,16 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////
 
 class OPDI {
-private:
+protected:
 	// list pointers
 	OPDI_Port *first_port;
 	OPDI_Port *last_port;
 
 	uint32_t idle_timeout_ms;
 	uint32_t last_activity;
+
+	// housekeeping function
+	uint8_t (*workFunction)();
 public:
 	/** Prepares the OPDI class for use.
 	 *
@@ -214,8 +217,14 @@ public:
 	OPDI_Port *findPort(opdi_Port *port);
 
 	/** Starts the OPDI handshake to accept commands from a master.
+	 * Does not use a housekeeping function.
 	 */
 	uint8_t start();
+
+	/** Starts the OPDI handshake to accept commands from a master.
+	 * Passes a pointer to a housekeeping function that needs to perform regular tasks.
+	 */
+	uint8_t start(uint8_t (*workFunction)());
 
 	/** This function is called while the OPDI slave is connected and waiting for messages.
 	 * In the default implementation this function only returns OPDI_STATUS_OK.
@@ -225,6 +234,10 @@ public:
 	 * This will usually signal a device error to the master or cause the master to time out.
 	 */
 	virtual uint8_t waiting(uint8_t canSend);
+
+	/** This function returns 1 if a master is currently connected and 0 otherwise.
+	 */
+	uint8_t isConnected();
 
 	/** Sends the Disconnect message to the master and stops message processing.
 	 */
