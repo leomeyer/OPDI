@@ -1,7 +1,7 @@
 #!/bin/sh
 # This script should work both for Windows and Linux.
 
-cd ../lib
+cd ../lib/$1
 echo Building nested library...
 make
 

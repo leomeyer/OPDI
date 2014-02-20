@@ -1,8 +1,8 @@
 package org.ospdi.opdi.androPDI.tcpip;
 
+import org.ospdi.opdi.androPDI.R;
 import org.ospdi.opdi.androPDI.AndroPDI;
 import org.ospdi.opdi.androPDI.bluetooth.BluetoothDevice;
-import org.ospdi.opdi.androPDI.R;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -78,7 +78,7 @@ public class AddTCPIPDevice extends Activity {
 					Toast.makeText(AddTCPIPDevice.this, R.string.tcpip_invalid_port, Toast.LENGTH_SHORT).show();
 					return;
 				}
-				String psk = etPSK.getText().toString();
+				String psk = etPSK.getText().toString().trim();
 				
 				// create the device
 				TCPIPDevice device = new TCPIPDevice(etName.getText().toString(), etAddress.getText().toString(), port, psk);

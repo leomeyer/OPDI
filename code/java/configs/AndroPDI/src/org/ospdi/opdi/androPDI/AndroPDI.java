@@ -423,7 +423,7 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
 			// wakeLock needs to be created?
 			if (wakeLock == null) {
 				PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-				wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "WizDroyd WakeLock");
+				wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "AndroPDI WakeLock");
 			}
 			// if the wakeLock is not active, acquire it
 			if (!wakeLock.isHeld()) {

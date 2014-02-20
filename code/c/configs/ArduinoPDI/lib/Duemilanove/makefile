@@ -33,7 +33,7 @@ LDFLAGS = $(COMMON)
 LDFLAGS += -Wl,-WizSlaveAVRLib.map
 
 ## Include Directories
-INCLUDES = -I "." -I "../../../platforms" -I "../../..//platforms/avr" -I "../../../common"
+INCLUDES = -I "." -I "../../../../platforms" -I "../../../../platforms/avr" -I "../../../../common"
 
 ## Libraries
 LIBS = -lm
@@ -45,17 +45,17 @@ OBJECTS = opdi_platformfuncs.o opdi_messages.o opdi_ports.o opdi_protocol.o opdi
 all: $(TARGET)
 
 ## Compile
-opdi_platformfuncs.o: ../../../platforms/avr/opdi_platformfuncs.c 
+opdi_platformfuncs.o: ../../../../platforms/avr/opdi_platformfuncs.c 
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
-opdi_messages.o: ../../../common/opdi_messages.c 
+opdi_messages.o: ../../../../common/opdi_messages.c 
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
-opdi_ports.o: ../../../common/opdi_ports.c 
+opdi_ports.o: ../../../../common/opdi_ports.c 
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
-opdi_protocol.o: ../../../common/opdi_protocol.c 
+opdi_protocol.o: ../../../../common/opdi_protocol.c 
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
-opdi_slave_protocol.o: ../../../common/opdi_slave_protocol.c 
+opdi_slave_protocol.o: ../../../../common/opdi_slave_protocol.c 
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
-opdi_strings.o: ../../../common/opdi_strings.c 
+opdi_strings.o: ../../../../common/opdi_strings.c 
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
 
 ##Link

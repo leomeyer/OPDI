@@ -178,8 +178,10 @@ class StreamingPortViewAdapter implements IPortViewAdapter, IStreamingPortListen
 	
 	@Override
 	public void dataReceived(StreamingPort port, final String data) {
+		if (sPort == null)
+			return;
 		// default behavior for text drivers
-		if (sPort.getDriverID().equals(Text_Driver.MAGIC)) {
+		if (Text_Driver.MAGIC.equals(sPort.getDriverID())) {
 			// default behavior: display data on UI thread
 			this.showDevicePorts.mHandler.post(new Runnable() {
 				@Override

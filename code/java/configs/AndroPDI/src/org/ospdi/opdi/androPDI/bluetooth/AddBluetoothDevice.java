@@ -102,7 +102,7 @@ public class AddBluetoothDevice extends Activity {
 				}
 				
 				// create the device
-				BluetoothDevice device = new BluetoothDevice(mBluetoothAdapter, etName.getText().toString(), address, etPSK.getText().toString(), etPIN.getText().toString(), cbSecure.isChecked());
+				BluetoothDevice device = new BluetoothDevice(mBluetoothAdapter, etName.getText().toString(), address, etPSK.getText().toString().trim(), etPIN.getText().toString(), cbSecure.isChecked());
 	            // Set result and finish this Activity
         		Intent result = new Intent();
         		result.putExtra(AndroPDI.DEVICE_SERIALIZATION, device.serialize());

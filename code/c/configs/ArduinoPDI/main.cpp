@@ -4,12 +4,9 @@
 #include <opdi_constants.h>
 #include <opdi_ports.h>
 
-#include "lib/opdi_configspecs.h"
+#include <opdi_configspecs.h>
 
 #include "OPDI.h"
-
-/*
- */
 
 OPDI_DigitalPortPin digPort1 = OPDI_DigitalPortPin("DP1", "Pin 12", OPDI_PORTDIRCAP_BIDI, OPDI_DIGITAL_PORT_HAS_PULLUP, 12);
 OPDI_DigitalPortPin digPort2 = OPDI_DigitalPortPin("DP2", "Pin 13", OPDI_PORTDIRCAP_OUTPUT, 0, 13);
@@ -31,15 +28,17 @@ int main(void)
 
 void setup() {                
 	// initialize the digital pin as an output.
-	// Pin 13 has an LED connected on most Arduino boards:
+	// Pin 13 has an LED connected on most Arduino boards
 	pinMode(13, OUTPUT);
 
 	// start serial port at 9600 baud
 	Serial.begin(9600);
 
-	Opdi.setup("Wizduino");
+	// initialize the OPDI system
+	Opdi.setup("ArduinOPDI");
 	Opdi.setIdleTimeout(20000);
 
+	// add the ports provided by this configuration
 	Opdi.addPort(&digPort1);
 	Opdi.addPort(&digPort2);
 	Opdi.addPort(&anaPort1);

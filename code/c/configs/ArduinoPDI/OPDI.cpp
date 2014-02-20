@@ -8,7 +8,7 @@
 #include <opdi_slave_protocol.h>
 #include <opdi_config.h>
 
-#include "lib/opdi_configspecs.h";
+#include <opdi_configspecs.h>
 
 #include <WProgram.h>
 #include "arduino.h";
@@ -560,6 +560,7 @@ uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 		} else {
 			// control channel message
 			if (millis() - this->last_activity > this->idle_timeout_ms) {
+				opdi_send_debug("Idle timeout!");
 				return this->disconnect();
 			}
 		}

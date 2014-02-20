@@ -8,7 +8,7 @@
     <TableRow
         android:id="@+id/tableRow1"
         android:layout_width="fill_parent"
-        android:layout_height="0dp"
+        android:layout_height="fill_parent"
         android:layout_weight="7" >
 
         <ListView
@@ -20,20 +20,26 @@
 
     </TableRow>
 
-        <ScrollView
-            android:id="@+id/svLog"
-			android:scrollbarAlwaysDrawVerticalTrack="true"
+        <TableRow
+            android:id="@+id/tableRow2"
             android:layout_width="wrap_content"
-            android:layout_height="100dp" >
-            
-            
-            <TextView
-                android:id="@+id/tvLog"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:scrollbars="vertical"
-                android:textSize="10sp" />
+            android:layout_height="wrap_content"
+            android:background="@drawable/border" >
 
-        </ScrollView>
+            <ScrollView
+                android:id="@+id/svLog"
+                android:layout_width="wrap_content"
+                android:layout_height="100dp"
+                android:scrollbarAlwaysDrawVerticalTrack="true" >
+
+                <TextView
+                    android:id="@+id/tvLog"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="vertical"
+                    android:textSize="10sp" />
+            </ScrollView>
+
+        </TableRow>
 
 </TableLayout>
