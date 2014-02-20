@@ -1,7 +1,7 @@
 //    This file is part of an OPDI reference implementation.
 //    see: Open Protocol for Device Interaction
 //
-//    Copyright (C) 2011 Leo Meyer (leo@leomeyer.de)
+//    Copyright (C) 2011-2014 Leo Meyer (leo@leomeyer.de)
 //
 //    This program is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -63,6 +63,10 @@ extern uint8_t opdi_slave_init(void);
 *   If it is NULL, only the basic protocol can be used.
 */
 extern uint8_t opdi_slave_start(opdi_Message *m, opdi_GetProtocol get_protocol, opdi_ProtocolCallback protocol_callback);
+
+/** Returns 1 if the slave is currently connected, i. e. a protocol handler is running; 0 otherwise.
+*/
+extern uint8_t opdi_slave_connected(void);
 
 /** Sends a debug message to the master.
 */

@@ -40,7 +40,7 @@
 #include "opdi_platformtypes.h"
 #include "opdi_configspecs.h"
 
-// device capabilities
+static uint8_t connected;
 
 // send a comma-separated list of port IDs
 static uint8_t send_device_caps(channel_t channel) {
@@ -1137,6 +1137,8 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	opdi_reset_bindings();
 #endif
 
+	connected = 0;
+
 	if (protocol_callback != NULL)
 		protocol_callback(OPDI_PROTOCOL_START_HANDSHAKE);
 
@@ -1370,6 +1372,8 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	}
 #endif	// OPDI_NO_AUTHENTICATION
 
+	connected = 1;
+
 	if (protocol_callback != NULL)
 		protocol_callback(OPDI_PROTOCOL_CONNECTED);
 
@@ -1379,7 +1383,13 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	if (protocol_callback != NULL)
 		protocol_callback(OPDI_PROTOCOL_DISCONNECTED);
 
+	connected = 0;
+
 	return result;
+}
+
+uint8_t opdi_slave_connected(void) {
+	return connected;
 }
 
 /** Sends a debug message to the master.

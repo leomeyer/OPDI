@@ -17,7 +17,6 @@
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Common functions of the OPDI protocol.
-//
 
 #include <stdlib.h>
 #include <string.h>

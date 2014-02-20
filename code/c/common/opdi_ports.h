@@ -1,7 +1,7 @@
 //    This file is part of an OPDI reference implementation.
 //    see: Open Protocol for Device Interaction
 //
-//    Copyright (C) 2011 Leo Meyer (leo@leomeyer.de)
+//    Copyright (C) 2011-2014 Leo Meyer (leo@leomeyer.de)
 //
 //    This program is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -30,23 +30,13 @@ extern "C" {
 #endif 
 
 /** Port type constants.
-*   Compared using string comparison; can be selectively disabled.
+*   Compared using string comparison.
 */
-#ifndef OPDI_NO_DIGITAL_PORTS
 #define OPDI_PORTTYPE_DIGITAL	"0"
-#endif
-#ifndef OPDI_NO_ANALOG_PORTS
 #define OPDI_PORTTYPE_ANALOG	"1"
-#endif
-#ifndef OPDI_NO_SELECT_PORTS
 #define OPDI_PORTTYPE_SELECT	"2"
-#endif
-#ifndef OPDI_NO_DIAL_PORTS
 #define OPDI_PORTTYPE_DIAL		"3"
-#endif
-#if (OPDI_STREAMING_PORTS > 0)
 #define OPDI_PORTTYPE_STREAMING	"4"
-#endif
 
 /** Port direction constants. 
 */
@@ -60,7 +50,7 @@ extern "C" {
 // given time)
 #define OPDI_PORTDIRCAP_BIDI	"2"
 
-/** Used to avoid pointer casts to integer and back.
+/** Used to avoid pointer casts to integer and back. 
 */
 typedef union opdi_PtrInt {
 	void *ptr;

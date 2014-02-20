@@ -1,7 +1,7 @@
 //    This file is part of an OPDI reference implementation.
 //    see: Open Protocol for Device Interaction
 //
-//    Copyright (C) 2011-14 Leo Meyer (leo@leomeyer.de)
+//    Copyright (C) 2011-2014 Leo Meyer (leo@leomeyer.de)
 //
 //    This program is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -123,8 +123,8 @@ extern "C" {
 #define OPDI_ANALOG_PORT_REFERENCE_EXT		0x800
 
 // streaming ports
-#define OPDI_STREAMING_NORMAL				0
-#define OPDI_STREAMING_AUTOBIND				1		// specifies that the master may automatically bind on connect
+#define OPDI_STREAMING_PORT_NORMAL			0
+#define OPDI_STREAMING_PORT_AUTOBIND		1		// specifies that the master may automatically bind on connect
 
 #ifdef __cplusplus
 }

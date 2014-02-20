@@ -1,7 +1,7 @@
 //    This file is part of an OPDI reference implementation.
 //    see: Open Protocol for Device Interaction
 //
-//    Copyright (C) 2011 Leo Meyer (leo@leomeyer.de)
+//    Copyright (C) 2011-2014 Leo Meyer (leo@leomeyer.de)
 //
 //    This program is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -16,15 +16,12 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
     
-// OPDI protocol macros
-
 #ifndef __OPDI_PROTOCOL_H
 #define __OPDI_PROTOCOL_H
 
 #include "opdi_platformtypes.h"
 
 // Common functions of the OPDI protocol.
-//
 
 // for splitting messages into parts
 extern const char *opdi_msg_parts[];
@@ -34,19 +31,19 @@ extern char opdi_msg_payload[];
 // expects a control message on channel 0
 extern uint8_t expect_control_message(const char **parts, uint8_t *partCount);
 
-// send an error with optional additional information
+// sends an error with optional additional information
 extern uint8_t send_error(uint8_t code, const char *part1, const char *part2);
 
-// send an disagreement message with optional additional information
+// sends an isagreement message with optional additional information
 extern uint8_t send_disagreement(channel_t channel, uint8_t code, const char *part1, const char *part2);
 
-// send an agreement message
+// sends an agreement message
 extern uint8_t send_agreement(channel_t channel);
 
-//send the contents of the opdi_msg_parts array on the specified channel
+// sends the contents of the opdi_msg_parts array on the specified channel
 extern uint8_t send_payload(channel_t channel);
 
-// send the contents of the opdi_msg_parts array on the specified channel
+// sends the contents of the opdi_msg_parts array on the specified channel
 extern uint8_t send_parts(channel_t channel);
 
 #endif		// __OPDI_PROTOCOL_H
