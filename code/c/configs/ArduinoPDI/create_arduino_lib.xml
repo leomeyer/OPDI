@@ -51,6 +51,7 @@
 
 <target name="clean" description="clean up" >
 	<delete dir="${dest}"/>
+   	<delete file="OPDI.zip"/>
 </target>
   
 </project>

@@ -1,4 +1,24 @@
-// include file for Arduino/OPDI wrapper
+//    This file is part of an OPDI reference implementation.
+//    see: Open Protocol for Device Interaction
+//
+//    Copyright (C) 2011-2014 Leo Meyer (leo@leomeyer.de)
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+/** Defines the OPDI classes that wrap the functions of the OPDI C implementation
+ *  for use in Arduino sketches.
+ */
 
 #include <opdi_config.h>
 #include <opdi_ports.h>
@@ -227,8 +247,8 @@ public:
 	uint8_t start(uint8_t (*workFunction)());
 
 	/** This function is called while the OPDI slave is connected and waiting for messages.
-	 * In the default implementation this function only returns OPDI_STATUS_OK.
-	 * You can override it to perform your housekeeping in case you need to.
+	 * In the default implementation this function calls the workFunction if canSend is true.
+	 * You can override it to perform your own housekeeping in case you need to.
 	 * If canSend is 1, the slave may send asynchronous messages to the master.
 	 * Returning any other value than OPDI_STATUS_OK causes the message processing to exit.
 	 * This will usually signal a device error to the master or cause the master to time out.

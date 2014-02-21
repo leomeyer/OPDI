@@ -1,4 +1,24 @@
-// wrapper implementation
+//    This file is part of an OPDI reference implementation.
+//    see: Open Protocol for Device Interaction
+//
+//    Copyright (C) 2011-2014 Leo Meyer (leo@leomeyer.de)
+//
+//    This program is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+/** OPDI C++ wrapper implementation
+ * Uses serial port communication.
+ */
 
 #include <inttypes.h>
 #include <string.h>
@@ -62,14 +82,16 @@ uint8_t opdi_debug_msg(const uint8_t *message, uint8_t direction) {
 #ifndef NO_DIGITAL_PORTS
 
 uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
-
+	uint8_t result;
 	uint8_t dMode;
 	uint8_t dLine;
 	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi.findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	dPort->getState(&dMode, &dLine);
+	result = dPort->getState(&dMode, &dLine);
+	if (result != OPDI_STATUS_OK)
+		return result;
 	mode[0] = '0' + dMode;
 	line[0] = '0' + dLine;
 
@@ -87,9 +109,7 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 		dLine = 1;
 	else
 		dLine = 0;
-	dPort->setLine(dLine);
-
-	return OPDI_STATUS_OK;
+	return dPort->setLine(dLine);
 }
 
 uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
@@ -105,9 +125,7 @@ uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 		// mode not supported
 		return OPDI_PROTOCOL_ERROR;
 
-	dPort->setMode(dMode);
-
-	return OPDI_STATUS_OK;
+	return dPort->setMode(dMode);
 }
 
 #endif 		// NO_DIGITAL_PORTS
@@ -115,6 +133,7 @@ uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 #ifndef NO_ANALOG_PORTS
 
 uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], char ref[], int32_t *value) {
+	uint8_t result;
 	uint8_t aMode;
 	uint8_t aRef;
 	uint8_t aRes;
@@ -123,7 +142,9 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	aPort->getState(&aMode, &aRes, &aRef, value);
+	result = aPort->getState(&aMode, &aRes, &aRef, value);
+	if (result != OPDI_STATUS_OK)
+		return result;
 	mode[0] = '0' + aMode;
 	res[0] = '0' + (aRes - 8);
 	ref[0] = '0' + aRef;
@@ -136,9 +157,7 @@ uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	aPort->setValue(value);
-
-	return OPDI_STATUS_OK;
+	return aPort->setValue(value);
 }
 
 uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
@@ -154,9 +173,7 @@ uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
 		// mode not supported
 		return OPDI_PROTOCOL_ERROR;
 
-	aPort->setMode(aMode);
-
-	return OPDI_STATUS_OK;
+	return aPort->setMode(aMode);
 }
 
 uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
@@ -171,9 +188,7 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
 		// resolution not supported
 		return OPDI_PROTOCOL_ERROR;
 
-	aPort->setResolution(aRes);
-
-	return OPDI_STATUS_OK;
+	return aPort->setResolution(aRes);
 }
 
 uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
@@ -188,9 +203,7 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 		// mode not supported
 		return OPDI_PROTOCOL_ERROR;
 
-	aPort->setReference(aRef);
-
-	return OPDI_STATUS_OK;
+	return aPort->setReference(aRef);
 }
 
 #endif
@@ -198,6 +211,7 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 uint8_t opdi_choose_language(const char *languages) {
 	// supports German?
 	if (strcmp("de_DE", languages) == 0) {
+		// TODO
 	}
 
 	return OPDI_STATUS_OK;
@@ -229,11 +243,8 @@ OPDI_Port::OPDI_Port(const char *id, const char *name, const char *type, const c
 
 	// copy ID to class buffer
 	strncpy(this->id, id, (MAX_PORTIDLENGTH) - 1);
-
 	this->setName(name);
-
 	strcpy(this->type, type);
-
 	strcpy(this->caps, dircaps);
 }
 
@@ -544,8 +555,6 @@ uint8_t OPDI::waiting(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-/** This function returns 1 if a master is currently connected and 0 otherwise.
- */
 uint8_t isConnected() {
 	return opdi_slave_connected();
 }
