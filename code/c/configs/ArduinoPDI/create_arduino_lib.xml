@@ -7,7 +7,7 @@
   <property name="target" value="Duemilanove"/>
   <property name="dest" location="Release/arduino_lib"/>
   
-<target name="dist" description="generate the distribution" >
+<target name="dist" depends="clean" description="generate the distribution" >
     <!-- Create the distribution directory -->
     <mkdir dir="${dest}"/>
 
@@ -15,7 +15,7 @@
     <copy todir="${dest}">
 		<fileset dir="../../common">
 			<include name="*.h"/>
-		    <exclude name="rijndael.h"/>
+		    <exclude name="opdi_rijndael.h"/>
 			<include name="*.c"/>
 		</fileset>
 		<fileset dir="../../platforms">
