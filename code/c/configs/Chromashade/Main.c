@@ -55,23 +55,32 @@
 #define GREEN_MASK			0b0100111
 #define BLUE_MASK			0b0011011
 
-const uint8_t pwm_table[256] PROGMEM = {
-0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
-0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
-0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x04, 0x04, 0x04, 0x04, 0x04, 0x05, 0x05, 0x05,
-0x05, 0x06, 0x06, 0x06, 0x07, 0x07, 0x07, 0x08, 0x08, 0x08, 0x09, 0x09, 0x0A, 0x0A, 0x0B, 0x0B,
-0x0C, 0x0C, 0x0D, 0x0D, 0x0E, 0x0F, 0x0F, 0x10, 0x11, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1F, 0x20, 0x21, 0x23, 0x24, 0x26, 0x27, 0x29, 0x2B, 0x2C,
-0x2E, 0x30, 0x32, 0x34, 0x36, 0x38, 0x3A, 0x3C, 0x3E, 0x40, 0x43, 0x45, 0x47, 0x4A, 0x4C, 0x4F,
-0x51, 0x54, 0x57, 0x59, 0x5C, 0x5F, 0x62, 0x64, 0x67, 0x6A, 0x6D, 0x70, 0x73, 0x76, 0x79, 0x7C,
-0x7F, 0x82, 0x85, 0x88, 0x8B, 0x8E, 0x91, 0x94, 0x97, 0x9A, 0x9C, 0x9F, 0xA2, 0xA5, 0xA7, 0xAA,
-0xAD, 0xAF, 0xB2, 0xB4, 0xB7, 0xB9, 0xBB, 0xBE, 0xC0, 0xC2, 0xC4, 0xC6, 0xC8, 0xCA, 0xCC, 0xCE,
-0xD0, 0xD2, 0xD3, 0xD5, 0xD7, 0xD8, 0xDA, 0xDB, 0xDD, 0xDE, 0xDF, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5,
-0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xED, 0xEE, 0xEF, 0xEF, 0xF0, 0xF1, 0xF1, 0xF2,
-0xF2, 0xF3, 0xF3, 0xF4, 0xF4, 0xF5, 0xF5, 0xF6, 0xF6, 0xF6, 0xF7, 0xF7, 0xF7, 0xF8, 0xF8, 0xF8,
-0xF9, 0xF9, 0xF9, 0xF9, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFB, 0xFB, 0xFB, 0xFB, 0xFB, 0xFB, 0xFC,
-0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD,
-0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFE, 0xFE, 0xFE, 0xFE, 0xFE, 0xFE, 0xFE, 0xFF, 0xFF};
+#define PWM_MAX		1024
+
+
+uint16_t pwm_table[256] PROGMEM = {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3,		
+								3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 9, 9, 10, 11, 11, 12,		
+								13, 14, 15, 16, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26,		
+								27, 28, 30, 31, 32, 34, 35, 36, 38, 39, 41, 42, 44, 46,		
+								47, 49, 51, 52, 54, 56, 58, 60, 61, 63, 65, 67, 69, 71,		
+								73, 76, 78, 80, 82, 84, 87, 89, 91, 94, 96, 98, 101,		
+								103, 106, 109, 111, 114, 117, 119, 122, 125, 128, 130,		
+								133, 136, 139, 142, 145, 148, 151, 155, 158, 161, 164,		
+								167, 171, 174, 177, 181, 184, 188, 191, 195, 198, 202,		
+								206, 209, 213, 217, 221, 225, 228, 232, 236, 240, 244,		
+								248, 252, 257, 261, 265, 269, 274, 278, 282, 287, 291,		
+								295, 300, 304, 309, 314, 318, 323, 328, 333, 337, 342,		
+								347, 352, 357, 362, 367, 372, 377, 382, 387, 393, 398,		
+								403, 408, 414, 419, 425, 430, 436, 441, 447, 452, 458,		
+								464, 470, 475, 481, 487, 493, 499, 505, 511, 517, 523,		
+								529, 535, 542, 548, 554, 561, 567, 573, 580, 586, 593,		
+								599, 606, 613, 619, 626, 633, 640, 647, 653, 660, 667,		
+								674, 681, 689, 696, 703, 710, 717, 725, 732, 739, 747,		
+								754, 762, 769, 777, 784, 792, 800, 807, 815, 823, 831,		
+								839, 847, 855, 863, 871, 879, 887, 895, 903, 912, 920,		
+								928, 937, 945, 954, 962, 971, 979, 988, 997, 1005,		
+								1014, 1023};		
+
 
 static uint8_t EEMEM eeprom_valid_ee;
 static uint8_t EEMEM red_ee;
@@ -103,15 +112,31 @@ volatile uint8_t green_val;
 volatile uint8_t blue_val;
 volatile uint8_t white_val;
 
-volatile int16_t redPWM;
-volatile int16_t greenPWM;
-volatile int16_t bluePWM;
-volatile int16_t whitePWM;
+int16_t redPWM;
+int16_t greenPWM;
+int16_t bluePWM;
+int16_t whitePWM;
 
 volatile uint8_t pwm_on;
-volatile uint8_t pwm_counter;
 
-volatile uint8_t mode;
+// This structure defines PWM settings as a linked list
+typedef struct PWMDef {
+	uint16_t pwmValue;
+	uint8_t ledMask;
+	volatile struct PWMDef *next;
+} PWMDef;
+
+// double buffered array
+struct PWMDef pwmDefs1[5];
+struct PWMDef pwmDefs2[5];
+
+// pointers to current and buffer definitions
+volatile PWMDef *currentPwmDef = pwmDefs1;	// this one iterates through the list in the interrupt routine
+volatile PWMDef *bufferPwmDef = pwmDefs2;	// this is the starting pointer for building a new def table
+
+volatile uint8_t pwm_sync;
+
+uint8_t mode;
 volatile uint8_t oscSpeed;
 volatile uint8_t oscBrightness;
 
@@ -365,8 +390,6 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 			
 			// ask the master to reconfigure
 			opdi_reconfigure();
-
-			timer0_delay(100);
 		}
 	} else
 		// unknown port
@@ -424,7 +447,7 @@ uint8_t opdi_debug_msg(const uint8_t *msg, uint8_t direction) {
 void apply_mode(long ticks)
 {
 	uint8_t target_pwm = 0;
-	
+
 	if (mode == MODE_OSCILLATE) {
 
 		// increment ticker
@@ -480,35 +503,111 @@ void apply_mode(long ticks)
 	APPROACH_TARGET(blue_val, blue_target)
 	APPROACH_TARGET(white_val, white_target)
 	
-	redPWM = pgm_read_byte(&pwm_table[red_val]);
-	greenPWM = pgm_read_byte(&pwm_table[green_val]);
-	bluePWM = pgm_read_byte(&pwm_table[blue_val]);
-	whitePWM = pgm_read_byte(&pwm_table[white_val]);	
+	redPWM = PWM_MAX - pgm_read_word(&pwm_table[red_val]);
+	greenPWM = PWM_MAX - pgm_read_word(&pwm_table[green_val]);
+	bluePWM = PWM_MAX - pgm_read_word(&pwm_table[blue_val]);
+	whitePWM = PWM_MAX - pgm_read_word(&pwm_table[white_val]);
+	
+	// now we have determined the PWM thresholds for each LED
+	// lower values means brighter (0 = brightest)
+	
+	// build a linked list of all values that are not zero
+	// start with first definition
+	uint8_t count = 0;
+	if (redPWM < PWM_MAX) {
+		bufferPwmDef[count].pwmValue = redPWM;
+		bufferPwmDef[count].ledMask = RED_LED;
+		count++;
+	}
+	if (greenPWM < PWM_MAX) {
+		bufferPwmDef[count].pwmValue = greenPWM;
+		bufferPwmDef[count].ledMask = GREEN_LED;
+		count++;
+	}
+	if (bluePWM < PWM_MAX) {
+		bufferPwmDef[count].pwmValue = bluePWM;
+		bufferPwmDef[count].ledMask = BLUE_LED;
+		count++;
+	}
+	if (whitePWM < PWM_MAX) {
+		bufferPwmDef[count].pwmValue = whitePWM;
+		bufferPwmDef[count].ledMask = WHITE_LED;
+		count++;
+	}
+	// default element defines all LEDs off, wait until PWM_MAX
+	bufferPwmDef[count].pwmValue = PWM_MAX;
+	bufferPwmDef[count].ledMask = 0;
+	bufferPwmDef[count].next = NULL;
+	
+	// now we have the definitions in the array; sort them ascending
+	// bubble sort
+	for (uint8_t i = 0; i < count - 1; ++i) 
+	{
+		for (uint8_t j = 0; j < count - i - 1; ++j) 
+		{
+			if (bufferPwmDef[j].pwmValue > bufferPwmDef[j + 1].pwmValue) {
+				PWMDef tmp = bufferPwmDef[j];
+				bufferPwmDef[j] = bufferPwmDef[j + 1];
+				bufferPwmDef[j + 1] = tmp;
+			}
+		}
+	}
+
+	// build linked list, calculate differences between PWM values
+	uint8_t delta = 0;
+	uint8_t index = 0;
+	for (uint8_t i = 0; i < count + 1; ++i) 
+	{
+		bufferPwmDef[i].pwmValue -= delta;
+		delta = bufferPwmDef[i].pwmValue + delta;
+		// unify masks?
+		if (bufferPwmDef[i].pwmValue == 0) {
+			bufferPwmDef[index].ledMask |= bufferPwmDef[i].ledMask;
+		}
+		else
+			index = i;
+
+		if (i < count) {
+ 			bufferPwmDef[index].next = &bufferPwmDef[i + 1];
+		} else {
+			// last element: create a cycle
+			bufferPwmDef[index].next = bufferPwmDef;
+		}
+	}
+
+	// buffer is prepared, wait for interrupt to set sync flag
+	pwm_sync = 0;
+    while (pwm_sync == 0);
+ 
+    // swap pointers to buffers (double buffering)
+    cli();
+	if (bufferPwmDef == pwmDefs1) {
+		currentPwmDef = pwmDefs1;
+		bufferPwmDef = pwmDefs2;
+	} else {
+		currentPwmDef = pwmDefs2;
+		bufferPwmDef = pwmDefs1;
+	}
+    sei();
 }
 
 // Interrupt for software PWM
 // MUST be short!
-// called with 25 kHz
 ISR (TIMER1_COMPA_vect)
 {
-	uint8_t leds = 0;
-	
-	if (!pwm_on) return;
-
-	pwm_counter++;		// overflows beyond 255
-	if (pwm_counter < redPWM)
-		leds |= RED_LED;
-	if (pwm_counter < greenPWM)
-		leds |= GREEN_LED;
-	if (pwm_counter < bluePWM)
-		leds |= BLUE_LED;
-	if (pwm_counter < whitePWM)
-		leds |= WHITE_LED;
-
-	// clear LEDS
-	PORTC &= ~ALL_LEDS;
-	// set new LED state
-	PORTC |= leds;
+	currentPwmDef = currentPwmDef->next;
+	if (pwm_on) {
+		// clear LEDS
+		PORTC &= ~ALL_LEDS;
+		// set new LED state
+		PORTC |= currentPwmDef->ledMask;
+	}
+	// when the LEDs have been cleared a PWM cycle ends, time to sync now
+	if (currentPwmDef->ledMask == 0)
+		pwm_sync = 1;
+		
+	// set next interrupt interval
+	OCR1A = currentPwmDef->pwmValue;
 }
  
 void timer1_init(void)
@@ -518,7 +617,7 @@ void timer1_init(void)
     TIMSK1 = _BV(OCIE1A); // Enable Interrupt Timer/Counter1, Output Compare A (TIMER1_COMPA_vect)
     TCCR1B = _BV(CS11) | _BV(CS10) | _BV(WGM12);    // Clock/64, Mode=CTC
 	// ticks/s = 8 MHz / 64 = 125 kHz
-    OCR1A = 2; 			// PWM speed: 125 kHz / 5 = 25 kHz
+    OCR1A = PWM_MAX; 			// PWM speed: 125 kHz / 5 = 25 kHz
 }
 
 uint8_t opdi_message_handled(channel_t channel, const char **parts) {
@@ -589,15 +688,16 @@ int main(void)
 	// initialize slave
 	init();
 	
-	// no pwm
-	pwm_on = 0;
+	// enable pwm
+	pwm_on = 1;	
+	// initialize first PWM definition
+	currentPwmDef->pwmValue = PWM_MAX;
+	currentPwmDef->ledMask = 0;
+	currentPwmDef->next = currentPwmDef;
 
 	// enable interrupts
 	sei();
 
-	// enable pwm
-	pwm_on = 1;	
-		
 	while (1)                   // main loop
 	{
 		// data arrived on uart?
