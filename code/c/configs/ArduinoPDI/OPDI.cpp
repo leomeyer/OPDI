@@ -258,7 +258,7 @@ uint8_t OPDI_Port::refresh() {
 	ports[0] = this;
 	ports[1] = NULL;
 
-	Opdi.refresh(ports);
+	return Opdi.refresh(ports);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -381,6 +381,8 @@ OPDI_AnalogPortPin::OPDI_AnalogPortPin(const char *id, const char *name, const c
 
 	this->pin = pin;
 	this->value = 0;
+	this->reference = 0;
+	this->resolution = 0;
 	// set reference depending on dircaps and flags
 	if (!strcmp(dircaps, OPDI_PORTDIRCAP_INPUT) || !strcmp(dircaps, OPDI_PORTDIRCAP_BIDI))  {
 		// default mode is input if possible
@@ -522,7 +524,7 @@ OPDI_Port *OPDI::findPort(opdi_Port *port) {
 
 // convenience method
 uint8_t OPDI::start() {
-	this->start(NULL);
+	return this->start(NULL);
 }
 
 uint8_t OPDI::start(uint8_t (*workFunction)()) {
