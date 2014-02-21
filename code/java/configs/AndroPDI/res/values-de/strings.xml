@@ -3,9 +3,9 @@
 
     <!-- OPDI string constants -->
 	<string name="opdi_disconnected">Getrennt</string>
-	<string name="opdi_connecting">Verbinde...</string>
+	<string name="opdi_connecting">Verbinde&#8230;</string>
 	<string name="opdi_connected">Verbunden</string>
-	<string name="opdi_disconnecting">Trenne...</string>
+	<string name="opdi_disconnecting">Trenne&#8230;</string>
 	<string name="opdi_error">Fehler</string>
 	<string name="opdi_io_failure">I/O-Fehler</string>
 	<string name="opdi_operation_aborted">Der Vorgang wurde abgebrochen</string>
@@ -29,6 +29,8 @@
     <string name="add_bluetooth_device">Bluetooth-Gerät hinzufügen</string>
     <string name="really_connect_device">Möchten Sie jetzt eine Verbindung zu {0} herstellen?</string>
     <string name="really_connect_bluetooth_pin">Möchten Sie jetzt eine Verbindung zu {0} herstellen? Für das Bluetooth-Pairing geben Sie folgende PIN ein: {1}</string>
+    <string name="psk">PSK:</string>
+    <string name="psk_hint">Der PSK (Pre-Shared-Key) dient zum Verschlüsseln der Datenübertragung. Üblicherweise finden Sie ihn am oder auf dem Gerät.</string>
     <string name="network_not_available">Keine Netzwerkverbindung verfügbar</string>
     
     <!-- AddBluetoothDevice activity -->
@@ -39,7 +41,7 @@
     <string name="bt_not_enabled_leaving">Bluetooth wurde nicht aktiviert.</string>
 
     <!-- DeviceListActivity -->
-    <string name="scanning">Scanne Bluetooth-Geräte...</string>
+    <string name="scanning">Scanne Bluetooth-Geräte&#8230;</string>
     <string name="select_device">Wählen Sie ein Gerät aus</string>
     <string name="none_paired">Keine gekoppelten Geräte gefunden</string>
     <string name="none_found">Keine Geräte gefunden</string>
@@ -61,7 +63,7 @@
     <string name="tcpip_port">Port:</string>
     <string name="tcpip_invalid_address">Bitte geben Sie einen Host-Namen oder eine IP-Adresse an.</string>
     <string name="tcpip_invalid_port">Bitte eine Portnummer zwischen 0 und 65535 angeben.</string>
-    <string name="devicecaps_loading">Lade Geräteeigenschaften...</string>
+    <string name="devicecaps_loading">Lade Geräteeigenschaften&#8230;</string>
 
     <!-- ShowDeviceCaps activity -->
     <string name="devicecaps_no_device">Kein Gerät ausgewählt</string>
@@ -71,7 +73,7 @@
     
     <string name="connect_all_devices">Alle Geräte verbinden</string>
     <string name="disconnect_all_devices">Alle Geräte trennen</string>
-    <string name="text_querying">Abfragen...</string>
+    <string name="text_querying">Abfragen&#8230;</string>
     <string name="analog_set_direction">Setze Richtung</string>
     <string name="analog_set_resolution">Setze Auflösung</string>
     <string name="analog_set_reference">Setze Referenz</string>
@@ -139,6 +141,7 @@
     <string name="error_on_0_1_">Fehler auf {0}: {1}</string>
     <string name="connection_to_0_closed_">Verbindung mit {0} getrennt.</string>
     <string name="authentication_required">Anmeldung notwendig</string>
+    <string name="bluetooth_pin">PIN:</string>
     <string name="edit_bluetooth_device">Bluetooth-Gerät bearbeiten</string>
     <string name="save_button">Speichern</string>
     <string name="edit_device">Geräteeinstellungen bearbeiten</string>
