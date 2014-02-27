@@ -95,6 +95,8 @@
     <ClInclude Include="..\..\platforms\opdi_platformfuncs.h" />
     <ClInclude Include="..\..\platforms\win32\opdi_platformtypes.h" />
     <ClInclude Include="..\test\test.h" />
+    <ClInclude Include="hef_uri_syntax.h" />
+    <ClInclude Include="master.h" />
     <ClInclude Include="opdi_configspecs.h" />
     <ClInclude Include="slave.h" />
     <ClInclude Include="stdafx.h" />
@@ -111,6 +113,8 @@
     <ClCompile Include="..\..\platforms\win32\opdi_platformfuncs.c" />
     <ClCompile Include="..\test\test.c" />
     <ClCompile Include="config.c" />
+    <ClCompile Include="hef_uri_syntax.cpp" />
+    <ClCompile Include="master.cpp" />
     <ClCompile Include="slave.cpp" />
     <ClCompile Include="WinOPDI.cpp" />
   </ItemGroup>
