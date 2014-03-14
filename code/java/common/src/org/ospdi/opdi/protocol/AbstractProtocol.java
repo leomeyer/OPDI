@@ -23,6 +23,14 @@ public abstract class AbstractProtocol {
 	public static final char SEPARATOR = ':';
 	public static final String DISCONNECT = "Dis";
 	public static final String ERROR = "Err";
+	
+	public static final String HANDSHAKE = "OPDI";
+	public static final String HANDSHAKE_VERSION = "0.1";
+	public static final double HANDSHAKE_VERSION_DOUBLE = Double.parseDouble(HANDSHAKE_VERSION);
+	public static final String AGREEMENT = "OK";
+	public static final String DISAGREEMENT = "NOK";
+	public static final String AUTHENTICATE = "Auth";
+	public static final int HANDSHAKE_TIMEOUT = 5000;
 
 	protected IDevice device;
 	
