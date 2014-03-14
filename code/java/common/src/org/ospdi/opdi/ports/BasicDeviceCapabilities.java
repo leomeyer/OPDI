@@ -48,28 +48,6 @@ public class BasicDeviceCapabilities {
 		}
 	}
 	
-	public String serialize() {
-		// build a comma-separated list of port IDs
-		List<String> idList = new ArrayList<String>(ports.size());
-		for (Port port: ports) idList.add(port.getID());
-		String portIDs = Strings.join(',', idList.toArray());
-		return Strings.join(':', MAGIC, portIDs);
-	}
-
-	public void addPort(Port port) {
-		if (findPortByID(port.getID()) != null)
-			throw new IllegalArgumentException("A port with this ID has already been added: " + port.getID());
-		ports.add(port);
-	}
-
-	public void addPorts(List<Port> ports) {
-		for (Port p: ports) {
-			if (findPortByID(p.getID()) != null)
-				throw new IllegalArgumentException("A port with this ID has already been added: " + p.getID());
-			ports.add(p);	
-		}
-	}
-	
 	public String toString() {
 		String result = "BasicDeviceCapabilities\n";
 		if (ports.size() == 0)
