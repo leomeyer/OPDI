@@ -53,7 +53,8 @@
       <AdditionalIncludeDirectories>.;..\..\common;..\..\platforms;..\..\platforms\win32;..\..\..\..\..\poco\Util\include;..\..\..\..\..\poco\Foundation\include;..\..\..\..\..\poco\Net\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <UndefinePreprocessorDefinitions>UNICODE</UndefinePreprocessorDefinitions>
+      <UndefinePreprocessorDefinitions>
+      </UndefinePreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -65,17 +66,22 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;..\..\common;..\..\platforms;..\..\platforms\win32;..\..\..\..\..\poco\Util\include;..\..\..\..\..\poco\Foundation\include;..\..\..\..\..\poco\Net\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <UndefinePreprocessorDefinitions>
+      </UndefinePreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>Ws2_32.lib;PocoFoundation.lib;PocoNet.lib;PocoUtil.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\..\poco\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -123,7 +129,9 @@
     <ClCompile Include="..\..\common\master\opdi_IODevice.cpp" />
     <ClCompile Include="..\..\common\master\opdi_Message.cpp" />
     <ClCompile Include="..\..\common\master\opdi_MessageQueueDevice.cpp" />
-    <ClCompile Include="..\..\common\master\opdi_Port.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_Port.cpp">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NOMINMAX;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <ClCompile Include="..\..\common\master\opdi_PortFactory.cpp" />
     <ClCompile Include="..\..\common\master\opdi_ProtocolFactory.cpp" />
     <ClCompile Include="..\..\common\master\opdi_StringTools.cpp" />

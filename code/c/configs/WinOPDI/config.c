@@ -192,7 +192,6 @@ void init_device() {
 		opdi_config_name = (char*)malloc(OPDI_CONFIG_NAME_LENGTH);
 	}
 
-	// requires #undef UNICODE to work properly
 	if (0 != GetComputerName(nameBuf, &dwCompNameLen)) {
 		sprintf((char *)opdi_config_name, "WinOPDI (%s)", nameBuf);
 	}

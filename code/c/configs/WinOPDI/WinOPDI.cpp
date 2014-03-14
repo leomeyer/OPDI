@@ -71,8 +71,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	} else {
 		// slave
 		if (com_port > 0) {
-			char comPort[6];
-			sprintf(comPort, "COM%d", com_port);
+			LPCTSTR comPort = (LPCTSTR)malloc(6);
+			wsprintf((LPTSTR)comPort, _T("COM%d"), com_port);
 
 			code = listen_com(comPort, -1, -1, -1, -1, 1000);
 		}
