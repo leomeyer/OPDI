@@ -49,8 +49,8 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS </PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;..\..\common;..\..\platforms;..\..\platforms\win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NOMINMAX;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS </PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;..\..\common;..\..\platforms;..\..\platforms\win32;..\..\..\..\..\poco\Util\include;..\..\..\..\..\poco\Foundation\include;..\..\..\..\..\poco\Net\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <UndefinePreprocessorDefinitions>UNICODE</UndefinePreprocessorDefinitions>
@@ -58,9 +58,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>
-      </AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;PocoFoundationd.lib;PocoNetd.lib;PocoUtild.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\..\poco\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -83,6 +82,20 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\common\master\opdi_AbstractProtocol.h" />
+    <ClInclude Include="..\..\common\master\opdi_BasicDeviceCapabilities.h" />
+    <ClInclude Include="..\..\common\master\opdi_BasicProtocol.h" />
+    <ClInclude Include="..\..\common\master\opdi_DigitalPort.h" />
+    <ClInclude Include="..\..\common\master\opdi_IBasicProtocol.h" />
+    <ClInclude Include="..\..\common\master\opdi_IDevice.h" />
+    <ClInclude Include="..\..\common\master\opdi_IODevice.h" />
+    <ClInclude Include="..\..\common\master\opdi_Message.h" />
+    <ClInclude Include="..\..\common\master\opdi_MessageQueueDevice.h" />
+    <ClInclude Include="..\..\common\master\opdi_Port.h" />
+    <ClInclude Include="..\..\common\master\opdi_PortFactory.h" />
+    <ClInclude Include="..\..\common\master\opdi_ProtocolFactory.h" />
+    <ClInclude Include="..\..\common\master\opdi_StringTools.h" />
+    <ClInclude Include="..\..\common\master\opdi_TCPIPDevice.h" />
     <ClInclude Include="..\..\common\opdi_constants.h" />
     <ClInclude Include="..\..\common\opdi_config.h" />
     <ClInclude Include="..\..\common\opdi_messages.h" />
@@ -95,7 +108,7 @@
     <ClInclude Include="..\..\platforms\opdi_platformfuncs.h" />
     <ClInclude Include="..\..\platforms\win32\opdi_platformtypes.h" />
     <ClInclude Include="..\test\test.h" />
-    <ClInclude Include="hef_uri_syntax.h" />
+    <ClInclude Include="main_io.h" />
     <ClInclude Include="master.h" />
     <ClInclude Include="opdi_configspecs.h" />
     <ClInclude Include="slave.h" />
@@ -103,6 +116,18 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\common\master\opdi_AbstractProtocol.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_BasicDeviceCapabilities.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_BasicProtocol.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_DigitalPort.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_IODevice.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_Message.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_MessageQueueDevice.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_Port.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_PortFactory.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_ProtocolFactory.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_StringTools.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_TCPIPDevice.cpp" />
     <ClCompile Include="..\..\common\opdi_aes.cpp" />
     <ClCompile Include="..\..\common\opdi_ports.c" />
     <ClCompile Include="..\..\common\opdi_messages.c" />
@@ -113,7 +138,7 @@
     <ClCompile Include="..\..\platforms\win32\opdi_platformfuncs.c" />
     <ClCompile Include="..\test\test.c" />
     <ClCompile Include="config.c" />
-    <ClCompile Include="hef_uri_syntax.cpp" />
+    <ClCompile Include="main_io.cpp" />
     <ClCompile Include="master.cpp" />
     <ClCompile Include="slave.cpp" />
     <ClCompile Include="WinOPDI.cpp" />

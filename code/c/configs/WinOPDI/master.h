@@ -15,9 +15,15 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+#ifndef __MASTER_H
+#define __MASTER_H
+
+#include <string>
+
+extern std::string opdiMasterName;
 
 /** Starts the interactive master.
 */
 int start_master();
 
+#endif
