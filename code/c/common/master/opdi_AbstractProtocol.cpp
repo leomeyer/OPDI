@@ -11,7 +11,7 @@
 #include <master\opdi_StringTools.h>
 #include <Poco\NumberParser.h>
 
-const double AbstractProtocol::HANDSHAKE_VERSION_DOUBLE = parseDouble(Handshake_version, "Handshake version", 0, 1000);
+const double AbstractProtocol::HANDSHAKE_VERSION_DOUBLE = parseDouble(OPDI_Handshake_version, "Handshake version", 0, 1000);
 long AbstractProtocol::HANDSHAKE_TIMEOUT = 5000L;
 
 int AbstractProtocol::parseInt(std::string s, std::string paramName, int min, int max)
@@ -63,7 +63,7 @@ int AbstractProtocol::send(Message* message)
 void AbstractProtocol::sendError(std::string message)
 {
 	if (!device->isConnected()) return;
-	Message* msg = new Message(0, Error); //StringTools::join(SEPARATOR, std::string() + ERR, message));
+	Message* msg = new Message(0, OPDI_Error); //StringTools::join(SEPARATOR, std::string() + ERR, message));
 	device->sendMessage(msg);
 }
 	
@@ -120,7 +120,7 @@ Message expect(long channel, int timeout) throws TimeoutException, InterruptedEx
 void AbstractProtocol::disconnect() {
 	// send disconnect message
 	try {
-		send(new Message(0, Disconnect));
+		send(new Message(0, OPDI_Disconnect));
 	} catch (DisconnectedException e) {
 		// ignore DisconnectedExceptions
 	}

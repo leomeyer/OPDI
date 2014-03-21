@@ -50,16 +50,16 @@ uint8_t expect_control_message(const char **parts, uint8_t *partCount) {
 	if (m.channel != 0)
 		return OPDI_PROTOCOL_ERROR;
 
-	result = strings_split(m.payload, PARTS_SEPARATOR, parts, OPDI_MAX_MESSAGE_PARTS, 1, partCount);
+	result = strings_split(m.payload, OPDI_PARTS_SEPARATOR, parts, OPDI_MAX_MESSAGE_PARTS, 1, partCount);
 	if (result != OPDI_STATUS_OK)
 		return result;
 
 	// disconnect message?
-	if (!strcmp(parts[0], Disconnect))
+	if (!strcmp(parts[0], OPDI_Disconnect))
 		return OPDI_DISCONNECTED;
 
 	// error message?
-	if (!strcmp(parts[0], Error))
+	if (!strcmp(parts[0], OPDI_Error))
 		return OPDI_DEVICE_ERROR;
 
 	return OPDI_STATUS_OK;
@@ -74,13 +74,13 @@ uint8_t send_error(uint8_t code, const char *part1, const char *part2) {
 	opdi_uint8_to_str(code, buf);
 
 	// join payload
-	opdi_msg_parts[0] = Error;
+	opdi_msg_parts[0] = OPDI_Error;
 	opdi_msg_parts[1] = buf;
 	opdi_msg_parts[2] = part1;
 	opdi_msg_parts[3] = part2;
 	opdi_msg_parts[4] = NULL;
 
-	result = strings_join(opdi_msg_parts, PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
+	result = strings_join(opdi_msg_parts, OPDI_PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
 	if (result != OPDI_STATUS_OK)
 		return result;
 
@@ -101,12 +101,12 @@ uint8_t send_disagreement(channel_t channel, uint8_t code, const char *part1, co
 	uint8_t result;
 
 	// join payload
-	opdi_msg_parts[0] = Disagreement;
+	opdi_msg_parts[0] = OPDI_Disagreement;
 	opdi_msg_parts[1] = part1;
 	opdi_msg_parts[2] = part2;
 	opdi_msg_parts[3] = NULL;
 
-	result = strings_join(opdi_msg_parts, PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
+	result = strings_join(opdi_msg_parts, OPDI_PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
 	if (result != OPDI_STATUS_OK)
 		return result;
 
@@ -127,10 +127,10 @@ uint8_t send_agreement(channel_t channel) {
 	uint8_t result;
 
 	// join payload
-	opdi_msg_parts[0] = Agreement;
+	opdi_msg_parts[0] = OPDI_Agreement;
 	opdi_msg_parts[1] = NULL;
 
-	result = strings_join(opdi_msg_parts, PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
+	result = strings_join(opdi_msg_parts, OPDI_PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
 	if (result != OPDI_STATUS_OK)
 		return result;
 
@@ -166,7 +166,7 @@ uint8_t send_payload(channel_t channel) {
 uint8_t send_parts(channel_t channel) {
 	uint8_t result;
 
-	result = strings_join(opdi_msg_parts, PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
+	result = strings_join(opdi_msg_parts, OPDI_PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
 	if (result != OPDI_STATUS_OK)
 		return result;
 

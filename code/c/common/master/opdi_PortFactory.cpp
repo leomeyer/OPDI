@@ -7,7 +7,7 @@
 Port* PortFactory::createPort(IBasicProtocol& protocol, std::vector<std::string> parts)
 {
 	// the "magic" in the first part decides about the port type		
-	if (parts[0] == digitalPort)
+	if (parts[0] == OPDI_digitalPort)
 		return new DigitalPort(protocol, parts);
 /*
 	else if (parts[0].equals(AnalogPort.MAGIC))

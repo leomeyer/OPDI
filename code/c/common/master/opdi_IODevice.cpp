@@ -201,7 +201,15 @@ IBasicProtocol* IODevice::getProtocol()
 {
 	return protocol;
 }
-	
+
+BasicDeviceCapabilities* IODevice::getCapabilities()
+{
+	if (!getProtocol())
+		throw DeviceException("Can't load capabilities; no protocol");
+
+	return getProtocol()->getDeviceCapabilities();
+}
+
 void IODevice::getHandshakeMessage(int expectedPartCount, std::vector<std::string>& results)
 {
 	if (!isConnecting()) return;
@@ -230,15 +238,15 @@ void IODevice::getHandshakeMessage(int expectedPartCount, std::vector<std::strin
 */
 
 	// devices may disconnect or send error messages at any time
-	if (results[0] == Disconnect)
+	if (results[0] == OPDI_Disconnect)
 		throw DisconnectedException();
-	else if (results[0] == Error) {
+	else if (results[0] == OPDI_Error) {
 		if (results.size() > 1) 
 			throw DeviceException(results[1]);
 		else
 			throw DeviceException();
 	}
-	else if (results[0] == Disagreement) {
+	else if (results[0] == OPDI_Disagreement) {
 		std::stringstream msg;
 		msg << (results.size() > 1 ? results[1] : "") << (results.size() > 2 ? results[2] : "");
 
@@ -261,9 +269,9 @@ void IODevice::expectAgreement()
 	int REPLY = 0;
 	std::vector<std::string> reply;
 	getHandshakeMessage(1, reply);
-	if (reply[REPLY] == Disagreement)
+	if (reply[REPLY] == OPDI_Disagreement)
 		throw DisagreementException();
-	if (reply[REPLY] != Agreement)
+	if (reply[REPLY] != OPDI_Agreement)
 		throw ProtocolException("Agreement expected");				
 }
 
@@ -272,7 +280,7 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 {
 	std::string supportedEncryptions = ""; // (this.tryToUseEncryption() ? StringTools::join(',', std::vector<std::string>("AES")) : "");
 	// send handshake message
-	Message handshake(0, StringTools::join(AbstractProtocol::SEPARATOR, Handshake, Handshake_version, Poco::NumberFormatter::format(flags), supportedEncryptions));
+	Message handshake(0, StringTools::join(AbstractProtocol::SEPARATOR, OPDI_Handshake, OPDI_Handshake_version, Poco::NumberFormatter::format(flags), supportedEncryptions));
 		
 	////////////////////////////////////////////////////////////
 	///// Send: Handshake
@@ -295,14 +303,14 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 	std::vector<std::string> parts;
 	getHandshakeMessage(PART_COUNT, parts);
 		
-	if (parts[HSHAKE] != Handshake) {
+	if (parts[HSHAKE] != OPDI_Handshake) {
 		throw ProtocolException("Unexpected handshake message");
 	}
 				
 	// check version
 	if (AbstractProtocol::HANDSHAKE_VERSION_DOUBLE < AbstractProtocol::parseDouble(parts[VERSION], "Handshake version", 0, std::numeric_limits<double>::max())) {
 		// send error message to the device
-		sendSynchronous(&Message(0, Disagreement));
+		sendSynchronous(&Message(0, OPDI_Disagreement));
 		throw ProtocolException("Handshake version not supported"); //, parts[VERSION]);
 	}
 
@@ -380,7 +388,7 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 	// protocol found?
 	if (prot == NULL) {
 		// no match for supported protocols found
-		sendSynchronous(&Message(0, Disagreement));
+		sendSynchronous(&Message(0, OPDI_Disagreement));
 		// no possible protocols found
 		throw ProtocolException("No supported protocol found");
 	}
@@ -414,7 +422,7 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 	else
 		getHandshakeMessage(2, parts);
 		
-	if (parts[0] != Agreement) {
+	if (parts[0] != OPDI_Agreement) {
 		return NULL;
 	}
 		
@@ -441,7 +449,7 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 		///// Send: Authentication
 		////////////////////////////////////////////////////////////
 			
-		Message auth = Message(0, StringTools::join(AbstractProtocol::SEPARATOR, Auth, user, password));
+		Message auth = Message(0, StringTools::join(AbstractProtocol::SEPARATOR, OPDI_Auth, user, password));
 		sendSynchronous(&auth);
 
 		try {
@@ -455,7 +463,7 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 			// on error clear password
 			setPassword("");
 				
-			sendSynchronous(&Message(0, Disconnect));
+			sendSynchronous(&Message(0, OPDI_Disconnect));
 			throw AuthenticationException();
 		}
 			
@@ -529,7 +537,7 @@ void ConnectRunner::run() {
 	} catch (ProtocolException& e) {
 		// abort the connection
 		try {
-			device->sendSynchronous(&Message(0, Disconnect));
+			device->sendSynchronous(&Message(0, OPDI_Disconnect));
 		} catch (Poco::Exception e1) {
 		}
 		device->close();

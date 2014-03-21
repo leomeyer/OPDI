@@ -126,6 +126,16 @@ extern "C" {
 #define OPDI_STREAMING_PORT_NORMAL			0
 #define OPDI_STREAMING_PORT_AUTOBIND		1		// specifies that the master may automatically bind on connect
 
+// port state constants
+
+#define OPDI_DIGITAL_MODE_INPUT_FLOATING	"0"
+#define OPDI_DIGITAL_MODE_INPUT_PULLUP		"1"
+#define OPDI_DIGITAL_MODE_INPUT_PULLDOWN	"2"
+#define OPDI_DIGITAL_MODE_OUTPUT			"3"
+
+#define OPDI_DIGITAL_LINE_LOW				"0"
+#define OPDI_DIGITAL_LINE_HIGH				"1"
+
 #ifdef __cplusplus
 }
 #endif

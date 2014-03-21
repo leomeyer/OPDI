@@ -21,7 +21,7 @@ BasicDeviceCapabilities::BasicDeviceCapabilities(IBasicProtocol* protocol, int c
 	// get port info for each port
 	for (std::vector<std::string>::iterator iter = portIDs.begin(); iter != portIDs.end(); iter++) {
 		if ((*iter) != "") {
-			Port* port = protocol->getPortInfo_((*iter), channel);
+			Port* port = protocol->getPortInfo((*iter), channel);
 			// ignore NULLs
 			if (port)
 				ports.push_back(port);

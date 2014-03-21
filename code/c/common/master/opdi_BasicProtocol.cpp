@@ -104,13 +104,13 @@ bool BasicProtocol::dispatch(Message* message)
 	// analyze control channel messages
 	if (message->getChannel() == 0) {
 		// received a disconnect?
-		if (message->getPayload() == Disconnect) {
+		if (message->getPayload() == OPDI_Disconnect) {
 			// disconnect the device (this sends a disconnect message back)
 			device->disconnect(false);
 			return true;
 		}
 		else
-		if (message->getPayload() == Reconfigure) {
+		if (message->getPayload() == OPDI_Reconfigure) {
 			// clear cached device capabilities
 //			deviceCaps = null;
 			/*
@@ -131,11 +131,11 @@ bool BasicProtocol::dispatch(Message* message)
 			StringTools::split(message->getPayload(), SEPARATOR, parts);
 				
 			// received a debug message?
-			if (parts[0] == Debug) {
+			if (parts[0] == OPDI_Debug) {
 				device->receivedDebug(StringTools::join(1, 0, SEPARATOR, parts));
 				return true;
 			} else
-			if (parts[0] == Refresh) {
+			if (parts[0] == OPDI_Refresh) {
 				// remaining components are port IDs
 				std::vector<std::string> portIDs;
 				for (std::vector<std::string>::iterator iter = parts.begin() + 1; iter != parts.end(); iter++)
@@ -143,7 +143,7 @@ bool BasicProtocol::dispatch(Message* message)
 				device->receivedRefresh(portIDs);
 				return true;
 			} else
-			if (parts[0] == Error) {
+			if (parts[0] == OPDI_Error) {
 				// remaining optional components contain the error information
 				int error = 0;
 				std::string text;
@@ -181,7 +181,7 @@ BasicDeviceCapabilities* BasicProtocol::getDeviceCapabilities()
 	int channel = getSynchronousChannel();
 		
 	// request device capabilities from the slave
-	send(new Message(channel, getDeviceCaps));
+	send(new Message(channel, OPDI_getDeviceCaps));
 	Message* capResult = expect(channel, DEFAULT_TIMEOUT);
 		
 	// decode the serial form
@@ -196,9 +196,9 @@ Port* BasicProtocol::findPortByID(std::string portID)
 	return NULL;
 }
 
-Port* BasicProtocol::getPortInfo_(std::string id, int channel)
+Port* BasicProtocol::getPortInfo(std::string id, int channel)
 {
-	send(new Message(channel, StringTools::join(AbstractProtocol::SEPARATOR, getPortInfo, id)));
+	send(new Message(channel, StringTools::join(AbstractProtocol::SEPARATOR, OPDI_getPortInfo, id)));
 	Message* message = expect(channel, DEFAULT_TIMEOUT);
 		
 	// check the port magic
@@ -209,226 +209,63 @@ Port* BasicProtocol::getPortInfo_(std::string id, int channel)
 	return PortFactory::createPort(*this, parts);
 }
 
-	/** Sets the mode for the given digital port and returns the new mode.
-	 * 
-	 * @param digitalPort
-	 * @param mode
-	 * @return
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 * @throws AbortedException
-	 */
-//	void setPortMode(DigitalPort digitalPort, DigitalPort.PortMode mode);
+void BasicProtocol::expectDigitalPortState(DigitalPort* port, int channel)
+{
+	Message* m = expect(channel, DEFAULT_TIMEOUT);
+		
+	int PREFIX = 0;
+	int ID = 1;
+	int MODE = 2;
+	int LINE = 3;
+	int PARTS_COUNT = 4;
+		
+	std::vector<std::string> parts;
+	StringTools::split(m->getPayload(), SEPARATOR, parts);
+	if (parts.size() != PARTS_COUNT)
+		throw new ProtocolException("invalid number of message parts");
+	if (parts[PREFIX] != OPDI_digitalPortState)
+		throw new ProtocolException(std::string("unexpected reply, expected: ") + OPDI_digitalPortState);
+	if (parts[ID] != port->getID())
+		throw new ProtocolException("wrong port ID");
 
-	/** Sets the line state for the given digital port and returns the new value.
-	 * 
-	 * @param digitalPort
-	 * @param line
-	 * @return
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 * @throws AbortedException
-	 */
-//	void setPortLine(DigitalPort digitalPort, DigitalPort.PortLine line) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;;
-	
+	// set port state
+	port->setPortState(*this, (DigitalPortMode)AbstractProtocol::parseInt(parts[MODE], "mode", 0, 3));
+		
+	port->setPortLine(*this, 
+			(DigitalPortLine)AbstractProtocol::parseInt(parts[LINE], "line", 0, 1));
+}
 
-
-	void BasicProtocol::expectDigitalPortState(DigitalPort* port, int channel)
+void BasicProtocol::setPortMode(DigitalPort* digitalPort, DigitalPortMode mode)
+{
+	std::string portMode;
+	switch (mode)
 	{
-		Message* m = expect(channel, DEFAULT_TIMEOUT);
-		
-		int PREFIX = 0;
-		int ID = 1;
-		int MODE = 2;
-		int LINE = 3;
-		int PARTS_COUNT = 4;
-		
-		std::vector<std::string> parts;
-		StringTools::split(m->getPayload(), SEPARATOR, parts);
-		if (parts.size() != PARTS_COUNT)
-			throw new ProtocolException("invalid number of message parts");
-		if (parts[PREFIX] != digitalPortState)
-			throw new ProtocolException(std::string("unexpected reply, expected: ") + digitalPortState);
-		if (parts[ID] != port->getID())
-			throw new ProtocolException("wrong port ID");
-
-		// set port state
-		port->setPortState(*this, (DigitalPortMode)AbstractProtocol::parseInt(parts[MODE], "mode", 0, 2));
-		
-		port->setPortLine(*this, 
-				(DigitalPortLine)AbstractProtocol::parseInt(parts[LINE], "line", 0, 1));
+	case DIGITAL_INPUT_FLOATING: portMode = OPDI_DIGITAL_MODE_INPUT_FLOATING; break;
+	case DIGITAL_INPUT_PULLUP: portMode = OPDI_DIGITAL_MODE_INPUT_PULLUP; break;
+	case DIGITAL_INPUT_PULLDOWN: portMode = OPDI_DIGITAL_MODE_INPUT_PULLDOWN; break;
+	case DIGITAL_OUTPUT: portMode = OPDI_DIGITAL_MODE_OUTPUT; break;
+	default: throw Poco::InvalidArgumentException("Invalid value for digital port mode");
 	}
 
-	void BasicProtocol::getPortState(DigitalPort* aDigitalPort)
+	expectDigitalPortState(digitalPort, send(new Message(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_setDigitalPortMode, digitalPort->getID(), portMode))));
+}
+
+void BasicProtocol::setPortLine(DigitalPort* digitalPort, DigitalPortLine line)
+{
+	std::string portLine;
+	switch (line)
 	{
-		expectDigitalPortState(aDigitalPort, send(new Message(getSynchronousChannel(), StringTools::join(SEPARATOR, getDigitalPortState, aDigitalPort->getID()))));		
+	case DIGITAL_LOW: portLine = OPDI_DIGITAL_LINE_LOW; break;
+	case DIGITAL_HIGH: portLine = OPDI_DIGITAL_LINE_HIGH; break;
+	default: throw Poco::InvalidArgumentException("Invalid value for digital port line");
 	}
 
-	/** Gets the state of an analog port. Returns the current value.
-	 *  
-	 * @param analogPort
-	 * @return 
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 * @throws AbortedException
-	 */
-//	void getPortState(AnalogPort analogPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;;
+	expectDigitalPortState(digitalPort, send(new Message(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_setDigitalPortLine, digitalPort->getID(), portLine))));
+}
 
-	/** Sets the mode for the given analog port and returns the new mode.
-	 * 
-	 * @param analogPort
-	 * @param mode
-	 * @return
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 * @throws AbortedException
-	 */
-//	void setPortMode(AnalogPort analogPort, AnalogPort.PortMode mode) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;;
+void BasicProtocol::getPortState(DigitalPort* aDigitalPort)
+{
+	expectDigitalPortState(aDigitalPort, send(new Message(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_getDigitalPortState, aDigitalPort->getID()))));		
+}
 
-	
-	/** Sets the value of an analog port and returns the new value.
-	 * 
-	 * @param analogPort
-	 * @param value
-	 * @return
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 * @throws AbortedException
-	 */
-//	void setPortValue(AnalogPort analogPort, int value) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;;
 
-	/** Sets the resolution of an analog port and returns the new value.
-	 * 
-	 * @param analogPort
-	 * @param resolution
-	 * @return
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 * @throws AbortedException
-	 */
-//	void setPortResolution(AnalogPort analogPort, AnalogPort.Resolution resolution) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
-
-	/** Sets the reference of an analog port and returns the new value.
-	 * 
-	 * @param analogPort
-	 * @param reference
-	 * @return
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 * @throws AbortedException
-	 */
-//	void setPortReference(AnalogPort analogPort, AnalogPort.Reference reference) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
-
-	/** Retrieves the label of the given position from a select port.
-	 * 
-	 * @param selectPort
-	 * @param pos
-	 * @return
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 */
-//	String getLabel(SelectPort selectPort, int pos) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
-	
-	/** Retrieves the current position setting of a select port as a zero-based integer value.
-	 * 
-	 * @param selectPort
-	 * @return
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 */
-//	void getPosition(SelectPort selectPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
-
-	/** Sets the current position setting of a select port to the given value.
-	 * Returns the current setting.
-	 * @param selectPort
-	 * @return
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 */
-//	void setPosition(SelectPort selectPort, int pos) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
-
-	/** Retrieves the current position setting of a dial port.
-	 * 
-	 * @param port
-	 * @return
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 */
-//	void getPosition(DialPort port) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
-	
-	/** Sets the current position setting of a dial port to the given value.
-	 * Returns the current setting.
-	 * @param port
-	 * @param pos
-	 * @return
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 */
-//	void setPosition(DialPort port, int pos) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
-	
-	/** Binds the specified streaming port to a streaming channel.
-	 * Returns true if the binding attempt was successful.
-	 * 
-	 * @param streamingPort
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 */
-//	boolean bindStreamingPort(StreamingPort streamingPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
-
-	/** Unbinds the specified streaming port.
-	 * 
-	 * @param streamingPort
-	 * @throws TimeoutException
-	 * @throws InterruptedException
-	 * @throws DisconnectedException
-	 * @throws DeviceException
-	 * @throws ProtocolException
-	 */
-//	void unbindStreamingPort(StreamingPort streamingPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
-	
-	/** Sends the given data to the specified streaming port. Does not perform checks on the supplied data.
-	 * 
-	 * @param streamingPort
-	 * @param data
-	 * @throws DisconnectedException
-	 */
-//	void sendStreamingData(StreamingPort streamingPort, String data) throws DisconnectedException;

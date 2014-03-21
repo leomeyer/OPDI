@@ -15,7 +15,7 @@ DigitalPort::DigitalPort(IBasicProtocol& protocol, std::vector<std::string> part
 	int FLAGS_PART = 4;
 	int PART_COUNT = 5;
 		
-	checkSerialForm(parts, PART_COUNT, digitalPort);
+	checkSerialForm(parts, PART_COUNT, OPDI_digitalPort);
 
 	setID(parts[ID_PART]);
 	setName(parts[NAME_PART]);
@@ -28,7 +28,7 @@ DigitalPort::DigitalPort(IBasicProtocol& protocol, std::vector<std::string> part
 	
 std::string DigitalPort::serialize()
 {
-	return StringTools::join(':', digitalPort, getID(), getName(), Poco::NumberFormatter::format(getDirCaps()), Poco::NumberFormatter::format(flags));
+	return StringTools::join(':', OPDI_digitalPort, getID(), getName(), Poco::NumberFormatter::format(getDirCaps()), Poco::NumberFormatter::format(flags));
 }
 	
 bool DigitalPort::hasPullup()
@@ -92,7 +92,7 @@ void DigitalPort::setMode(DigitalPortMode portMode)
 {
 	checkMode(portMode);		
 	// set the mode
-	//getProtocol()->setPortMode(this, portMode);
+	getProtocol().setPortMode(this, portMode);
 }
 	
 DigitalPortMode DigitalPort::getMode()
@@ -115,10 +115,6 @@ std::string DigitalPort::getModeText()
 	return "Invalid mode value: " + Poco::NumberFormatter::format(mode);
 }
 
-/** Sets the port to the given state. Throws an IllegalArgumentException if the state
-	 * is not supported.
-	 * @param portState
-	 */
 void DigitalPort::setLine(DigitalPortLine portLine)
 {
 	if (getDirCaps() == PORTDIRCAP_INPUT)
@@ -126,7 +122,7 @@ void DigitalPort::setLine(DigitalPortLine portLine)
 	if (mode != DIGITAL_OUTPUT)
 		throw Poco::InvalidArgumentException("Can't set state on digital port configured as input: ID = " + getID());
 	// set the line state
-//	getProtocol().setPortLine(this, portLine);
+	getProtocol().setPortLine(this, portLine);
 }
 	
 DigitalPortLine DigitalPort::getLine()

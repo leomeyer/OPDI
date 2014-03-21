@@ -111,7 +111,7 @@ public:
 	 * 
 	 * @return
 	 */
-	Port* getPortInfo_(std::string id, int channel) override;
+	Port* getPortInfo(std::string id, int channel) override;
 
 	/** Sets the mode for the given digital port and returns the new mode.
 	 * 
@@ -125,7 +125,7 @@ public:
 	 * @throws ProtocolException
 	 * @throws AbortedException
 	 */
-//	void setPortMode(DigitalPort digitalPort, DigitalPort.PortMode mode);
+	void setPortMode(DigitalPort* digitalPort, DigitalPortMode mode) override;
 
 	/** Sets the line state for the given digital port and returns the new value.
 	 * 
@@ -139,8 +139,7 @@ public:
 	 * @throws ProtocolException
 	 * @throws AbortedException
 	 */
-//	void setPortLine(DigitalPort digitalPort, DigitalPort.PortLine line) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;;
-	
+	void setPortLine(DigitalPort* digitalPort, DigitalPortLine line) override;
 
 
 	/** Gets the state for the given port.

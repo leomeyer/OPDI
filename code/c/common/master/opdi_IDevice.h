@@ -267,6 +267,9 @@ public:
 	 * @return
 	 */
 	virtual long getLastSendTimeMS() = 0;
+
+	/** Returns the device capabilities. */
+	virtual BasicDeviceCapabilities* getCapabilities() = 0;
 };
 
 inline IDevice::IDevice(std::string id)

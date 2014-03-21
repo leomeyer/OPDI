@@ -78,8 +78,8 @@ static struct opdi_StreamingPortInfo sp1Info = { "BMP085", OPDI_STREAMING_PORT_N
 static struct opdi_Port streamPort2 = { "SP2", "Clock" };
 static struct opdi_StreamingPortInfo sp2Info = { "TEXT", OPDI_STREAMING_PORT_AUTOBIND };
 
-static char digmode[] = "0";		// floating input
-static char digline[] = "0";
+static char digmode[] = OPDI_DIGITAL_MODE_INPUT_FLOATING;
+static char digline[] = OPDI_DIGITAL_LINE_LOW;
 
 static char anamode[] = "1";		// output
 static char anares[] = "1";		// 9 bit
@@ -132,12 +132,12 @@ uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 
 		// simulate crosstalk between pins
 		// is the digital port configured as input?
-		if (digmode[0] == '0') {
+		if (digmode[0] == OPDI_DIGITAL_MODE_INPUT_FLOATING[0]) {
 			// the digital port is set to "on" if the analog value is greater than half the resolution maximum
 			if (anavalue > (1 << (7 + anares[0] - '0')))
-				digline[0] = '1';
+				digline[0] = OPDI_DIGITAL_LINE_HIGH[0];
 			else
-				digline[0] = '0';
+				digline[0] = OPDI_DIGITAL_LINE_LOW[0];
 			// cause port refresh
 			refreshPort[0] = &digPort;
 			refreshPort[1] = NULL;

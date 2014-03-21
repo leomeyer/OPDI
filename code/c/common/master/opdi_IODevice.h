@@ -133,6 +133,8 @@ public:
 	void disconnect(bool onError) override;
 	
 	IBasicProtocol* getProtocol() override;
+
+	BasicDeviceCapabilities* getCapabilities() override;
 	
 	void getHandshakeMessage(int partCount, std::vector<std::string>& results);
 	

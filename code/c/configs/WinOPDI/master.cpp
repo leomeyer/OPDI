@@ -44,6 +44,7 @@
 #include <iostream>
 
 #include "opdi_constants.h"
+#include "opdi_protocol_constants.h"
 #include "master.h"
 #include "main_io.h"
 #include <master\opdi_IDevice.h>
@@ -318,6 +319,119 @@ void print_devicecaps(BasicDeviceCapabilities* bdc)
 	}
 }
 
+bool digital_port_command(std::string cmd, Port* port)
+{
+	const char *part;
+
+	if (port->getType() != PORTTYPE_DIGITAL)
+	{
+		output << "Expected digital port for command: " << cmd << std::endl;
+		return false;
+	}
+
+	DigitalPort* thePort = (DigitalPort*)port;
+
+	if (cmd == OPDI_setDigitalPortMode)
+	{
+		part = strtok(NULL, " ");
+		if (part == NULL) {
+			output << "Error: digital port mode expected" << std::endl;
+			return false;
+		}
+
+		DigitalPortMode dpm = DIGITAL_MODE_UNKNOWN;
+		if (strcmp(part, OPDI_DIGITAL_MODE_INPUT_FLOATING) == 0)
+			dpm = DIGITAL_INPUT_FLOATING;
+		else
+		if (strcmp(part, OPDI_DIGITAL_MODE_INPUT_PULLUP) == 0)
+			dpm = DIGITAL_INPUT_PULLUP;
+		else
+		if (strcmp(part, OPDI_DIGITAL_MODE_INPUT_PULLDOWN) == 0)
+			dpm = DIGITAL_INPUT_PULLDOWN;
+		else
+		if (strcmp(part, OPDI_DIGITAL_MODE_OUTPUT) == 0)
+			dpm = DIGITAL_OUTPUT;
+
+		thePort->setMode(dpm);
+		return true;
+	}
+	else
+	if (cmd == OPDI_setDigitalPortLine)
+	{
+		part = strtok(NULL, " ");
+		if (part == NULL) {
+			output << "Error: digital port line expected" << std::endl;
+			return false;
+		}
+
+		DigitalPortLine dpl = DIGITAL_LINE_UNKNOWN;
+		if (strcmp(part, OPDI_DIGITAL_LINE_LOW) == 0)
+			dpl = DIGITAL_LOW;
+		else
+		if (strcmp(part, OPDI_DIGITAL_LINE_HIGH) == 0)
+			dpl = DIGITAL_HIGH;
+
+		thePort->setLine(dpl);
+		return true;
+	}
+
+	output << "Command not implemented: " << cmd << std::endl;
+	return false;
+}
+
+// commands that operate on ports
+// find device, find port, execute command
+bool port_command(const char *part)
+{
+	std::string cmd = part;
+
+	// expect second token: device ID
+	part = strtok(NULL, " ");
+	if (part == NULL) {
+		output << "Error: device ID expected" << std::endl;
+		return false;
+	}
+	std::string devID = part;
+
+	// find device
+	// throw exception if not found
+	IDevice *device = find_device(devID, true);
+
+	if (device->getStatus() != CONNECTED) {
+		output << "Device " << device->getID() << " is not connected" << std::endl;
+		return false;
+	}
+
+	// expect third token: port ID
+	part = strtok(NULL, " ");
+	if (part == NULL) {
+		output << "Error: port ID expected" << std::endl;
+		return false;
+	}
+	std::string portID = part;
+
+	// find port
+	Port* port = device->getCapabilities()->findPortByID(portID);
+
+	if (port == NULL) {
+		output << "Error: port not found: " << portID << std::endl;
+		return false;
+	}
+
+	// check command
+	if (cmd == OPDI_setDigitalPortMode || cmd == OPDI_setDigitalPortLine)
+	{
+		if (digital_port_command(cmd, port))
+		{
+			output << port->toString() << std::endl;
+			return true;
+		}
+	}
+
+	output << "Command not implemented: " << cmd << std::endl;
+	return false;
+}
+
 int start_master() 
 {
 	#define PROMPT	"$ "
@@ -399,7 +513,7 @@ int start_master()
 					device->connect(new DeviceListener());
 				}
 			} else 
-			if (strcmp(part, "gDC") == 0) {
+			if (strcmp(part, OPDI_getDeviceCaps) == 0) {
 				// expect second token: device ID
 				part = strtok(NULL, " ");
 				if (part == NULL) {
@@ -417,7 +531,13 @@ int start_master()
 				}
 
 				// query device capabilities
-				print_devicecaps(device->getProtocol()->getDeviceCapabilities());
+				print_devicecaps(device->getCapabilities());
+			} else 
+			if (strcmp(part, OPDI_setDigitalPortMode) == 0) {
+				port_command(part);
+			} else 
+			if (strcmp(part, OPDI_setDigitalPortLine) == 0) {
+				port_command(part);
 			} else 
 			if (strcmp(part, "disconnect") == 0) {
 				// expect second token: device ID
