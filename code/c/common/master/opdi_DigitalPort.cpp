@@ -146,7 +146,7 @@ std::string DigitalPort::getLineText()
 
 std::string DigitalPort::toString() 
 {
-	return "DigitalPort id=" + getID() + "; name='" + getName() + "'; dir_caps=" + getDirCapsText() + 
+	return "DigitalPort id=" + getID() + "; name='" + getName() + "'; dirCaps=" + getDirCapsText() + 
 		"; hasPullup=" + (hasPullup() ? "true" : "false") + "; hasPulldown=" + (hasPulldown() ? "true" : "false") + 
 		"; mode=" + getModeText() + "; line=" + getLineText();
 }

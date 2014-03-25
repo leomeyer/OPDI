@@ -239,7 +239,7 @@ void add_device(IDevice* device)
 
 	// found it?
 	if (iter != devices.end()) {
-		output << "Cannot add device: a device with ID " << device->getID() << " already exists" << std::endl;
+		output << "Cannot add device: A device with ID " << device->getID() << " already exists" << std::endl;
 	} else {
 		// add the device
 		devices.push_back(device);
@@ -335,7 +335,7 @@ bool digital_port_command(std::string cmd, Port* port)
 	{
 		part = strtok(NULL, " ");
 		if (part == NULL) {
-			output << "Error: digital port mode expected" << std::endl;
+			output << "Error: Digital port mode expected" << std::endl;
 			return false;
 		}
 
@@ -360,7 +360,7 @@ bool digital_port_command(std::string cmd, Port* port)
 	{
 		part = strtok(NULL, " ");
 		if (part == NULL) {
-			output << "Error: digital port line expected" << std::endl;
+			output << "Error: Digital port line expected" << std::endl;
 			return false;
 		}
 
@@ -388,7 +388,7 @@ bool port_command(const char *part)
 	// expect second token: device ID
 	part = strtok(NULL, " ");
 	if (part == NULL) {
-		output << "Error: device ID expected" << std::endl;
+		output << "Error: Device ID expected" << std::endl;
 		return false;
 	}
 	std::string devID = part;
@@ -405,7 +405,7 @@ bool port_command(const char *part)
 	// expect third token: port ID
 	part = strtok(NULL, " ");
 	if (part == NULL) {
-		output << "Error: port ID expected" << std::endl;
+		output << "Error: Port ID expected" << std::endl;
 		return false;
 	}
 	std::string portID = part;
@@ -414,7 +414,7 @@ bool port_command(const char *part)
 	Port* port = device->getCapabilities()->findPortByID(portID);
 
 	if (port == NULL) {
-		output << "Error: port not found: " << portID << std::endl;
+		output << "Error: Port not found: " << portID << std::endl;
 		return false;
 	}
 
@@ -457,7 +457,7 @@ int start_master()
 			if (strcmp(part, "?") == 0) {
 				show_help();
 			} else
-			if (strcmp(part, "quit") == 0) {
+			if ((strcmp(part, "quit") == 0) || (strcmp(part, "exit") == 0)) {
 				cleanup();
 				break;
 			} else
@@ -468,7 +468,7 @@ int start_master()
 				// expect second token: device ID
 				part = strtok(NULL, " ");
 				if (part == NULL) {
-					output << "Error: device ID expected" << std::endl;
+					output << "Error: Device ID expected" << std::endl;
 					continue;
 				}
 				std::string devID = part;
@@ -476,7 +476,7 @@ int start_master()
 				// expect third token: slave address
 				part = strtok(NULL, " ");
 				if (part == NULL) {
-					output << "Error: slave address expected" << std::endl;
+					output << "Error: Slave address expected" << std::endl;
 					continue;
 				}
 				std::string address = part;
@@ -490,7 +490,7 @@ int start_master()
 				// expect second token: device ID
 				part = strtok(NULL, " ");
 				if (part == NULL) {
-					output << "Error: device ID expected" << std::endl;
+					output << "Error: Device ID expected" << std::endl;
 					continue;
 				}
 				std::string devID = part;
@@ -517,7 +517,7 @@ int start_master()
 				// expect second token: device ID
 				part = strtok(NULL, " ");
 				if (part == NULL) {
-					output << "Error: device ID expected" << std::endl;
+					output << "Error: Device ID expected" << std::endl;
 					continue;
 				}
 				std::string devID = part;
@@ -543,7 +543,7 @@ int start_master()
 				// expect second token: device ID
 				part = strtok(NULL, " ");
 				if (part == NULL) {
-					output << "Error: device ID expected" << std::endl;
+					output << "Error: Device ID expected" << std::endl;
 					continue;
 				}
 				std::string devID = part;
