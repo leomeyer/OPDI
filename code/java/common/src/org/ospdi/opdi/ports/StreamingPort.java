@@ -7,6 +7,8 @@ import org.ospdi.opdi.drivers.DriverFactory;
 import org.ospdi.opdi.interfaces.IBasicProtocol;
 import org.ospdi.opdi.interfaces.IDriver;
 import org.ospdi.opdi.protocol.DisconnectedException;
+import org.ospdi.opdi.protocol.PortAccessDeniedException;
+import org.ospdi.opdi.protocol.PortErrorException;
 import org.ospdi.opdi.protocol.ProtocolException;
 import org.ospdi.opdi.utils.Strings;
 
@@ -139,9 +141,15 @@ public class StreamingPort extends Port {
 	 * @throws DisconnectedException 
 	 * @throws InterruptedException 
 	 * @throws TimeoutException 
+	 * @throws PortAccessDeniedException 
 	 */
-	public void bind() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
-		getProtocol().bindStreamingPort(this);
+	public void bind() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+		clearError();
+		try {
+			getProtocol().bindStreamingPort(this);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 	}
 
 	/** Unbinds this port.
@@ -152,9 +160,15 @@ public class StreamingPort extends Port {
 	 * @throws DisconnectedException 
 	 * @throws InterruptedException 
 	 * @throws TimeoutException 
+	 * @throws PortAccessDeniedException 
 	 */
-	public void unbind() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
-		getProtocol().unbindStreamingPort(this);
+	public void unbind() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+		clearError();
+		try {
+			getProtocol().unbindStreamingPort(this);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 	}
 	
 	public void dataReceived(IBasicProtocol protocol, String data) {

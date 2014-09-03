@@ -583,8 +583,7 @@ static uint8_t bind_streaming_port(channel_t channel, opdi_Port *port, const cha
 
 	// problem
 	if (result == OPDI_TOO_MANY_BINDINGS) {
-		send_disagreement(channel, result, NULL, NULL);
-		return OPDI_STATUS_OK;
+		return send_disagreement(channel, result, NULL, NULL);
 	}
 
 	// error
@@ -958,6 +957,7 @@ static uint8_t extended_protocol_message(channel_t channel) {
 
 /** The message handler for the basic protocol.
 */
+/*
 uint8_t opdi_handle_basic_message(opdi_Message *m) {
 	uint8_t result;
 
@@ -986,6 +986,7 @@ uint8_t opdi_handle_basic_message(opdi_Message *m) {
 
 	return OPDI_STATUS_OK;
 }
+*/
 
 /** The protocol handler for the basic protocol.
 */
@@ -1035,14 +1036,26 @@ static uint8_t basic_protocol_handler(void) {
 			}
 #endif
 		} else {
+			// clear port info message
+			opdi_set_port_message(NULL);
+
 			// message other than control message received
 			// let the protocol handle the message
 			result = basic_protocol_message(m.channel);
 			if (result != OPDI_STATUS_OK) {
+				// special case: port access denied
+				if (result == OPDI_PORT_ACCESS_DENIED)
+					send_disagreement(m.channel, OPDI_PORT_ACCESS_DENIED, opdi_get_port_message(), NULL);
+				else
+				// special case: port error
+				if (result == OPDI_PORT_ERROR)
+					send_port_error(m.channel, opdi_get_port_message(), NULL);
+				else
 				// intentional disconnects are not an error
 				if (result != OPDI_DISCONNECTED)
 					// an error occurred during message handling; send error to device and exit
 					return send_error(result, NULL, NULL);
+				else
 				return result;
 			}
 		}
@@ -1172,9 +1185,11 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 
 #ifdef OPDI_NO_ENCRYPTION
 	// is encryption required by the master?
-	if (flags & OPDI_FLAG_ENCRYPTION_REQUIRED)
+	if (flags & OPDI_FLAG_ENCRYPTION_REQUIRED) {
 		// this device does not support encryption
-		return send_disagreement(OPDI_ENCRYPTION_NOT_SUPPORTED, 0, NULL, NULL);
+		send_disagreement(OPDI_ENCRYPTION_NOT_SUPPORTED, 0, NULL, NULL);
+		return OPDI_ENCRYPTION_NOT_SUPPORTED;
+	}
 #else
 	// encryption is supported
 	// split supported encryptions
@@ -1185,8 +1200,10 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	// is encryption required by the master?
 	if ((flags & OPDI_FLAG_ENCRYPTION_REQUIRED) == OPDI_FLAG_ENCRYPTION_REQUIRED) {
 		// does the device not allow or support encryption?
-		if (((opdi_device_flags & OPDI_FLAG_ENCRYPTION_NOT_ALLOWED) == OPDI_FLAG_ENCRYPTION_NOT_ALLOWED) || (strlen(opdi_encryption_method) == 0))
-			return send_disagreement(0, OPDI_ENCRYPTION_NOT_SUPPORTED, "Encryption not supported: ", "by device");
+		if (((opdi_device_flags & OPDI_FLAG_ENCRYPTION_NOT_ALLOWED) == OPDI_FLAG_ENCRYPTION_NOT_ALLOWED) || (strlen(opdi_encryption_method) == 0)) {
+			send_disagreement(0, OPDI_ENCRYPTION_NOT_SUPPORTED, "Encryption not supported: ", "by device");
+			return OPDI_ENCRYPTION_NOT_SUPPORTED;
+		}
 
 		// device's encryption must be supported
 		result = OPDI_ENCRYPTION_NOT_SUPPORTED;
@@ -1196,8 +1213,10 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 				break;
 			}
 		}
-		if (result != OPDI_STATUS_OK)
-			return send_disagreement(0, result, "Encryption not supported: ", opdi_encryption_method);
+		if (result != OPDI_STATUS_OK) {
+			send_disagreement(0, result, "Encryption not supported: ", opdi_encryption_method);
+			return result;
+		}
 		// choose encryption
 		encryption = opdi_encryption_method;
 		use_encryption = 1;
@@ -1205,8 +1224,10 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	// does the device require encryption?
 	else if ((opdi_device_flags & OPDI_FLAG_ENCRYPTION_REQUIRED) == OPDI_FLAG_ENCRYPTION_REQUIRED) {
 		// does the master not allow encryption?
-		if (flags & OPDI_FLAG_ENCRYPTION_NOT_ALLOWED)
-			return send_disagreement(0, OPDI_ENCRYPTION_REQUIRED, "Encryption required: ", "by device");
+		if (flags & OPDI_FLAG_ENCRYPTION_NOT_ALLOWED) {
+			send_disagreement(0, OPDI_ENCRYPTION_REQUIRED, "Encryption required: ", "by device");
+			return OPDI_ENCRYPTION_REQUIRED;
+		}
 
 		// device's encryption must be supported
 		result = OPDI_ENCRYPTION_REQUIRED;
@@ -1216,8 +1237,10 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 				break;
 			}
 		}
-		if (result != OPDI_STATUS_OK)
-			return send_disagreement(0, result, "Encryption required: ", opdi_encryption_method);
+		if (result != OPDI_STATUS_OK) {
+			send_disagreement(0, result, "Encryption required: ", opdi_encryption_method);
+			return result;
+		}
 		// choose encryption
 		encryption = opdi_encryption_method;
 		use_encryption = 1;
@@ -1334,9 +1357,11 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 
 #ifdef OPDI_NO_AUTHENTICATION
 	// is authentication required by the master?
-	if (flags & OPDI_FLAG_AUTHENTICATION_REQUIRED)
+	if (flags & OPDI_FLAG_AUTHENTICATION_REQUIRED) {
 		// this device does not support authentication
-		return send_disagreement(OPDI_AUTH_NOT_SUPPORTED, 0, NULL, NULL);
+		send_disagreement(OPDI_AUTH_NOT_SUPPORTED, 0, NULL, NULL);
+		return OPDI_AUTH_NOT_SUPPORTED;
+	}
 #else
 	// does this device require authentication?
 	if (opdi_device_flags & OPDI_FLAG_AUTHENTICATION_REQUIRED) {
@@ -1358,12 +1383,15 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 		if (result != OPDI_STATUS_OK)
 			return result;
 
-		if (strcmp(opdi_msg_parts[0], OPDI_Auth))
-			return send_disagreement(0, OPDI_AUTHENTICATION_EXPECTED, NULL, NULL);
+		if (strcmp(opdi_msg_parts[0], OPDI_Auth)) {
+			send_disagreement(0, OPDI_AUTHENTICATION_EXPECTED, NULL, NULL);
+			return OPDI_AUTHENTICATION_EXPECTED;
+		}
 
 		// user name: match case insensitive
 		if (opdi_string_cmp(opdi_msg_parts[1], opdi_username) || strcmp(opdi_msg_parts[2], opdi_password)) {
-			return send_disagreement(0, OPDI_AUTHENTICATION_FAILED, "Authentication failed", NULL);
+			send_disagreement(0, OPDI_AUTHENTICATION_FAILED, "Authentication failed", NULL);
+			return OPDI_AUTHENTICATION_FAILED;
 		}
 
 		result = send_agreement(0);

@@ -15,6 +15,7 @@
 	<string name="opdi_protocol_error">Protocol error</string>
 	<string name="opdi_connection_optional_encryption">Connected: {0}{1}</string>
 	<string name="opdi_secured_with_encryption_0"> (secured with {0})</string>
+	<string name="opdi_port_access_denied">Port access denied; Info: </string>
 	
 	<!-- Application -->
     <string name="app_name">AndroPDI Remote Controller</string>

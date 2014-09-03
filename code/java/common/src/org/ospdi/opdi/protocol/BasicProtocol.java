@@ -33,7 +33,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	public static final String RECONFIGURE = "Reconf";
 	public static final String DEBUG = "Debug";
 
-	protected static final int DEFAULT_TIMEOUT = 5000;
+	protected static final int DEFAULT_TIMEOUT = 10000;
 	
 	protected static int CHANNEL_LOWEST_STREAMING = 1;
 	protected static int CHANNEL_HIGHEST_STREAMING = 19;
@@ -221,7 +221,14 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		
 		// request device capabilities from the slave
 		send(new Message(channel, GET_DEVICE_CAPS));
-		Message capResult = expect(channel, DEFAULT_TIMEOUT);
+		Message capResult;
+		try {
+			capResult = expect(channel, DEFAULT_TIMEOUT);
+		} catch (PortAccessDeniedException e) {
+			throw new IllegalStateException("Programming error on device: getDeviceCapabilities should never signal port access denied", e);
+		} catch (PortErrorException e) {
+			throw new IllegalStateException("Programming error on device: getDeviceCapabilities should never signal a port error", e);
+		}
 		
 		// decode the serial form
 		// this may issue callbacks on the protocol which do not have to be threaded
@@ -233,7 +240,14 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	@Override
 	public Port getPortInfo(String portID, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 		send(new Message(channel, Strings.join(SEPARATOR, GET_PORT_INFO, portID)));
-		Message message = expect(channel, DEFAULT_TIMEOUT);
+		Message message;
+		try {
+			message = expect(channel, DEFAULT_TIMEOUT);
+		} catch (PortAccessDeniedException e) {
+			throw new IllegalStateException("Programming error on device: getPortInfo should never signal port access denied", e);
+		} catch (PortErrorException e) {
+			throw new IllegalStateException("Programming error on device: getPortInfo should never signal a port error", e);
+		}
 		
 		// check the port magic
 		String[] parts = Strings.split(message.getPayload(), SEPARATOR);
@@ -242,7 +256,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		return PortFactory.createPort(this, parts);
 	}
 
-	protected void expectDigitalPortState(DigitalPort port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	protected void expectDigitalPortState(DigitalPort port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		Message m = expect(channel, DEFAULT_TIMEOUT);
 		
 		final int PREFIX = 0;
@@ -270,24 +284,24 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	@Override
 	public void setPortMode(DigitalPort port, DigitalPort.PortMode portMode)
 			throws TimeoutException, InterruptedException,
-			DisconnectedException, DeviceException, ProtocolException {		
+			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {		
 		expectDigitalPortState(port, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, SET_DIGITAL_PORT_MODE, port.getID(), portMode.ordinal()))));
 	}
 	
 	
 	@Override
-	public void setPortLine(DigitalPort digitalPort, DigitalPort.PortLine portLine) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {		
+	public void setPortLine(DigitalPort digitalPort, DigitalPort.PortLine portLine) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {		
 		expectDigitalPortState(digitalPort, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, SET_DIGITAL_PORT_LINE, digitalPort.getID(), portLine.ordinal()))));
 	}
 
 	@Override
-	public void getPortState(DigitalPort digitalPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public void getPortState(DigitalPort digitalPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		expectDigitalPortState(digitalPort, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, GET_DIGITAL_PORT_STATE, digitalPort.getID()))));
 	}
 
 	/// Analog port
 	
-	protected void expectAnalogPortState(AnalogPort port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	protected void expectAnalogPortState(AnalogPort port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		Message m = expect(channel, DEFAULT_TIMEOUT);
 		
 		final int PREFIX = 0;
@@ -317,14 +331,14 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	}
 
 	@Override
-	public void setPortValue(AnalogPort analogPort, int value) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public void setPortValue(AnalogPort analogPort, int value) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		expectAnalogPortState(analogPort, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, SET_ANALOG_PORT_VALUE, analogPort.getID(), value))));
 	}
 
 	@Override
 	public void getPortState(AnalogPort analogPort) throws TimeoutException,
 			InterruptedException, DisconnectedException, DeviceException,
-			ProtocolException {
+			ProtocolException, PortAccessDeniedException, PortErrorException {
 		int channel = getSynchronousChannel();
 		send(new Message(channel, Strings.join(SEPARATOR, GET_ANALOG_PORT_STATE, analogPort.getID())));
 		expectAnalogPortState(analogPort, channel);
@@ -333,28 +347,28 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	@Override
 	public void setPortMode(AnalogPort analogPort, AnalogPort.PortMode mode)
 			throws TimeoutException, InterruptedException,
-			DisconnectedException, DeviceException, ProtocolException {
+			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		expectAnalogPortState(analogPort, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, SET_ANALOG_PORT_MODE, analogPort.getID(), mode.ordinal()))));
 	}
 
 	@Override
 	public void setPortResolution(AnalogPort analogPort, Resolution resolution)
 			throws TimeoutException, InterruptedException,
-			DisconnectedException, DeviceException, ProtocolException {
+			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		expectAnalogPortState(analogPort, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, SET_ANALOG_PORT_RESOLUTION, analogPort.getID(), resolution.ordinal()))));
 	}
 
 	@Override
 	public void setPortReference(AnalogPort analogPort, AnalogPort.Reference reference)
 			throws TimeoutException, InterruptedException,
-			DisconnectedException, DeviceException, ProtocolException {
+			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		expectAnalogPortState(analogPort, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, SET_ANALOG_PORT_REFERENCE, analogPort.getID(), reference.ordinal()))));
 	}
 	
 	@Override
 	public String getLabel(SelectPort port, int pos)
 			throws TimeoutException, InterruptedException,
-			DisconnectedException, DeviceException, ProtocolException {
+			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		
 		// send request
 		int channel = getSynchronousChannel();
@@ -381,7 +395,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		return parts[LABEL];
 	}
 
-	protected void expectSelectPortPosition(SelectPort port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	protected void expectSelectPortPosition(SelectPort port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		Message m = expect(channel, DEFAULT_TIMEOUT);
 		
 		final int PREFIX = 0;
@@ -403,7 +417,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	@Override
 	public void getPosition(SelectPort port) throws TimeoutException,
 			InterruptedException, DisconnectedException, DeviceException,
-			ProtocolException {
+			ProtocolException, PortAccessDeniedException, PortErrorException {
 		// send request
 		int channel = getSynchronousChannel();
 		send(new Message(channel, Strings.join(SEPARATOR, GET_SELECT_PORT_STATE, port.getID())));
@@ -414,7 +428,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	@Override
 	public void setPosition(SelectPort port, int pos)
 			throws TimeoutException, InterruptedException,
-			DisconnectedException, DeviceException, ProtocolException {
+			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		// send request
 		int channel = getSynchronousChannel();
 		send(new Message(channel, Strings.join(SEPARATOR, SET_SELECT_PORT_POSITION, port.getID(), pos)));
@@ -422,7 +436,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		expectSelectPortPosition(port, channel);
 	}
 
-	protected void expectDialPortPosition(DialPort port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	protected void expectDialPortPosition(DialPort port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		Message m = expect(channel, DEFAULT_TIMEOUT);
 		
 		final int PREFIX = 0;
@@ -444,7 +458,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	@Override
 	public void getPosition(DialPort port) throws TimeoutException,
 			InterruptedException, DisconnectedException, DeviceException,
-			ProtocolException {
+			ProtocolException, PortAccessDeniedException, PortErrorException {
 		// send request
 		int channel = getSynchronousChannel();
 		send(new Message(channel, Strings.join(SEPARATOR, GET_DIAL_PORT_STATE, port.getID())));
@@ -455,7 +469,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	@Override
 	public void setPosition(DialPort port, int pos)
 			throws TimeoutException, InterruptedException,
-			DisconnectedException, DeviceException, ProtocolException {
+			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		// send request
 		int channel = getSynchronousChannel();
 		send(new Message(channel, Strings.join(SEPARATOR, SET_DIAL_PORT_POSITION, port.getID(), pos)));
@@ -466,7 +480,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	@Override
 	public boolean bindStreamingPort(StreamingPort streamingPort)
 			throws TimeoutException, InterruptedException,
-			DisconnectedException, DeviceException, ProtocolException {
+			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 
 		// determine the channel to bind to
 		int bChannel = 0;
@@ -511,7 +525,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	@Override
 	public void unbindStreamingPort(StreamingPort streamingPort)
 			throws TimeoutException, InterruptedException,
-			DisconnectedException, DeviceException, ProtocolException {
+			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		
 		synchronized (boundStreamingPorts) {
 			// verify that the port is bound
@@ -552,7 +566,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	}
 
 	@Override
-	public Port findPortByID(String portID) throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException {
+	public Port findPortByID(String portID) throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException, PortAccessDeniedException, PortErrorException {
 		BasicDeviceCapabilities bdc = getDeviceCapabilities();
 		if (bdc == null) return null;
 		return bdc.findPortByID(portID);

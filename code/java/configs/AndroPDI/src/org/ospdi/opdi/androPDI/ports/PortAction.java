@@ -5,6 +5,7 @@ import java.util.concurrent.TimeoutException;
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.protocol.DisconnectedException;
+import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.ProtocolException;
 
 abstract class PortAction {
@@ -29,8 +30,9 @@ abstract class PortAction {
 	 * @throws DisconnectedException
 	 * @throws DeviceException
 	 * @throws ProtocolException
+	 * @throws PortAccessDeniedException 
 	 */
-	abstract void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
+	abstract void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException;
 
 	/** Defines the operations to be done on the UI thread after perform() has been run.
 	 * By default calls the updateState() method of the adapter. This causes a UI refresh.

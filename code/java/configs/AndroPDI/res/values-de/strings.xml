@@ -15,7 +15,8 @@
 	<string name="opdi_protocol_error">Protokollfehler</string>
 	<string name="opdi_connection_optional_encryption">Verbunden: {0}{1}</string>
 	<string name="opdi_secured_with_encryption_0"> (gesichert mit {0})</string>
-	
+	<string name="opdi_port_access_denied">Port-Zugriff verweigert; Info: </string>
+		
 	<!-- Application -->
 	<string name="app_name">AndroPDI Fernsteuerung</string>
     <string name="add_device">Gerät hinzufügen</string>

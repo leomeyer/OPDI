@@ -50,24 +50,24 @@ typedef struct opdi_Message {
 *   snd is a pointer to a function that sends bytes.
 *   info is a pointer to information required by the recv and snd functions.
 */
-extern uint8_t opdi_message_setup(func_receive recv, func_send snd, void *info);
+uint8_t opdi_message_setup(func_receive recv, func_send snd, void *info);
 
 /** Puts the next received message in message.
 *   If canSend is true a receive function may send its own messages during waiting for
 *   a message. This will usually be the case if no protocol is currently being executed.
 *   Returns a status code != OPDI_STATUS_OK in case of an error or disconnecting.
 */
-extern uint8_t opdi_get_message(opdi_Message *message, uint8_t canSend);
+uint8_t opdi_get_message(opdi_Message *message, uint8_t canSend);
 
 /** Sends the message to the master.
 *   Returns a status code != OPDI_STATUS_OK in case of an error or disconnecting.
 */
-extern uint8_t opdi_put_message(opdi_Message *message);
+uint8_t opdi_put_message(opdi_Message *message);
 
 #ifndef OPDI_NO_ENCRYPTION
 
 /** Enable encryption. See device.h for encryption functions. */
-extern uint8_t opdi_set_encryption(uint8_t enabled);
+uint8_t opdi_set_encryption(uint8_t enabled);
 
 /** Specifies the block size of the encryption. Must be specified if encryption is used.
 */
@@ -88,11 +88,11 @@ extern const char *opdi_encryption_key;
 
 /** Set the current message timeout.
 */
-extern void opdi_set_timeout(uint16_t timeout);
+void opdi_set_timeout(uint16_t timeout);
 
 /** Get the current message timeout.
 */
-extern uint16_t opdi_get_timeout(void);
+uint16_t opdi_get_timeout(void);
 
 #ifdef __cplusplus
 }

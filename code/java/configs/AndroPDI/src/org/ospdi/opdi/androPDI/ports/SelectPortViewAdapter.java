@@ -6,6 +6,7 @@ import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.ports.SelectPort;
 import org.ospdi.opdi.protocol.DisconnectedException;
+import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.ProtocolException;
 import org.ospdi.opdi.androPDI.R;
 
@@ -69,7 +70,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 
 		showDevicePorts.addPortAction(new PortAction(SelectPortViewAdapter.this) {
 			@Override
-			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 				queryState();
 			}
 		});
@@ -94,8 +95,9 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 		openMenu();
 	}
 	
-	protected void queryState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	protected void queryState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		position = sPort.getPosition();
+        stateError = sPort.hasError();
 	}
 	
 	@Override
@@ -124,7 +126,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 					InterruptedException,
 					DisconnectedException,
 					DeviceException,
-					ProtocolException {
+					ProtocolException, PortAccessDeniedException {
 				// reload the port state
 				sPort.refresh();
 				queryState();
@@ -175,7 +177,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return showDevicePorts.addPortAction(new PortAction(SelectPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 								sPort.refresh();
 								queryState();
 							}
@@ -201,7 +203,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 						
 						return SelectPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(SelectPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 								// set mode
 								sPort.setPosition(mItem.getNumericShortcut());
 								position = sPort.getPosition();
@@ -216,4 +218,10 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 			menu.close();
 		}
 	}
+
+	@Override
+	public void showMessage(String message) {
+		showDevicePorts.receivedPortMessage(this.sPort, message);
+	}
+
 }

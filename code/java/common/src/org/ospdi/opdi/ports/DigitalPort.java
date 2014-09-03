@@ -5,6 +5,8 @@ import java.util.concurrent.TimeoutException;
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.interfaces.IBasicProtocol;
 import org.ospdi.opdi.protocol.DisconnectedException;
+import org.ospdi.opdi.protocol.PortAccessDeniedException;
+import org.ospdi.opdi.protocol.PortErrorException;
 import org.ospdi.opdi.protocol.ProtocolException;
 import org.ospdi.opdi.utils.Strings;
 
@@ -89,9 +91,14 @@ public class DigitalPort extends Port {
 	}
 	
 	// Retrieve all port state from the device
-	public void getPortState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public void getPortState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+		clearError();
 		// Request port state
-		getProtocol().getPortState(this);
+		try {
+			getProtocol().getPortState(this);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 	}
 	
 	public void setPortState(IBasicProtocol protocol, PortMode mode) throws ProtocolException {
@@ -130,14 +137,21 @@ public class DigitalPort extends Port {
 	/** Configures the port in the given mode. Throws an IllegalArgumentException if the mode
 	 * is not supported.
 	 * @param portMode
+	 * @throws PortErrorException 
+	 * @throws PortAccessDeniedException 
 	 */
-	public void setMode(PortMode portMode)  throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
-		checkMode(portMode);		
+	public void setMode(PortMode portMode)  throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+		checkMode(portMode);
+		clearError();
 		// set the mode
-		getProtocol().setPortMode(this, portMode);
+		try {
+			getProtocol().setPortMode(this, portMode);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 	}
 	
-	public PortMode getMode() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public PortMode getMode() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		if (mode == null)
 			getPortState();
 		return mode;
@@ -147,16 +161,21 @@ public class DigitalPort extends Port {
 	 * is not supported.
 	 * @param portState
 	 */
-	public void setLine(PortLine portLine)  throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public void setLine(PortLine portLine)  throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		if (getDirCaps() == PortDirCaps.INPUT)
 			throw new IllegalArgumentException("Can't set state on input only digital port: ID = " + getID());
 		if (mode != PortMode.OUTPUT)
 			throw new IllegalArgumentException("Can't set state on digital port configured as input: ID = " + getID());
+		clearError();
 		// set the line state
-		getProtocol().setPortLine(this, portLine);
+		try {
+			getProtocol().setPortLine(this, portLine);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 	}
 	
-	public PortLine getLine() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public PortLine getLine() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		if (line == null)
 			// get state from the device
 			getPortState();
@@ -170,8 +189,8 @@ public class DigitalPort extends Port {
 
 	@Override
 	public void refresh() {
+		super.refresh();
 		mode = null;
 		line = null;
 	}
-
 }

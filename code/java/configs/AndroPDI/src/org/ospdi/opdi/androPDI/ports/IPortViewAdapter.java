@@ -47,11 +47,17 @@ interface IPortViewAdapter {
 	public void startPerformAction();
 	
 	/** Called by the action processor in case an error occurs.
+	 *
+	 * @param throwable
+	 */
+	public void setError(Throwable throwable);
+
+	/** Called by the action processor in case a message should be displayed.
 	 * 
 	 * @param message
 	 */
-	public void setError(Throwable throwable);
-	
+	public void showMessage(String message);
+
 	/** UI update routine that is to be run on the UI thread.
 	 * 
 	 */

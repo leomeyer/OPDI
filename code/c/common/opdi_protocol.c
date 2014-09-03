@@ -117,7 +117,32 @@ uint8_t send_disagreement(channel_t channel, uint8_t code, const char *part1, co
 	if (result != OPDI_STATUS_OK)
 		return result;
 
-	return code;
+	return OPDI_STATUS_OK;
+}
+
+uint8_t send_port_error(channel_t channel, const char *part1, const char *part2) {
+	// send a port error message on the specified channel
+	opdi_Message message;
+	uint8_t result;
+
+	// join payload
+	opdi_msg_parts[0] = OPDI_Error;
+	opdi_msg_parts[1] = part1;
+	opdi_msg_parts[2] = part2;
+	opdi_msg_parts[3] = NULL;
+
+	result = strings_join(opdi_msg_parts, OPDI_PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
+	if (result != OPDI_STATUS_OK)
+		return result;
+
+	message.channel = channel;
+	message.payload = opdi_msg_payload;
+
+	result = opdi_put_message(&message);
+	if (result != OPDI_STATUS_OK)
+		return result;
+
+	return OPDI_STATUS_OK;
 }
 
 #if (OPDI_STREAMING_PORTS > 0) || !defined(OPDI_NO_AUTHENTICATION)

@@ -77,6 +77,9 @@ static struct opdi_Port streamPort1 = { "SP1", "Temp/Pressure" };
 static struct opdi_StreamingPortInfo sp1Info = { "BMP085", OPDI_STREAMING_PORT_NORMAL };
 static struct opdi_Port streamPort2 = { "SP2", "Clock" };
 static struct opdi_StreamingPortInfo sp2Info = { "TEXT", OPDI_STREAMING_PORT_AUTOBIND };
+static struct opdi_Port digPort2 = { "DP2", "Access Denying Port" };
+static struct opdi_Port digPort3 = { "DP3", "Test Error Port" };
+static struct opdi_Port digPort4 = { "DP4", "Test Query Error" };
 
 static char digmode[] = OPDI_DIGITAL_MODE_INPUT_FLOATING;
 static char digline[] = OPDI_DIGITAL_LINE_LOW;
@@ -107,6 +110,9 @@ uint8_t opdi_choose_language(const char *languages) {
 		dialPort.name = "Lautstärke";
 		streamPort1.name = "Temperatur/Druck";
 		streamPort2.name = "Uhrzeit";
+		digPort2.name = "Testport Deny";
+		digPort3.name = "Testport Error";
+		digPort4.name = "Testport Abfrage-Error";
 	}
 
 	return OPDI_STATUS_OK;
@@ -153,7 +159,29 @@ uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 	if (!strcmp(port->id, digPort.id)) {
 		mode[0] = digmode[0];
-		line[0] = digline[0];
+		// line depends on mode
+		if (digmode[0] == OPDI_DIGITAL_MODE_INPUT_PULLUP[0])
+			line[0] = OPDI_DIGITAL_LINE_HIGH[0];
+		else
+		if (digmode[0] == OPDI_DIGITAL_MODE_INPUT_PULLDOWN[0])
+			line[0] = OPDI_DIGITAL_LINE_LOW[0];
+		else
+			line[0] = digline[0];
+	} else
+	if (!strcmp(port->id, digPort2.id)) {
+		// fixed
+		mode[0] = OPDI_DIGITAL_MODE_INPUT_FLOATING[0];
+		line[0] = OPDI_DIGITAL_LINE_LOW[0];
+	} else
+	if (!strcmp(port->id, digPort3.id)) {
+		// fixed
+		mode[0] = OPDI_DIGITAL_MODE_INPUT_FLOATING[0];
+		line[0] = OPDI_DIGITAL_LINE_LOW[0];
+	} else
+	if (!strcmp(port->id, digPort4.id)) {
+		// query error
+		opdi_set_port_message("Port unavailable!");
+		return OPDI_PORT_ERROR;
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
@@ -213,6 +241,17 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 			opdi_refresh(refreshPort);
 		}
 	} else
+	if (!strcmp(port->id, digPort2.id)) {
+		return OPDI_PORT_ACCESS_DENIED;
+	} else
+	if (!strcmp(port->id, digPort3.id)) {
+		// test error
+		return OPDI_PORT_ERROR;
+	} else
+	if (!strcmp(port->id, digPort4.id)) {
+		// ignore
+		return OPDI_STATUS_OK;
+	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
 		
@@ -222,6 +261,20 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 	if (!strcmp(port->id, digPort.id)) {
 		digmode[0] = mode[0];
+	} else
+	if (!strcmp(port->id, digPort2.id)) {
+		// test access denied
+		opdi_set_port_message("You cannot set the port mode, sorry!");
+		return OPDI_PORT_ACCESS_DENIED;
+	} else
+	if (!strcmp(port->id, digPort3.id)) {
+		// test error
+		opdi_set_port_message("Fatal error setting the port mode!");
+		return OPDI_PORT_ERROR;
+	} else
+	if (!strcmp(port->id, digPort4.id)) {
+		// ignore
+		return OPDI_STATUS_OK;
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
@@ -257,6 +310,9 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 				opdi_add_port(&anaPort);
 				opdi_add_port(&dialPort);
 				opdi_add_port(&testPort);
+				opdi_add_port(&digPort2);
+				opdi_add_port(&digPort3);
+				opdi_add_port(&digPort4);
 			} else {
 				// show streaming ports
 				opdi_add_port(&streamPort1);
@@ -339,6 +395,18 @@ void configure_ports(void) {
 		streamPort2.type = OPDI_PORTTYPE_STREAMING;
 		streamPort2.info.ptr = &sp2Info;
 
+		digPort2.type = OPDI_PORTTYPE_DIGITAL;
+		digPort2.caps = OPDI_PORTDIRCAP_BIDI;
+		digPort2.info.i = (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_HAS_PULLDN);
+
+		digPort3.type = OPDI_PORTTYPE_DIGITAL;
+		digPort3.caps = OPDI_PORTDIRCAP_BIDI;
+		digPort3.info.i = (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_HAS_PULLDN);
+
+		digPort4.type = OPDI_PORTTYPE_DIGITAL;
+		digPort4.caps = OPDI_PORTDIRCAP_BIDI;
+		digPort4.info.i = (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_HAS_PULLDN);
+
 		// on init, only the default ports are visible
 		// the select port lets the user switch to streaming ports and back
 		selectPos = 0;
@@ -348,6 +416,9 @@ void configure_ports(void) {
 		opdi_add_port(&dialPort);
 		opdi_add_port(&testPort);
 //		opdi_add_port(&streamPort1);
+		opdi_add_port(&digPort2);
+		opdi_add_port(&digPort3);
+		opdi_add_port(&digPort4);
 	}
 }
 

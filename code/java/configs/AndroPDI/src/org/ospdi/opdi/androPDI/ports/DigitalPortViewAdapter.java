@@ -7,6 +7,7 @@ import org.ospdi.opdi.ports.DigitalPort;
 import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.ports.Port.PortDirCaps;
 import org.ospdi.opdi.protocol.DisconnectedException;
+import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.ProtocolException;
 import org.ospdi.opdi.androPDI.R;
 
@@ -72,7 +73,7 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 
         showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
 			@Override
-			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 				queryState();
 			}
 		});
@@ -93,10 +94,14 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 		});
 	}
 	
-	protected void queryState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	protected void queryState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
         // attempt to retrieve the values
         line = dPort.getLine();
         mode = dPort.getMode();
+        stateError = dPort.hasError();
+        if (stateError) {
+        	this.showMessage("Error: " + dPort.getErrorMessage());
+        }
 	}
 	
 	@Override
@@ -120,13 +125,14 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 					InterruptedException,
 					DisconnectedException,
 					DeviceException,
-					ProtocolException {
+					ProtocolException, PortAccessDeniedException {
 				// reload the port state
 				dPort.refresh();
 				queryState();
 			}
 		});
 	}
+	
 	// must be called on the UI thread!
 	public void updateState() {
 		if (stateError) {
@@ -134,6 +140,7 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 			ivPortIcon.setOnClickListener(null);
     		ivStateIcon.setImageDrawable(context.getResources().getDrawable(R.drawable.led_yellow));
     		ivStateIcon.setOnClickListener(null);
+    		tvBottomtext.setText(dPort.getErrorMessage());
     		return;
 		}
 
@@ -173,7 +180,7 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 					public void onClick(View v) {
 						DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 								// set line
 								dPort.setLine(DigitalPort.PortLine.HIGH);
 								line = dPort.getLine();
@@ -189,7 +196,7 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 					public void onClick(View v) {
 						DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 								// set mode
 								dPort.setLine(DigitalPort.PortLine.LOW);
 								line = dPort.getLine();
@@ -256,7 +263,7 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 								dPort.refresh();
 								queryState();
 							}
@@ -308,11 +315,10 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 								// set mode
 								dPort.setMode(DigitalPort.PortMode.INPUT_FLOATING);
-								mode = dPort.getMode();
-								line = dPort.getLine();
+								queryState();
 							}
 						});
 					}
@@ -327,11 +333,10 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 								// set mode
 								dPort.setMode(DigitalPort.PortMode.INPUT_PULLUP);
-								mode = dPort.getMode();
-								line = dPort.getLine();
+								queryState();
 							}
 						});
 					}
@@ -346,11 +351,10 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 						public boolean onMenuItemClick(MenuItem item) {
 							return DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
 								@Override
-								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 									// set mode
 									dPort.setMode(DigitalPort.PortMode.INPUT_PULLDOWN);
-									mode = dPort.getMode();
-									line = dPort.getLine();
+									queryState();
 								}
 							});
 						}
@@ -365,11 +369,10 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 						public boolean onMenuItemClick(MenuItem item) {
 							return DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
 								@Override
-								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 									// set mode
 									dPort.setMode(DigitalPort.PortMode.OUTPUT);
-									mode = dPort.getMode();
-									line = dPort.getLine();
+									queryState();
 								}
 							});
 						}
@@ -390,10 +393,10 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 						public boolean onMenuItemClick(MenuItem item) {
 							return DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
 								@Override
-								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 									// set line
 									dPort.setLine(DigitalPort.PortLine.LOW);
-									line = dPort.getLine();
+									queryState();
 								}
 							});
 						}
@@ -407,10 +410,10 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 						public boolean onMenuItemClick(MenuItem item) {
 							return DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
 								@Override
-								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 									// set line
 									dPort.setLine(DigitalPort.PortLine.HIGH);
-									line = dPort.getLine();
+									queryState();
 								}
 							});
 						}
@@ -421,4 +424,10 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 			menu.close();
 		}
 	}
+
+	@Override
+	public void showMessage(String message) {
+		showDevicePorts.receivedPortMessage(this.dPort, message);
+	}
+
 }

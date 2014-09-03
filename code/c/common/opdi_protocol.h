@@ -24,26 +24,29 @@
 // Common functions of the OPDI protocol.
 
 // for splitting messages into parts
-extern const char *opdi_msg_parts[];
+const char *opdi_msg_parts[];
 // for assembling a payload
-extern char opdi_msg_payload[];
+char opdi_msg_payload[];
 
 // expects a control message on channel 0
-extern uint8_t expect_control_message(const char **parts, uint8_t *partCount);
+uint8_t expect_control_message(const char **parts, uint8_t *partCount);
 
 // sends an error with optional additional information
-extern uint8_t send_error(uint8_t code, const char *part1, const char *part2);
+uint8_t send_error(uint8_t code, const char *part1, const char *part2);
 
-// sends an isagreement message with optional additional information
-extern uint8_t send_disagreement(channel_t channel, uint8_t code, const char *part1, const char *part2);
+// sends a disagreement message with optional additional information
+uint8_t send_disagreement(channel_t channel, uint8_t code, const char *part1, const char *part2);
+
+// sends a port error message with optional additional information
+uint8_t send_port_error(channel_t channel, const char *part1, const char *part2);
 
 // sends an agreement message
-extern uint8_t send_agreement(channel_t channel);
+uint8_t send_agreement(channel_t channel);
 
 // sends the contents of the opdi_msg_parts array on the specified channel
-extern uint8_t send_payload(channel_t channel);
+uint8_t send_payload(channel_t channel);
 
 // sends the contents of the opdi_msg_parts array on the specified channel
-extern uint8_t send_parts(channel_t channel);
+uint8_t send_parts(channel_t channel);
 
 #endif		// __OPDI_PROTOCOL_H

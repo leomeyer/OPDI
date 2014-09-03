@@ -49,43 +49,43 @@ typedef opdi_ProtocolHandler (*opdi_GetProtocol)(const char *protocolID);
 *   This handler is available as a fallback mechanism for extended protocols.
 *   It returns OPDI_STATUS_OK even if the message could not be processed (ignore unknown messages).
 */
-extern uint8_t opdi_handle_basic_message(opdi_Message *m);
+//uint8_t opdi_handle_basic_message(opdi_Message *m);
 
 /** Prepares the OPDI protocol implementation for a new connection.
 *   Most importantly, this will disable encryption as it is not used at the beginning
 *   of the handshake.
 */
-extern uint8_t opdi_slave_init(void);
+uint8_t opdi_slave_init(void);
 
 /** Starts the OPDI protocol by performing the handshake using the given message.
 *   get_protocol is used to determine extended protocols. It is passed the master's chosen
 *   protocol identifier and may return a protocol handler. It may also be NULL.
 *   If it is NULL, only the basic protocol can be used.
 */
-extern uint8_t opdi_slave_start(opdi_Message *m, opdi_GetProtocol get_protocol, opdi_ProtocolCallback protocol_callback);
+uint8_t opdi_slave_start(opdi_Message *m, opdi_GetProtocol get_protocol, opdi_ProtocolCallback protocol_callback);
 
 /** Returns 1 if the slave is currently connected, i. e. a protocol handler is running; 0 otherwise.
 */
-extern uint8_t opdi_slave_connected(void);
+uint8_t opdi_slave_connected(void);
 
 /** Sends a debug message to the master.
 */
-extern uint8_t opdi_send_debug(const char *debugmsg);
+uint8_t opdi_send_debug(const char *debugmsg);
 	
 /** Causes the Reconfigure message to be sent which prompts the master to re-read the device capabilities.
 */
-extern uint8_t opdi_reconfigure(void);
+uint8_t opdi_reconfigure(void);
 
 /** Causes the Refresh message to be sent for the specified ports. The last element must be NULL.
 *   If the first element is NULL, sends the empty refresh message causing all ports to be
 *   refreshed.
 */
-extern uint8_t opdi_refresh(opdi_Port **ports);
+uint8_t opdi_refresh(opdi_Port **ports);
 
 /** Causes the Disconnect message to be sent to the master.
 *   Returns OPDI_DISCONNECTED. After this, no more messages may be sent to the master.
 */
-extern uint8_t opdi_disconnect(void);
+uint8_t opdi_disconnect(void);
 
 #ifdef __cplusplus
 }
