@@ -21,8 +21,12 @@
  * Provides a few example ports.
  */
 
-#include <WProgram.h>
-#include <arduino.h>
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+#else
+#include "WProgram.h"
+#endif
+#include "memory.h"
 
 #include <opdi_constants.h>
 

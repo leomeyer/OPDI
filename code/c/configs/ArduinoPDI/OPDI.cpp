@@ -30,8 +30,12 @@
 
 #include <opdi_configspecs.h>
 
-#include <WProgram.h>
-#include "arduino.h";
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+#else
+#include "WProgram.h"
+#endif
+#include "memory.h"
 
 #include "OPDI.h"
 
@@ -246,6 +250,10 @@ OPDI_Port::OPDI_Port(const char *id, const char *name, const char *type, const c
 	this->setName(name);
 	strcpy(this->type, type);
 	strcpy(this->caps, dircaps);
+}
+
+uint8_t OPDI_Port::doWork() {
+	return OPDI_STATUS_OK;
 }
 
 void OPDI_Port::setName(const char *name) {
@@ -550,6 +558,19 @@ uint8_t OPDI::waiting(uint8_t canSend) {
 		uint8_t result = this->workFunction();
 		if (result != OPDI_STATUS_OK)
 			return result;
+	}
+
+	// ports' doWork function can be called as long as canSend is true
+	if (canSend) {
+		OPDI_Port *p = this->first_port;
+		// go through ports
+		while (p != NULL) {
+			// call doWork function, return errors immediately
+			uint8_t result = p->doWork();
+			if (result != OPDI_STATUS_OK)
+				return result;
+			p = p->next;
+		}
 	}
 
 	return OPDI_STATUS_OK;

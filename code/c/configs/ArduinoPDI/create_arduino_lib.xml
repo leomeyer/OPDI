@@ -27,6 +27,7 @@
 		</fileset>
 		<fileset dir=".">
 			<include name="OPDI.h"/>
+			<include name="memory.h"/>
 			<include name="OPDI.cpp"/>
 		</fileset>
 		<fileset dir="lib/${target}">
