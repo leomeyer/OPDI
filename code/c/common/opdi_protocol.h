@@ -24,9 +24,9 @@
 // Common functions of the OPDI protocol.
 
 // for splitting messages into parts
-const char *opdi_msg_parts[];
+extern const char *opdi_msg_parts[];
 // for assembling a payload
-char opdi_msg_payload[];
+extern char opdi_msg_payload[];
 
 // expects a control message on channel 0
 uint8_t expect_control_message(const char **parts, uint8_t *partCount);
