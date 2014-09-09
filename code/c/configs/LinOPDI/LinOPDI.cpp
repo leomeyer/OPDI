@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "server.h"
+#include "slave.h"
 
 int main(int argc, char* argv[])
 {
