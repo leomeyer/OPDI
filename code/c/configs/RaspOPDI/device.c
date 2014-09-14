@@ -18,6 +18,12 @@
 
 // Implements device specific attributes and functions for the Linux OPDI slave implementation on a Raspberry Pi ("RaspOPDI").
 
+// Define USE_GERTBOARD to test the Gertboard over OPDI.
+// Program must be run as root. Gertboard configuration
+// should be the one for the LED test program (see Gertboard manual).
+// This demo uses only two of the Gertboard LEDs.
+#define USE_GERTBOARD	1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,11 +38,18 @@
 #include "opdi_constants.h"
 #include "opdi_ports.h"
 #include "opdi_messages.h"
-#include "opdi_protocol.h"
-#include "opdi_device.h"
+#include "opdi_slave_protocol.h"
+#include "slave.h"
+
+#ifdef USE_GERTBOARD
+#include "rpi/gertboard/gb_common.h"
+#define GB_L1		(1<<25)
+#define GB_L2		(1<<24)
+#define GB_ALL_LEDS	(L1|L2)
+#endif
 
 #define OPDI_SLAVE_NAME_LENGTH 32
-const char *opdi_slave_name;
+const char *opdi_config_name;
 
 char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
 const char *opdi_encoding = "";
@@ -50,6 +63,7 @@ uint16_t opdi_device_flags = OPDI_FLAG_AUTHENTICATION_REQUIRED;
 uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
 uint8_t opdi_encryption_buffer[OPDI_ENCRYPTION_BLOCKSIZE];
 uint8_t opdi_encryption_buffer_2[OPDI_ENCRYPTION_BLOCKSIZE];
+const char *opdi_encryption_key = "0123456789012345";
 
 /// Ports
 
@@ -59,7 +73,12 @@ static struct opdi_Port selectPort = { "SL1", "Switch" };
 static struct opdi_Port dialPort = { "DL1", "Audio Volume" };
 static struct opdi_DialPortInfo dialPortInfo = { 0, 100, 5 };
 static struct opdi_Port streamPort1 = { "SP1", "Temp/Pressure" };
-static struct opdi_StreamingPortInfo sp1Info = { "BMP085", OPDI_MESSAGE_PAYLOAD_LENGTH };
+static struct opdi_StreamingPortInfo sp1Info = { "BMP085", OPDI_STREAMING_PORT_NORMAL };
+
+#ifdef USE_GERTBOARD
+static struct opdi_Port gertboardLED1 = { "GBLED1", "Gertboard LED 1" };
+static struct opdi_Port gertboardLED2 = { "GBLED2", "Gertboard LED 2" };
+#endif
 
 static char digmode[] = "0";		// floating input
 static char digline[] = "0";
@@ -105,7 +124,6 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 	char c;
 	int result;
 	opdi_Message m;
-	char bmp085[32];
 	long ticks = GetTickCount();
 	long sendTicks = ticks;
 
@@ -117,17 +135,6 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 				sendTicks = GetTickCount();
 				// channel assigned for streaming port?
 				if (sp1Info.channel > 0) {
-
-					temperature += (rand() * 10.0 / RAND_MAX) - 5;
-					if (temperature > 100) temperature = 100;
-					if (temperature < -100) temperature = -100;
-					pressure += (rand() * 10.0 / RAND_MAX) - 5;
-
-					// send streaming message
-					m.channel = sp1Info.channel;
-					sprintf(bmp085, "BMP085:%.2f:%.2f", temperature, pressure);
-					m.payload = bmp085;
-					opdi_put_message(&m);
 
 				}
 			}
@@ -229,14 +236,17 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 	return OPDI_STATUS_OK;
 }
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // is called by the protocol
 uint8_t opdi_choose_language(const char *languages) {
 	if (!strcmp(languages, "de_DE")) {
 		digPort.name = "Digitaler Port";
 		anaPort.name = "Analoger Port";
 		selectPort.name = "Wahlschalter";
-		dialPort.name = "Lautstärke";
-		streamPort1.name = "Temperatur/Druck";
 	}
 
 	return OPDI_STATUS_OK;
@@ -266,9 +276,24 @@ uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 }
 
 uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
+	unsigned int b;
 	if (!strcmp(port->id, digPort.id)) {
 		mode[0] = digmode[0];
 		line[0] = digline[0];
+#ifdef USE_GERTBOARD
+	} else
+	if (!strcmp(port->id, gertboardLED1.id)) {
+		b = GPIO_IN0;
+		mode[0] = OPDI_DIGITAL_MODE_OUTPUT[0];
+		// LED bit set?
+		line[0] = (b & GB_L1) == GB_L1 ? '1' : '0';
+	} else
+	if (!strcmp(port->id, gertboardLED2.id)) {
+		b = GPIO_IN0;
+		mode[0] = OPDI_DIGITAL_MODE_OUTPUT[0];
+		// LED bit set?
+		line[0] = (b & GB_L2) == GB_L2 ? '1' : '0';
+#endif	
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
@@ -312,6 +337,22 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 	if (!strcmp(port->id, digPort.id)) {
 		digline[0] = line[0];
+#ifdef USE_GERTBOARD
+	} else
+	if (!strcmp(port->id, gertboardLED1.id)) {
+		if (line[0] == '1') {
+			GPIO_SET0 = GB_L1;
+		} else {
+			GPIO_CLR0 = GB_L1;
+		}
+	} else
+	if (!strcmp(port->id, gertboardLED2.id)) {
+		if (line[0] == '1') {
+			GPIO_SET0 = GB_L2;
+		} else {
+			GPIO_CLR0 = GB_L2;
+		}
+#endif	
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
@@ -322,6 +363,14 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 	if (!strcmp(port->id, digPort.id)) {
 		digmode[0] = mode[0];
+#ifdef USE_GERTBOARD
+	} else
+	if (!strcmp(port->id, gertboardLED1.id)) {
+		// mode change not possible
+	} else
+	if (!strcmp(port->id, gertboardLED2.id)) {
+		// mode change not possible
+#endif	
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
@@ -349,7 +398,6 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 	return OPDI_STATUS_OK;
 }
 
-
 uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
 	if (!strcmp(port->id, dialPort.id)) {
 		*position = dialvalue;
@@ -361,24 +409,6 @@ uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
 }
 
 uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
-/*
-	HWAVEOUT i;
-	int error;
-	HWAVEOUT devCount = (HWAVEOUT)waveOutGetNumDevs();
-	if (!strcmp(port->id, dialPort.id)) {
-
-		// set volume of all wave devices
-		for (i = 0; i < devCount; i++) {
-			error = (waveOutSetVolume(i, (0xFFFF / 100) * position));
-			if (error != MMSYSERR_NOERROR) 
-				printf("Volume set error: &d", error);
-		}
-
-		dialvalue = position;
-	} else
-		// unknown port
-		return OPDI_PORT_UNKNOWN;
-*/		
 	return OPDI_STATUS_OK;
 }
 
@@ -399,17 +429,25 @@ void init_device() {
 	char nameBuf[1024];
 	size_t compNameLen = 1024;
 
-	if (opdi_slave_name == NULL) {
-		opdi_slave_name = (const char*)malloc(OPDI_SLAVE_NAME_LENGTH);
+	if (opdi_config_name == NULL) {
+		opdi_config_name = (const char*)malloc(OPDI_SLAVE_NAME_LENGTH);
 	}
 
 	// requires #undef UNICODE to work properly
 	if (0 != gethostname(nameBuf, compNameLen)) {
-		sprintf((char *)opdi_slave_name, "RaspOPDI (%s)", nameBuf);
+		sprintf((char *)opdi_config_name, "RaspOPDI (%s)", nameBuf);
 	}
 	else {
-		opdi_slave_name = "RaspOPDI";
+		opdi_config_name = "RaspOPDI";
 	}
+
+#ifdef USE_GERTBOARD
+	// prepare Gertboard IO
+	setup_io();
+	
+	INP_GPIO(24);  OUT_GPIO(24);
+	INP_GPIO(25);  OUT_GPIO(25);
+#endif
 
 	// configure ports
 	if (opdi_get_ports() == NULL) {
@@ -444,13 +482,21 @@ void init_device() {
 		streamPort1.type = OPDI_PORTTYPE_STREAMING;
 		streamPort1.caps = OPDI_PORTDIRCAP_BIDI;
 		streamPort1.info.ptr = (void*)&sp1Info;
-		opdi_add_port(&streamPort1);
+//		opdi_add_port(&streamPort1);
+		
+#ifdef USE_GERTBOARD
+		gertboardLED1.type = OPDI_PORTTYPE_DIGITAL;
+		gertboardLED1.caps = OPDI_PORTDIRCAP_OUTPUT;
+		gertboardLED1.info.i = 0;
+		opdi_add_port(&gertboardLED1);
+		
+		gertboardLED2.type = OPDI_PORTTYPE_DIGITAL;
+		gertboardLED2.caps = OPDI_PORTDIRCAP_OUTPUT;
+		gertboardLED2.info.i = 0;
+		opdi_add_port(&gertboardLED2);
+#endif	
 	}
 }
-
-#ifdef __cplusplus
-extern "C" {
-#endif 
 
 /** This method handles an incoming TCP connection. It blocks until the connection is closed.
 */
@@ -476,14 +522,14 @@ int HandleTCPConnection(int csock) {
 	}
 
 	// info value is the socket handle
-	opdi_setup(&io_receive, &io_send, (void *)(long)csock);
+	opdi_message_setup(&io_receive, &io_send, (void *)(long)csock);
 
 	result = opdi_get_message(&message, OPDI_CANNOT_SEND);
 	if (result != 0) 
 		return result;
 
 	// initiate handshake
-	result = opdi_start(&message, NULL, &my_protocol_callback);
+	result = opdi_slave_start(&message, NULL, &my_protocol_callback);
 
 	// release the socket
 	return result;
@@ -500,21 +546,17 @@ int HandleSerialConnection(char firstByte, int fd) {
 	init_device();
 
 	// info value is the serial port handle
-	opdi_setup(&io_receive, &io_send, (void *)(long)fd);
+	opdi_message_setup(&io_receive, &io_send, (void *)(long)fd);
 
 	result = opdi_get_message(&message, OPDI_CANNOT_SEND);
 	if (result != 0) 
 		return result;
 
 	// initiate handshake
-	result = opdi_start(&message, NULL, &my_protocol_callback);
+	result = opdi_slave_start(&message, NULL, &my_protocol_callback);
 
 	return result;
 }
-
-#ifdef __cplusplus
-}
-#endif 
 
 uint8_t opdi_debug_msg(const uint8_t *str, uint8_t direction) {
 	if (direction == OPDI_DIR_INCOMING)
@@ -524,3 +566,7 @@ uint8_t opdi_debug_msg(const uint8_t *str, uint8_t direction) {
 	printf("%s\n", str);
 	return OPDI_STATUS_OK;
 }
+
+#ifdef __cplusplus
+}
+#endif 
