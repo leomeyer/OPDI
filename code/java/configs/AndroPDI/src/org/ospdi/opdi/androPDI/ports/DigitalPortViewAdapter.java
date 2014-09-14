@@ -208,6 +208,8 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
         	}
 		} else {
 			// an input mode is active
+			// disable click listener
+			ivStateIcon.setOnClickListener(null);				
         	switch(line) {
         	case LOW: 
         		stateIcon = context.getResources().getDrawable(R.drawable.led_red);
