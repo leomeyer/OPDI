@@ -97,7 +97,7 @@ extern "C" {
 // device flag constants
 
 /** Is used to indicate that this device must use encryption. 
-*   The device may choose one of the supported encryptions. 
+*   The device may choose one of the supported encryption methods. 
 */
 #define OPDI_FLAG_ENCRYPTION_REQUIRED		0x01
 
@@ -111,6 +111,11 @@ extern "C" {
 #define OPDI_FLAG_AUTHENTICATION_REQUIRED	0x04
 
 // port flag constants
+
+/** Indicates that a port is not always present, for example if a menu structure
+is implemented using dial ports. Accessing a temporary port that is not present in
+the current configuration should yield an OPDI_PORT_ACCESS_DENIED error. */
+#define OPDI_PORT_TEMPORARY					0x8000
 
 #define OPDI_DIGITAL_PORT_HAS_PULLUP		0x01
 #define OPDI_DIGITAL_PORT_HAS_PULLDN		0x02
@@ -129,8 +134,8 @@ extern "C" {
 
 // streaming ports
 
-#define OPDI_STREAMING_PORT_NORMAL			0
-#define OPDI_STREAMING_PORT_AUTOBIND		1		// specifies that the master may automatically bind on connect
+#define OPDI_STREAMING_PORT_NORMAL			0x00
+#define OPDI_STREAMING_PORT_AUTOBIND		0x01		// specifies that the master may automatically bind on connect
 
 // port state constants
 

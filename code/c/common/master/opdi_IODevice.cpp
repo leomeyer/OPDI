@@ -529,7 +529,7 @@ void ConnectRunner::run() {
 		csListener.connectionFailed(device, ResourceFactory.instance.getString(ResourceFactory.OPERATION_WAS_ABORTED));
 		Thread.currentThread().interrupt();
 		return; */
-	} catch (TimeoutException& e) {
+	} catch (TimeoutException&) {
 		device->close();
 		if (aborted) return;
 		csListener->connectionFailed(device, "Timeout: The device did not respond");
@@ -544,7 +544,7 @@ void ConnectRunner::run() {
 		if (aborted) return;
 		csListener->connectionFailed(device, (std::string)"Protocol error: " + e.displayText());
 		return;
-	} catch (DisconnectedException& e) {
+	} catch (DisconnectedException&) {
 		device->close();
 		if (aborted) return;
 		csListener->connectionFailed(device, "The device closed the connection");
@@ -554,12 +554,12 @@ void ConnectRunner::run() {
 		if (aborted) return;
 		csListener->connectionError(device, e.displayText());
 		return;
-	} catch (AuthenticationException& e) {
+	} catch (AuthenticationException&) {
 		device->close();
 		if (aborted) return;
 		csListener->connectionFailed(device, "Authentication failed; invalid user name or password");
 		return;				
-	} catch (CancelledException& e) {
+	} catch (CancelledException&) {
 		device->close();
 		if (aborted) return;
 		csListener->connectionAborted(device);
