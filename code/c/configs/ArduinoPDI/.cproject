@@ -4,7 +4,7 @@
 		<cconfiguration id="de.innot.avreclipse.configuration.app.release.1602708466">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="de.innot.avreclipse.configuration.app.release.1602708466" moduleId="org.eclipse.cdt.core.settings" name="Release">
 				<macros>
-					<stringMacro name="ARDUINO_TARGET" type="VALUE_TEXT" value="Duemilanove"/>
+					<stringMacro name="ARDUINO_TARGET" type="VALUE_TEXT" value="Mega2560"/>
 				</macros>
 				<externalSettings/>
 				<extensions>
@@ -75,7 +75,7 @@
 								</option>
 								<option id="de.innot.avreclipse.cpplinker.option.libpath.340954913" name="Libraries Path (-L)" superClass="de.innot.avreclipse.cpplinker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ArduinoCore/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="../lib"/>
+									<listOptionValue builtIn="false" value="../lib/${ARDUINO_TARGET}"/>
 								</option>
 								<option id="de.innot.avreclipse.cpplinker.option.mrelax.1748627324" name="Relax branches (-mrelax)" superClass="de.innot.avreclipse.cpplinker.option.mrelax" value="false" valueType="boolean"/>
 								<inputType id="de.innot.avreclipse.tool.cpplinker.input.1207861046" name="OBJ Files" superClass="de.innot.avreclipse.tool.cpplinker.input">

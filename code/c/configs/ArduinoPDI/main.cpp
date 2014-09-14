@@ -26,7 +26,7 @@
 #else
 #include "WProgram.h"
 #endif
-#include "memory.h"
+//#include "memory.h"
 
 #include <opdi_constants.h>
 
