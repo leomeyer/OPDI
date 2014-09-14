@@ -13,14 +13,21 @@ CPATH = ../../common
 PPATH = ../../platforms/$(PLATFORM)
 PPATH1 = ../../platforms
 
+# Relative path to libraries directory (without trailing slash)
+# This also becomes an additional include directory.
+LIBPATH = ../../libraries
+
 # List C source files of the configuration here.
-SRC = $(TARGET).cpp server.cpp device.c
+SRC = $(TARGET).cpp slave.cpp device.c
 
 # platform specific files
 SRC += $(PPATH)/opdi_platformfuncs.c
 
+# library files
+SRC += $(LIBPATH)/rpi/gertboard/gb_common.c
+
 # common files
-SRC += $(CPATH)/opdi_messages.c $(CPATH)/opdi_ports.c $(CPATH)/opdi_protocol.c $(CPATH)/opdi_strings.c
+SRC += $(CPATH)/opdi_messages.c $(CPATH)/opdi_ports.c $(CPATH)/opdi_protocol.c $(CPATH)/opdi_slave_protocol.c $(CPATH)/opdi_strings.c
 SRC += $(CPATH)/opdi_aes.cpp  $(CPATH)/opdi_rijndael.cpp
 
 # The compiler to be used.
@@ -28,7 +35,7 @@ CC = g++
 
 # List any extra directories to look for include files here.
 # Each directory must be seperated by a space.
-EXTRAINCDIRS = $(CPATH) $(PPATH) $(PPATH1) .
+EXTRAINCDIRS = $(CPATH) $(PPATH) $(PPATH1) $(LIBPATH) .
 
 # Place -I options here
 CINCS =
@@ -36,6 +43,7 @@ CINCS =
 # Compiler flags.
 CFLAGS = $(CDEFS) $(CINCS)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
+CFLAGS += -fpermissive
 
 OBJECTS = $(SRC:.cpp=.o)
 
