@@ -33,14 +33,14 @@ extern "C" {
 *   This routine also trims the parts of whitespace if trim is != 0. 
 *   In case of an error it returns a value != 0.
 */
-extern uint8_t strings_split(const char *str, char separator, const char **parts, uint8_t max_parts, uint8_t trim, uint8_t *part_count);
+uint8_t strings_split(const char *str, char separator, const char **parts, uint8_t max_parts, uint8_t trim, uint8_t *part_count);
 
 /** Joins the null-terminated strings in the parts array by the separator until one entry in parts is NULL.
 *   The output is written to dest. If the separator is contained in any of the strings it is escaped.
 *   Empty parts are encoded as a single blank.
 *   If max_length is exceeded a value != 0 is returned.
 */
-extern uint8_t strings_join(const char **parts, char separator, char *dest, uint16_t max_length);
+uint8_t strings_join(const char **parts, char separator, char *dest, uint16_t max_length);
 
 #ifdef __cplusplus
 }

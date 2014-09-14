@@ -25,12 +25,12 @@ extern "C" {
 /** Handles an incoming TCP connection by performing the handshake and running the message loop
 *   on the specified TCP/IP socket.
 */
-extern int HandleTCPConnection(int *csock);
+int HandleTCPConnection(int *csock);
 
 
 /** Handles an incoming COM connection by performing the handshake and running the message loop.
 */
-extern int HandleCOMConnection(char firstByte, HANDLE hndPort);
+int HandleCOMConnection(char firstByte, HANDLE hndPort);
 
 #ifdef __cplusplus
 }

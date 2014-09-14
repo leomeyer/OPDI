@@ -7,6 +7,8 @@ import java.util.concurrent.TimeoutException;
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.interfaces.IBasicProtocol;
 import org.ospdi.opdi.protocol.DisconnectedException;
+import org.ospdi.opdi.protocol.PortAccessDeniedException;
+import org.ospdi.opdi.protocol.PortErrorException;
 import org.ospdi.opdi.protocol.ProtocolException;
 import org.ospdi.opdi.utils.Strings;
 
@@ -37,6 +39,8 @@ public class SelectPort extends Port {
 	 * @throws DisconnectedException 
 	 * @throws InterruptedException 
 	 * @throws TimeoutException 
+	 * @throws PortAccessDeniedException 
+	 * @throws PortErrorException 
 	 */
 	public SelectPort(IBasicProtocol protocol, String[] parts) throws ProtocolException, TimeoutException, InterruptedException, DisconnectedException, DeviceException {
 		super(protocol, null, null, PortType.SELECT, PortDirCaps.OUTPUT);
@@ -55,7 +59,15 @@ public class SelectPort extends Port {
 		
 		// query port labels
 		for (int i = 0; i < posCount; i++)
-			labels.add(protocol.getLabel(this, i));
+			try {
+				labels.add(protocol.getLabel(this, i));
+			} catch (PortAccessDeniedException e) {
+				// makes no sense
+				e.printStackTrace();
+			} catch (PortErrorException e) {
+				// makes no sense
+				e.printStackTrace();
+			}
 	}
 	
 	public String serialize() {
@@ -79,14 +91,19 @@ public class SelectPort extends Port {
 	}
 	
 	// Retrieve the position from the device
-	public int getPosition() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public int getPosition() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		if (position < 0)
 			getPortState();
 		return position;
 	}
 	
-	public void setPosition(int pos) throws ProtocolException, TimeoutException, InterruptedException, DisconnectedException, DeviceException {
-		getProtocol().setPosition(this, pos);
+	public void setPosition(int pos) throws ProtocolException, TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException {
+		clearError();
+		try {
+			getProtocol().setPosition(this, pos);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 	}
 	
 	@Override
@@ -101,8 +118,13 @@ public class SelectPort extends Port {
 	
 	@Override
 	public void getPortState() throws TimeoutException, InterruptedException,
-			DisconnectedException, DeviceException, ProtocolException {
+			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+		clearError();
 		// Request port state
-		getProtocol().getPosition(this);
+		try {
+			getProtocol().getPosition(this);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 	}
 }

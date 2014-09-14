@@ -41,7 +41,7 @@
 static int connection_mode = 0;
 static char first_com_byte = 0;
 
-static unsigned long idle_timeout_ms = 20000;
+static unsigned long idle_timeout_ms = 180000;
 static unsigned long last_activity = 0;
 
 /** For TCP connections, receives a byte from the socket specified in info and places the result in byte.
@@ -192,7 +192,6 @@ void init_device() {
 		opdi_config_name = (char*)malloc(OPDI_CONFIG_NAME_LENGTH);
 	}
 
-	// requires #undef UNICODE to work properly
 	if (0 != GetComputerName(nameBuf, &dwCompNameLen)) {
 		sprintf((char *)opdi_config_name, "WinOPDI (%s)", nameBuf);
 	}

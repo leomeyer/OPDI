@@ -34,6 +34,10 @@ protected:
 	// Protected constructor: This class can't be instantiated directly
 	OPDI_Port(const char *id, const char *name, const char *type, const char* dircaps);
 
+	/** Called regularly by the OPDI system. Enables the port to do work.
+	 * Override this in subclasses to implement more complex functionality. */
+	virtual uint8_t doWork();
+
 	char id[MAX_PORTIDLENGTH];
 	char name[MAX_PORTNAMELENGTH];
 	char type[2];	// type constants are one character (see opdi_ports.h)

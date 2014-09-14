@@ -5,6 +5,8 @@ import java.util.concurrent.TimeoutException;
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.interfaces.IBasicProtocol;
 import org.ospdi.opdi.protocol.DisconnectedException;
+import org.ospdi.opdi.protocol.PortAccessDeniedException;
+import org.ospdi.opdi.protocol.PortErrorException;
 import org.ospdi.opdi.protocol.ProtocolException;
 
 
@@ -39,12 +41,14 @@ public abstract class Port {
 		BIDIRECTIONAL
 	}
 
-	private IBasicProtocol protocol;
-	private String id;
-	private String name;
-	private PortType type;
-	private PortDirCaps dirCaps;
-	private Object viewAdapter;
+	protected IBasicProtocol protocol;
+	protected String id;
+	protected String name;
+	protected PortType type;
+	protected PortDirCaps dirCaps;
+	protected Object viewAdapter;
+	protected boolean hasError;
+	protected String errorMessage;
 	
 	/** Only to be used by subclasses
 	 * 
@@ -62,6 +66,16 @@ public abstract class Port {
 		this.dirCaps = dirCaps;
 	}	
 
+	public synchronized boolean hasError() {
+		return hasError;
+	}
+
+	public synchronized String getErrorMessage() {
+		if (errorMessage == null)
+			return "";
+		return errorMessage;
+	}
+	
 	/** Returns the protocol.
 	 * 
 	 * @return
@@ -145,7 +159,9 @@ public abstract class Port {
 	/** Clear cached state values.
 	 * 
 	 */
-	public abstract void refresh();
+	public void refresh() {
+		clearError();
+	}
 
 	@Override
 	public String toString() {
@@ -171,5 +187,18 @@ public abstract class Port {
 	/** Fetches the state of the port from the device.
 	 * 
 	 */
-	public abstract void getPortState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
+	public abstract void getPortState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException;
+	
+	/** Should be called internally before port handling methods are called.
+	 * 
+	 */
+	protected void clearError() {
+		hasError = false;
+		errorMessage = null;
+	}
+	
+	protected void handlePortError(PortErrorException e) {
+		hasError = true;
+		errorMessage = e.getMessage();
+	}
 }

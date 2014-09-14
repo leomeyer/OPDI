@@ -26,6 +26,7 @@ extern "C" {
 #endif 
 
 // common status codes
+
 #define OPDI_STATUS_OK					0
 #define OPDI_DISCONNECTED				1
 #define OPDI_TIMEOUT					2
@@ -55,6 +56,8 @@ extern "C" {
 #define OPDI_POSITION_INVALID			26
 #define OPDI_NETWORK_ERROR				27
 #define OPDI_TERMINATOR_IN_PAYLOAD		28
+#define OPDI_PORT_ACCESS_DENIED			29
+#define OPDI_PORT_ERROR					30
 
 // encodings
 #define OPDI_ENCODING_ASCII			0
@@ -73,6 +76,7 @@ extern "C" {
 #define OPDI_CAN_SEND		1
 
 // constants for the debug message
+
 // this message has been received from the master
 #define OPDI_DIR_INCOMING	0
 // this message is being sent to the master
@@ -90,7 +94,8 @@ extern "C" {
 #define OPDI_PROTOCOL_CONNECTED			1
 #define OPDI_PROTOCOL_DISCONNECTED		2
 
-// Device flag constants
+// device flag constants
+
 /** Is used to indicate that this device must use encryption. 
 *   The device may choose one of the supported encryptions. 
 */
@@ -105,7 +110,7 @@ extern "C" {
 */
 #define OPDI_FLAG_AUTHENTICATION_REQUIRED	0x04
 
-// Port flag constants
+// port flag constants
 
 #define OPDI_DIGITAL_PORT_HAS_PULLUP		0x01
 #define OPDI_DIGITAL_PORT_HAS_PULLDN		0x02
@@ -123,8 +128,19 @@ extern "C" {
 #define OPDI_ANALOG_PORT_REFERENCE_EXT		0x800
 
 // streaming ports
+
 #define OPDI_STREAMING_PORT_NORMAL			0
 #define OPDI_STREAMING_PORT_AUTOBIND		1		// specifies that the master may automatically bind on connect
+
+// port state constants
+
+#define OPDI_DIGITAL_MODE_INPUT_FLOATING	"0"
+#define OPDI_DIGITAL_MODE_INPUT_PULLUP		"1"
+#define OPDI_DIGITAL_MODE_INPUT_PULLDOWN	"2"
+#define OPDI_DIGITAL_MODE_OUTPUT			"3"
+
+#define OPDI_DIGITAL_LINE_LOW				"0"
+#define OPDI_DIGITAL_LINE_HIGH				"1"
 
 #ifdef __cplusplus
 }

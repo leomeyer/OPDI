@@ -23,6 +23,14 @@ public abstract class AbstractProtocol {
 	public static final char SEPARATOR = ':';
 	public static final String DISCONNECT = "Dis";
 	public static final String ERROR = "Err";
+	
+	public static final String HANDSHAKE = "OPDI";
+	public static final String HANDSHAKE_VERSION = "0.1";
+	public static final double HANDSHAKE_VERSION_DOUBLE = Double.parseDouble(HANDSHAKE_VERSION);
+	public static final String AGREEMENT = "OK";
+	public static final String DISAGREEMENT = "NOK";
+	public static final String AUTHENTICATE = "Auth";
+	public static final int HANDSHAKE_TIMEOUT = 5000;
 
 	protected IDevice device;
 	
@@ -65,7 +73,7 @@ public abstract class AbstractProtocol {
 	 * Time calculation is not absolutely exact but it's guaranteed to not be less than timeout milliseconds.
 	 * 
 	 */
-	protected Message expect(long channel, int timeout, IAbortable abortable) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException {
+	protected Message expect(long channel, int timeout, IAbortable abortable) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException, PortErrorException {
 		if (channel < 0)
 			throw new DisconnectedException();
 		Queue<Message> queue = device.getInputMessages();
@@ -84,6 +92,26 @@ public abstract class AbstractProtocol {
 				}
 				if (message != null) {
 					queue.remove(message);
+					
+					// analyze message for port status
+					String[] parts = Strings.split(message.getPayload(), SEPARATOR);
+					if (parts[0].equals(DISAGREEMENT))
+					{
+						if (parts.length > 1)
+							throw new PortAccessDeniedException(Strings.join(1, SEPARATOR, (Object[])parts));
+						else
+							throw new PortAccessDeniedException();
+					}
+					else
+					if (parts[0].equals(ERROR))
+					{
+						if (parts.length > 1)
+							throw new PortErrorException(Strings.join(1, SEPARATOR, (Object[])parts));
+						else
+							throw new PortErrorException();
+					}
+					else
+					
 					return message;
 				}
 			}	// synchronized(queue)
@@ -104,7 +132,7 @@ public abstract class AbstractProtocol {
 	}
 	
 	// A convenience method without an abortable.
-	protected Message expect(long channel, int timeout) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException {
+	protected Message expect(long channel, int timeout) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException, PortErrorException {
 		return expect(channel, timeout, null);
 	}
 

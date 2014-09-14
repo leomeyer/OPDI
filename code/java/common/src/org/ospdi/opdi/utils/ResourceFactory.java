@@ -40,6 +40,7 @@ public class ResourceFactory {
 	public static final String CONNECTION_FAILURE = "opdi_connection_failure";
 	public static final String INVALID_MESSAGE = "opdi_invalid_message";
 	public static final String DEVICE_ERROR = "opdi_device_error";
+	public static final String PORT_ACCESS_DENIED = "opdi_port_access_denied";
 	
 	
 	protected final HashMap<String, String> stringMap = new HashMap<String, String>();
@@ -78,6 +79,7 @@ public class ResourceFactory {
 		stringMap.put(CONNECTION_FAILURE, "Connection failure: {0}");
 		stringMap.put(INVALID_MESSAGE, "Invalid message: {0}");
 		stringMap.put(DEVICE_ERROR, "Error: {0}");
+		stringMap.put(PORT_ACCESS_DENIED, "Port access denied; Info: ");
 	}
 	
 	public String getString(String id) {

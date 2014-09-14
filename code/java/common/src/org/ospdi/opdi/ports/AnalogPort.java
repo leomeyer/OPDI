@@ -5,6 +5,8 @@ import java.util.concurrent.TimeoutException;
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.interfaces.IBasicProtocol;
 import org.ospdi.opdi.protocol.DisconnectedException;
+import org.ospdi.opdi.protocol.PortAccessDeniedException;
+import org.ospdi.opdi.protocol.PortErrorException;
 import org.ospdi.opdi.protocol.ProtocolException;
 import org.ospdi.opdi.utils.Strings;
 
@@ -105,9 +107,14 @@ public class AnalogPort extends Port {
 	}
 	
 	// Retrieve all port state from the device
-	public void getPortState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public void getPortState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+		clearError();
 		// Request port state
-		getProtocol().getPortState(this);
+		try {
+			getProtocol().getPortState(this);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 	}
 
 	public void setPortState(IBasicProtocol protocol, PortMode mode, Reference ref, Resolution res) {
@@ -127,8 +134,9 @@ public class AnalogPort extends Port {
 	/** Configures the port in the given mode. Throws an IllegalArgumentException if the mode
 	 * is not supported.
 	 * @param portMode
+	 * @throws PortAccessDeniedException 
 	 */
-	public PortMode setMode(PortMode portMode) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public PortMode setMode(PortMode portMode) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		// configure for output?
 		if (portMode == PortMode.OUTPUT) {
 			if (getDirCaps() == PortDirCaps.INPUT)
@@ -141,12 +149,17 @@ public class AnalogPort extends Port {
 		} else {
 			throw new IllegalArgumentException("An analog port supports only input and output modes, but not: " + portMode);			
 		}
+		clearError();
 		// set the mode
-		getProtocol().setPortMode(this, portMode);
+		try {
+			getProtocol().setPortMode(this, portMode);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 		return mode;
 	}
 	
-	public PortMode getMode() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public PortMode getMode() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		// use cached value
 		if (mode == null)
 			getPortState();
@@ -170,13 +183,18 @@ public class AnalogPort extends Port {
 		}		
 	}
 	
-	public Resolution setResolution(Resolution resolution) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public Resolution setResolution(Resolution resolution) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		checkResolution(resolution);
-		getProtocol().setPortResolution(this, resolution);
+		clearError();
+		try {
+			getProtocol().setPortResolution(this, resolution);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 		return this.resolution;
 	}
 
-	public Resolution getResolution() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public Resolution getResolution() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		// use cached value
 		if (resolution == null)
 			getPortState();
@@ -195,13 +213,18 @@ public class AnalogPort extends Port {
 		default: throw new IllegalArgumentException("check not implemented for reference: " + ref);
 		}
 	}
-	public Reference setReference(Reference reference) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public Reference setReference(Reference reference) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		checkReference(reference);
-		getProtocol().setPortReference(this, reference);
+		clearError();
+		try {
+			getProtocol().setPortReference(this, reference);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 		return this.reference;
 	}
 
-	public Reference getReference() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public Reference getReference() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		// use cached value
 		if (reference == null)
 			getPortState();			
@@ -211,8 +234,9 @@ public class AnalogPort extends Port {
 	/** Sets the port to the given value. Throws an IllegalArgumentException if setting the value
 	 * is not supported.
 	 * @param value
+	 * @throws PortAccessDeniedException 
 	 */
-	public void setValue(int value) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public void setValue(int value) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		if (getDirCaps() == PortDirCaps.INPUT)
 			throw new IllegalArgumentException("Can't set value on input only analog port: ID = " + getID());
 		if (mode != PortMode.OUTPUT)
@@ -222,14 +246,20 @@ public class AnalogPort extends Port {
 		if (val < 0) val = 0;
 		int maximum = getMaxValue();
 		if (val > maximum) val = maximum;
-		getProtocol().setPortValue(this, value);
+		clearError();
+		try {
+			getProtocol().setPortValue(this, value);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 	}
 	
 	/** Returns the current value of the analog port.
 	 * 
 	 * @return
+	 * @throws PortAccessDeniedException 
 	 */
-	public int getValue() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public int getValue() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		// use cached value
 		if (value < 0)
 			getPortState();			
@@ -242,7 +272,7 @@ public class AnalogPort extends Port {
 			+ "; flags=" + flags;
 	}
 
-	public int getMaxValue() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public int getMaxValue() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		Resolution res = getResolution();
 		int maximum;
 		switch (res) {
@@ -259,6 +289,7 @@ public class AnalogPort extends Port {
 	
 	@Override
 	public void refresh() {
+		super.refresh();
 		value = -1;
 		mode = null;
 		resolution = null;

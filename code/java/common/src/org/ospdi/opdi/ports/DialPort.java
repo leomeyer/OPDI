@@ -6,6 +6,8 @@ import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.interfaces.IBasicProtocol;
 import org.ospdi.opdi.protocol.BasicProtocol;
 import org.ospdi.opdi.protocol.DisconnectedException;
+import org.ospdi.opdi.protocol.PortAccessDeniedException;
+import org.ospdi.opdi.protocol.PortErrorException;
 import org.ospdi.opdi.protocol.ProtocolException;
 import org.ospdi.opdi.utils.Strings;
 
@@ -95,6 +97,7 @@ public class DialPort extends Port {
 	
 	@Override
 	public void refresh() {
+		super.refresh();
 		position = -1;
 	}
 
@@ -105,13 +108,13 @@ public class DialPort extends Port {
 	}
 	
 	// Retrieve the position from the device
-	public int getPosition() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	public int getPosition() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		if (position < 0)
 			getPortState();
 		return position;
 	}
 		
-	public void setPosition(int pos) throws ProtocolException, TimeoutException, InterruptedException, DisconnectedException, DeviceException {
+	public void setPosition(int pos) throws ProtocolException, TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException {
 		// limit value range
 		int val = pos;
 		if (val < minimum) val = minimum;
@@ -120,14 +123,23 @@ public class DialPort extends Port {
 		// round up or down, depending on what's nearest
 		val = (modulo <= step / 2 ? val - modulo : val + step - modulo);
 		if (val > maximum) val = maximum;		
-		getProtocol().setPosition(this, val);
+		clearError();
+		try {
+			getProtocol().setPosition(this, val);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 	}
 	
 	@Override
 	public void getPortState() throws TimeoutException, InterruptedException,
-			DisconnectedException, DeviceException, ProtocolException {
+			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+		clearError();
 		// Request port state
-		getProtocol().getPosition(this);
+		try {
+			getProtocol().getPosition(this);
+		} catch (PortErrorException e) {
+			handlePortError(e);
+		}
 	}
-
 }

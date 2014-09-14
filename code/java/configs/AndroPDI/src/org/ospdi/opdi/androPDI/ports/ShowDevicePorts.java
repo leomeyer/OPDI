@@ -19,7 +19,9 @@ import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.ports.Port.PortType;
 import org.ospdi.opdi.ports.StreamingPort;
 import org.ospdi.opdi.protocol.DisconnectedException;
+import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.ProtocolException;
+import org.ospdi.opdi.utils.ResourceFactory;
 import org.ospdi.opdi.androPDI.R;
 
 import android.content.Intent;
@@ -62,7 +64,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 		}
 		
 		@Override
-		void perform() throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException {
+		void perform() throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException, PortAccessDeniedException {
             IBasicProtocol protocol = device.getProtocol();
             final BasicDeviceCapabilities bdc;
             
@@ -128,6 +130,10 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 	                        	ShowDevicePorts.this.onActionCompleted(op);
 	                        }
 	                    });
+                    } catch (PortAccessDeniedException e) {
+                    	// display a message
+                    	op.adapter.showMessage(ResourceFactory.instance.getString(ResourceFactory.PORT_ACCESS_DENIED) + 
+                    			(e.getMessage() != null ? " " + e.getMessage() : ""));
                     } catch (DisconnectedException de) {
                     	// if disconnected, exit the thread and the view immediately
                     	ShowDevicePorts.this.finish();
@@ -280,7 +286,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 	    				@Override
 	    				void perform() throws TimeoutException,
 	    						InterruptedException, DisconnectedException,
-	    						DeviceException, ProtocolException {
+	    						DeviceException, ProtocolException, PortAccessDeniedException {
 	    					((StreamingPort)port).unbind();
 	    				}
 	    			});
@@ -465,5 +471,16 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 		void createContextMenu(ContextMenu menu, ContextMenuInfo menuInfo) {
 			adapter.createContextMenu(menu, menuInfo);
 		}
+	}
+
+	public void receivedPortMessage(Port port, String message) {
+		final String msg = this.device.getDeviceName() + "/" + port.getName() + ": " + message;
+		mHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				Toast.makeText(ShowDevicePorts.this, msg, Toast.LENGTH_LONG).show();
+				addLogMessage(msg);
+			}
+		});
 	}
 }

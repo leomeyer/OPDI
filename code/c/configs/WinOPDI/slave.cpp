@@ -41,7 +41,7 @@ int listen_tcp(int host_port) {
     err = WSAStartup(wVersionRequested, &wsaData);
     if (err != 0 || (LOBYTE(wsaData.wVersion) != 2 ||
             HIBYTE(wsaData.wVersion) != 2)) {
-        fprintf(stderr, "Could not find useable sock dll %d\n",WSAGetLastError());
+        fprintf(stderr, "Could not find useable sock dll %d\n", WSAGetLastError());
         goto FINISH;
     }
 
@@ -50,7 +50,7 @@ int listen_tcp(int host_port) {
     int *p_int ;
     hsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (hsock == -1) {
-        printf("Error initializing socket %d\n",WSAGetLastError());
+        printf("Error initializing socket %d\n", WSAGetLastError());
         goto FINISH;
     }
     
@@ -78,7 +78,7 @@ int listen_tcp(int host_port) {
         goto FINISH;
     }
     if (listen(hsock, 10) == -1) {
-        fprintf(stderr, "Error listening %d\n",WSAGetLastError());
+        fprintf(stderr, "Error listening %d\n", WSAGetLastError());
         goto FINISH;
     }
     
@@ -89,7 +89,7 @@ int listen_tcp(int host_port) {
     int addr_size = sizeof(SOCKADDR);
     
     while (true) {
-        printf("listening for a connection on port %d\n", host_port);
+        printf("Listening for a connection on port %d\n", host_port);
         csock = (int *)malloc(sizeof(int));
         
         if ((*csock = accept(hsock, (SOCKADDR *)&sadr, &addr_size)) != INVALID_SOCKET) {
@@ -177,7 +177,7 @@ int listen_com(LPCTSTR lpPortName, DWORD dwBaudRate, BYTE bStopBits, BYTE bParit
 	DWORD bytesRead;
 
     while (true) {
-        printf("listening for a connection on COM port %s\n", lpPortName);
+        printf("Listening for a connection on COM port %s\n", lpPortName);
         
 		while (true) {
 			// try to read a byte

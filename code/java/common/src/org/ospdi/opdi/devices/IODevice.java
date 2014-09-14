@@ -55,16 +55,6 @@ public abstract class IODevice extends MessageQueueDevice {
 	@SuppressWarnings("serial")
 	class AuthenticationException extends Exception {}
 	
-	public static final char SEPARATOR = ':';
-	
-	public static final String HANDSHAKE = "OPDI";
-	public static final String HANDSHAKE_VERSION = "0.1";
-	public static final double HANDSHAKE_VERSION_DOUBLE = Double.parseDouble(HANDSHAKE_VERSION);
-	public static final String AGREEMENT = "OK";
-	public static final String DISAGREEMENT = "NOK";
-	public static final String AUTHENTICATE = "Auth";
-	public static final int HANDSHAKE_TIMEOUT = 5000;
-	
 	private IBasicProtocol protocol;
 	private ConnectThread connThread;
 	
@@ -287,7 +277,7 @@ public abstract class IODevice extends MessageQueueDevice {
 	}
 	
 	private String[] getHandshakeMessage(int partCount) throws IOException, InterruptedException, TimeoutException, DisconnectedException, DeviceException, ProtocolException {
-		Message m = receiveHandshakeMessage(HANDSHAKE_TIMEOUT, new IAbortable() {
+		Message m = receiveHandshakeMessage(AbstractProtocol.HANDSHAKE_TIMEOUT, new IAbortable() {
 			@Override
 			public boolean isAborted() {
 				return !isConnecting();
@@ -299,14 +289,14 @@ public abstract class IODevice extends MessageQueueDevice {
 			throw new ProtocolException(ResourceFactory.instance.getString(ResourceFactory.INVALID_HANDSHAKE_MESSAGE));
 		
 		// split the message
-		String[] parts = Strings.split(m.getPayload(), SEPARATOR);
+		String[] parts = Strings.split(m.getPayload(), AbstractProtocol.SEPARATOR);
 
 		// devices may disconnect or send error messages at any time
 		if (parts[0].equals(AbstractProtocol.DISCONNECT))
 			throw new DisconnectedException();
 		else if (parts[0].equals(AbstractProtocol.ERROR))
 			throw new DeviceException((parts.length > 1 ? parts[1] : ""));
-		else if (parts[0].equals(DISAGREEMENT)) {
+		else if (parts[0].equals(AbstractProtocol.DISAGREEMENT)) {
 			String msg = ("" + (parts.length > 1 ? parts[1] : "") + (parts.length > 2 ? parts[2] : "")).trim();
 			if (msg.length() > 1)
 				throw new ProtocolException(MessageFormat.format(ResourceFactory.instance.getString(ResourceFactory.DEVICE_CANCELLED_BECAUSE), msg));
@@ -324,9 +314,9 @@ public abstract class IODevice extends MessageQueueDevice {
 		// expect an agreement
 		final int REPLY = 0;
 		String[] reply = getHandshakeMessage(1);
-		if (reply[REPLY].equals(DISAGREEMENT))
+		if (reply[REPLY].equals(AbstractProtocol.DISAGREEMENT))
 			throw new DisagreementException();
-		if (!reply[REPLY].equals(AGREEMENT))
+		if (!reply[REPLY].equals(AbstractProtocol.AGREEMENT))
 			throw new ProtocolException(ResourceFactory.instance.getString(ResourceFactory.AGREEMENT_EXPECTED) + reply[REPLY]);				
 	}
 	
@@ -350,7 +340,7 @@ public abstract class IODevice extends MessageQueueDevice {
 
 		String supportedEncryptions = (this.tryToUseEncryption() ? Strings.join(',', Encryption.AES.toString()) : "");
 		// send handshake message
-		Message handshake = new Message(0, Strings.join(SEPARATOR, HANDSHAKE, HANDSHAKE_VERSION, flags, supportedEncryptions));
+		Message handshake = new Message(0, Strings.join(AbstractProtocol.SEPARATOR, AbstractProtocol.HANDSHAKE, AbstractProtocol.HANDSHAKE_VERSION, flags, supportedEncryptions));
 		
 		////////////////////////////////////////////////////////////
 		///// Send: Handshake
@@ -372,14 +362,14 @@ public abstract class IODevice extends MessageQueueDevice {
 
 		String[] parts = getHandshakeMessage(PART_COUNT);
 		
-		if (!parts[HSHAKE].equals(HANDSHAKE)) {
-			throw new ProtocolException(ResourceFactory.instance.getString(ResourceFactory.UNEXPECTED_HANDSHAKE) + HANDSHAKE);
+		if (!parts[HSHAKE].equals(AbstractProtocol.HANDSHAKE)) {
+			throw new ProtocolException(ResourceFactory.instance.getString(ResourceFactory.UNEXPECTED_HANDSHAKE) + AbstractProtocol.HANDSHAKE);
 		}
 				
 		// check version
-		if (HANDSHAKE_VERSION_DOUBLE < Strings.parseDouble(parts[VERSION], ResourceFactory.instance.getString(ResourceFactory.HANDSHAKE_VERSION), Double.MIN_VALUE, Double.MAX_VALUE)) {
+		if (AbstractProtocol.HANDSHAKE_VERSION_DOUBLE < Strings.parseDouble(parts[VERSION], ResourceFactory.instance.getString(ResourceFactory.HANDSHAKE_VERSION), Double.MIN_VALUE, Double.MAX_VALUE)) {
 			// send error message to the device
-			sendSynchronous(new Message(0, DISAGREEMENT));
+			sendSynchronous(new Message(0, AbstractProtocol.DISAGREEMENT));
 			throw new ProtocolException(MessageFormat.format(ResourceFactory.instance.getString(ResourceFactory.HANDSHAKE_VERSION_NOT_SUPPORTED), parts[VERSION]));
 		}
 
@@ -396,7 +386,7 @@ public abstract class IODevice extends MessageQueueDevice {
 				setEncoding(encoding);
 			} catch (Exception e) {				
 				// send error message to the device
-				sendSynchronous(new Message(0, DISAGREEMENT));
+				sendSynchronous(new Message(0, AbstractProtocol.DISAGREEMENT));
 				
 				throw new ProtocolException(ResourceFactory.instance.getString(ResourceFactory.ENCODING_NOT_SUPPORTED) + parts[ENCODING]);
 			}
@@ -451,7 +441,7 @@ public abstract class IODevice extends MessageQueueDevice {
 		// protocol found?
 		if (prot == null) {
 			// no match for supported protocols found
-			sendSynchronous(new Message(0, Strings.join(SEPARATOR, DISAGREEMENT)));
+			sendSynchronous(new Message(0, Strings.join(AbstractProtocol.SEPARATOR, AbstractProtocol.DISAGREEMENT)));
 			// no possible protocols found
 			throw new ProtocolException(ResourceFactory.instance.getString(ResourceFactory.NO_SUPPORTED_PROTOCOL));
 		}
@@ -461,7 +451,7 @@ public abstract class IODevice extends MessageQueueDevice {
 		////////////////////////////////////////////////////////////
 		
 		String preferredLanguages = getPreferredLocalesString();
-		sendSynchronous(new Message(0, Strings.join(SEPARATOR, prot.getMagic(), preferredLanguages, getMasterName())));
+		sendSynchronous(new Message(0, Strings.join(AbstractProtocol.SEPARATOR, prot.getMagic(), preferredLanguages, getMasterName())));
 		
 		////////////////////////////////////////////////////////////
 		///// Receive: Slave Name
@@ -485,7 +475,7 @@ public abstract class IODevice extends MessageQueueDevice {
 		else
 			parts = getHandshakeMessage(2);
 		
-		if (!parts[0].equals(AGREEMENT)) {
+		if (!parts[0].equals(AbstractProtocol.AGREEMENT)) {
 			return null;
 		}
 		
@@ -516,7 +506,7 @@ public abstract class IODevice extends MessageQueueDevice {
 			///// Send: Authentication
 			////////////////////////////////////////////////////////////
 			
-			Message auth = new Message(0, Strings.join(SEPARATOR, AUTHENTICATE, user, password));
+			Message auth = new Message(0, Strings.join(AbstractProtocol.SEPARATOR, AbstractProtocol.AUTHENTICATE, user, password));
 			sendSynchronous(auth);
 
 			try {

@@ -2,16 +2,80 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:padding="6dip"
-    android:background="#FFFFFF">
-    <ImageView android:src="@drawable/icon" android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/port_icon" android:paddingRight="5dip"></ImageView>
-    <LinearLayout android:id="@+id/linearLayout1" android:layout_weight="1" android:layout_width="0dip" android:orientation="vertical" android:layout_height="wrap_content">
-        <TextView style="@style/ListTitleFont" android:gravity="center_vertical" android:id="@+id/toptext" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/text_querying"></TextView>
-        <SeekBar android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/seekBar"></SeekBar>
+    android:background="#FFFFFF"
+    android:orientation="vertical"
+    android:padding="6dip" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent" >
+
+        <ImageView
+            android:id="@+id/port_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingRight="5dip"
+            android:src="@drawable/icon" />
+
+        <LinearLayout
+            android:id="@+id/linearLayout1"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/toptext"
+                style="@style/ListTitleFont"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:text="@string/text_querying" />
+
+            <SeekBar
+                android:id="@+id/seekBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/linearLayout2"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingLeft="5dip" >
+
+            <TextView
+                android:id="@+id/analog_max_value"
+                style="@style/StandardFont"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:text="@string/text_querying" />
+
+            <TextView
+                android:id="@+id/analog_ref_value"
+                style="@style/StandardFont"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center|right"
+                android:text="@string/text_querying" />
+
+            <TextView
+                android:id="@+id/analog_current_value"
+                style="@style/StandardFont"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="bottom"
+                android:gravity="bottom|right"
+                android:text="@string/text_querying" />
+        </LinearLayout>
+
     </LinearLayout>
-    <LinearLayout android:id="@+id/linearLayout2" android:orientation="vertical" android:layout_height="match_parent" android:layout_width="wrap_content" android:paddingLeft="5dip">
-        <TextView style="@style/StandardFont" android:layout_height="wrap_content" android:id="@+id/analog_max_value" android:gravity="right" android:text="@string/text_querying" android:layout_width="wrap_content"></TextView>
-        <TextView style="@style/StandardFont" android:layout_height="wrap_content" android:text="@string/text_querying" android:gravity="center|right" android:layout_width="match_parent" android:id="@+id/analog_ref_value"></TextView>
-        <TextView style="@style/StandardFont" android:id="@+id/analog_current_value" android:layout_height="match_parent" android:layout_gravity="bottom" android:gravity="bottom|right" android:text="@string/text_querying" android:layout_width="wrap_content"></TextView>
-    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvError"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+
 </LinearLayout>

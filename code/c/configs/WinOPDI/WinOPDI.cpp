@@ -22,53 +22,64 @@
 #include <stdlib.h>
 
 #include "stdafx.h"
+#include "master.h"
 #include "slave.h"
 
 int _tmain(int argc, _TCHAR* argv[])
 {
 	int code = 0;
+	int interactive = 0;
 	int tcp_port = 13110;
 	int com_port = 0;
 
-	printf("WinOPDI server. Arguments: [-tcp <port>] [-com <port>]\n");
+	printf("WinOPDI test program. Arguments: [-i] [-tcp <port>] [-com <port>]\n");
+	printf("-i starts the interactive master.\n");
 
 	for (int i = 1; i < argc; i++) {
-            if (i < argc - 1) {
-                if (_tcscmp(argv[i], _T("-tcp")) == 0) {
-					// parse tcp port number
-					tcp_port = _wtoi(argv[++i]);
-					if ((tcp_port < 1) || (tcp_port > 65535)) {
-						printf("Invalid TCP port number: %d\n", tcp_port);
-						exit(1);
-					}
-                } else if (_tcscmp(argv[i], _T("-com")) == 0) {
-					// parse com port number
-					com_port = _wtoi(argv[++i]);
-					if ((com_port < 1) || (com_port > 32)) {
-						printf("Invalid COM port number: %d\n", com_port);
-						exit(1);
-					}
-                } else {
-					printf("Unrecognized argument: %s\n", argv[i]);
+        if (_tcscmp(argv[i], _T("-i")) == 0) {
+			interactive = 1;
+		} else
+        if (i < argc - 1) {
+            if (_tcscmp(argv[i], _T("-tcp")) == 0) {
+				// parse tcp port number
+				tcp_port = _wtoi(argv[++i]);
+				if ((tcp_port < 1) || (tcp_port > 65535)) {
+					printf("Invalid TCP port number: %d\n", tcp_port);
 					exit(1);
 				}
-            }
-			else {
-				printf("Invalid syntax: missing argument\n");
+            } else if (_tcscmp(argv[i], _T("-com")) == 0) {
+				// parse com port number
+				com_port = _wtoi(argv[++i]);
+				if ((com_port < 1) || (com_port > 32)) {
+					printf("Invalid COM port number: %d\n", com_port);
+					exit(1);
+				}
+            } else {
+				printf("Unrecognized argument: %s\n", argv[i]);
 				exit(1);
 			}
         }
+		else {
+			printf("Invalid syntax: missing argument\n");
+			exit(1);
+		}
+    }
 
-	if (com_port > 0) {
-		char comPort[6];
-		sprintf(comPort, "COM%d", com_port);
+	// master?
+	if (interactive) {
+		code = start_master();
+	} else {
+		// slave
+		if (com_port > 0) {
+			LPCTSTR comPort = (LPCTSTR)malloc(6);
+			wsprintf((LPTSTR)comPort, _T("COM%d"), com_port);
 
-		code = listen_com(comPort, -1, -1, -1, -1, 1000);
+			code = listen_com(comPort, -1, -1, -1, -1, 1000);
+		}
+		else {
+			code = listen_tcp(tcp_port);
+		}
 	}
-	else {
-		code = listen_tcp(tcp_port);
-	}
-
 	printf("Exit code: %d", code);
 	exit(code);
 }

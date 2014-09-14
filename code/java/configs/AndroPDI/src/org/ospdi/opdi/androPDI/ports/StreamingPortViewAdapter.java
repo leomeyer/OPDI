@@ -8,6 +8,7 @@ import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.ports.StreamingPort;
 import org.ospdi.opdi.ports.StreamingPort.IStreamingPortListener;
 import org.ospdi.opdi.protocol.DisconnectedException;
+import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.ProtocolException;
 import org.ospdi.opdi.androPDI.R;
 
@@ -70,8 +71,9 @@ class StreamingPortViewAdapter implements IPortViewAdapter, IStreamingPortListen
     		// try to autobind
 			showDevicePorts.addPortAction(new PortAction(StreamingPortViewAdapter.this) {
 				@Override
-				void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+				void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 					sPort.bind();
+			        stateError = sPort.hasError();
 			    	// listen for port events
 			    	sPort.setStreamingPortListener(StreamingPortViewAdapter.this);
 				}
@@ -197,4 +199,10 @@ class StreamingPortViewAdapter implements IPortViewAdapter, IStreamingPortListen
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void showMessage(String message) {
+		showDevicePorts.receivedPortMessage(this.sPort, message);
+	}
+
 }

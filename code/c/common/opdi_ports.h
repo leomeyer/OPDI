@@ -110,52 +110,60 @@ typedef struct opdi_StreamingPortBinding {
 /** Clears the list of ports. This does not free the memory associated with the ports.
 *   Resets all port bindings of streaming ports.
 */
-extern uint8_t opdi_clear_ports(void);
+uint8_t opdi_clear_ports(void);
 
 /** Returns the start of the linked list of ports.
 *   NULL if the port list is empty.
 */
-extern opdi_Port *opdi_get_ports(void);
+opdi_Port *opdi_get_ports(void);
 
 /** Returns the end of the linked list of ports.
 *   NULL if the port list is empty.
 */
-extern opdi_Port *opdi_get_last_port(void);
+opdi_Port *opdi_get_last_port(void);
 
 /** Adds a port to the list. Returns OPDI_STATUS_OK if everything is ok.
 */
-extern uint8_t opdi_add_port(opdi_Port *port);
+uint8_t opdi_add_port(opdi_Port *port);
 
 /** Returns the port identified by the given ID.
 *   Returns NULL if the port can't be found.
 */
-extern opdi_Port *opdi_find_port_by_id(const char *id);
+opdi_Port *opdi_find_port_by_id(const char *id);
 
 #if (OPDI_STREAMING_PORTS > 0)
 
 /** Binds the port to the specified channel. The port must be a streaming port.
 */
-extern uint8_t opdi_bind_port(opdi_Port *port, channel_t channel);
+uint8_t opdi_bind_port(opdi_Port *port, channel_t channel);
 
 /** Unbinds the port. The port must be a streaming port.
 */
-extern uint8_t opdi_unbind_port(opdi_Port *port);
+uint8_t opdi_unbind_port(opdi_Port *port);
 
 /** Tries to dispatch the message payload to a bound streaming port. If a streaming port is found,
 *   its dataReceived function from its port information is called and its result returned.
 *   If there is no port bound to this channel, returns OPDI_NO_BINDING.
 */
-extern uint8_t opdi_try_dispatch_stream(opdi_Message *m);
+uint8_t opdi_try_dispatch_stream(opdi_Message *m);
 
 /** Resets all bindings. This will usually be called when a new connection is being initiated.
 */
-extern uint8_t opdi_reset_bindings(void);
+uint8_t opdi_reset_bindings(void);
 
 /** Returns the number of currently bound streaming ports.
 */
-extern uint16_t opdi_get_port_bind_count(void);
+uint16_t opdi_get_port_bind_count(void);
 
 #endif
+
+/** Used to set the port info message for OPDI_PORT_ACCESS_DENIED and OPDI_PORT_ERROR.
+*/
+void opdi_set_port_message(const char *message);
+
+/** Used to get the port info message for OPDI_PORT_ACCESS_DENIED and OPDI_PORT_ERROR.
+*/
+const char *opdi_get_port_message(void);
 
 #ifdef __cplusplus
 }

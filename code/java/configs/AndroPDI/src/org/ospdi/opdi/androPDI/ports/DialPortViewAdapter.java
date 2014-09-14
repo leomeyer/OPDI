@@ -6,6 +6,7 @@ import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.ports.DialPort;
 import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.protocol.DisconnectedException;
+import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.ProtocolException;
 import org.ospdi.opdi.androPDI.R;
 
@@ -76,7 +77,7 @@ class DialPortViewAdapter implements IPortViewAdapter {
 
         showDevicePorts.addPortAction(new PortAction(DialPortViewAdapter.this) {
 			@Override
-			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 				queryState();
 			}
 		});
@@ -101,13 +102,14 @@ class DialPortViewAdapter implements IPortViewAdapter {
 		openMenu();
 	}
 
-	protected void queryState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	protected void queryState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
         // attempt to retrieve the values
         position = dPort.getPosition();
         maxValue = dPort.getMaximum();
         minValue = dPort.getMinimum();
         step = dPort.getStep();
-	}
+        stateError = dPort.hasError();
+    }
 	
 	@Override
 	public void startPerformAction() {
@@ -117,7 +119,6 @@ class DialPortViewAdapter implements IPortViewAdapter {
 	
 	@Override
 	public void setError(Throwable t) {
-		// 
 		stateError = true;
 	}
 
@@ -136,7 +137,7 @@ class DialPortViewAdapter implements IPortViewAdapter {
 					InterruptedException,
 					DisconnectedException,
 					DeviceException,
-					ProtocolException {
+					ProtocolException, PortAccessDeniedException {
 				// reload the port state
 				dPort.refresh();
 				queryState();
@@ -189,7 +190,7 @@ class DialPortViewAdapter implements IPortViewAdapter {
 			private void setValue(final int val) {
 				DialPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DialPortViewAdapter.this) {
 					@Override
-					void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+					void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 						dPort.setPosition(val + dPort.getMinimum());
 						position = dPort.getPosition();
 					}
@@ -248,7 +249,7 @@ class DialPortViewAdapter implements IPortViewAdapter {
 				public boolean onMenuItemClick(MenuItem item) {
 					return showDevicePorts.addPortAction(new PortAction(DialPortViewAdapter.this) {
 						@Override
-						void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+						void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 							dPort.refresh();
 							queryState();
 						}
@@ -300,7 +301,7 @@ class DialPortViewAdapter implements IPortViewAdapter {
 											InterruptedException,
 											DisconnectedException,
 											DeviceException,
-											ProtocolException {
+											ProtocolException, PortAccessDeniedException {
 										// set the port value
 										// this corrects to the nearest step
 										dPort.setPosition(val);
@@ -325,4 +326,11 @@ class DialPortViewAdapter implements IPortViewAdapter {
 			menu.close();
 		}
 	}
+
+	@Override
+	public void showMessage(String message) {
+		showDevicePorts.receivedPortMessage(this.dPort, message);
+		
+	}
+
 }
