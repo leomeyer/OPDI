@@ -29,7 +29,7 @@ void StringTools::split(std::string str, char c, std::vector<std::string>& resul
 	char ch; 
 	char nextCh;
 	results.clear();
-	for (int i = 0; i < str.size(); i++) {
+	for (unsigned int i = 0; i < str.size(); i++) {
 		ch = str[i];
 		nextCh = ch + 1;
 		// preview of next character
@@ -66,7 +66,7 @@ std::string StringTools::join(int skipBegin, int skipEnd, char c, std::vector<st
 		std::string str = (std::string)*it;
 		// do not send empty strings because it messes up the separator character escape sequence
 		if (str.size() == 0) str = " ";
-		for (int i = 0; i < str.size(); i++) {
+		for (unsigned int i = 0; i < str.size(); i++) {
 			char ch = str[i]; 
 			// duplicate first character in case it's a blank
 			// this preserves sending leading blanks
