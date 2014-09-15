@@ -3,7 +3,7 @@
 *.zip
 *.a
 *.d
-/code/c/configs/Chromashade/*.eep
+*.eep
 *.elf
 *.hex
 *.lss
@@ -11,9 +11,9 @@
 *.sym
 *.eep
 *.tlog
-/code/c/configs/WinOPDI/Debug/*.log
-/code/c/configs/WinOPDI/Debug/*.exe
-/code/c/configs/WinOPDI/Debug/*.obj
+*.log
+*.exe
+*.obj
 *.pdb
 *.idb
 *.opensdf
@@ -28,3 +28,4 @@
 *.lastbuildstate
 *.cache
 *.rc
+/code/c/configs/WinOPDI/Debug/*.unsuccessfulbuild
