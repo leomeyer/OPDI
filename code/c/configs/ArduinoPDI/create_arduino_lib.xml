@@ -4,7 +4,7 @@
     </description>
     
   <!-- set global properties for this build -->
-  <property name="target" value="Duemilanove"/>
+  <loadproperties srcFile="create_arduino_lib.properties"/>
   <property name="dest" location="Release/arduino_lib"/>
   
 <target name="dist" depends="clean" description="generate the distribution" >

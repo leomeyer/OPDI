@@ -5,6 +5,7 @@
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="de.innot.avreclipse.configuration.app.release.1602708466" moduleId="org.eclipse.cdt.core.settings" name="Release">
 				<macros>
 					<stringMacro name="ARDUINO_TARGET" type="VALUE_TEXT" value="Mega2560"/>
+					<stringMacro name="FOR_ARDUINO_TARGET" type="VALUE_TEXT" value="Enter one of the sub folder names of the lib folder (content will be used for the Arduino library)."/>
 				</macros>
 				<externalSettings/>
 				<extensions>
