@@ -1,7 +1,7 @@
 ###############################################################################
 # ArduinOPDILib
-# Makefile for the dependent arduino OPDI library
-# Leo Meyer, leomeyer@gmx.de, 2013-2014
+# Makefile for the dependent Arduino OPDI library
+# Leo Meyer, leo@leomeyer.de, 2013-2014
 ###############################################################################
 ## General Flags
 ####################################################################
