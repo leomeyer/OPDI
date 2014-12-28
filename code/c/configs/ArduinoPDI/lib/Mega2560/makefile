@@ -1,5 +1,7 @@
 ###############################################################################
-# Makefile for the project libwizslave
+# ArduinOPDILib
+# Makefile for the dependent arduino OPDI library
+# Leo Meyer, leomeyer@gmx.de, 2013-2014
 ###############################################################################
 ## General Flags
 ####################################################################
@@ -13,6 +15,7 @@ MCU = $(AVRTARGETMCU)
 ## It is important to put "lib" in front of your project name
 TARGET = libarduinopdi.a
 CC = avr-gcc
+CPP = avr-g++
 
 ## Options common to compile, link and assembly rules
 COMMON = -mmcu=$(MCU)
@@ -21,6 +24,10 @@ COMMON = -mmcu=$(MCU)
 CFLAGS = $(COMMON)
 CFLAGS += -Wall -gdwarf-2 -O0 -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 CFLAGS += -Wp,-M,-MP,-MT,$(*F).o,-MF,dep/$(@F).d
+
+## Compile options for C++ compilation units.
+CPPFLAGS = $(COMMON)
+CPPFLAGS += -w -Os -ffunction-sections -fdata-sections -ffunction-sections -fdata-sections -fno-exceptions
 
 ## Assembly specific flags
 ASMFLAGS = $(COMMON)
@@ -39,7 +46,7 @@ INCLUDES = -I "." -I "../../../../platforms" -I "../../../../platforms/avr" -I "
 LIBS = -lm
 
 ## Objects that must be built in order to link
-OBJECTS = opdi_platformfuncs.o opdi_messages.o opdi_ports.o opdi_protocol.o opdi_slave_protocol.o opdi_strings.o
+OBJECTS = opdi_platformfuncs.o opdi_messages.o opdi_ports.o opdi_protocol.o opdi_slave_protocol.o opdi_strings.o OPDI.o
 
 ## Build
 all: $(TARGET)
@@ -57,7 +64,9 @@ opdi_slave_protocol.o: ../../../../common/opdi_slave_protocol.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
 opdi_strings.o: ../../../../common/opdi_strings.c 
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
-
+OPDI.o: ../../../../common/cppwrapper/OPDI.cpp 
+	$(CPP) $(INCLUDES) $(CPPFLAGS) -MMD -MP -MF"OPDI.d" -MT"OPDI.d" -c -o "OPDI.o" "../../../../common/cppwrapper/OPDI.cpp"
+	
 ##Link
 $(TARGET): $(OBJECTS)
 	avr-ar -r $(TARGET) $(OBJECTS)

@@ -30,7 +30,10 @@
 
 #include <opdi_constants.h>
 
-#include "OPDI.h"
+#include "ArduinOPDI.h"
+
+// define global OPDI instance
+OPDI Opdi = ArduinOPDI();
 
 // Port definitions
 

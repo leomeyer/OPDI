@@ -20,6 +20,9 @@
  *  for use in Arduino sketches.
  */
 
+#ifndef __OPDI_H__
+#define __OPDI_H__
+
 #include <opdi_config.h>
 #include <opdi_ports.h>
 
@@ -92,38 +95,6 @@ public:
 	virtual uint8_t getState(uint8_t *mode, uint8_t *line) = 0;
 };
 
-/** Defines a digital port that is bound to a specified pin.
- *
- */
-class OPDI_DigitalPortPin : public OPDI_DigitalPort {
-
-protected:
-	uint8_t pin;
-	uint8_t mode;
-	uint8_t line;
-
-public:
-	// Initialize a digital port. Specify one of the OPDI_PORTDIRCAPS_* values for dircaps.
-	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
-	// Note: OPDI_DIGITAL_PORT_HAS_PULLDN is not supported.
-	OPDI_DigitalPortPin(const char *id, const char *name, const char * dircaps, const uint8_t flags, const uint8_t pin);
-	virtual ~OPDI_DigitalPortPin();
-
-	// function that handles the set mode command (opdi_set_digital_port_mode)
-	// mode = 0: floating input
-	// mode = 1: input with pullup on
-	// mode = 2: not supported
-	// mode = 3: output
-	uint8_t setMode(uint8_t mode);
-
-	// function that handles the set line command (opdi_set_digital_port_line)
-	// line = 0: state low
-	// line = 1: state high
-	uint8_t setLine(uint8_t line);
-
-	// function that fills in the current port state
-	uint8_t getState(uint8_t *mode, uint8_t *line);
-};
 
 #endif // OPDI_NO_DIGITAL_PORTS
 
@@ -163,44 +134,6 @@ public:
 	virtual uint8_t getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) = 0;
 };
 
-/** Defines an analog port that is bound to a specified pin.
-	The following restrictions apply:
-	1. Port resolution is fixed; 10 bits (0 - 1023) for input ports, and 8 bits (0 - 255) for output ports.
-	2. The internal reference setting maps to the analog reference type DEFAULT (not INTERNAL!). It uses the supply voltage
-	   of the board as a reference (5V or 3.3V).
-	3. The external reference setting maps to the analog reference type EXTERNAL. It uses the voltage at the AREF pin as a reference.
-	4. Analog outputs may output an analog value or a PWM signal depending on the board and pin.
- */
-class OPDI_AnalogPortPin : public OPDI_AnalogPort {
-
-protected:
-	uint8_t pin;
-	uint8_t mode;
-	uint8_t reference;
-	uint8_t resolution;
-	int32_t value;
-
-public:
-	OPDI_AnalogPortPin(const char *id, const char *name, const char * dircaps, const uint8_t flags, const uint8_t pin);
-	virtual ~OPDI_AnalogPortPin();
-
-	// mode = 1: input
-	// mode = 2: output
-	uint8_t setMode(uint8_t mode);
-
-	// does nothing (resolution is fixed to 10 for inputs and 8 for outputs)
-	uint8_t setResolution(uint8_t resolution);
-
-	// reference = 0: internal voltage reference
-	// reference = 1: external voltage reference
-	uint8_t setReference(uint8_t reference);
-
-	// value: an integer value ranging from 0 to 2^resolution - 1
-	uint8_t setValue(int32_t value);
-
-	uint8_t getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value);
-};
-
 #endif // OPDI_NO_ANALOG_PORTS
 
 
@@ -223,12 +156,13 @@ protected:
 
 public:
 	/** Prepares the OPDI class for use.
-	 *
+	 * You must override this method to implement your platform specific setup.
 	 */
-	uint8_t setup(const char *slave_name);
+	virtual uint8_t setup(const char *slave_name);
 
 	/** Sets the idle timeout. If the master sends no meaningful messages during this time
 	 * the slave sends a disconnect message. If the value is 0 (default), the setting has no effect.
+	 * This functionality depends on the method getTimeMs to return meaningful values.
 	 */
 	void setIdleTimeout(uint32_t idleTimeoutMs);
 
@@ -251,7 +185,7 @@ public:
 	uint8_t start();
 
 	/** Starts the OPDI handshake to accept commands from a master.
-	 * Passes a pointer to a housekeeping function that needs to perform regular tasks.
+	 * Accepts a pointer to a housekeeping function that needs to perform regular tasks.
 	 */
 	uint8_t start(uint8_t (*workFunction)());
 
@@ -282,9 +216,18 @@ public:
 	 */
 	uint8_t refresh(OPDI_Port **ports);
 
+	/** Returns the current system time in milliseconds. Used to implement the idle timer.
+	 * Override this function to return the correct time. The default implementation always returns 0.
+	 * This effectively disables the idle timer.
+	 */
+	virtual uint32_t getTimeMs();
+
 	/** An internal handler which is used to implement the idle timer.
 	 */
 	virtual uint8_t messageHandled(channel_t channel, const char **parts);
 };
 
+// define a singleton instance
 extern OPDI Opdi;
+
+#endif
