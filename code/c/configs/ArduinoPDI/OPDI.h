@@ -50,6 +50,9 @@ protected:
 	OPDI_Port *next;
 
 public:
+	/** Virtual destructor for the port. */
+	virtual ~OPDI_Port();
+
 	/** Sets the name of the port. Maximum length is defined in MAX_PORTNAMELENGTH. */
 	void setName(const char *name);
 
@@ -206,6 +209,7 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////
 
 class OPDI {
+
 protected:
 	// list pointers
 	OPDI_Port *first_port;
@@ -216,6 +220,7 @@ protected:
 
 	// housekeeping function
 	uint8_t (*workFunction)();
+
 public:
 	/** Prepares the OPDI class for use.
 	 *
