@@ -5,7 +5,7 @@
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="de.innot.avreclipse.configuration.app.release.1602708466" moduleId="org.eclipse.cdt.core.settings" name="Release">
 				<macros>
 					<stringMacro name="FOR_ARDUINO_TARGET" type="VALUE_TEXT" value="Enter one of the sub folder names of the lib folder (content will be used for the Arduino library)."/>
-					<stringMacro name="ARDUINO_TARGET" type="VALUE_TEXT" value="Mega2560"/>
+					<stringMacro name="ARDUINO_TARGET" type="VALUE_TEXT" value="Duemilanove"/>
 				</macros>
 				<externalSettings/>
 				<extensions>
@@ -55,8 +55,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ArduinoCore}&quot;"/>
 									<listOptionValue builtIn="false" value="../../../platforms/avr"/>
 									<listOptionValue builtIn="false" value="../../../common"/>
-									<listOptionValue builtIn="false" value="../lib/${ARDUINO_TARGET}"/>
 									<listOptionValue builtIn="false" value="../../../common/cppwrapper"/>
+									<listOptionValue builtIn="false" value="../lib/${ARDUINO_TARGET}"/>
 								</option>
 								<option id="de.innot.avreclipse.cppcompiler.option.optimize.other.635259380" name="Other Optimization Flags" superClass="de.innot.avreclipse.cppcompiler.option.optimize.other" value="-ffunction-sections -fdata-sections" valueType="string"/>
 								<option id="de.innot.avreclipse.cppcompiler.option.allwarn.800024607" name="All Warnings (-Wall)" superClass="de.innot.avreclipse.cppcompiler.option.allwarn" value="false" valueType="boolean"/>

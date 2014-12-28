@@ -227,7 +227,7 @@ public:
 	virtual uint8_t messageHandled(channel_t channel, const char **parts);
 };
 
-// define a singleton instance
-extern OPDI Opdi;
-
 #endif
+
+// declare a singleton instance that must be defined by the implementation
+extern OPDI *Opdi;

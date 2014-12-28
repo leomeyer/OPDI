@@ -45,7 +45,7 @@ uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 	uint8_t result;
 	uint8_t dMode;
 	uint8_t dLine;
-	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi.findPort(port);
+	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -61,7 +61,7 @@ uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 	uint8_t dLine;
 
-	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi.findPort(port);
+	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -75,7 +75,7 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 	uint8_t dMode;
 
-	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi.findPort(port);
+	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -98,7 +98,7 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 	uint8_t aRef;
 	uint8_t aRes;
 
-	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi.findPort(port);
+	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -113,7 +113,7 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 }
 
 uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
-	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi.findPort(port);
+	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -123,7 +123,7 @@ uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
 	uint8_t aMode;
 
-	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi.findPort(port);
+	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -138,7 +138,7 @@ uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
 
 uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
 	uint8_t aRes;
-	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi.findPort(port);
+	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -153,7 +153,7 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
 
 uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 	uint8_t aRef;
-	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi.findPort(port);
+	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -181,7 +181,7 @@ uint8_t opdi_choose_language(const char *languages) {
 
 
 uint8_t opdi_message_handled(channel_t channel, const char **parts) {
-	return Opdi.messageHandled(channel, parts);
+	return Opdi->messageHandled(channel, parts);
 }
 
 #endif
@@ -222,7 +222,7 @@ uint8_t OPDI_Port::refresh() {
 	ports[0] = this;
 	ports[1] = NULL;
 
-	return Opdi.refresh(ports);
+	return Opdi->refresh(ports);
 }
 
 OPDI_Port::~OPDI_Port() {
@@ -280,9 +280,7 @@ uint8_t OPDI::setup(const char *slaveName) {
 	// set standard encoding to "utf-8"
 	strncpy((char*)opdi_encoding, "utf-8", MAX_ENCODINGNAMELENGTH - 1);
 
-	opdi_slave_init();
-
-	return OPDI_STATUS_OK;
+	return opdi_slave_init();
 }
 
 void OPDI::setIdleTimeout(uint32_t idleTimeoutMs) {
@@ -411,4 +409,3 @@ uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 
 	return OPDI_STATUS_OK;
 }
-

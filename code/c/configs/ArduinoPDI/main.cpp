@@ -32,8 +32,11 @@
 
 #include "ArduinOPDI.h"
 
+// The ArduinOPDI class defines all the Arduino specific stuff like serial ports communication.
+ArduinOPDI ArduinOpdi = ArduinOPDI();
 // define global OPDI instance
-OPDI Opdi = ArduinOPDI();
+// important: for polymorphism to work, assign own OPDI instance
+OPDI *Opdi = &ArduinOpdi;
 
 // Port definitions
 
@@ -47,19 +50,25 @@ OPDI_AnalogPortPin anaPort1 = OPDI_AnalogPortPin("AP1", "Pin A0", OPDI_PORTDIRCA
 // Analog output port (PWM)
 OPDI_AnalogPortPin anaPort2 = OPDI_AnalogPortPin("AP2", "PWM 11", OPDI_PORTDIRCAP_OUTPUT, 0, 11);
 
-int main(void)
-{
-	init();
+uint8_t checkerror(uint8_t result) {
+	if (result != OPDI_STATUS_OK) {
+		digitalWrite(13, LOW);    // set the LED off
+		delay(500);
 
-	setup();
-
-	for (;;)
-		loop();
-
-	return 0;
+		// flash error code on LED
+		for (uint8_t i = 0; i < result; i++) {
+			digitalWrite(13, HIGH);   // set the LED on
+			delay(200);              // wait
+			digitalWrite(13, LOW);    // set the LED off
+			delay(200);              // wait
+		}
+		digitalWrite(13, LOW);    // set the LED off
+		return 0;
+	}
+	return 1;
 }
 
-void setup() {                
+uint8_t setupDevice() {
 	// initialize the digital pin as an output.
 	// Pin 13 has an LED connected on most Arduino boards
 	pinMode(13, OUTPUT);
@@ -68,18 +77,35 @@ void setup() {
 	Serial.begin(9600);
 
 	// initialize the OPDI system
-	Opdi.setup("ArduinOPDI");
-	Opdi.setIdleTimeout(20000);
+	uint8_t result = Opdi->setup("ArduinOPDI");
+	if (checkerror(result) == 0)
+		return 0;
+	Opdi->setIdleTimeout(20000);
 
 	// add the ports provided by this configuration
-	Opdi.addPort(&digPort1);
-	Opdi.addPort(&digPort2);
-	Opdi.addPort(&anaPort1);
-	Opdi.addPort(&anaPort2);
+	Opdi->addPort(&digPort1);
+	Opdi->addPort(&digPort2);
+	Opdi->addPort(&anaPort1);
+	Opdi->addPort(&anaPort2);
+
+	return 1;
+}
+
+int main(void)
+{
+	init();
+
+	uint8_t setupOK = setupDevice();
+
+	for (;;)
+		if (setupOK)
+			loop();
+
+	return 0;
 }
 
 /* This function can be called to perform regular housekeeping.
-* Passing it to the Opdi.start() function ensures that it is called regularly.
+* Passing it to the Opdi->start() function ensures that it is called regularly.
 * The function can send OPDI messages to the master or even disconnect a connection.
 * It should always return OPDI_STATUS_OK in case everything is normal.
 * If disconnected it should return OPDI_DISCONNECTED.
@@ -103,7 +129,7 @@ void loop() {
 
 		// start the OPDI protocol, passing a pointer to the housekeeping function
 		// this call blocks until the slave is disconnected
-		uint8_t result = Opdi.start(&doWork);
+		uint8_t result = Opdi->start(&doWork);
 
 		// no regular disconnect?
 		if (result != OPDI_DISCONNECTED) {

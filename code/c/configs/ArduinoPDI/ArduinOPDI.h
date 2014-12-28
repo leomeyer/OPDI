@@ -7,8 +7,6 @@
 class ArduinOPDI : public OPDI {
 
 public:
-	ArduinOPDI();
-
 	virtual uint8_t setup(const char *slaveName);
 
 	virtual ~ArduinOPDI();

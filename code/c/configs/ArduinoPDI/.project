@@ -96,11 +96,4 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 		<nature>de.innot.avreclipse.core.avrnature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>vminst.log</name>
-			<type>1</type>
-			<location>C:/temp/vminst.log</location>
-		</link>
-	</linkedResources>
 </projectDescription>

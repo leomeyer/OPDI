@@ -48,14 +48,14 @@
 	</copy>
 		   
    	<!-- Zip the files for import in the Arduino IDE -->
-   	<zip basedir="${dest}" destfile="OPDI.zip" update="true">
+   	<zip basedir="${dest}" destfile="OPDI_${target}.zip" update="true">
    	    
    	</zip>
 </target>
 
 <target name="clean" description="clean up" >
 	<delete dir="${dest}"/>
-   	<delete file="OPDI.zip"/>
+   	<delete file="OPDI_${target}.zip"/>
 </target>
   
 </project>

@@ -16,7 +16,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/** OPDI C++ wrapper implementation
+/** OPDI C++ wrapper implementation for Arduino.
  * Uses serial port communication.
  */
 
@@ -51,7 +51,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 		if ((millis() - ticks) > timeout)
 			return OPDI_TIMEOUT;
 
-		uint8_t result = Opdi.waiting(canSend);
+		uint8_t result = Opdi->waiting(canSend);
 		if (result != OPDI_STATUS_OK)
 			return result;
 	}
@@ -80,26 +80,21 @@ uint8_t opdi_debug_msg(const uint8_t *message, uint8_t direction) {
 // Device specific OPDI implementation
 //////////////////////////////////////////////////////////////////////////////////////////
 
-ArduinOPDI::ArduinOPDI() : OPDI() { }
-
 uint8_t ArduinOPDI::setup(const char *slaveName) {
-
 	uint8_t result = OPDI::setup(slaveName);
 	if (result != OPDI_STATUS_OK)
 		return result;
 
 	// setup OPDI messaging via serial port
-	opdi_message_setup(&io_receive, &io_send, NULL);
-
-	return OPDI_STATUS_OK;
+	return opdi_message_setup(&io_receive, &io_send, NULL);
 }
 
-ArduinOPDI::~ArduinOPDI() {}
+ArduinOPDI::~ArduinOPDI() {
+}
 
 uint32_t ArduinOPDI::getTimeMs() {
-	return 0;
+	return millis();
 }
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Digital port functionality
