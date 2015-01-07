@@ -111,8 +111,7 @@ public abstract class AbstractProtocol {
 							throw new PortErrorException();
 					}
 					else
-					
-					return message;
+						return message;
 				}
 			}	// synchronized(queue)
 			// not found
