@@ -1,11 +1,25 @@
 #ifndef __OPDI_ABSTRACTPROTOCOL_H
 #define __OPDI_ABSTRACTPROTOCOL_H
 
+#include <Poco\Exception.h>
+
 #include "opdi_protocol_constants.h"
 
 #include <master\opdi_IDevice.h>
 
-class TimeoutException : Poco::Exception {};
+#define EXCEPTION_API
+
+POCO_DECLARE_EXCEPTION(EXCEPTION_API, ProtocolException, Poco::ApplicationException)
+
+POCO_DECLARE_EXCEPTION(EXCEPTION_API, DisconnectedException, Poco::ApplicationException)
+
+POCO_DECLARE_EXCEPTION(EXCEPTION_API, DisagreementException, Poco::ApplicationException)
+
+POCO_DECLARE_EXCEPTION(EXCEPTION_API, TimeoutException, Poco::ApplicationException)
+
+POCO_DECLARE_EXCEPTION(EXCEPTION_API, PortErrorException, Poco::ApplicationException)
+
+POCO_DECLARE_EXCEPTION(EXCEPTION_API, PortAccessDeniedException, Poco::ApplicationException)
 
 /** This class implements generic functions of OPDI communication protocols.
  * 

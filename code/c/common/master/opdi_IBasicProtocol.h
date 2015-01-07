@@ -11,21 +11,6 @@
 #include <Poco\Exception.h>
 #include <master\opdi_DigitalPort.h>
 
-class ProtocolException : public Poco::Exception
-{
-public:
-	ProtocolException(const std::string &message) : Poco::Exception(message, 0) {};
-};
-
-class DisconnectedException : public Poco::Exception
-{
-};
-
-class DisagreementException : public Poco::Exception
-{
-};
-
-
 /** This interface specifies the basic protocol that must be supported by all devices.
  * 
  * @author Leo

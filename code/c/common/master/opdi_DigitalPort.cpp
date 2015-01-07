@@ -55,7 +55,7 @@ void DigitalPort::setPortState(IBasicProtocol& protocol, DigitalPortMode mode)
 	try {
 		checkMode(mode);
 	} catch (Poco::Exception e) {
-		throw new ProtocolException(e.displayText());
+		throw ProtocolException(e.displayText());
 	}
 	this->mode = mode;
 }

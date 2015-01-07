@@ -11,6 +11,20 @@
 #include <master\opdi_StringTools.h>
 #include <Poco\NumberParser.h>
 
+
+POCO_IMPLEMENT_EXCEPTION(ProtocolException, Poco::ApplicationException, "Protocol Error")
+
+POCO_IMPLEMENT_EXCEPTION(DisconnectedException, Poco::ApplicationException, "Disconnected")
+
+POCO_IMPLEMENT_EXCEPTION(DisagreementException, Poco::ApplicationException, "Disagreement")
+
+POCO_IMPLEMENT_EXCEPTION(TimeoutException, Poco::ApplicationException, "Timeout")
+
+POCO_IMPLEMENT_EXCEPTION(PortAccessDeniedException, Poco::ApplicationException, "Port Access Denied")
+
+POCO_IMPLEMENT_EXCEPTION(PortErrorException, Poco::ApplicationException, "Port Error")
+
+
 const double AbstractProtocol::HANDSHAKE_VERSION_DOUBLE = parseDouble(OPDI_Handshake_version, "Handshake version", 0, 1000);
 long AbstractProtocol::HANDSHAKE_TIMEOUT = 5000L;
 
@@ -87,7 +101,30 @@ Message* AbstractProtocol::expect(long channel, int timeout /*, IAbortable abort
 			{
 				// check whether a message with this channel is in the queue
 				if (mn->message->getChannel() == channel) {
-					return mn->message;
+
+					// analyze message for port status
+					std::vector<std::string> parts;
+					StringTools::split(mn->message->getPayload(), SEPARATOR, parts);
+					if (parts.size() < 1)
+						throw ProtocolException("invalid number of message parts");
+
+					if (parts[0] == OPDI_Disagreement)
+					{
+						if (parts.size() > 1)
+							throw PortAccessDeniedException(parts[1]);
+						else
+							throw PortAccessDeniedException();
+					}
+					else
+					if (parts[0] == OPDI_Error)
+					{
+						if (parts.size() > 1)
+							throw PortErrorException(parts[1]);
+						else
+							throw PortErrorException();
+					}
+					else
+						return mn->message;
 				}
 				else {
 					// the message is for a different channel; let other thread handle it

@@ -1,3 +1,4 @@
+#include <master\opdi_AbstractProtocol.h>
 #include <master\opdi_IBasicProtocol.h>
 #include <master\opdi_StringTools.h>
 
@@ -12,9 +13,9 @@ BasicDeviceCapabilities::BasicDeviceCapabilities(IBasicProtocol* protocol, int c
 	std::vector<std::string> parts;
 	StringTools::split(serialForm, ':', parts);
 	if (parts.size() != PART_COUNT) 
-		throw new ProtocolException("BasicDeviceCapabilities message invalid");
+		throw ProtocolException("BasicDeviceCapabilities message invalid");
 	if (parts[0] != OPDI_BASIC_DEVICE_CAPABILITIES_MAGIC)
-		throw new ProtocolException("BasicDeviceCapabilities message invalid: incorrect magic: " + parts[0]);
+		throw ProtocolException("BasicDeviceCapabilities message invalid: incorrect magic: " + parts[0]);
 	// split port IDs by comma
 	std::vector<std::string> portIDs;
 	StringTools::split(parts[PORTS_PART], ',', portIDs);

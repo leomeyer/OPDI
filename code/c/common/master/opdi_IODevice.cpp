@@ -233,7 +233,7 @@ void IODevice::getHandshakeMessage(int expectedPartCount, std::vector<std::strin
 		
 /*
 	if (results.size != 0) {
-		throw new ProtocolException("Invalid handshake message");
+		throw ProtocolException("Invalid handshake message");
 	}
 */
 

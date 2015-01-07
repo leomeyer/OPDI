@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "opdi_Port.h"
+#include <master\opdi_AbstractProtocol.h>
 #include <master\opdi_IBasicProtocol.h>
 
 Port::Port(IBasicProtocol& protocol, std::string id, std::string name, PortType type, PortDirCaps dirCaps) : protocol(protocol) {

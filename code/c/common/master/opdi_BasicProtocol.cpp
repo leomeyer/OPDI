@@ -222,11 +222,11 @@ void BasicProtocol::expectDigitalPortState(DigitalPort* port, int channel)
 	std::vector<std::string> parts;
 	StringTools::split(m->getPayload(), SEPARATOR, parts);
 	if (parts.size() != PARTS_COUNT)
-		throw new ProtocolException("invalid number of message parts");
+		throw ProtocolException("invalid number of message parts");
 	if (parts[PREFIX] != OPDI_digitalPortState)
-		throw new ProtocolException(std::string("unexpected reply, expected: ") + OPDI_digitalPortState);
+		throw ProtocolException(std::string("unexpected reply, expected: ") + OPDI_digitalPortState);
 	if (parts[ID] != port->getID())
-		throw new ProtocolException("wrong port ID");
+		throw ProtocolException("wrong port ID");
 
 	// set port state
 	port->setPortState(*this, (DigitalPortMode)AbstractProtocol::parseInt(parts[MODE], "mode", 0, 3));
