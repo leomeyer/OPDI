@@ -441,7 +441,7 @@ int start_master()
 	printf("Interactive OPDI master started. Type '?' for help.\n");
 
 	add_device(create_device("1", "opdi_tcp://admin:admin@localhost:13110"));
-	add_device(create_device("2", "opdi_tcp://dev02"));
+	add_device(create_device("2", "opdi_tcp://admin:admin@192.168.56.101"));
 
 	std::string cmd;
 	while (true) {
@@ -581,14 +581,18 @@ int start_master()
 				output << "Command unknown" << std::endl;
 			}
 		}
-		catch (Poco::Exception& e) {
+		catch (const Poco::Exception& e) {
 			print_exception(&e);
 		}
-		catch (std::exception&) {
-			output << "Unknown exception";
+		catch (const ProtocolException& pe) {
+			output << "Protocol exception: ";
+			print_exception(&pe);
+		}
+		catch (const std::exception&) {
+			output << "Unknown exception\n";
 		}
 		catch (...) {
-			output << "Unknown error";
+			output << "Unknown error\n";
 		}
 	}		// while
 
