@@ -45,12 +45,15 @@ CFLAGS = $(CDEFS) $(CINCS)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 CFLAGS += -fpermissive
 
+# Additional Libraries
+LIBS = -lrt
+
 OBJECTS = $(SRC:.cpp=.o)
 
 all: $(SRC) $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $@
+	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(LIBS)
 
 .cpp.o:
 	@echo
