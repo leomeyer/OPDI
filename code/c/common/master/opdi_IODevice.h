@@ -64,19 +64,7 @@ public:
  */
 class IODevice : public MessageQueueDevice
 {
-	
-	/** Used for supplying the device with authentication credentials during the handshake.
-	 * 
-	 * @author Leo
-	 *
-	public interface ICredentialsCallback {
-//		/** The callback method must put the user name into the first component and the
-		 * password into the second component. if save is true the credentials may be saved.
-		 * May return false if the handshake should be cancelled.
-		 * @param namePassword
-		public boolean getCredentials(String[] namePassword, Boolean[] save);
-	}
-	 */
+
 protected:
 
 	IBasicProtocol* protocol;
@@ -136,7 +124,7 @@ public:
 
 	BasicDeviceCapabilities* getCapabilities() override;
 	
-	void getHandshakeMessage(int partCount, std::vector<std::string>& results);
+	void getHandshakeMessage(unsigned int partCount, std::vector<std::string>& results);
 	
 	void expectAgreement();
 	

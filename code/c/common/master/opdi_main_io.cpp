@@ -15,7 +15,7 @@ const char *read_line (char *buf, size_t length, FILE *f)
 {
   const char *p;
 
-  if (p = fgets (buf, length, f)) {
+  if ((p = fgets (buf, length, f))) {
     size_t last = strlen (buf) - 1;
 
     if (buf[last] == '\n') {
@@ -41,7 +41,7 @@ const char *readLine (char *buf, size_t length, FILE *f)
 {
   const char *p;
 
-  if (p = fgets (buf, length, f)) {
+  if ((p = fgets (buf, length, f))) {
     size_t last = strlen (buf) - 1;
 
     if (buf[last] == '\n') {

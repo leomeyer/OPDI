@@ -56,7 +56,7 @@ CINCS =
 CDEFINES = -Dlinux
 
 # Compiler flags.
-CFLAGS = $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
+CFLAGS = -Wall $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -static-libstdc++
 
 OBJECTS = $(SRC)

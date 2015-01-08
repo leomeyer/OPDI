@@ -65,8 +65,6 @@ static unsigned long last_activity = 0;
 static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t canSend) {
 	char c;
 	int result;
-	opdi_Message m;
-	char bmp085[32];
 	uint64_t ticks = opdi_get_time_ms();
 	long sendTicks = ticks;
 
@@ -116,8 +114,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 			int fd = (long)info;
 			char inputData;
 			int bytesRead;
-			int err;
-
+			
 			// first byte of connection remembered?
 			if (first_com_byte != 0) {
 				c = first_com_byte;

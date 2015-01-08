@@ -219,11 +219,11 @@ void BasicProtocol::expectDigitalPortState(DigitalPort* port, int channel)
 	int ID = 1;
 	int MODE = 2;
 	int LINE = 3;
-	int PARTS_COUNT = 4;
+	unsigned int PART_COUNT = 4;
 		
 	std::vector<std::string> parts;
 	StringTools::split(m->getPayload(), SEPARATOR, parts);
-	if (parts.size() != PARTS_COUNT)
+	if (parts.size() != PART_COUNT)
 		throw ProtocolException("invalid number of message parts");
 	if (parts[PREFIX] != OPDI_digitalPortState)
 		throw ProtocolException(std::string("unexpected reply, expected: ") + OPDI_digitalPortState);

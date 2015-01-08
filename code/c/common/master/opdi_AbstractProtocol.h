@@ -97,7 +97,7 @@ protected:
 	 * Time calculation is not absolutely exact but it's guaranteed to not be less than timeout milliseconds.
 	 * 
 	 */
-	virtual Message* expect(long channel, int timeout /*, IAbortable abortable */);
+	virtual Message* expect(long channel, unsigned int timeout /*, IAbortable abortable */);
 	
 	// A convenience method without an abortable.
 	//virtual Message expect(long channel, int timeout);

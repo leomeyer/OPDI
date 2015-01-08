@@ -106,7 +106,7 @@ public:
 	 * @param magic
 	 * @throws ProtocolException
 	 */
-	virtual void checkSerialForm(std::vector<std::string> parts, int count, std::string magic);
+	virtual void checkSerialForm(std::vector<std::string> parts, unsigned int count, std::string magic);
 
 	/** Returns a serialized description of this port.
 	 * 

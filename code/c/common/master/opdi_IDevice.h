@@ -31,6 +31,8 @@ class IDevice;
 class IDeviceListener
 {
 public:
+	virtual ~IDeviceListener() = 0;
+
 	virtual void connectionOpened(IDevice* device) = 0;
 
 	virtual void connectionInitiated(IDevice* aDevice) = 0;
@@ -55,6 +57,8 @@ public:
 
 	virtual void receivedError(IDevice* device, std::string text) = 0;
 };
+
+inline IDeviceListener::~IDeviceListener() { }
 
 /** This interface describes a remote device.
  * 

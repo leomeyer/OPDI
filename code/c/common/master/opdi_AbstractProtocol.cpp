@@ -83,7 +83,7 @@ void AbstractProtocol::sendError(std::string message)
 	device->sendMessage(msg);
 }
 	
-Message* AbstractProtocol::expect(long channel, int timeout /*, IAbortable abortable */)
+Message* AbstractProtocol::expect(long channel, unsigned int timeout /*, IAbortable abortable */)
 {
 	if (channel < 0)
 		throw DisconnectedException();

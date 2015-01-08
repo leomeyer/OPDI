@@ -34,7 +34,6 @@ void MessageProcessor::run()
 	char buffer[BUFFER_SIZE];
 
 	int bytesProcessed = 0;
-	int counter = 0;
 
 	while (!stop || hasMessagesToSend) {
         try {

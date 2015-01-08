@@ -214,7 +214,7 @@ BasicDeviceCapabilities* IODevice::getCapabilities()
 	return getProtocol()->getDeviceCapabilities();
 }
 
-void IODevice::getHandshakeMessage(int expectedPartCount, std::vector<std::string>& results)
+void IODevice::getHandshakeMessage(unsigned int expectedPartCount, std::vector<std::string>& results)
 {
 	if (!isConnecting()) return;
 	

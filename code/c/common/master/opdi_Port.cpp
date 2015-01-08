@@ -64,7 +64,7 @@ void Port::setDirCaps(PortDirCaps dir) {
 	dirCaps = dir;
 }
 	
-void Port::checkSerialForm(std::vector<std::string> parts, int count, std::string magic) 
+void Port::checkSerialForm(std::vector<std::string> parts, unsigned int count, std::string magic) 
 {
 	if (parts.size() != count) 
 		throw ProtocolException("Serial form invalid");

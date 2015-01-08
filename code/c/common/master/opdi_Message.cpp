@@ -95,7 +95,7 @@ int Message::encode(int encoding, char buffer[], int maxlength)
 	checksum = 0;
 	std::string data = content.str();
 	const char *bytes = data.c_str();
-	for (int i = 0; i < data.length(); i++) {
+	for (unsigned int i = 0; i < data.length(); i++) {
 		if (bytes[i] == TERMINATOR)
 			throw MessageException("Message terminator may not appear in payload");
 		// add unsigned bytes for payload

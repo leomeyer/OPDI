@@ -7,7 +7,7 @@
 BasicDeviceCapabilities::BasicDeviceCapabilities(IBasicProtocol* protocol, int channel, std::string serialForm)
 {
 	int PORTS_PART = 1;
-	int PART_COUNT = 2;
+	unsigned int PART_COUNT = 2;
 		
 	// decode the serial representation
 	std::vector<std::string> parts;
