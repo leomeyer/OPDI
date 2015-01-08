@@ -184,11 +184,6 @@ void init_device() {
 	DWORD dwCompNameLen = 1024;
 	TCHAR nameBuf[1024];
 
-	// reserve name buffer
-	if (opdi_config_name == NULL) {
-		opdi_config_name = (char*)malloc(OPDI_CONFIG_NAME_LENGTH);
-	}
-
 	// UTF-8?
 	if (strcmp(opdi_encoding, OPDI_ENCODING_UTF8) == 0) {
 
@@ -198,26 +193,19 @@ void init_device() {
 			// print the formatted name into the buffer
 			swprintf(nameBuf, L"WinOPDI (%s)", compName);
 
+			opdi_config_name = (char*)malloc(OPDI_CONFIG_NAME_LENGTH);
+
 			// convert to multibyte character set (UTF-8)
 			WideCharToMultiByte(CP_UTF8, 0, &nameBuf[0], -1, (LPSTR)opdi_config_name, OPDI_CONFIG_NAME_LENGTH, NULL, NULL);
 		}
 	} else {
-		// single byte character set; transfer directly
-
-		// get the computer name (WSTRING)
-		if (0 != GetComputerName(compName, &dwCompNameLen)) {
-
-			// print the formatted name into the buffer
-			swprintf(nameBuf, L"WinOPDI (%s)", compName);
-
-			// convert to multibyte character set (UTF-8)
-			WideCharToMultiByte(CP_UTF8, 0, &nameBuf[0], -1, (LPSTR)opdi_config_name, OPDI_CONFIG_NAME_LENGTH, NULL, NULL);
-		}
-		strncpy((char*)opdi_config_name, (const char*)nameBuf, OPDI_CONFIG_NAME_LENGTH);
+		// single byte character set
+	
+		// TODO convert from wide char
 	}
 
 	// fallback to generic name
-	if (strlen(opdi_config_name) == 0) {
+	if (opdi_config_name == NULL) {
 		opdi_config_name = "WinOPDI";
 	}
 

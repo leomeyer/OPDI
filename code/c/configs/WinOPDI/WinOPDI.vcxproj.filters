@@ -126,9 +126,6 @@
     <ClInclude Include="..\test\master.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\test\slave.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\common\master\opdi_main_io.h">
       <Filter>Headerdateien\common\master</Filter>
     </ClInclude>

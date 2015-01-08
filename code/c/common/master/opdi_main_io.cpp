@@ -1,6 +1,7 @@
-//#include <intrin.h>
+
 #include <stdio.h>
 #include <string.h>
+#include <string>
 #include <iostream>
 
 #include "opdi_main_io.h"

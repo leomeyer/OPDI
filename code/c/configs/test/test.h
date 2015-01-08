@@ -21,6 +21,14 @@
 #define OPDI_CONFIG_NAME_LENGTH 32
 
 // externs defined in test.c
-extern "C" void configure_ports();
-extern "C" void handle_streaming_ports();
-extern "C" void my_protocol_callback(uint8_t state);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern void configure_ports();
+extern void handle_streaming_ports();
+extern void my_protocol_callback(uint8_t state);
+
+#ifdef __cplusplus
+}
+#endif
