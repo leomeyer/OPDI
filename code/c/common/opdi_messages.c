@@ -289,12 +289,25 @@ static uint8_t get_encrypted(opdi_Message *message, uint8_t can_send) {
 					// the message is finished
 					msgBuf[i] = '\0';
 					if (decode(message, msgBuf) == OPDI_STATUS_OK) {
+						#ifndef OPDI_NO_ENCRYPTION
+						if (encryption)
+					        	opdi_debug_msg(msgBuf, OPDI_DIR_INCOMING_ENCR);
+						else
+						#endif
 						opdi_debug_msg(msgBuf, OPDI_DIR_INCOMING);
 						return OPDI_STATUS_OK;
 					}
 					// ignore malformed messages
-					opdi_debug_msg(MESSAGE_MALFORMED, OPDI_DIR_INCOMING);
-					opdi_debug_msg((const uint8_t *)msgBuf, OPDI_DIR_INCOMING);
+                                        #ifndef OPDI_NO_ENCRYPTION
+                                                if (encryption) {
+                                        		opdi_debug_msg(MESSAGE_MALFORMED, OPDI_DIR_INCOMING_ENCR);
+                                        		opdi_debug_msg((const uint8_t *)msgBuf, OPDI_DIR_INCOMING_ENCR);
+						} else
+					#endif
+					{
+						opdi_debug_msg(MESSAGE_MALFORMED, OPDI_DIR_INCOMING);
+						opdi_debug_msg((const uint8_t *)msgBuf, OPDI_DIR_INCOMING);
+					}
 					pos = 0;
 					blockpos = 0;
 					break;
@@ -412,6 +425,11 @@ uint8_t opdi_put_message(opdi_Message *message) {
 
 	// for debug output, do not use terminating \n
 	msgBuf[length - 1] = '\0';
+#ifndef OPDI_NO_ENCRYPTION
+        if (encryption)
+                opdi_debug_msg(msgBuf, OPDI_DIR_OUTGOING_ENCR);
+	else
+#endif
 	opdi_debug_msg(msgBuf, OPDI_DIR_OUTGOING);
 	msgBuf[length - 1] = '\n';
 

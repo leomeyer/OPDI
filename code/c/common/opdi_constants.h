@@ -79,10 +79,13 @@ extern "C" {
 
 // this message has been received from the master
 #define OPDI_DIR_INCOMING	0
+#define OPDI_DIR_INCOMING_ENCR	128
 // this message is being sent to the master
 #define OPDI_DIR_OUTGOING	1
+#define OPDI_DIR_OUTGOING_ENCR	129
 // this message is a debug message from the master, sent on the control channel
-#define OPDI_DIR_DEBUG	2
+#define OPDI_DIR_DEBUG		2
+#define OPDI_DIR_DEBUG_ENCR	130
 
 // Timeout for authentication (milliseconds).
 // To give the user time to enter credentials.

@@ -15,7 +15,7 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 // Test functions (platform independent)
 
 #include <stdio.h>
@@ -127,7 +127,7 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -152,7 +152,7 @@ uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -185,7 +185,7 @@ uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -195,7 +195,7 @@ uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -207,7 +207,7 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -218,7 +218,7 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -254,7 +254,7 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -278,7 +278,7 @@ uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -291,7 +291,7 @@ uint8_t opdi_get_select_port_state(opdi_Port *port, uint16_t *position) {
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -334,7 +334,7 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -345,7 +345,7 @@ uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -355,7 +355,7 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
 	} else
 		// unknown port
 		return OPDI_PORT_UNKNOWN;
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -367,14 +367,14 @@ void configure_ports(void) {
 
 		anaPort.type = OPDI_PORTTYPE_ANALOG;
 		anaPort.caps = OPDI_PORTDIRCAP_BIDI;
-		anaPort.info.i = (OPDI_ANALOG_PORT_CAN_CHANGE_RES	
-							   | OPDI_ANALOG_PORT_RESOLUTION_8	
-							   | OPDI_ANALOG_PORT_RESOLUTION_9	
-							   | OPDI_ANALOG_PORT_RESOLUTION_10	
-							   | OPDI_ANALOG_PORT_RESOLUTION_11	
-							   | OPDI_ANALOG_PORT_RESOLUTION_12	
-							   | OPDI_ANALOG_PORT_CAN_CHANGE_REF	
-							   | OPDI_ANALOG_PORT_REFERENCE_INT	
+		anaPort.info.i = (OPDI_ANALOG_PORT_CAN_CHANGE_RES
+							   | OPDI_ANALOG_PORT_RESOLUTION_8
+							   | OPDI_ANALOG_PORT_RESOLUTION_9
+							   | OPDI_ANALOG_PORT_RESOLUTION_10
+							   | OPDI_ANALOG_PORT_RESOLUTION_11
+							   | OPDI_ANALOG_PORT_RESOLUTION_12
+							   | OPDI_ANALOG_PORT_CAN_CHANGE_REF
+							   | OPDI_ANALOG_PORT_REFERENCE_INT
 							   | OPDI_ANALOG_PORT_REFERENCE_EXT);
 
 		selectPort.type = OPDI_PORTTYPE_SELECT;
@@ -459,7 +459,16 @@ uint8_t opdi_debug_msg(const uint8_t *str, uint8_t direction) {
 	if (direction == OPDI_DIR_INCOMING)
 		printf(">");
 	else
+	if (direction == OPDI_DIR_OUTGOING)
 		printf("<");
+	else
+	if (direction == OPDI_DIR_INCOMING_ENCR)
+		printf("}");
+	else
+	if (direction == OPDI_DIR_OUTGOING_ENCR)
+		printf("{");
+	else
+		printf("-");
 	printf("%s\n", str);
 	return OPDI_STATUS_OK;
 }
