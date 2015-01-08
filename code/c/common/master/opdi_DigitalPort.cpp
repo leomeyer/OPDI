@@ -1,11 +1,11 @@
 
+#include "Poco/NumberFormatter.h"
+
 #include "opdi_constants.h"
 
-#include <master\opdi_DigitalPort.h>
-
-#include <master\opdi_StringTools.h>
-#include <master\opdi_AbstractProtocol.h>
-#include <Poco\NumberFormatter.h>
+#include "opdi_DigitalPort.h"
+#include "opdi_StringTools.h"
+#include "opdi_AbstractProtocol.h"
 
 DigitalPort::DigitalPort(IBasicProtocol& protocol, std::vector<std::string> parts) : Port(protocol, "", "", PORTTYPE_DIGITAL, PORTDIRCAP_UNKNOWN)
 {
@@ -75,7 +75,7 @@ void DigitalPort::checkMode(DigitalPortMode portMode)
 			throw Poco::InvalidArgumentException("Can't configure input only digital port for output: ID = " + getID());
 	// configure for input?
 	if (portMode == DIGITAL_INPUT_FLOATING || portMode == DIGITAL_INPUT_PULLUP || portMode == DIGITAL_INPUT_PULLDOWN)
-		if (getDirCaps() == DIGITAL_OUTPUT)
+		if (getDirCaps() == PORTDIRCAP_OUTPUT)
 			throw Poco::InvalidArgumentException("Can't configure output only digital port for input: ID = " + getID());
 	// check pullup/pulldown
 	if (portMode == DIGITAL_INPUT_PULLUP && !hasPullup())

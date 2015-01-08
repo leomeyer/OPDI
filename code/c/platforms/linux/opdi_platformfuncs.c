@@ -16,13 +16,15 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-// Windows specific functions
+// Linux specific functions
 
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <time.h>
 
 #include "opdi_constants.h"
 #include "opdi_platformfuncs.h"
@@ -122,4 +124,14 @@ uint8_t opdi_is_space(char c) {
 uint8_t opdi_string_cmp(const char *s1, const char *s2) {
 	return strcasecmp(s1, s2);
 }
+
+uint64_t opdi_get_time_ms(void) {
+    timespec ts;
+    uint64_t theTick = 0U;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    theTick = ts.tv_nsec / 1000000;
+    theTick += ts.tv_sec * 1000;
+    return theTick;
+}
+
 

@@ -33,7 +33,7 @@ public:
 	
 	Message(int channel, std::string payload, int checksum);
 
-	static Message* Message::decode(char *serialForm/*, Charset encoding*/);
+	static Message* decode(char *serialForm/*, Charset encoding*/);
 
 	/** Returns the serial form of a message that contains payload and checksum.
 	 * The parameter maxlength specifies the maximum length of the buffer.

@@ -3,7 +3,7 @@
 
 #include "opdi_protocol_constants.h"
 
-#include <master\opdi_Port.h>
+#include "opdi_Port.h"
 
 /** This class serves as a factory for basic port objects.
  * 

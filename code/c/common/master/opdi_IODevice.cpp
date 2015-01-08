@@ -3,13 +3,17 @@
 #include <iostream>
 
 #include "Poco/NumberFormatter.h"
+
 #include "opdi_constants.h"
+#include "opdi_strings.h"
 
 #include "opdi_IODevice.h"
-#include <opdi_strings.h>
-#include <master\opdi_AbstractProtocol.h>
-#include <master\opdi_StringTools.h>
-#include <master\opdi_ProtocolFactory.h>
+#include "opdi_AbstractProtocol.h"
+#include "opdi_StringTools.h"
+#include "opdi_ProtocolFactory.h"
+
+static Message msgDisagreement(0, OPDI_Disagreement);
+static Message msgDisconnect(0, OPDI_Disconnect);
 
 class IODevice;
 
@@ -40,42 +44,42 @@ public:
 		// start the protocol
 		device->getProtocol()->initiate();
 				
-		device->setStatus(CONNECTED, "");
+		device->setStatus(DS_CONNECTED, "");
 	}
 			
 	void connectionInitiated(IDevice* aDevice) override
 	{
-		device->setStatus(CONNECTING, "");
+		device->setStatus(DS_CONNECTING, "");
 		outerListener->connectionInitiated(device);
 	}
 			
 	void connectionAborted(IDevice* aDevice) override
 	{
-		device->setStatus(DISCONNECTED, "");
+		device->setStatus(DS_DISCONNECTED, "");
 		outerListener->connectionAborted(device);
 	}
 
 	void connectionFailed(IDevice* aDevice, std::string message) override 
 	{
-		device->setStatus(DISCONNECTED, message);
+		device->setStatus(DS_DISCONNECTED, message);
 		outerListener->connectionFailed(device, message);
 	}
 
 	void connectionTerminating(IDevice* aDevice) override
 	{
-		device->setStatus(DISCONNECTING, "");
+		device->setStatus(DS_DISCONNECTING, "");
 		outerListener->connectionTerminating(device);
 	}
 			
 	void connectionClosed(IDevice* aDevice) override
 	{
-		device->setStatus(DISCONNECTED, "");
+		device->setStatus(DS_DISCONNECTED, "");
 		outerListener->connectionClosed(device);
 	}
 
 	void connectionError(IDevice* aDevice, std::string message) override
 	{
-		device->setStatus(ERR, message);
+		device->setStatus(DS_ERR, message);
 		outerListener->connectionError(device, message);
 	}
 			
@@ -279,6 +283,7 @@ void IODevice::expectAgreement()
 IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 {
 	std::string supportedEncryptions = ""; // (this.tryToUseEncryption() ? StringTools::join(',', std::vector<std::string>("AES")) : "");
+	
 	// send handshake message
 	Message handshake(0, StringTools::join(AbstractProtocol::SEPARATOR, OPDI_Handshake, OPDI_Handshake_version, Poco::NumberFormatter::format(flags), supportedEncryptions));
 		
@@ -310,7 +315,7 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 	// check version
 	if (AbstractProtocol::HANDSHAKE_VERSION_DOUBLE < AbstractProtocol::parseDouble(parts[VERSION], "Handshake version", 0, std::numeric_limits<double>::max())) {
 		// send error message to the device
-		sendSynchronous(&Message(0, OPDI_Disagreement));
+		sendSynchronous(&msgDisagreement);
 		throw ProtocolException("Handshake version not supported"); //, parts[VERSION]);
 	}
 
@@ -388,7 +393,7 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 	// protocol found?
 	if (prot == NULL) {
 		// no match for supported protocols found
-		sendSynchronous(&Message(0, OPDI_Disagreement));
+		sendSynchronous(&msgDisagreement);
 		// no possible protocols found
 		throw ProtocolException("No supported protocol found");
 	}
@@ -398,7 +403,10 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 	////////////////////////////////////////////////////////////
 		
 	std::string preferredLanguages = getPreferredLocalesString();
-	sendSynchronous(&Message(0, StringTools::join(AbstractProtocol::SEPARATOR, prot->getMagic(), preferredLanguages, getMasterName())));
+
+	Message protocolSelect(0, StringTools::join(AbstractProtocol::SEPARATOR, prot->getMagic(), preferredLanguages, getMasterName()));
+
+	sendSynchronous(&protocolSelect);
 		
 	////////////////////////////////////////////////////////////
 	///// Receive: Slave Name
@@ -463,7 +471,7 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 			// on error clear password
 			setPassword("");
 				
-			sendSynchronous(&Message(0, OPDI_Disconnect));
+			sendSynchronous(&msgDisconnect);
 			throw AuthenticationException();
 		}
 			
@@ -537,7 +545,7 @@ void ConnectRunner::run() {
 	} catch (ProtocolException& e) {
 		// abort the connection
 		try {
-			device->sendSynchronous(&Message(0, OPDI_Disconnect));
+			device->sendSynchronous(&msgDisconnect);
 		} catch (Poco::Exception e1) {
 		}
 		device->close();
@@ -571,7 +579,7 @@ void ConnectRunner::run() {
 		return;
 	}
 				
-	device->setStatus(CONNECTED);
+	device->setStatus(DS_CONNECTED);
 	csListener->connectionOpened(device);
 }
 		

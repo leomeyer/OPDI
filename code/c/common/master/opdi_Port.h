@@ -1,6 +1,7 @@
 #ifndef __OPDI_PORT_H
 #define __OPDI_PORT_H
 
+#include <string>
 #include <vector>
 
 /** Defines different types of ports. */

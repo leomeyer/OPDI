@@ -1,7 +1,8 @@
 #include <string>
 #include <vector>
-#include <master\opdi_IBasicProtocol.h>
-#include <master\opdi_PortFactory.h>
+
+#include "opdi_IBasicProtocol.h"
+#include "opdi_PortFactory.h"
 
 
 Port* PortFactory::createPort(IBasicProtocol& protocol, std::vector<std::string> parts)

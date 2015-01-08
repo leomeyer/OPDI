@@ -1,6 +1,7 @@
+#include "opdi_platformfuncs.h"
 
 #include "opdi_MessageQueueDevice.h"
-#include <master\opdi_IODevice.h>
+#include "opdi_IODevice.h"
 
 /** This class defines the functions of a device that communicates via messages that are put into
  * input and output queues. It provides an IBasicProtocol object that is connected to these queues.
@@ -234,7 +235,7 @@ void MessageProcessor::stopProcessing()
 
 MessageQueueDevice::MessageQueueDevice(std::string id): IDevice(id)
 {
-	status = DISCONNECTED;
+	status = DS_DISCONNECTED;
 }
 
 void MessageQueueDevice::sendMessage(Message* message)
@@ -281,11 +282,11 @@ void MessageQueueDevice::setStatus(DeviceStatus status)
 std::string MessageQueueDevice::getStatusText()
 {
 	switch (status) {
-	case CONNECTED: return "Connected";
-	case DISCONNECTED : return "Disconnected";
-	case CONNECTING : return "Connecting";
-	case DISCONNECTING: return "Disconnecting";
-	case ERR : return "Error";
+	case DS_CONNECTED: return "Connected";
+	case DS_DISCONNECTED : return "Disconnected";
+	case DS_CONNECTING : return "Connecting";
+	case DS_DISCONNECTING: return "Disconnecting";
+	case DS_ERR : return "Error";
 	}
 	return "Unknown Status";
 }		
@@ -318,23 +319,23 @@ void MessageQueueDevice::stopProcessing()
 	
 bool MessageQueueDevice::isConnected()
 {
-	return getStatus() == CONNECTED;
+	return getStatus() == DS_CONNECTED;
 }
 	
 bool MessageQueueDevice::isConnecting()
 {
-	return getStatus() == CONNECTING;
+	return getStatus() == DS_CONNECTING;
 }
 	
 void MessageQueueDevice::disconnect(bool onError)
 {
 	if (!onError && !isConnected()) return;
-	setStatus(DISCONNECTING);
+	setStatus(DS_DISCONNECTING);
 	notifyTerminating();
 
 	close();
 
-	setStatus(DISCONNECTED);
+	setStatus(DS_DISCONNECTED);
 	notifyClosed();
 
 	// free device listeners
@@ -601,7 +602,7 @@ void MessageQueueDevice::sendSynchronous(Message* message) {
 	else
 		write_blocks(bytes, length);
 		
-	lastSendTimeMS = GetTickCount();
+	lastSendTimeMS = opdi_get_time_ms();
 	
     logDebug("Message sent: " + message->toString());
 }	
@@ -689,7 +690,7 @@ bool MessageQueueDevice::hasCredentials()
 void MessageQueueDevice::setDeviceError(std::string msg) {
     // close the connection
 	close();
-	setStatus(ERR, msg);
+	setStatus(DS_ERR, msg);
 	notifyError(msg);
 }
 

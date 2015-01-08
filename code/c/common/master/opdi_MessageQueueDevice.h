@@ -1,11 +1,10 @@
 #ifndef __OPDI_MESSAGEQUEUEDEVICE_H
 #define __OPDI_MESSAGEQUEUEDEVICE_H
 
-#include <master\opdi_IDevice.h>
+#include "Poco/Runnable.h"
+#include "Poco/Thread.h"
 
-#include <Poco\Runnable.h>
-#include <Poco\Thread.h>
-
+#include "opdi_IDevice.h"
 
 #define AES_BLOCKSIZE 16
 

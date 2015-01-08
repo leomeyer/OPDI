@@ -43,6 +43,7 @@
 #include "opdi_ports.h"
 #include "opdi_messages.h"
 #include "opdi_slave_protocol.h"
+#include "test.h"
 
 const char *opdi_config_name;
 
@@ -359,6 +360,37 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
 	return OPDI_STATUS_OK;
 }
 
+uint8_t opdi_debug_msg(const uint8_t *str, uint8_t direction) {
+	if (direction == OPDI_DIR_INCOMING)
+		printf(">");
+	else
+	if (direction == OPDI_DIR_OUTGOING)
+		printf("<");
+	else
+	if (direction == OPDI_DIR_INCOMING_ENCR)
+		printf("}");
+	else
+	if (direction == OPDI_DIR_OUTGOING_ENCR)
+		printf("{");
+	else
+		printf("-");
+	printf("%s\n", str);
+	return OPDI_STATUS_OK;
+}
+
+// slave protocoll callback
+void my_protocol_callback(uint8_t state) {
+	if (state == OPDI_PROTOCOL_START_HANDSHAKE) {
+		printf("Handshake started\n");
+	} else
+	if (state == OPDI_PROTOCOL_CONNECTED) {
+		printf("Connected to: %s\n", opdi_master_name);
+	} else
+	if (state == OPDI_PROTOCOL_DISCONNECTED) {
+		printf("Disconnected\n");
+	}
+}
+
 void configure_ports(void) {
 	if (opdi_get_ports() == NULL) {
 		digPort.type = OPDI_PORTTYPE_DIGITAL;
@@ -452,37 +484,6 @@ void handle_streaming_ports() {
 		clocktext[strlen(clocktext) - 1] = '\0';
 		m.payload = clocktext;
 		opdi_put_message(&m);
-	}
-}
-
-uint8_t opdi_debug_msg(const uint8_t *str, uint8_t direction) {
-	if (direction == OPDI_DIR_INCOMING)
-		printf(">");
-	else
-	if (direction == OPDI_DIR_OUTGOING)
-		printf("<");
-	else
-	if (direction == OPDI_DIR_INCOMING_ENCR)
-		printf("}");
-	else
-	if (direction == OPDI_DIR_OUTGOING_ENCR)
-		printf("{");
-	else
-		printf("-");
-	printf("%s\n", str);
-	return OPDI_STATUS_OK;
-}
-
-// slave protocoll callback
-void my_protocol_callback(uint8_t state) {
-	if (state == OPDI_PROTOCOL_START_HANDSHAKE) {
-		printf("Handshake started\n");
-	} else
-	if (state == OPDI_PROTOCOL_CONNECTED) {
-		printf("Connected to: %s\n", opdi_master_name);
-	} else
-	if (state == OPDI_PROTOCOL_DISCONNECTED) {
-		printf("Disconnected\n");
 	}
 }
 

@@ -23,12 +23,7 @@
 
 // basic types on Linux
 
-#define uint8_t		unsigned char
-#define int8_t		signed char
-#define uint16_t	unsigned short
-#define int16_t		signed short
-#define uint32_t	unsigned int
-#define int32_t		signed int
+#include <stdint.h>
 
 // channel number data type bit length
 // It's important to define it this way because the C preprocessor can't compare strings.

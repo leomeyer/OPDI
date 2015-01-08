@@ -1,6 +1,6 @@
-#include <master\opdi_AbstractProtocol.h>
-#include <master\opdi_IBasicProtocol.h>
-#include <master\opdi_StringTools.h>
+#include "opdi_AbstractProtocol.h"
+#include "opdi_IBasicProtocol.h"
+#include "opdi_StringTools.h"
 
 #include "opdi_BasicDeviceCapabilities.h"
 

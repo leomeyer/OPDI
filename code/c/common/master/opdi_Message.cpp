@@ -5,10 +5,10 @@
 #include <sstream>
 #include <algorithm>
 #include <Poco/NumberParser.h>
+#include "Poco/NumberFormatter.h"
 
 #include "opdi_Message.h"
-#include <master\opdi_StringTools.h>
-#include <Poco\NumberFormatter.h>
+#include "opdi_StringTools.h"
 
 
 /** Represents a message that is sent to or from a device.

@@ -1,13 +1,15 @@
 
-#include "opdi_BasicProtocol.h"
+#include "Poco/Thread.h"
 
 #include "opdi_constants.h"
 #include "opdi_protocol_constants.h"
 
-#include <master\opdi_AbstractProtocol.h>
-#include <master\opdi_StringTools.h>
-#include <Poco\Thread.h>
-#include <master\opdi_PortFactory.h>
+#include "opdi_platformfuncs.h"
+
+#include "opdi_AbstractProtocol.h"
+#include "opdi_BasicProtocol.h"
+#include "opdi_StringTools.h"
+#include "opdi_PortFactory.h"
 
 PingRunner::PingRunner(IDevice* device)
 {
@@ -22,7 +24,7 @@ void PingRunner::run()
 	while (!stopped && device->isConnected()) {
 		try {
 			// wait for the specified time after the last message
-			while (GetTickCount() - device->getLastSendTimeMS() < PING_INTERVAL_MS)
+			while (opdi_get_time_ms() - device->getLastSendTimeMS() < PING_INTERVAL_MS)
 				Poco::Thread::sleep(10);
 			device->sendMessage(&ping);
 			// sleep at least as long as specified by the interval

@@ -1,11 +1,12 @@
 #ifndef __BASICPROTOCOL_H
 #define __BASICPROTOCOL_H
 
+#include "Poco/Runnable.h"
+#include "Poco/Thread.h"
+
 #include "opdi_IBasicProtocol.h"
-#include <master\opdi_IDevice.h>
-#include <master\opdi_AbstractProtocol.h>
-#include <Poco\Runnable.h>
-#include <Poco\Thread.h>
+#include "opdi_IDevice.h"
+#include "opdi_AbstractProtocol.h"
 
 #define DEFAULT_TIMEOUT				10000
 
@@ -48,7 +49,7 @@ private:
 
 protected:
 
-	void BasicProtocol::expectDigitalPortState(DigitalPort* port, int channel);
+	void expectDigitalPortState(DigitalPort* port, int channel);
 
 public:
 

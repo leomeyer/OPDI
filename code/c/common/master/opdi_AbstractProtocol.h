@@ -1,11 +1,11 @@
 #ifndef __OPDI_ABSTRACTPROTOCOL_H
 #define __OPDI_ABSTRACTPROTOCOL_H
 
-#include <Poco\Exception.h>
+#include <Poco/Exception.h>
 
 #include "opdi_protocol_constants.h"
 
-#include <master\opdi_IDevice.h>
+#include <opdi_IDevice.h>
 
 #define EXCEPTION_API
 

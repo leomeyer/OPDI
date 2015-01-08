@@ -1,9 +1,9 @@
 #ifndef __OPDI_IODEVICE_H
 #define __OPDI_IODEVICE_H
 
-#include <master\opdi_IBasicProtocol.h>
-#include <master\opdi_MessageQueueDevice.h>
-#include <master\opdi_IDevice.h>
+#include "opdi_IBasicProtocol.h"
+#include "opdi_MessageQueueDevice.h"
+#include "opdi_IDevice.h"
 
 class DeviceException : public Poco::Exception
 {

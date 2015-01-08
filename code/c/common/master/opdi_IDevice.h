@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#include <POCO/NotificationQueue.h>
+#include "Poco/NotificationQueue.h"
 
 #include "opdi_platformtypes.h"
 
@@ -14,16 +14,16 @@
 enum DeviceStatus
 {
 		/** The device is not connected; or a connection attempt failed. */
-		DISCONNECTED,
+		DS_DISCONNECTED,
 		/** The device is currently being connected. */
-		CONNECTING,
+		DS_CONNECTING,
 		/** The device is connected and ready to accept commands. */
-		CONNECTED,
+		DS_CONNECTED,
 		/** The device is being disconnected. */
-		DISCONNECTING,
-		/** A connection error has occurred or the device has indicated 
+		DS_DISCONNECTING,
+		/** A connection error has occurred or the device has indicated
 		 * an error condition which makes it unusable for control purposes. */
-		ERR
+		DS_ERR
 };
 
 class IDevice;

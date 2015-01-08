@@ -3,13 +3,14 @@
 
 #include <string>
 
+#include "Poco/Exception.h"
+
 #include "opdi_platformtypes.h"
 
 #include "opdi_Message.h"
 #include "opdi_Port.h"
 #include "opdi_BasicDeviceCapabilities.h"
-#include <Poco\Exception.h>
-#include <master\opdi_DigitalPort.h>
+#include "opdi_DigitalPort.h"
 
 /** This interface specifies the basic protocol that must be supported by all devices.
  * 

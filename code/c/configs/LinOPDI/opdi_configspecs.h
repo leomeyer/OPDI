@@ -27,7 +27,11 @@
 extern "C" {
 #endif
 
+// Set to 1 if this device can act as a slave.
 #define OPDI_IS_SLAVE		1
+
+// Set to 1 if this device can act as a master.
+#define OPDI_IS_MASTER		1
 
 #define OPDI_ENCODING_DEFAULT	OPDI_ENCODING_ISO8859_1
 
@@ -86,6 +90,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif		// __CONFIGSPECS_H

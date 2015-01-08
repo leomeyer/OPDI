@@ -1,15 +1,17 @@
 
-#include <master\opdi_AbstractProtocol.h>
-
 /** This class implements generic functions of OPDI communication protocols.
  * 
  * @author Leo
  *
  */
-#include <opdi_strings.h>
-#include <master\opdi_MessageQueueDevice.h>
-#include <master\opdi_StringTools.h>
-#include <Poco\NumberParser.h>
+#include "Poco/NumberParser.h"
+
+#include "opdi_AbstractProtocol.h"
+
+#include "opdi_strings.h"
+#include "opdi_platformfuncs.h"
+#include "opdi_MessageQueueDevice.h"
+#include "opdi_StringTools.h"
 
 
 POCO_IMPLEMENT_EXCEPTION(ProtocolException, Poco::ApplicationException, "Protocol Error")
@@ -88,8 +90,8 @@ Message* AbstractProtocol::expect(long channel, int timeout /*, IAbortable abort
 
 	Poco::NotificationQueue* queue = device->getInputMessages();
 
-	long startTime = GetTickCount();
-	while (GetTickCount() - startTime < timeout && 
+	long startTime = opdi_get_time_ms();
+	while (opdi_get_time_ms() - startTime < timeout && 
 			//(abortable == null || !abortable.isAborted()) &&
 			device->isConnected()) {
 

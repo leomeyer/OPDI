@@ -5,12 +5,14 @@
 #define STANDARD_PORT	13110
 
 #include <string>
-#include <Poco\Net\StreamSocket.h>
-#include <Poco\Net\SocketStream.h>
-#include <Poco\URI.h>
+
+#include "Poco/Net/StreamSocket.h"
+#include "Poco/Net/SocketStream.h"
+#include "Poco/URI.h"
 
 #include "opdi_platformtypes.h"
-#include <master\opdi_IODevice.h>
+
+#include "opdi_IODevice.h"
 
 /** Implements IDevice for a TCP/IP device.
  * 

@@ -3,7 +3,6 @@
 #include "Poco/RegularExpression.h"
 
 #include "opdi_TCPIPDevice.h"
-#include "master.h"
 #include "opdi_main_io.h"
 
 /** Implements IDevice for a TCP/IP device.
@@ -154,7 +153,7 @@ bool TCPIPDevice::isSupported()
 
 std::string TCPIPDevice::getMasterName()
 {
-	return opdiMasterName;
+	return "Master";
 }
 
 char TCPIPDevice::read()

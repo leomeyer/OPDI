@@ -15,17 +15,18 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+ 
+#ifdef windows
 #include <winsock2.h>
 #include <windows.h>
+#endif
+
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <algorithm>
-
-#include "stdafx.h"
 
 #include "Poco/Net/SocketReactor.h"
 #include "Poco/Net/SocketAcceptor.h"
@@ -47,10 +48,9 @@
 #include "opdi_protocol_constants.h"
 #include "master.h"
 #include "opdi_main_io.h"
-#include <master\opdi_AbstractProtocol.h>
-#include <master\opdi_IDevice.h>
-#include <master\opdi_TCPIPDevice.h>
-
+#include "opdi_AbstractProtocol.h"
+#include "opdi_IDevice.h"
+#include "opdi_TCPIPDevice.h"
 
 using Poco::Net::SocketReactor;
 using Poco::Net::SocketAcceptor;
@@ -76,7 +76,7 @@ bool var_debug = false;
 
 void show_device_info(IDevice* device)
 {
-	output << "Device " << device->getID() << " (" << device->getStatusText() << "): " << device->getLabel() << (device->getStatus() == CONNECTED ? " (" + device->getDeviceName() + ")" : "") << std::endl;	
+	output << "Device " << device->getID() << " (" << device->getStatusText() << "): " << device->getLabel() << (device->getStatus() == DS_CONNECTED ? " (" + device->getDeviceName() + ")" : "") << std::endl;	
 }
 
 class DeviceListener : public IDeviceListener 
@@ -398,7 +398,7 @@ bool port_command(const char *part)
 	// throw exception if not found
 	IDevice *device = find_device(devID, true);
 
-	if (device->getStatus() != CONNECTED) {
+	if (device->getStatus() != DS_CONNECTED) {
 		output << "Device " << device->getID() << " is not connected" << std::endl;
 		return false;
 	}
@@ -503,11 +503,11 @@ int start_master()
 					continue;
 
 				// prepare the device for connection
-				if (device->getStatus() == CONNECTED) {
+				if (device->getStatus() == DS_CONNECTED) {
 					output << "Device " << device->getID() << " is already connected" << std::endl;
 					continue;
 				} else
-				if (device->getStatus() == CONNECTING) {
+				if (device->getStatus() == DS_CONNECTING) {
 					output << "Device " << device->getID() << " is already connecting" << std::endl;
 					continue;
 				} else {
@@ -526,7 +526,7 @@ int start_master()
 				// throw exception if not found
 				IDevice *device = find_device(devID, true);
 
-				if (device->getStatus() != CONNECTED) {
+				if (device->getStatus() != DS_CONNECTED) {
 					output << "Device " << device->getID() << " is not connected" << std::endl;
 					continue;
 				}
@@ -552,7 +552,7 @@ int start_master()
 				// throw exception if not found
 				IDevice *device = find_device(devID, true);
 
-				if (device->getStatus() == DISCONNECTED) {
+				if (device->getStatus() == DS_DISCONNECTED) {
 					output << "Device " << device->getID() << " is already disconnected" << std::endl;
 					continue;
 				}

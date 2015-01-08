@@ -1,7 +1,7 @@
 #ifndef __DIGITALPORT_H
 #define __DIGITALPORT_H
 
-#include <master\opdi_Port.h>
+#include "opdi_Port.h"
 
 /** The mode a digital port may be in.*/
 enum DigitalPortMode {
