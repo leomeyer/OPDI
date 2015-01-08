@@ -47,7 +47,7 @@
 const char *opdi_config_name;
 
 char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
-const char *opdi_encoding = "";
+const char *opdi_encoding = OPDI_ENCODING_ISO8859_1;
 const char *opdi_encryption_method = "AES";
 const char *opdi_supported_protocols = "BP,EP";
 const char *opdi_username = "admin";
@@ -471,5 +471,18 @@ uint8_t opdi_debug_msg(const uint8_t *str, uint8_t direction) {
 		printf("-");
 	printf("%s\n", str);
 	return OPDI_STATUS_OK;
+}
+
+// slave protocoll callback
+void my_protocol_callback(uint8_t state) {
+	if (state == OPDI_PROTOCOL_START_HANDSHAKE) {
+		printf("Handshake started\n");
+	} else
+	if (state == OPDI_PROTOCOL_CONNECTED) {
+		printf("Connected to: %s\n", opdi_master_name);
+	} else
+	if (state == OPDI_PROTOCOL_DISCONNECTED) {
+		printf("Disconnected\n");
+	}
 }
 

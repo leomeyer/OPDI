@@ -48,12 +48,6 @@
     <ClInclude Include="..\test\test.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="slave.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="master.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\common\master\opdi_BasicDeviceCapabilities.h">
       <Filter>Headerdateien\common\master</Filter>
     </ClInclude>
@@ -123,13 +117,19 @@
     <ClInclude Include="..\..\common\master\opdi_StringTools.h">
       <Filter>Headerdateien\common\master</Filter>
     </ClInclude>
-    <ClInclude Include="main_io.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\common\master\opdi_PortFactory.h">
       <Filter>Headerdateien\common\master</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\master\opdi_DigitalPort.h">
+      <Filter>Headerdateien\common\master</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\master.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\slave.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\master\opdi_main_io.h">
       <Filter>Headerdateien\common\master</Filter>
     </ClInclude>
   </ItemGroup>
@@ -138,15 +138,6 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="..\test\test.c">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="config.c">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="slave.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="master.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="..\..\common\opdi_aes.cpp">
@@ -209,8 +200,11 @@
     <ClCompile Include="..\..\common\master\opdi_Port.cpp">
       <Filter>Quelldateien\common\master</Filter>
     </ClCompile>
-    <ClCompile Include="main_io.cpp">
+    <ClCompile Include="..\test\master.cpp">
       <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\master\opdi_main_io.cpp">
+      <Filter>Quelldateien\common\master</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

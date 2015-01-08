@@ -46,7 +46,7 @@
 #include "opdi_constants.h"
 #include "opdi_protocol_constants.h"
 #include "master.h"
-#include "main_io.h"
+#include "opdi_main_io.h"
 #include <master\opdi_AbstractProtocol.h>
 #include <master\opdi_IDevice.h>
 #include <master\opdi_TCPIPDevice.h>

@@ -31,7 +31,7 @@ extern "C" {
 #define OPDI_IS_SLAVE	1
 
 // Sets the default encoding that is used by this config.
-#define OPDI_ENCODING_DEFAULT		OPDI_ENCODING_ISO8859_1
+#define OPDI_ENCODING_DEFAULT		OPDI_ENCODING_UTF8
 
 // Defines the maximum message length this config can receive.
 // Consumes this amount of bytes in RAM.

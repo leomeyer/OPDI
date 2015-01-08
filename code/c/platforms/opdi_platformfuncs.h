@@ -68,15 +68,15 @@ extern uint8_t opdi_uint16_to_str(uint16_t value, char* msgBuf);
 */
 extern uint8_t opdi_int32_to_str(int32_t value, char* msgBuf);
 
-/** Decodes a sequence of bytes into a char array using the specified encoding.
+/** Decodes a sequence of bytes into a char array.
 *   May indicate an error by returning a value != 0.
 */
-extern uint8_t opdi_bytes_to_string(uint8_t bytes[], uint16_t offset, uint16_t length, char *dest, uint16_t dest_length, uint8_t encoding);
+extern uint8_t opdi_bytes_to_string(uint8_t bytes[], uint16_t offset, uint16_t length, char *dest, uint16_t dest_length);
 
-/** Encodes a sequence of chars into a byte array using the specified encoding.
+/** Encodes a sequence of chars into a byte array.
 *   May indicate an error by returning a value != 0. Puts the byte count into bytelen.
 */
-extern uint8_t opdi_string_to_bytes(char* string, uint8_t *dest, uint16_t pos, uint16_t maxlength, uint8_t encoding, uint16_t *bytelen);
+extern uint8_t opdi_string_to_bytes(char* string, uint8_t *dest, uint16_t pos, uint16_t maxlength, uint16_t *bytelen);
 
 /** Case insensitive comparison. Platforms that do not support this may implement a case sensitive comparison.
 *   Semantics like strcmp.

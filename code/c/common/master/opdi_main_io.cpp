@@ -3,7 +3,7 @@
 #include <iostream>
 
 
-#include "main_io.h"
+#include "opdi_main_io.h"
 
 
 const char *read_line (char *buf, size_t length, FILE *f)

@@ -50,7 +50,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>NOMINMAX;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS </PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;..\..\common;..\..\platforms;..\..\platforms\win32;..\..\libraries\POCO\Util\include;..\..\libraries\POCO\Foundation\include;..\..\libraries\POCO\Net\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..\test;..\..\common;..\..\common\master;..\..\platforms;..\..\platforms\win32;..\..\libraries\POCO\Util\include;..\..\libraries\POCO\Foundation\include;..\..\libraries\POCO\Net\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <UndefinePreprocessorDefinitions>
@@ -95,6 +95,7 @@
     <ClInclude Include="..\..\common\master\opdi_IBasicProtocol.h" />
     <ClInclude Include="..\..\common\master\opdi_IDevice.h" />
     <ClInclude Include="..\..\common\master\opdi_IODevice.h" />
+    <ClInclude Include="..\..\common\master\opdi_main_io.h" />
     <ClInclude Include="..\..\common\master\opdi_Message.h" />
     <ClInclude Include="..\..\common\master\opdi_MessageQueueDevice.h" />
     <ClInclude Include="..\..\common\master\opdi_Port.h" />
@@ -113,11 +114,10 @@
     <ClInclude Include="..\..\common\opdi_strings.h" />
     <ClInclude Include="..\..\platforms\opdi_platformfuncs.h" />
     <ClInclude Include="..\..\platforms\win32\opdi_platformtypes.h" />
+    <ClInclude Include="..\test\master.h" />
+    <ClInclude Include="..\test\slave.h" />
     <ClInclude Include="..\test\test.h" />
-    <ClInclude Include="main_io.h" />
-    <ClInclude Include="master.h" />
     <ClInclude Include="opdi_configspecs.h" />
-    <ClInclude Include="slave.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -127,6 +127,7 @@
     <ClCompile Include="..\..\common\master\opdi_BasicProtocol.cpp" />
     <ClCompile Include="..\..\common\master\opdi_DigitalPort.cpp" />
     <ClCompile Include="..\..\common\master\opdi_IODevice.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_main_io.cpp" />
     <ClCompile Include="..\..\common\master\opdi_Message.cpp" />
     <ClCompile Include="..\..\common\master\opdi_MessageQueueDevice.cpp" />
     <ClCompile Include="..\..\common\master\opdi_Port.cpp">
@@ -144,11 +145,8 @@
     <ClCompile Include="..\..\common\opdi_slave_protocol.c" />
     <ClCompile Include="..\..\common\opdi_strings.c" />
     <ClCompile Include="..\..\platforms\win32\opdi_platformfuncs.c" />
+    <ClCompile Include="..\test\master.cpp" />
     <ClCompile Include="..\test\test.c" />
-    <ClCompile Include="config.c" />
-    <ClCompile Include="main_io.cpp" />
-    <ClCompile Include="master.cpp" />
-    <ClCompile Include="slave.cpp" />
     <ClCompile Include="WinOPDI.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

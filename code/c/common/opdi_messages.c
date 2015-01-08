@@ -39,9 +39,6 @@ static char msgPayload[OPDI_MESSAGE_PAYLOAD_LENGTH];
 // the message output buffer
 static uint8_t msgBuf[OPDI_MESSAGE_BUFFER_SIZE];
 
-// the encoding that is currently set
-static uint8_t encoding = OPDI_ENCODING_DEFAULT;
-
 // function handler for receiving of bytes
 static func_receive receive;
 
@@ -143,7 +140,7 @@ static uint8_t decode(opdi_Message *message, uint8_t bytes[]) {
 			return OPDI_ERROR_MALFORMED_MESSAGE;
 
 	// retrieve the payload
-	err = opdi_bytes_to_string(bytes, payloadPos, lastSepPos - payloadPos, msgPayload, OPDI_MESSAGE_PAYLOAD_LENGTH, encoding);
+	err = opdi_bytes_to_string(bytes, payloadPos, lastSepPos - payloadPos, msgPayload, OPDI_MESSAGE_PAYLOAD_LENGTH);
 	if (err != OPDI_STATUS_OK)
 		return err;
 	message->payload = msgPayload;
@@ -172,7 +169,7 @@ static uint8_t encode(opdi_Message *message, uint16_t *length) {
 #endif
 	
 	// transfer channel number
-	err = opdi_string_to_bytes(channelBuf, msgBuf, 0, OPDI_MESSAGE_BUFFER_SIZE, encoding, &bytelen);
+	err = opdi_string_to_bytes(channelBuf, msgBuf, 0, OPDI_MESSAGE_BUFFER_SIZE, &bytelen);
 	if (err != OPDI_STATUS_OK)
 		return err;
 
@@ -185,7 +182,7 @@ static uint8_t encode(opdi_Message *message, uint16_t *length) {
 		checksum += msgBuf[i - 1];
 
 	// transfer payload
-	err = opdi_string_to_bytes(message->payload, msgBuf, pos, OPDI_MESSAGE_BUFFER_SIZE, encoding, &bytelen);
+	err = opdi_string_to_bytes(message->payload, msgBuf, pos, OPDI_MESSAGE_BUFFER_SIZE, &bytelen);
 	if (err != OPDI_STATUS_OK)
 		return err;
 

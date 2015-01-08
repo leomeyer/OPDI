@@ -87,7 +87,7 @@ uint8_t opdi_int32_to_str(int32_t value, char* msgBuf) {
 	return strlen(msgBuf);
 }
 
-uint8_t opdi_bytes_to_string(uint8_t bytes[], uint16_t offset, uint16_t length, char *dest, uint16_t dest_length, uint8_t encoding) {
+uint8_t opdi_bytes_to_string(uint8_t bytes[], uint16_t offset, uint16_t length, char *dest, uint16_t dest_length) {
 	uint16_t i;
 	// supports only single-byte character sets
 	for (i = 0; i < length; i++) {
@@ -99,7 +99,7 @@ uint8_t opdi_bytes_to_string(uint8_t bytes[], uint16_t offset, uint16_t length, 
 	return OPDI_STATUS_OK;
 }
 
-uint8_t opdi_string_to_bytes(char* string, uint8_t *dest, uint16_t pos, uint16_t maxlength, uint8_t encoding, uint16_t *bytelen) {
+uint8_t opdi_string_to_bytes(char* string, uint8_t *dest, uint16_t pos, uint16_t maxlength, uint16_t *bytelen) {
 	uint16_t i = 0;
 	// supports only single-byte character sets
 	while (string[i]) {

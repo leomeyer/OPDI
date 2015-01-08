@@ -4,7 +4,7 @@
 
 #include "opdi_TCPIPDevice.h"
 #include "master.h"
-#include "main_io.h"
+#include "opdi_main_io.h"
 
 /** Implements IDevice for a TCP/IP device.
  * 

@@ -1,7 +1,7 @@
-// main_io: common IO functions
+// opdi_main_io: common IO functions
 
-#ifndef __MAIN_IO_H
-#define __MAIN_IO_H
+#ifndef __OPDI_MAIN_IO_H
+#define __OPDI_MAIN_IO_H
 
 #include <stdio.h>
 #include <iostream>
