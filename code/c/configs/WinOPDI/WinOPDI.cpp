@@ -191,7 +191,7 @@ void init_device() {
 		if (0 != GetComputerName(compName, &dwCompNameLen)) {
 
 			// print the formatted name into the buffer
-			swprintf(nameBuf, L"WinOPDI (%s)", compName);
+			swprintf(nameBuf, dwCompNameLen, L"WinOPDI (%s)", compName);
 
 			opdi_config_name = (char*)malloc(OPDI_CONFIG_NAME_LENGTH);
 
