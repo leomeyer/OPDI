@@ -34,7 +34,7 @@ CONIOINCPATH = ../../libraries/conio
 POCOINCPATH = ../../libraries/POCO/Util/include ../../libraries/POCO/Foundation/include ../../libraries/POCO/Net/include
 
 # POCO library path
-POCOLIBPATH = ../../libraries/POCO/lib/Linux/i686
+POCOLIBPATH = ../../libraries/POCO/lib/Linux/x86_64
 
 # POCO libraries
 POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 

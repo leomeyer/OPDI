@@ -1,3 +1,4 @@
+#include <string.h>
 #include <vector>
 #include <iterator>
 #include <iostream>
@@ -21,17 +22,17 @@ Message::Message(int channel, std::string payload)
 	this->channel = channel;
 	this->payload = payload;
 }
-	
+
 Message::Message(int channel, std::string payload, int checksum)
 {
 	this->channel = channel;
 	this->payload = payload;
 	this->checksum = checksum;
 }
-	
+
 int calcChecksum(char *message) {
 	int myChecksum = 0;
-	bool colonFound = false; 
+	bool colonFound = false;
 	// add everything before the last colon
 	for (int i = strlen(message) - 1; i >= 0; i--)
 		if (colonFound)
@@ -41,11 +42,11 @@ int calcChecksum(char *message) {
 			colonFound = message[i] == Message::SEPARATOR;
 	return myChecksum;
 }
-	
-	/** Tries to decode a message from its serial form.
-	 * 
-	 * @return
-	 */
+
+/** Tries to decode a message from its serial form.
+ *
+ * @return
+ */
 Message* Message::decode(char *serialForm/*, Charset encoding*/)
 {
 	std::string message(serialForm);
@@ -78,7 +79,6 @@ Message* Message::decode(char *serialForm/*, Charset encoding*/)
 		return new Message(pid, content, checksum);
 	} catch (Poco::SyntaxException nfe) {
 		throw MessageException("Message channel number invalid");
-				
 	}
 }
 
@@ -116,10 +116,10 @@ std::string Message::getPayload() {
 }
 
 int Message::getChannel() {
-	return channel;		
+	return channel;
 }
 
 std::string Message::toString()
 {
 	return Poco::NumberFormatter::format(channel) + ":" + payload;
-}	
+}
