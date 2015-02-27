@@ -113,43 +113,6 @@ extern "C" {
 */
 #define OPDI_FLAG_AUTHENTICATION_REQUIRED	0x04
 
-// port flag constants
-
-/** Indicates that a port is not always present, for example if a menu structure
-is implemented using dial ports. Accessing a temporary port that is not present in
-the current configuration should yield an OPDI_PORT_ACCESS_DENIED error. */
-#define OPDI_PORT_TEMPORARY					0x8000
-
-#define OPDI_DIGITAL_PORT_HAS_PULLUP		0x01
-#define OPDI_DIGITAL_PORT_HAS_PULLDN		0x02
-#define OPDI_DIGITAL_PORT_PULLUP_ALWAYS 	0x04
-#define OPDI_DIGITAL_PORT_PULLDN_ALWAYS		0x08
-
-#define OPDI_ANALOG_PORT_CAN_CHANGE_RES		0x01
-#define OPDI_ANALOG_PORT_RESOLUTION_8		0x02
-#define OPDI_ANALOG_PORT_RESOLUTION_9		0x04
-#define OPDI_ANALOG_PORT_RESOLUTION_10		0x08
-#define OPDI_ANALOG_PORT_RESOLUTION_11		0x10
-#define OPDI_ANALOG_PORT_RESOLUTION_12		0x20
-#define OPDI_ANALOG_PORT_CAN_CHANGE_REF		0x200
-#define OPDI_ANALOG_PORT_REFERENCE_INT		0x400
-#define OPDI_ANALOG_PORT_REFERENCE_EXT		0x800
-
-// streaming ports
-
-#define OPDI_STREAMING_PORT_NORMAL			0x00
-#define OPDI_STREAMING_PORT_AUTOBIND		0x01		// specifies that the master may automatically bind on connect
-
-// port state constants
-
-#define OPDI_DIGITAL_MODE_INPUT_FLOATING	"0"
-#define OPDI_DIGITAL_MODE_INPUT_PULLUP		"1"
-#define OPDI_DIGITAL_MODE_INPUT_PULLDOWN	"2"
-#define OPDI_DIGITAL_MODE_OUTPUT			"3"
-
-#define OPDI_DIGITAL_LINE_LOW				"0"
-#define OPDI_DIGITAL_LINE_HIGH				"1"
-
 #ifdef __cplusplus
 }
 #endif

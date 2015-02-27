@@ -2,6 +2,7 @@
 #include "Poco/NumberFormatter.h"
 
 #include "opdi_constants.h"
+#include "opdi_ports.h"
 
 #include "opdi_DigitalPort.h"
 #include "opdi_StringTools.h"

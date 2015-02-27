@@ -337,11 +337,11 @@ int listen_tcp(int host_port) {
     memset(&(my_addr.sin_zero), 0, 8);
     my_addr.sin_addr.s_addr = INADDR_ANY ;
     
-    if (bind(hsock, (struct sockaddr*)&my_addr, sizeof(my_addr)) == -1) {
+    if (bind(hsock, (struct sockaddr*)&my_addr, sizeof(my_addr)) != 0) {
         fprintf(stderr,"Error binding to socket, make sure nothing else is listening on this port %d\n", WSAGetLastError());
         goto FINISH;
     }
-    if (listen(hsock, 10) == -1) {
+    if (listen(hsock, 10) != 0) {
         fprintf(stderr, "Error listening %d\n", WSAGetLastError());
         goto FINISH;
     }

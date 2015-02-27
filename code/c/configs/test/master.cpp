@@ -45,6 +45,7 @@
 #include <iostream>
 
 #include "opdi_constants.h"
+#include "opdi_ports.h"
 #include "opdi_protocol_constants.h"
 #include "master.h"
 #include "opdi_main_io.h"

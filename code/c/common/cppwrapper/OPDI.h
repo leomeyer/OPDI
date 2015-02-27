@@ -16,15 +16,18 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/** Defines the OPDI classes that wrap the functions of the OPDI C implementation
- *  for use in Arduino sketches.
+/** Defines the OPDI classes that wrap the functions of the OPDI C implementation.
  */
 
 #ifndef __OPDI_H__
 #define __OPDI_H__
 
-#include <opdi_config.h>
-#include <opdi_ports.h>
+#include "opdi_configspecs.h"
+
+#include "opdi_config.h"
+#include "opdi_ports.h"
+
+class OPDI;
 
 /** Base class for OPDI port wrappers.
  *
@@ -45,6 +48,9 @@ protected:
 	char name[MAX_PORTNAMELENGTH];
 	char type[2];	// type constants are one character (see opdi_ports.h)
 	char caps[2];	// caps constants are one character (port direction constants)
+
+	// pointer to OPDI class instance
+	OPDI *opdi;
 
 	// OPDI implementation management structure
 	struct opdi_Port port;
@@ -138,7 +144,7 @@ public:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Main class for OPDI functionality
+// Main abstract class for OPDI functionality
 //////////////////////////////////////////////////////////////////////////////////////////
 
 class OPDI {
@@ -156,9 +162,9 @@ protected:
 
 public:
 	/** Prepares the OPDI class for use.
-	 * You must override this method to implement your platform specific setup.
+	 * You can override this method to implement your platform specific setup.
 	 */
-	virtual uint8_t setup(const char *slave_name);
+	virtual uint8_t setup(const char *slave_name, int idleTimeout);
 
 	/** Sets the idle timeout. If the master sends no meaningful messages during this time
 	 * the slave sends a disconnect message. If the value is 0 (default), the setting has no effect.
@@ -167,7 +173,7 @@ public:
 	void setIdleTimeout(uint32_t idleTimeoutMs);
 
 	/** Sets the encoding which must be a valid Java Charset identifier. Examples: ascii, utf-8, iso8859-1.
-	 * The default of this implementation is utf-8.
+	 * The default encoding of this implementation is utf-8.
 	 */
 	void setEncoding(const char* encoding);
 
@@ -178,6 +184,9 @@ public:
 	/** Internal function.
 	 */
 	OPDI_Port *findPort(opdi_Port *port);
+
+	/** Returns NULL if the port could not be found. */
+	OPDI_Port *findPortByID(const char *portID);
 
 	/** Starts the OPDI handshake to accept commands from a master.
 	 * Does not use a housekeeping function.
@@ -220,7 +229,7 @@ public:
 	 * Override this function to return the correct time. The default implementation always returns 0.
 	 * This effectively disables the idle timer.
 	 */
-	virtual uint32_t getTimeMs();
+	virtual uint32_t getTimeMs() = 0;
 
 	/** An internal handler which is used to implement the idle timer.
 	 */
@@ -228,6 +237,3 @@ public:
 };
 
 #endif
-
-// declare a singleton instance that must be defined by the implementation
-extern OPDI *Opdi;
