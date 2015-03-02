@@ -338,7 +338,7 @@ int listen_tcp(int host_port) {
     my_addr.sin_addr.s_addr = INADDR_ANY ;
     
     if (bind(hsock, (struct sockaddr*)&my_addr, sizeof(my_addr)) != 0) {
-        fprintf(stderr,"Error binding to socket, make sure nothing else is listening on this port %d\n", WSAGetLastError());
+        fprintf(stderr,"Error binding to socket, make sure nothing else is listening on port %d\n", WSAGetLastError());
         goto FINISH;
     }
     if (listen(hsock, 10) != 0) {
