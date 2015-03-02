@@ -186,7 +186,7 @@ static void my_protocol_callback(uint8_t state) {
 		Opdi->println(opdi_master_name);
 	} else
 	if (state == OPDI_PROTOCOL_DISCONNECTED) {
-		Opdi->println("Disconnected\n");
+		Opdi->println("Disconnected");
 	}
 }
 

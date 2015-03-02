@@ -19,6 +19,12 @@
     <Filter Include="Quelldateien\common">
       <UniqueIdentifier>{fe170a8f-fe38-4ad0-9eb0-7451842f7683}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Headerdateien\common\cppwrapper">
+      <UniqueIdentifier>{496d7b9c-9b05-429b-9c3c-61284749dcb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\common\cppwrapper">
+      <UniqueIdentifier>{ec6597fa-f6eb-4783-94ac-6944857f7cdd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -37,9 +43,6 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="WindowsOPDID.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\common\cppwrapper\OPDI.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="EmulatedPorts.h">
@@ -75,6 +78,9 @@
     <ClInclude Include="..\..\..\common\opdi_slave_protocol.h">
       <Filter>Headerdateien\common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\common\cppwrapper\OPDI.h">
+      <Filter>Headerdateien\common\cppwrapper</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -87,9 +93,6 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="WindowsOPDID.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\common\cppwrapper\OPDI.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="EmulatedPorts.cpp">
@@ -112,6 +115,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\common\opdi_slave_protocol.c">
       <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\common\cppwrapper\OPDI.cpp">
+      <Filter>Quelldateien\common\cppwrapper</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

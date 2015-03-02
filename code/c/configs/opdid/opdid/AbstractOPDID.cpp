@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "Poco/Exception.h"
+#include "Poco/Tuple.h"
 
 #include "opdi_constants.h"
 
@@ -55,7 +56,7 @@ void AbstractOPDID::printlni(int i) {
 
 int AbstractOPDID::startup(std::vector<std::string> args) {
 	// evaluate arguments
-	for (uint i = 0; i < args.size(); i++) {
+	for (unsigned int i = 0; i < args.size(); i++) {
 		if (args.at(i) == "-c") {
 			i++;
 			if (args.size() == i) {
@@ -81,7 +82,7 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 
 	this->setup(slaveName.c_str(), timeout);
 
-	this->setupPorts(this->configuration);
+	this->setupNodes(this->configuration);
 
 	// create view to "Connection" section
 	Poco::Util::AbstractConfiguration *connection = this->configuration->createView("Connection");
@@ -113,44 +114,116 @@ void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *
 	this->addPort(digPort);
 }
 
-void AbstractOPDID::setupPort(Poco::Util::AbstractConfiguration *config, std::string port) {
-	this->print("Setting up port: ");
+void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	this->print("Setting up emulated analog port: ");
 	this->println(port.c_str());
 
-	// create port section view
-	Poco::Util::AbstractConfiguration *portConfig = this->configuration->createView(port);
+	std::string portLabel = this->getConfigString(portConfig, "Label", "", true);
+	std::string portDirCaps = this->getConfigString(portConfig, "DirCaps", "Bidi", false);
+	
+	const char *dircaps;
+	if (portDirCaps == "Input") {
+		dircaps = OPDI_PORTDIRCAP_INPUT;
+	} else if (portDirCaps == "Output") {
+		dircaps = OPDI_PORTDIRCAP_OUTPUT;
+	} else if (portDirCaps == "Bidi") {
+		dircaps = OPDI_PORTDIRCAP_BIDI;
+	} else
+		throw Poco::DataException("Unknown port DirCaps specifier; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
+	
+	uint8_t flags = portConfig->getInt("Flags", 0);
 
-	// get port information
-	std::string portType = this->getConfigString(portConfig, "Type", "", true);
-	std::string portDriver = this->getConfigString(portConfig, "Driver", "", true);
+	OPDI_EmulatedAnalogPort *anaPort = new OPDI_EmulatedAnalogPort(port.c_str(), portLabel.c_str(), dircaps, flags);
 
-	if (portType == "Digital") {
-		if (portDriver == "EmulatedDigitalPort") {
-			this->setupEmulatedDigitalPort(portConfig, port);
-		} else
-			throw Poco::DataException("Invalid configuration: Unknown digital port driver", portDriver);
+	// set initial values
+	if (portConfig->hasProperty("Mode")) {
+		std::string mode = this->getConfigString(portConfig, "Mode", "Output", false);
+		if (mode == "Input")
+			anaPort->setMode(0);
+		else if (mode == "Output")
+			anaPort->setMode(1);
+		else
+			throw Poco::ApplicationException("Unknown analog port mode, expected 'Input' or 'Output'", mode);
+	} else
+		// default mode: output
+		anaPort->setMode(1);
+
+	if (portConfig->hasProperty("Resolution")) {
+		uint8_t resolution = portConfig->getInt("Resolution", OPDI_ANALOG_PORT_RESOLUTION_12);
+		if (anaPort->setResolution(resolution) != OPDI_STATUS_OK) {
+			throw Poco::ApplicationException("Unable to set resolution from configuration", this->to_string(resolution));
+		}
 	}
-	else
-		throw Poco::DataException("Invalid configuration: Unknown port type", portType);
+	if (portConfig->hasProperty("Value")) {
+		uint32_t value = portConfig->getInt("Value", 0);
+		if (anaPort->setValue(value) != OPDI_STATUS_OK) {
+			throw Poco::ApplicationException("Unable to set value from configuration", this->to_string(value));
+		}
+	}
+	this->addPort(anaPort);
 }
 
-void AbstractOPDID::setupPorts(Poco::Util::AbstractConfiguration *config) {
-	// enumerate section "Ports"
-	Poco::Util::AbstractConfiguration *ports = this->configuration->createView("Ports");
-	this->println("Setting up ports");
+void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
+	this->print("Setting up node: ");
+	this->println(node.c_str());
 
-	Poco::Util::AbstractConfiguration::Keys portKeys;
-	ports->keys("", portKeys);
-	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = portKeys.begin(); it != portKeys.end(); ++it) {
-		// check whether the port is active
-		if (!ports->getBool(*it, false))
+	// create node section view
+	Poco::Util::AbstractConfiguration *nodeConfig = this->configuration->createView(node);
+
+	// get node information
+	std::string nodeType = this->getConfigString(nodeConfig, "Type", "", true);
+	std::string nodeDriver = this->getConfigString(nodeConfig, "Driver", "", true);
+
+	if (nodeType == "DigitalPort") {
+		if (nodeDriver == "EmulatedDigitalPort") {
+			this->setupEmulatedDigitalPort(nodeConfig, node);
+		} else
+			throw Poco::DataException("Invalid configuration: Unknown digital port driver", nodeDriver);
+	} else
+	if (nodeType == "AnalogPort") {
+		if (nodeDriver == "EmulatedAnalogPort") {
+			this->setupEmulatedAnalogPort(nodeConfig, node);
+		} else
+			throw Poco::DataException("Invalid configuration: Unknown analog port driver", nodeDriver);
+	}
+	else
+		throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
+}
+
+void AbstractOPDID::setupNodes(Poco::Util::AbstractConfiguration *config) {
+	// enumerate section "Nodes"
+	Poco::Util::AbstractConfiguration *nodes = this->configuration->createView("Nodes");
+	this->println("Setting up nodes");
+
+	Poco::Util::AbstractConfiguration::Keys nodeKeys;
+	nodes->keys("", nodeKeys);
+
+	typedef Poco::Tuple<int, std::string> Node;
+	typedef std::vector<Node> NodeList;
+	NodeList orderedNodes;
+
+	// create ordered list of nodes (by priority)
+	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = nodeKeys.begin(); it != nodeKeys.end(); ++it) {
+		int nodeNumber = nodes->getInt(*it, 0);
+		// check whether the node is active
+		if (nodeNumber <= 0)
 			continue;
 
-		// check whether the port has already been added
-		if (this->findPortByID(it->c_str()) == NULL) {
-			this->setupPort(config, *it);
-		} else 
-			throw Poco::DataException("Invalid configuration: Duplicate port ID", *it);
+		// insert at the correct position to create a sorted list of nodes
+		NodeList::const_iterator nli = orderedNodes.begin();
+		while (nli != orderedNodes.end()) {
+			if (nli->get<0>() > nodeNumber)
+				break;
+			nli++;
+		}
+		orderedNodes.insert(nli, Node(nodeNumber, *it));
+	}
+
+	// go through ordered list, setup nodes by name
+	NodeList::const_iterator nli = orderedNodes.begin();
+	while (nli != orderedNodes.end()) {
+		this->setupNode(config, nli->get<1>());
+		nli++;
 	}
 }
 

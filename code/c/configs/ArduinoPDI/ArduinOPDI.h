@@ -74,8 +74,8 @@ public:
 	OPDI_AnalogPortPin(const char *id, const char *name, const char * dircaps, const uint8_t flags, const uint8_t pin);
 	virtual ~OPDI_AnalogPortPin();
 
-	// mode = 1: input
-	// mode = 2: output
+	// mode = 0: input
+	// mode = 1: output
 	uint8_t setMode(uint8_t mode);
 
 	// does nothing (resolution is fixed to 10 for inputs and 8 for outputs)

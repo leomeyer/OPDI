@@ -4,8 +4,7 @@
 
 #ifndef OPDI_NO_DIGITAL_PORTS
 
-/** Defines a digital port that is bound to a specified pin.
- *
+/** Defines an emulated digital port.
  */
 class OPDI_EmulatedDigitalPort : public OPDI_DigitalPort {
 
@@ -37,3 +36,37 @@ public:
 };
 
 #endif // OPDI_NO_DIGITAL_PORTS
+
+#ifndef OPDI_NO_ANALOG_PORTS
+
+/** Defines an emulated analog port.
+ */
+class OPDI_EmulatedAnalogPort : public OPDI_AnalogPort {
+
+protected:
+	uint8_t mode;
+	uint8_t reference;
+	uint8_t resolution;
+	int32_t value;
+
+public:
+	OPDI_EmulatedAnalogPort(const char *id, const char *name, const char * dircaps, const uint8_t flags);
+	virtual ~OPDI_EmulatedAnalogPort();
+
+	// mode = 0: input
+	// mode = 1: output
+	uint8_t setMode(uint8_t mode);
+
+	uint8_t setResolution(uint8_t resolution);
+
+	// reference = 0: internal voltage reference
+	// reference = 1: external voltage reference
+	uint8_t setReference(uint8_t reference);
+
+	// value: an integer value ranging from 0 to 2^resolution - 1
+	uint8_t setValue(int32_t value);
+
+	uint8_t getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value);
+};
+
+#endif // OPDI_NO_ANALOG_PORTS

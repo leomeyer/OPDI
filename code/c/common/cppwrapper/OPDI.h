@@ -41,7 +41,12 @@ protected:
 	OPDI_Port(const char *id, const char *name, const char *type, const char* dircaps);
 
 	/** Called regularly by the OPDI system. Enables the port to do work.
-	 * Override this in subclasses to implement more complex functionality. */
+	 * Override this in subclasses to implement more complex functionality.
+	 * In this method, an implementation may send asynchronous messages to the master.
+	 * This includes messages like Resync, Refresh, Debug etc.
+	 * Returning any other value than OPDI_STATUS_OK causes the message processing to exit.
+	 * This will usually signal a device error to the master or cause the master to time out.
+	 */
 	virtual uint8_t doWork();
 
 	char id[MAX_PORTIDLENGTH];
@@ -57,6 +62,9 @@ protected:
 
 	// linked list of ports - pointer to next port
 	OPDI_Port *next;
+
+	/** This function is called while the OPDI slave is connected and waiting for messages.
+	 * You can override it to perform your own housekeeping in case you need to.
 
 public:
 	/** Virtual destructor for the port. */
