@@ -63,9 +63,6 @@ protected:
 	// linked list of ports - pointer to next port
 	OPDI_Port *next;
 
-	/** This function is called while the OPDI slave is connected and waiting for messages.
-	 * You can override it to perform your own housekeeping in case you need to.
-
 public:
 	/** Virtual destructor for the port. */
 	virtual ~OPDI_Port();

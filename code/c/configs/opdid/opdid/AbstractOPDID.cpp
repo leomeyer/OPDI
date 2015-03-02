@@ -1,5 +1,4 @@
 
-#include <string>
 #include <vector>
 #include <sstream>
 
@@ -210,13 +209,14 @@ void AbstractOPDID::setupNodes(Poco::Util::AbstractConfiguration *config) {
 			continue;
 
 		// insert at the correct position to create a sorted list of nodes
-		NodeList::const_iterator nli = orderedNodes.begin();
+		NodeList::iterator nli = orderedNodes.begin();
 		while (nli != orderedNodes.end()) {
 			if (nli->get<0>() > nodeNumber)
 				break;
 			nli++;
 		}
-		orderedNodes.insert(nli, Node(nodeNumber, *it));
+		Node node(nodeNumber, *it);
+		orderedNodes.insert(nli, node);
 	}
 
 	// go through ordered list, setup nodes by name

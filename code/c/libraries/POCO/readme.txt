@@ -19,7 +19,7 @@ If you want to use the DLLs remove the POCO_STATIC compiler directive from the p
 
 On Linux, do the following:
 
-> configure --no-tests --no-samples
+> ./configure --no-tests --no-samples
 Then, compile POCO:
 > make -s
 For multiprocessor machines:
