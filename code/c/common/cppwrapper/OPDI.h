@@ -229,7 +229,7 @@ public:
 	 * Override this function to return the correct time. The default implementation always returns 0.
 	 * This effectively disables the idle timer.
 	 */
-	virtual uint32_t getTimeMs() = 0;
+	// virtual uint32_t getTimeMs() = 0;
 
 	/** An internal handler which is used to implement the idle timer.
 	 */

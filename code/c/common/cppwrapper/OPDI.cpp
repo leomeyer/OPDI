@@ -28,6 +28,7 @@
 #include <opdi_config.h>
 
 #include <opdi_configspecs.h>
+#include <opdi_platformfuncs.h>
 
 #include "OPDI.h"
 
@@ -190,7 +191,7 @@ uint8_t OPDI::start(uint8_t (*workFunction)()) {
 	}
 
 	// reset idle timer
-	this->last_activity = this->getTimeMs();
+	this->last_activity = opdi_get_time_ms();
 	this->workFunction = workFunction;
 
 	// initiate handshake
@@ -250,18 +251,14 @@ uint8_t OPDI::refresh(OPDI_Port **ports) {
 	return opdi_refresh(iPorts);
 }
 
-uint32_t OPDI::getTimeMs() {
-	return 0;
-}
-
 uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 	if (this->idle_timeout_ms > 0) {
 		if (channel != 0) {
 			// reset activity time
-			this->last_activity = this->getTimeMs();
+			this->last_activity = opdi_get_time_ms();
 		} else {
 			// control channel message
-			if (this->getTimeMs() - this->last_activity > this->idle_timeout_ms) {
+			if (opdi_get_time_ms() - this->last_activity > this->idle_timeout_ms) {
 				opdi_send_debug("Idle timeout!");
 				return this->disconnect();
 			}

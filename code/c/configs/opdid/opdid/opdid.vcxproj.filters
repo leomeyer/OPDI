@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Headerdateien\common">
+      <UniqueIdentifier>{15b6eb6b-5c9c-49fb-9658-10708e5b2496}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\common">
+      <UniqueIdentifier>{fe170a8f-fe38-4ad0-9eb0-7451842f7683}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -36,38 +42,38 @@
     <ClInclude Include="..\..\..\common\cppwrapper\OPDI.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="opdi_configspecs.h">
+    <ClInclude Include="EmulatedPorts.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\common\opdi_config.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\common\opdi_constants.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\common\opdi_messages.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\common\opdi_ports.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\common\opdi_protocol.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\common\opdi_protocol_constants.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\common\opdi_rijndael.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\common\opdi_slave_protocol.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Headerdateien\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\common\opdi_strings.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Headerdateien\common</Filter>
     </ClInclude>
-    <ClInclude Include="EmulatedPorts.h">
-      <Filter>Headerdateien</Filter>
+    <ClInclude Include="opdi_configspecs.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\common\opdi_constants.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\common\opdi_messages.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\common\opdi_ports.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\common\opdi_protocol.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\common\opdi_protocol_constants.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\common\opdi_rijndael.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\common\opdi_slave_protocol.h">
+      <Filter>Headerdateien\common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -86,26 +92,26 @@
     <ClCompile Include="..\..\..\common\cppwrapper\OPDI.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\common\opdi_messages.c">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\common\opdi_ports.c">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\common\opdi_protocol.c">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\common\opdi_slave_protocol.c">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\common\opdi_strings.c">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\platforms\win32\opdi_platformfuncs.c">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="EmulatedPorts.cpp">
       <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\common\opdi_messages.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\common\opdi_strings.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\platforms\win32\opdi_platformfuncs.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\common\opdi_ports.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\common\opdi_protocol.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\common\opdi_slave_protocol.c">
+      <Filter>Quelldateien\common</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
