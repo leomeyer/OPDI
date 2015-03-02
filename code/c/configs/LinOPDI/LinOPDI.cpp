@@ -26,12 +26,10 @@
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
-#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
-#include <unistd.h>
 #include <sys/param.h>
 
 #include "opdi_platformfuncs.h"
