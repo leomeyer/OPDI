@@ -23,7 +23,7 @@ AbstractOPDID::~AbstractOPDID(void)
 }
 
 void AbstractOPDID::sayHello(void) {
-	std::cout << "OPDID version 0.1 (c) Leo Meyer 2015" << std::endl;
+	this->println("OPDID version 0.1 (c) Leo Meyer 2015");
 }
 
 void AbstractOPDID::readConfiguration(const std::string filename) {
@@ -55,7 +55,7 @@ void AbstractOPDID::printlni(int i) {
 
 int AbstractOPDID::startup(std::vector<std::string> args) {
 	// evaluate arguments
-	for (int i = 0; i < args.size(); i++) {
+	for (uint i = 0; i < args.size(); i++) {
 		if (args.at(i) == "-c") {
 			i++;
 			if (args.size() == i) {
@@ -331,10 +331,7 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 #endif
 
 uint8_t opdi_choose_language(const char *languages) {
-	// supports German?
-	if (strcmp("de_DE", languages) == 0) {
-		// TODO
-	}
+	// TODO
 
 	return OPDI_STATUS_OK;
 }
