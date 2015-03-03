@@ -17,5 +17,7 @@ public:
 	int HandleTCPConnection(int csock);
 
 	int setupTCP(std::string interfaces, int port);
+
+	IOPDIDPlugin *getPlugin(std::string driver);
 };
 

@@ -20,23 +20,23 @@ SRC = $(TARGET).cpp
 SRC += $(PPATH)/opdi_platformfuncs.c
 
 # common files
-SRC += $(CPATH)/opdi_messages.c $(CPATH)/opdi_ports.c $(CPATH)/opdi_protocol.c $(CPATH)/opdi_slave_protocol.c $(CPATH)/opdi_strings.c
+SRC += $(CPATH)/opdi_message.c $(CPATH)/opdi_port.c $(CPATH)/opdi_protocol.c $(CPATH)/opdi_slave_protocol.c $(CPATH)/opdi_strings.c
 # $(CPATH)/opdi_aes.cpp $(CPATH)/opdi_rijndael.cpp
 
 # master implementation
 MPATH = $(CPATH)/master
 
 # master files
-# SRC += $(MPATH)/opdi_AbstractProtocol.cpp $(MPATH)/opdi_BasicDeviceCapabilities.cpp $(MPATH)/opdi_BasicProtocol.cpp $(MPATH)/opdi_DigitalPort.cpp $(MPATH)/opdi_IODevice.cpp $(MPATH)/opdi_main_io.cpp $(MPATH)/opdi_Message.cpp $(MPATH)/opdi_MessageQueueDevice.cpp $(MPATH)/opdi_Port.cpp $(MPATH)/opdi_PortFactory.cpp $(MPATH)/opdi_ProtocolFactory.cpp $(MPATH)/opdi_StringTools.cpp $(MPATH)/opdi_TCPIPDevice.cpp
+# SRC += $(MPATH)/opdi_AbstractProtocol.cpp $(MPATH)/opdi_BasicDeviceCapabilities.cpp $(MPATH)/opdi_BasicProtocol.cpp $(MPATH)/opdi_DigitalPort.cpp $(MPATH)/opdi_IODevice.cpp $(MPATH)/opdi_main_io.cpp $(MPATH)/opdi_OPDIMessage.cpp $(MPATH)/opdi_MessageQueueDevice.cpp $(MPATH)/opdi_OPDIPort.cpp $(MPATH)/opdi_PortFactory.cpp $(MPATH)/opdi_ProtocolFactory.cpp $(MPATH)/opdi_StringTools.cpp $(MPATH)/opdi_TCPIPDevice.cpp
 
 # C++ wrapper
 CPPPATH = $(CPATH)/cppwrapper
 
 # C++ wrapper files
-SRC += $(CPPPATH)/OPDI.cpp
+SRC += $(CPPPATH)/OPDI.cpp $(CPPPATH)/OPDI_Ports.cpp
 
 # additional source files
-SRC += ./AbstractOPDID.cpp ./EmulatedPorts.cpp ./opdid_linux.cpp
+SRC += ./AbstractOPDID.cpp ./opdid_linux.cpp
 
 # conio include path
 CONIOINCPATH = ../../../libraries/conio
@@ -51,7 +51,7 @@ POCOLIBPATH = ../../../libraries/POCO/lib/Linux/x86_64
 POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
 
 # Additional libraries
-LIBS = -lpthread
+LIBS = -lpthread -ldl
 
 # The compiler to be used.
 CC = g++

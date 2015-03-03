@@ -13,12 +13,13 @@
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include <sys/param.h>
+#include <dlfcn.h>
 
 #include "opdi_platformfuncs.h"
 #include "opdi_configspecs.h"
 #include "opdi_constants.h"
-#include "opdi_ports.h"
-#include "opdi_messages.h"
+#include "opdi_port.h"
+#include "opdi_message.h"
 #include "opdi_protocol.h"
 #include "opdi_slave_protocol.h"
 #include "opdi_config.h"
@@ -274,4 +275,25 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
         }
 
 	return 0;
+}
+
+
+IOPDIDPlugin *LinuxOPDID::getPlugin(std::string driver) {
+
+	void *hndl = dlopen(driver.c_str(), RTLD_NOW);
+	if (hndl == NULL){
+		throw Poco::FileException("Could not load the plugin library", dlerror());
+	}
+
+	dlerror();
+	void *getPluginInstance = dlsym(hndl, "GetOPDIDPluginInstance");
+	
+	char *lasterror = dlerror();
+	if (lasterror != NULL) {
+		dlclose(hndl);
+		throw Poco::ApplicationException("Invalid plugin library; could not locate function 'GetOPDIDPluginInstance' in " + driver, lasterror);
+	}
+
+	// call the library function to get the plugin instance
+	return ((IOPDIDPlugin *(*)())(getPluginInstance))();
 }
