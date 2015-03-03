@@ -2,13 +2,13 @@
 #include "Poco/NumberFormatter.h"
 
 #include "opdi_constants.h"
-#include "opdi_ports.h"
+#include "opdi_port.h"
 
 #include "opdi_DigitalPort.h"
 #include "opdi_StringTools.h"
 #include "opdi_AbstractProtocol.h"
 
-DigitalPort::DigitalPort(IBasicProtocol& protocol, std::vector<std::string> parts) : Port(protocol, "", "", PORTTYPE_DIGITAL, PORTDIRCAP_UNKNOWN)
+DigitalPort::DigitalPort(IBasicProtocol& protocol, std::vector<std::string> parts) : OPDIPort(protocol, "", "", PORTTYPE_DIGITAL, PORTDIRCAP_UNKNOWN)
 {
 	int ID_PART = 1;
 	int NAME_PART = 2;
@@ -120,9 +120,10 @@ void DigitalPort::setLine(DigitalPortLine portLine)
 {
 	if (getDirCaps() == PORTDIRCAP_INPUT)
 		throw Poco::InvalidArgumentException("Can't set state on input only digital port: ID = " + getID());
-	if (mode != DIGITAL_OUTPUT)
+	// mode set to input?
+	if (mode == DIGITAL_INPUT_FLOATING || mode == DIGITAL_INPUT_PULLUP ||mode == DIGITAL_INPUT_PULLDOWN)
 		throw Poco::InvalidArgumentException("Can't set state on digital port configured as input: ID = " + getID());
-	// set the line state
+	// mode output or unknown; set the line state
 	getProtocol().setPortLine(this, portLine);
 }
 	

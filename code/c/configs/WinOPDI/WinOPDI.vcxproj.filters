@@ -57,22 +57,10 @@
     <ClInclude Include="..\..\common\master\opdi_IDevice.h">
       <Filter>Headerdateien\common\master</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\common\master\opdi_Message.h">
-      <Filter>Headerdateien\common\master</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\master\opdi_Port.h">
-      <Filter>Headerdateien\common\master</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\common\opdi_config.h">
       <Filter>Headerdateien\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\opdi_constants.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\opdi_messages.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\opdi_ports.h">
       <Filter>Headerdateien\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\opdi_protocol.h">
@@ -132,6 +120,18 @@
     <ClInclude Include="..\test\slave.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\common\master\opdi_OPDIPort.h">
+      <Filter>Headerdateien\common\master</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\master\opdi_OPDIMessage.h">
+      <Filter>Headerdateien\common\master</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\opdi_message.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\opdi_port.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WinOPDI.cpp">
@@ -141,12 +141,6 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="..\..\common\opdi_aes.cpp">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\opdi_messages.c">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\opdi_ports.c">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\common\opdi_protocol.c">
@@ -182,9 +176,6 @@
     <ClCompile Include="..\..\common\master\opdi_ProtocolFactory.cpp">
       <Filter>Quelldateien\common\master</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\common\master\opdi_Message.cpp">
-      <Filter>Quelldateien\common\master</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\common\master\opdi_StringTools.cpp">
       <Filter>Quelldateien\common\master</Filter>
     </ClCompile>
@@ -197,13 +188,22 @@
     <ClCompile Include="..\..\common\master\opdi_DigitalPort.cpp">
       <Filter>Quelldateien\common\master</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\common\master\opdi_Port.cpp">
-      <Filter>Quelldateien\common\master</Filter>
-    </ClCompile>
     <ClCompile Include="..\test\master.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="..\..\common\master\opdi_main_io.cpp">
+      <Filter>Quelldateien\common\master</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\opdi_port.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\opdi_message.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\master\opdi_OPDIPort.cpp">
+      <Filter>Quelldateien\common\master</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\master\opdi_OPDIMessage.cpp">
       <Filter>Quelldateien\common\master</Filter>
     </ClCompile>
   </ItemGroup>

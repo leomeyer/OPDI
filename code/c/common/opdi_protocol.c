@@ -23,7 +23,7 @@
 
 #include "opdi_constants.h"
 #include "opdi_strings.h"
-#include "opdi_messages.h"
+#include "opdi_message.h"
 #include "opdi_protocol.h"
 #include "opdi_slave_protocol.h"
 #include "opdi_protocol_constants.h"

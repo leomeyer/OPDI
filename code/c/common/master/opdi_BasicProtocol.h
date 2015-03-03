@@ -82,7 +82,7 @@ public:
 	 * @param message
 	 * @return
 	 */
-	bool dispatch(Message* message) override;
+	bool dispatch(OPDIMessage* message) override;
 
 	/** Returns the device capabilities.
 	 * 
@@ -105,14 +105,14 @@ public:
 	 * @throws ProtocolException 
 	 * @throws TimeoutException 
 	 */
-	Port* findPortByID(std::string portID) override;
+	OPDIPort* findPortByID(std::string portID) override;
 	
 	/** Returns the information about the port with the given ID.
 	 * Requires the channel from the initiating protocol.
 	 * 
 	 * @return
 	 */
-	Port* getPortInfo(std::string id, int channel) override;
+	OPDIPort* getPortInfo(std::string id, int channel) override;
 
 	/** Sets the mode for the given digital port and returns the new mode.
 	 * 

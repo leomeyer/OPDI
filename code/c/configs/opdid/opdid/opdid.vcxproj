@@ -39,6 +39,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(ProjectDir)$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -80,33 +81,33 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\common\cppwrapper\OPDI_Ports.h" />
     <ClInclude Include="..\..\..\common\cppwrapper\OPDI.h" />
     <ClInclude Include="..\..\..\common\opdi_config.h" />
     <ClInclude Include="..\..\..\common\opdi_constants.h" />
-    <ClInclude Include="..\..\..\common\opdi_messages.h" />
-    <ClInclude Include="..\..\..\common\opdi_ports.h" />
+    <ClInclude Include="..\..\..\common\opdi_message.h" />
+    <ClInclude Include="..\..\..\common\opdi_port.h" />
     <ClInclude Include="..\..\..\common\opdi_protocol.h" />
     <ClInclude Include="..\..\..\common\opdi_protocol_constants.h" />
     <ClInclude Include="..\..\..\common\opdi_rijndael.h" />
     <ClInclude Include="..\..\..\common\opdi_slave_protocol.h" />
     <ClInclude Include="..\..\..\common\opdi_strings.h" />
     <ClInclude Include="AbstractOPDID.h" />
-    <ClInclude Include="EmulatedPorts.h" />
     <ClInclude Include="opdi_configspecs.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="WindowsOPDID.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\common\cppwrapper\OPDI_Ports.cpp" />
     <ClCompile Include="..\..\..\common\cppwrapper\OPDI.cpp" />
-    <ClCompile Include="..\..\..\common\opdi_messages.c" />
-    <ClCompile Include="..\..\..\common\opdi_ports.c" />
+    <ClCompile Include="..\..\..\common\opdi_message.c" />
+    <ClCompile Include="..\..\..\common\opdi_port.c" />
     <ClCompile Include="..\..\..\common\opdi_protocol.c" />
     <ClCompile Include="..\..\..\common\opdi_slave_protocol.c" />
     <ClCompile Include="..\..\..\common\opdi_strings.c" />
     <ClCompile Include="..\..\..\platforms\win32\opdi_platformfuncs.c" />
     <ClCompile Include="AbstractOPDID.cpp" />
-    <ClCompile Include="EmulatedPorts.cpp" />
     <ClCompile Include="opdid_win.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="WindowsOPDID.cpp" />

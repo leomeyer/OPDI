@@ -22,7 +22,7 @@ BasicDeviceCapabilities::BasicDeviceCapabilities(IBasicProtocol* protocol, int c
 	// get port info for each port
 	for (std::vector<std::string>::iterator iter = portIDs.begin(); iter != portIDs.end(); iter++) {
 		if ((*iter) != "") {
-			Port* port = protocol->getPortInfo((*iter), channel);
+			OPDIPort* port = protocol->getPortInfo((*iter), channel);
 			// ignore NULLs
 			if (port)
 				ports.push_back(port);
@@ -30,15 +30,15 @@ BasicDeviceCapabilities::BasicDeviceCapabilities(IBasicProtocol* protocol, int c
 	}
 }
 
-Port* BasicDeviceCapabilities::findPortByID(std::string portID) {
-	for (std::vector<Port*>::iterator iter = ports.begin(); iter != ports.end(); iter++) {
+OPDIPort* BasicDeviceCapabilities::findPortByID(std::string portID) {
+	for (std::vector<OPDIPort*>::iterator iter = ports.begin(); iter != ports.end(); iter++) {
 		if ((*iter)->getID() == portID)
 			return (*iter);
 	}
 	return NULL;
 }
 
-std::vector<Port*> & BasicDeviceCapabilities::getPorts()
+std::vector<OPDIPort*> & BasicDeviceCapabilities::getPorts()
 {
 	return ports;
 }

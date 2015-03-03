@@ -7,8 +7,8 @@
 
 #include "opdi_platformtypes.h"
 
-#include "opdi_Message.h"
-#include "opdi_Port.h"
+#include "opdi_OPDIMessage.h"
+#include "opdi_OPDIPort.h"
 #include "opdi_BasicDeviceCapabilities.h"
 #include "opdi_DigitalPort.h"
 
@@ -41,7 +41,7 @@ public:
 	 * @param message
 	 * @return
 	 */
-	virtual bool dispatch(Message* message) = 0;
+	virtual bool dispatch(OPDIMessage* message) = 0;
 
 	/** Returns the device capabilities.
 	 * 
@@ -64,14 +64,14 @@ public:
 	 * @throws ProtocolException 
 	 * @throws TimeoutException 
 	 */
-	virtual Port* findPortByID(std::string portID) = 0;
+	virtual OPDIPort* findPortByID(std::string portID) = 0;
 	
 	/** Returns the information about the port with the given ID.
 	 * Requires the channel from the initiating protocol.
 	 * 
 	 * @return
 	 */
-	virtual Port* getPortInfo(std::string id, int channel) = 0;
+	virtual OPDIPort* getPortInfo(std::string id, int channel) = 0;
 
 	/** Sets the mode for the given digital port and returns the new mode.
 	 * 

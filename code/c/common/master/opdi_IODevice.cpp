@@ -12,8 +12,8 @@
 #include "opdi_StringTools.h"
 #include "opdi_ProtocolFactory.h"
 
-static Message msgDisagreement(0, OPDI_Disagreement);
-static Message msgDisconnect(0, OPDI_Disconnect);
+static OPDIMessage msgDisagreement(0, OPDI_Disagreement);
+static OPDIMessage msgDisconnect(0, OPDI_Disconnect);
 
 class IODevice;
 
@@ -218,7 +218,7 @@ void IODevice::getHandshakeMessage(unsigned int expectedPartCount, std::vector<s
 {
 	if (!isConnecting()) return;
 	
-	Message* m = receiveHandshakeMessage(AbstractProtocol::HANDSHAKE_TIMEOUT /*, new IAbortable() {
+	OPDIMessage* m = receiveHandshakeMessage(AbstractProtocol::HANDSHAKE_TIMEOUT /*, new IAbortable() {
 		@Override
 		public boolean isAborted() {
 			return !isConnecting();
@@ -285,7 +285,7 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 	std::string supportedEncryptions = ""; // (this.tryToUseEncryption() ? StringTools::join(',', std::vector<std::string>("AES")) : "");
 	
 	// send handshake message
-	Message handshake(0, StringTools::join(AbstractProtocol::SEPARATOR, OPDI_Handshake, OPDI_Handshake_version, Poco::NumberFormatter::format(flags), supportedEncryptions));
+	OPDIMessage handshake(0, StringTools::join(AbstractProtocol::SEPARATOR, OPDI_Handshake, OPDI_Handshake_version, Poco::NumberFormatter::format(flags), supportedEncryptions));
 		
 	////////////////////////////////////////////////////////////
 	///// Send: Handshake
@@ -404,7 +404,7 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 		
 	std::string preferredLanguages = getPreferredLocalesString();
 
-	Message protocolSelect(0, StringTools::join(AbstractProtocol::SEPARATOR, prot->getMagic(), preferredLanguages, getMasterName()));
+	OPDIMessage protocolSelect(0, StringTools::join(AbstractProtocol::SEPARATOR, prot->getMagic(), preferredLanguages, getMasterName()));
 
 	sendSynchronous(&protocolSelect);
 		
@@ -457,7 +457,7 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 		///// Send: Authentication
 		////////////////////////////////////////////////////////////
 			
-		Message auth = Message(0, StringTools::join(AbstractProtocol::SEPARATOR, OPDI_Auth, user, password));
+		OPDIMessage auth = OPDIMessage(0, StringTools::join(AbstractProtocol::SEPARATOR, OPDI_Auth, user, password));
 		sendSynchronous(&auth);
 
 		try {

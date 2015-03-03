@@ -1,38 +1,38 @@
 
 #include <vector>
 
-#include "opdi_Port.h"
+#include "opdi_OPDIPort.h"
 #include "opdi_AbstractProtocol.h"
 #include "opdi_IBasicProtocol.h"
 
-Port::Port(IBasicProtocol& protocol, std::string id, std::string name, PortType type, PortDirCaps dirCaps) : protocol(protocol) {
+OPDIPort::OPDIPort(IBasicProtocol& protocol, std::string id, std::string name, PortType type, PortDirCaps dirCaps) : protocol(protocol) {
 	this->id = id;
 	this->name = name;
 	this->type = type;
 	this->dirCaps = dirCaps;
 }
 
-IBasicProtocol& Port::getProtocol() {
+IBasicProtocol& OPDIPort::getProtocol() {
 	return protocol;
 }
 
-std::string Port::getID() {
+std::string OPDIPort::getID() {
 	return id;
 }
 
-std::string Port::getName() {
+std::string OPDIPort::getName() {
 	return name;
 }
 		
-PortType Port::getType() {
+PortType OPDIPort::getType() {
 	return type;
 }
 
-PortDirCaps Port::getDirCaps() {
+PortDirCaps OPDIPort::getDirCaps() {
 	return dirCaps;
 }
 
-std::string Port::getDirCapsText()
+std::string OPDIPort::getDirCapsText()
 {
 	switch (dirCaps)
 	{
@@ -44,27 +44,27 @@ std::string Port::getDirCapsText()
 	return "Invalid dirCaps: " + dirCaps;
 }
 
-void Port::setProtocol(IBasicProtocol& protocol) {
+void OPDIPort::setProtocol(IBasicProtocol& protocol) {
 	this->protocol = protocol;
 }
 
-void Port::setID(std::string id) {
+void OPDIPort::setID(std::string id) {
 	this->id = id;
 }
 
-void Port::setName(std::string name) {
+void OPDIPort::setName(std::string name) {
 	this->name = name;
 }
 
-void Port::setType(PortType type) {
+void OPDIPort::setType(PortType type) {
 	this->type = type;
 }
 
-void Port::setDirCaps(PortDirCaps dir) {
+void OPDIPort::setDirCaps(PortDirCaps dir) {
 	dirCaps = dir;
 }
 	
-void Port::checkSerialForm(std::vector<std::string> parts, unsigned int count, std::string magic) 
+void OPDIPort::checkSerialForm(std::vector<std::string> parts, unsigned int count, std::string magic) 
 {
 	if (parts.size() != count) 
 		throw ProtocolException("Serial form invalid");
@@ -72,10 +72,10 @@ void Port::checkSerialForm(std::vector<std::string> parts, unsigned int count, s
 		throw ProtocolException("Serial form invalid: wrong magic");		
 }
 
-void Port::setViewAdapter(void *viewAdapter) {
+void OPDIPort::setViewAdapter(void *viewAdapter) {
 	this->viewAdapter = viewAdapter;
 }
 
-void *Port::getViewAdapter() {
+void *OPDIPort::getViewAdapter() {
 	return viewAdapter;
 }

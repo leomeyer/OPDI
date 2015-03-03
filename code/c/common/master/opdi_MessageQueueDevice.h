@@ -14,9 +14,9 @@
 class MessageNotification : public Poco::Notification
 {
 public:
-	Message *message;
+	OPDIMessage *message;
 
-	MessageNotification(Message *message);
+	MessageNotification(OPDIMessage *message);
 	~MessageNotification();
 };
 
@@ -97,7 +97,7 @@ protected:
 
 public:
 
-void sendMessage(Message* message) override;
+void sendMessage(OPDIMessage* message) override;
 
 void clearQueues();
 	
@@ -155,7 +155,7 @@ virtual std::string getEncryptionKey() = 0;
 
 Poco::NotificationQueue* getInputMessages() override;
 
-void enqueueIn(Message* message);
+void enqueueIn(OPDIMessage* message);
 
 // Process messages on the output queue. Returns true if there are more messages to be sent
 bool processOutQueue();
@@ -212,7 +212,7 @@ virtual void close() = 0;
 	* @throws IOException
 	* @throws DeviceException 
 	*/
-void sendSynchronous(Message* message);
+void sendSynchronous(OPDIMessage* message);
 
 /** Waits for a message until the timeout expires, the operation is aborted or a valid message
 	* is actually received.
@@ -225,7 +225,7 @@ void sendSynchronous(Message* message);
 	* @throws TimeoutException 
 	* @throws DeviceException 
 	*/
-Message* receiveHandshakeMessage(int timeout /*, IAbortable abortable*/);
+OPDIMessage* receiveHandshakeMessage(int timeout /*, IAbortable abortable*/);
 
 bool hasCredentials() override;
 

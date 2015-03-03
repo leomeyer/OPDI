@@ -1,10 +1,61 @@
 
-
+#include <cstdlib>
 #include <string.h>
 
 #include "opdi_constants.h"
+#include "opdi_port.h"
+#include "opdi_platformtypes.h"
 
-#include "EmulatedPorts.h"
+#include "OPDI.h"
+#include "OPDI_Ports.h"
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// General port functionality
+//////////////////////////////////////////////////////////////////////////////////////////
+
+OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const char *dircaps, int32_t flags, void* ptr) {
+	this->data = NULL;
+	this->next = NULL;
+	this->id = NULL;
+	this->label = NULL;
+	this->opdi = NULL;
+	this->flags = flags;
+	this->ptr = ptr;
+
+	this->id = (char*)malloc(strlen(id) + 1);
+	strcpy(this->id, id);
+	this->setLabel(label);
+	strcpy(this->type, type);
+	strcpy(this->caps, dircaps);
+}
+
+uint8_t OPDI_Port::doWork() {
+	return OPDI_STATUS_OK;
+}
+
+void OPDI_Port::setLabel(const char *label) {
+	if (this->label != NULL)
+		free(this->label);
+	this->label = (char*)malloc(strlen(label) + 1);
+	strcpy(this->label, label);
+}
+
+uint8_t OPDI_Port::refresh() {
+	OPDI_Port **ports = new OPDI_Port*[2];
+	ports[0] = this;
+	ports[1] = NULL;
+
+	return opdi->refresh(ports);
+}
+
+OPDI_Port::~OPDI_Port() {
+	if (this->id != NULL)
+		free(this->id);
+	if (this->label != NULL)
+		free(this->label);
+	if (this->data != NULL)
+		free(this->data);
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Digital port functionality
@@ -12,9 +63,42 @@
 
 #ifndef OPDI_NO_DIGITAL_PORTS
 
-OPDI_EmulatedDigitalPort::OPDI_EmulatedDigitalPort(const char *id, const char *name, const char *dircaps, const uint8_t flags) :
+OPDI_DigitalPort::OPDI_DigitalPort(const char *id, const char *label, const char *dircaps, const uint8_t flags) :
+	// call base constructor
+	OPDI_Port(id, label, OPDI_PORTTYPE_DIGITAL, dircaps, flags, NULL) {
+}
+
+OPDI_DigitalPort::~OPDI_DigitalPort() {
+}
+
+#endif		// NO_DIGITAL_PORTS
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Analog port functionality
+//////////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef OPDI_NO_ANALOG_PORTS
+
+OPDI_AnalogPort::OPDI_AnalogPort(const char *id, const char *label, const char *dircaps, const uint8_t flags) :
+	// call base constructor
+	OPDI_Port(id, label, OPDI_PORTTYPE_ANALOG, dircaps, flags, NULL) {
+}
+
+OPDI_AnalogPort::~OPDI_AnalogPort() {
+}
+
+#endif		// NO_ANALOG_PORTS
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Digital port functionality
+//////////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef OPDI_NO_DIGITAL_PORTS
+
+OPDI_EmulatedDigitalPort::OPDI_EmulatedDigitalPort(const char *id, const char *label, const char *dircaps, const uint8_t flags) :
 	// call base constructor; mask unsupported flags
-	OPDI_DigitalPort(id, name, dircaps, flags & (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) & (OPDI_DIGITAL_PORT_HAS_PULLDN | OPDI_DIGITAL_PORT_PULLDN_ALWAYS)) {
+	OPDI_DigitalPort(id, label, dircaps, flags & (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) & (OPDI_DIGITAL_PORT_HAS_PULLDN | OPDI_DIGITAL_PORT_PULLDN_ALWAYS)) {
 
 	this->line = 0;
 	// set mode depending on dircaps and flags
@@ -93,9 +177,9 @@ uint8_t OPDI_EmulatedDigitalPort::getState(uint8_t *mode, uint8_t *line) {
 
 #ifndef OPDI_NO_ANALOG_PORTS
 
-OPDI_EmulatedAnalogPort::OPDI_EmulatedAnalogPort(const char *id, const char *name, const char *dircaps, const uint8_t flags) :
+OPDI_EmulatedAnalogPort::OPDI_EmulatedAnalogPort(const char *id, const char *label, const char *dircaps, const uint8_t flags) :
 	// call base constructor
-	OPDI_AnalogPort(id, name, dircaps, flags) {
+	OPDI_AnalogPort(id, label, dircaps, flags) {
 
 	this->mode = 0;
 	this->value = 0;
@@ -172,3 +256,5 @@ uint8_t OPDI_EmulatedAnalogPort::getState(uint8_t *mode, uint8_t *resolution, ui
 }
 
 #endif		// NO_ANALOG_PORTS
+
+

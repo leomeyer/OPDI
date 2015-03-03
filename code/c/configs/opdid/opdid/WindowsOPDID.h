@@ -27,5 +27,10 @@ public:
 	int HandleTCPConnection(int *csock);
 
 	int setupTCP(std::string interfaces, int port);
+
+	IOPDIDPlugin *getPlugin(std::string driver);
 };
 
+
+// The plugin DLL entry function that returns the plugin instance
+typedef IOPDIDPlugin* (__cdecl *GetOPDIDPluginInstance_t)();

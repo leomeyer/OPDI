@@ -45,7 +45,7 @@
 #include <iostream>
 
 #include "opdi_constants.h"
-#include "opdi_ports.h"
+#include "opdi_port.h"
 #include "opdi_protocol_constants.h"
 #include "master.h"
 #include "opdi_main_io.h"
@@ -316,25 +316,23 @@ void cleanup()
 
 void print_devicecaps(BasicDeviceCapabilities* bdc)
 {
-	for (std::vector<Port*>::iterator iter = bdc->getPorts().begin(); iter != bdc->getPorts().end(); iter++) {
+	for (std::vector<OPDIPort*>::iterator iter = bdc->getPorts().begin(); iter != bdc->getPorts().end(); iter++) {
 		output << (*iter)->toString() << std::endl;
 	}
 }
 
-bool digital_port_command(std::string cmd, Port* port)
+bool digital_port_command(std::string cmd, OPDIPort* port)
 {
 	const char *part;
 
-	if (port->getType() != PORTTYPE_DIGITAL)
-	{
+	if (port->getType() != PORTTYPE_DIGITAL) {
 		output << "Expected digital port for command: " << cmd << std::endl;
 		return false;
 	}
 
 	DigitalPort* thePort = (DigitalPort*)port;
 
-	if (cmd == OPDI_setDigitalPortMode)
-	{
+	if (cmd == OPDI_setDigitalPortMode) {
 		part = strtok(NULL, " ");
 		if (part == NULL) {
 			output << "Error: Digital port mode expected" << std::endl;
@@ -356,10 +354,8 @@ bool digital_port_command(std::string cmd, Port* port)
 
 		thePort->setMode(dpm);
 		return true;
-	}
-	else
-	if (cmd == OPDI_setDigitalPortLine)
-	{
+	} else
+	if (cmd == OPDI_setDigitalPortLine)	{
 		part = strtok(NULL, " ");
 		if (part == NULL) {
 			output << "Error: Digital port line expected" << std::endl;
@@ -375,8 +371,11 @@ bool digital_port_command(std::string cmd, Port* port)
 
 		thePort->setLine(dpl);
 		return true;
+	} else 
+	if (cmd == OPDI_getDigitalPortState)	{
+		thePort->getPortState();
+		return true;
 	}
-
 	output << "Command not implemented: " << cmd << std::endl;
 	return false;
 }
@@ -413,7 +412,7 @@ bool port_command(const char *part)
 	std::string portID = part;
 
 	// find port
-	Port* port = device->getCapabilities()->findPortByID(portID);
+	OPDIPort* port = device->getCapabilities()->findPortByID(portID);
 
 	if (port == NULL) {
 		output << "Error: Port not found: " << portID << std::endl;
@@ -421,7 +420,7 @@ bool port_command(const char *part)
 	}
 
 	// check command
-	if (cmd == OPDI_setDigitalPortMode || cmd == OPDI_setDigitalPortLine)
+	if (cmd == OPDI_setDigitalPortMode || cmd == OPDI_setDigitalPortLine || cmd == OPDI_getDigitalPortState)
 	{
 		if (digital_port_command(cmd, port))
 		{
@@ -539,6 +538,9 @@ int start_master()
 				port_command(part);
 			} else 
 			if (strcmp(part, OPDI_setDigitalPortLine) == 0) {
+				port_command(part);
+			} else 
+			if (strcmp(part, OPDI_getDigitalPortState) == 0) {
 				port_command(part);
 			} else 
 			if (strcmp(part, "disconnect") == 0) {

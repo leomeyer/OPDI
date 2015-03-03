@@ -1,5 +1,5 @@
-#ifndef __OPDI_MESSAGE_H
-#define __OPDI_MESSAGE_H
+#ifndef __OPDI_OPDIMESSAGE_H
+#define __OPDI_OPDIMESSAGE_H
 
 #include "Poco/Exception.h"
 
@@ -14,7 +14,7 @@ public:
  * @author Leo
  *
  */
-class Message {
+class OPDIMessage {
 	
 protected:
 	int channel;
@@ -29,11 +29,11 @@ public:
 	 * 
 	 * @param payload
 	 */
-	Message(int channel, std::string payload);
+	OPDIMessage(int channel, std::string payload);
 	
-	Message(int channel, std::string payload, int checksum);
+	OPDIMessage(int channel, std::string payload, int checksum);
 
-	static Message* decode(char *serialForm/*, Charset encoding*/);
+	static OPDIMessage* decode(char *serialForm/*, Charset encoding*/);
 
 	/** Returns the serial form of a message that contains payload and checksum.
 	 * The parameter maxlength specifies the maximum length of the buffer.

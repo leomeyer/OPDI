@@ -2,7 +2,7 @@
 #include "Poco/Thread.h"
 
 #include "opdi_constants.h"
-#include "opdi_ports.h"
+#include "opdi_port.h"
 #include "opdi_protocol_constants.h"
 
 #include "opdi_platformfuncs.h"
@@ -21,7 +21,7 @@ PingRunner::PingRunner(IDevice* device)
 void PingRunner::run()
 {
 	// send ping message on the control channel (channel == 0)
-	Message ping = Message(0, PING_MESSAGE);
+	OPDIMessage ping = OPDIMessage(0, PING_MESSAGE);
 	while (!stopped && device->isConnected()) {
 		try {
 			// wait for the specified time after the last message
@@ -102,7 +102,7 @@ int BasicProtocol::getSynchronousChannel() {
 	return channel;
 }
 
-bool BasicProtocol::dispatch(Message* message)
+bool BasicProtocol::dispatch(OPDIMessage* message)
 {
 	// analyze control channel messages
 	if (message->getChannel() == 0) {
@@ -184,8 +184,8 @@ BasicDeviceCapabilities* BasicProtocol::getDeviceCapabilities()
 	int channel = getSynchronousChannel();
 		
 	// request device capabilities from the slave
-	send(new Message(channel, OPDI_getDeviceCaps));
-	Message* capResult = expect(channel, DEFAULT_TIMEOUT);
+	send(new OPDIMessage(channel, OPDI_getDeviceCaps));
+	OPDIMessage* capResult = expect(channel, DEFAULT_TIMEOUT);
 		
 	// decode the serial form
 	// this may issue callbacks on the protocol which do not have to be threaded
@@ -194,15 +194,15 @@ BasicDeviceCapabilities* BasicProtocol::getDeviceCapabilities()
 	return deviceCaps;
 }
 
-Port* BasicProtocol::findPortByID(std::string portID)
+OPDIPort* BasicProtocol::findPortByID(std::string portID)
 {
 	return NULL;
 }
 
-Port* BasicProtocol::getPortInfo(std::string id, int channel)
+OPDIPort* BasicProtocol::getPortInfo(std::string id, int channel)
 {
-	send(new Message(channel, StringTools::join(AbstractProtocol::SEPARATOR, OPDI_getPortInfo, id)));
-	Message* message = expect(channel, DEFAULT_TIMEOUT);
+	send(new OPDIMessage(channel, StringTools::join(AbstractProtocol::SEPARATOR, OPDI_getPortInfo, id)));
+	OPDIMessage* message = expect(channel, DEFAULT_TIMEOUT);
 		
 	// check the port magic
 	std::vector<std::string> parts;
@@ -214,7 +214,7 @@ Port* BasicProtocol::getPortInfo(std::string id, int channel)
 
 void BasicProtocol::expectDigitalPortState(DigitalPort* port, int channel)
 {
-	Message* m = expect(channel, DEFAULT_TIMEOUT);
+	OPDIMessage* m = expect(channel, DEFAULT_TIMEOUT);
 		
 	int PREFIX = 0;
 	int ID = 1;
@@ -250,7 +250,7 @@ void BasicProtocol::setPortMode(DigitalPort* digitalPort, DigitalPortMode mode)
 	default: throw Poco::InvalidArgumentException("Invalid value for digital port mode");
 	}
 
-	expectDigitalPortState(digitalPort, send(new Message(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_setDigitalPortMode, digitalPort->getID(), portMode))));
+	expectDigitalPortState(digitalPort, send(new OPDIMessage(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_setDigitalPortMode, digitalPort->getID(), portMode))));
 }
 
 void BasicProtocol::setPortLine(DigitalPort* digitalPort, DigitalPortLine line)
@@ -263,12 +263,12 @@ void BasicProtocol::setPortLine(DigitalPort* digitalPort, DigitalPortLine line)
 	default: throw Poco::InvalidArgumentException("Invalid value for digital port line");
 	}
 
-	expectDigitalPortState(digitalPort, send(new Message(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_setDigitalPortLine, digitalPort->getID(), portLine))));
+	expectDigitalPortState(digitalPort, send(new OPDIMessage(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_setDigitalPortLine, digitalPort->getID(), portLine))));
 }
 
 void BasicProtocol::getPortState(DigitalPort* aDigitalPort)
 {
-	expectDigitalPortState(aDigitalPort, send(new Message(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_getDigitalPortState, aDigitalPort->getID()))));		
+	expectDigitalPortState(aDigitalPort, send(new OPDIMessage(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_getDigitalPortState, aDigitalPort->getID()))));		
 }
 
 

@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "Poco/Util/AbstractConfiguration.h"
@@ -6,6 +5,14 @@
 
 #include "OPDI.h"
 
+class AbstractOPDID;
+
+/* The abstract plugin interface. */
+struct IOPDIDPlugin {
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID) = 0;
+};
+
+/** The abstract base class for OPDID implementations. */
 class AbstractOPDID: public OPDI
 {
 protected:
@@ -49,6 +56,8 @@ public:
 	virtual int setupConnection(Poco::Util::AbstractConfiguration *config);
 
 	virtual int setupTCP(std::string interface_, int port) = 0;
+
+	virtual IOPDIDPlugin *getPlugin(std::string driver) = 0;
 };
 
 /** Define external singleton instance */

@@ -3,7 +3,7 @@
 
 #include "opdi_protocol_constants.h"
 
-#include "opdi_Port.h"
+#include "opdi_OPDIPort.h"
 
 /** This class serves as a factory for basic port objects.
  * 
@@ -13,7 +13,7 @@
 class PortFactory {
 	
 public:
-	static Port* createPort(IBasicProtocol& protocol, std::vector<std::string> parts);
+	static OPDIPort* createPort(IBasicProtocol& protocol, std::vector<std::string> parts);
 
 };
 

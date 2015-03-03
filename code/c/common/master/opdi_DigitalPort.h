@@ -1,7 +1,7 @@
 #ifndef __DIGITALPORT_H
 #define __DIGITALPORT_H
 
-#include "opdi_Port.h"
+#include "opdi_OPDIPort.h"
 
 /** The mode a digital port may be in.*/
 enum DigitalPortMode {
@@ -30,7 +30,7 @@ enum DigitalPortLine {
  * @author Leo
  *
  */
-class DigitalPort : public Port {
+class DigitalPort : public OPDIPort {
 	
 protected:
 	int flags;

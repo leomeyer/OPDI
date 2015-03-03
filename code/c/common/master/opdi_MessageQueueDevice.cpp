@@ -43,7 +43,7 @@ void MessageProcessor::run()
 				int terminatorPos = -1;
 				int bufferEnd = 0;
 				for (; bufferEnd < bytes; bytesProcessed++, bufferEnd++) {
-        			if (buffer[bufferEnd] == Message::TERMINATOR) {
+        			if (buffer[bufferEnd] == OPDIMessage::TERMINATOR) {
         				terminatorPos = bytesProcessed;
 						// signal end of message string
 						message.push_back('\0');
@@ -60,7 +60,7 @@ void MessageProcessor::run()
 					std::vector<char> part(message.begin(), message.begin() + msgLen + 1);
 					// try to decode the message
 					try {
-						Message* msg = Message::decode(&part[0]); //, getEncoding());
+						OPDIMessage* msg = OPDIMessage::decode(&part[0]); //, getEncoding());
                 		device->logDebug("Message received: " + msg->toString());
 						// message is valid
 						// let the protocol dispatch the message in case it contains streaming data
@@ -81,7 +81,7 @@ void MessageProcessor::run()
 						// we deal with a certain block size
 						if (device->getEncryption() == 0) {
 							for (; bufferEnd < bytes; bytesProcessed++, bufferEnd++) {
-        						if (buffer[bufferEnd] == Message::TERMINATOR) {
+        						if (buffer[bufferEnd] == OPDIMessage::TERMINATOR) {
         							terminatorPos = bytesProcessed;
 									// signal end of message string
 									message.push_back('\0');
@@ -237,7 +237,7 @@ MessageQueueDevice::MessageQueueDevice(std::string id): IDevice(id)
 	status = DS_DISCONNECTED;
 }
 
-void MessageQueueDevice::sendMessage(Message* message)
+void MessageQueueDevice::sendMessage(OPDIMessage* message)
 {
 	// synchronized on outQueue
 	Mutex::ScopedLock lockOut(outMutex);
@@ -462,7 +462,7 @@ Poco::NotificationQueue* MessageQueueDevice::getInputMessages()
 	return &inQueue;
 }
 
-void MessageQueueDevice::enqueueIn(Message* message)
+void MessageQueueDevice::enqueueIn(OPDIMessage* message)
 {
 	// synchronize on inQueue
 	Mutex::ScopedLock lock(inMutex);
@@ -590,7 +590,7 @@ void MessageQueueDevice::close()
 	* @throws IOException
 	* @throws DeviceException 
 	*/
-void MessageQueueDevice::sendSynchronous(Message* message) {
+void MessageQueueDevice::sendSynchronous(OPDIMessage* message) {
 #define MESSAGE_MAXLENGTH		1024
 	char bytes[MESSAGE_MAXLENGTH];
 	int length = message->encode(0, bytes, MESSAGE_MAXLENGTH); 
@@ -617,7 +617,7 @@ void MessageQueueDevice::sendSynchronous(Message* message) {
 	 * @throws TimeoutException 
 	 * @throws DeviceException 
 	 */
-Message* MessageQueueDevice::receiveHandshakeMessage(int timeout /* , IAbortable abortable */)
+OPDIMessage* MessageQueueDevice::receiveHandshakeMessage(int timeout /* , IAbortable abortable */)
 {
 	std::vector<char> message;
 	char buffer[BUFFER_SIZE];
@@ -631,7 +631,7 @@ Message* MessageQueueDevice::receiveHandshakeMessage(int timeout /* , IAbortable
         	// append received bytes to buffer
         	int terminatorPos = -1;
         	for (int i = 0; i < bytes; bytesReceived++, i++) {
-        		if (buffer[i] == Message::TERMINATOR) {
+        		if (buffer[i] == OPDIMessage::TERMINATOR) {
         			terminatorPos = bytesReceived;
 					// signal end of message string
 					message.push_back('\0');
@@ -648,7 +648,7 @@ Message* MessageQueueDevice::receiveHandshakeMessage(int timeout /* , IAbortable
                 // try to decode the message
                 
 				try {
-					Message* msg = Message::decode(&part[0]); //, getEncoding());
+					OPDIMessage* msg = OPDIMessage::decode(&part[0]); //, getEncoding());
                 	logDebug("Message received: " + msg->toString());
                 	// this discards remaining bytes in buffer but this shouldn't be a problem 
                 	// because we're expecting handshake messages which are always synchronous
@@ -666,7 +666,7 @@ Message* MessageQueueDevice::receiveHandshakeMessage(int timeout /* , IAbortable
                 	terminatorPos = -1;
                 	for (; i < bytes; bytesReceived++, i++) {
                 		message.push_back(buffer[i]);
-                		if (buffer[i] == Message::TERMINATOR)
+                		if (buffer[i] == OPDIMessage::TERMINATOR)
                 			terminatorPos = i;
                 	}
                 }
@@ -725,7 +725,7 @@ void MessageQueueDevice::setError(int error, std::string text) {
 	setDeviceError(text);
 }
 
-MessageNotification::MessageNotification(Message* message)
+MessageNotification::MessageNotification(OPDIMessage* message)
 {
 	this->message = message;
 }

@@ -81,7 +81,7 @@ protected:
 	 * @return
 	 * @throws DisconnectedException 
 	 */
-	virtual int send(Message* message);
+	virtual int send(OPDIMessage* message);
 	
 	/** Sends the error message to the device. This will cause the connection to be terminated.
 	 * 
@@ -97,7 +97,7 @@ protected:
 	 * Time calculation is not absolutely exact but it's guaranteed to not be less than timeout milliseconds.
 	 * 
 	 */
-	virtual Message* expect(long channel, unsigned int timeout /*, IAbortable abortable */);
+	virtual OPDIMessage* expect(long channel, unsigned int timeout /*, IAbortable abortable */);
 	
 	// A convenience method without an abortable.
 	//virtual Message expect(long channel, int timeout);

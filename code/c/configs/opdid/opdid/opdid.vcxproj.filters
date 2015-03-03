@@ -45,9 +45,6 @@
     <ClInclude Include="WindowsOPDID.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="EmulatedPorts.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\common\opdi_config.h">
       <Filter>Headerdateien\common</Filter>
     </ClInclude>
@@ -58,12 +55,6 @@
       <Filter>Headerdateien\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\common\opdi_constants.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\common\opdi_messages.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\common\opdi_ports.h">
       <Filter>Headerdateien\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\common\opdi_protocol.h">
@@ -81,6 +72,15 @@
     <ClInclude Include="..\..\..\common\cppwrapper\OPDI.h">
       <Filter>Headerdateien\common\cppwrapper</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\common\cppwrapper\OPDI_Ports.h">
+      <Filter>Headerdateien\common\cppwrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\common\opdi_port.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\common\opdi_message.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -95,19 +95,10 @@
     <ClCompile Include="WindowsOPDID.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="EmulatedPorts.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\common\opdi_messages.c">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\common\opdi_strings.c">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\platforms\win32\opdi_platformfuncs.c">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\common\opdi_ports.c">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\common\opdi_protocol.c">
@@ -118,6 +109,15 @@
     </ClCompile>
     <ClCompile Include="..\..\..\common\cppwrapper\OPDI.cpp">
       <Filter>Quelldateien\common\cppwrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\common\cppwrapper\OPDI_Ports.cpp">
+      <Filter>Quelldateien\common\cppwrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\common\opdi_port.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\common\opdi_message.c">
+      <Filter>Quelldateien\common</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

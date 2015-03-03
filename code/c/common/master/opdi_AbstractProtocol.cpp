@@ -68,7 +68,7 @@ IDevice* AbstractProtocol::getDevice() {
 	return device;
 }
 
-int AbstractProtocol::send(Message* message)
+int AbstractProtocol::send(OPDIMessage* message)
 {
 	if (!device->isConnected()) 
 		throw DisconnectedException();
@@ -79,11 +79,11 @@ int AbstractProtocol::send(Message* message)
 void AbstractProtocol::sendError(std::string message)
 {
 	if (!device->isConnected()) return;
-	Message* msg = new Message(0, OPDI_Error); //StringTools::join(SEPARATOR, std::string() + ERR, message));
+	OPDIMessage* msg = new OPDIMessage(0, OPDI_Error); //StringTools::join(SEPARATOR, std::string() + ERR, message));
 	device->sendMessage(msg);
 }
 	
-Message* AbstractProtocol::expect(long channel, unsigned int timeout /*, IAbortable abortable */)
+OPDIMessage* AbstractProtocol::expect(long channel, unsigned int timeout /*, IAbortable abortable */)
 {
 	if (channel < 0)
 		throw DisconnectedException();
@@ -159,7 +159,7 @@ Message expect(long channel, int timeout) throws TimeoutException, InterruptedEx
 void AbstractProtocol::disconnect() {
 	// send disconnect message
 	try {
-		send(new Message(0, OPDI_Disconnect));
+		send(new OPDIMessage(0, OPDI_Disconnect));
 	} catch (DisconnectedException e) {
 		// ignore DisconnectedExceptions
 	}

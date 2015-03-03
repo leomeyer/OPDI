@@ -28,7 +28,7 @@
 
 #include "opdi_platformtypes.h"
 #include "opdi_configspecs.h"
-#include "opdi_ports.h"
+#include "opdi_port.h"
 
 #ifdef __cplusplus
 extern "C" {

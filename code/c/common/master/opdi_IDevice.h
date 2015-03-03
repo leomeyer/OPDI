@@ -8,7 +8,7 @@
 
 #include "opdi_platformtypes.h"
 
-#include "opdi_Message.h"
+#include "opdi_OPDIMessage.h"
 #include "opdi_IBasicProtocol.h"
 
 enum DeviceStatus
@@ -158,7 +158,7 @@ public:
 	 * 
 	 * @param messages
 	 */
-	virtual void sendMessage(Message* message) = 0;
+	virtual void sendMessage(OPDIMessage* message) = 0;
 	
 	/** Returns the input message queue of the device.
 	 * Access to methods of this queue MUST be synchronized on the queue!

@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <WinBase.h>
 #include <Mmsystem.h>
 #include <stdio.h>
 #pragma comment(lib, "Winmm.lib")
@@ -13,8 +12,8 @@
 #include "opdi_platformtypes.h"
 #include "opdi_config.h"
 #include "opdi_constants.h"
-#include "opdi_ports.h"
-#include "opdi_messages.h"
+#include "opdi_port.h"
+#include "opdi_message.h"
 #include "opdi_slave_protocol.h"
 
 #include "WindowsOPDID.h"
@@ -313,4 +312,23 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 	}
 
 	return 0;
+}
+
+IOPDIDPlugin *WindowsOPDID::getPlugin(std::string driver) {
+	// attempt to load the specified DLL
+	HINSTANCE dllHandle = LoadLibraryW(utf8_decode(driver).c_str());
+
+	if (!dllHandle) {
+		throw Poco::FileException("Could not load the plugin DLL", driver);
+	}
+
+	GetOPDIDPluginInstance_t getPluginInstance = reinterpret_cast<GetOPDIDPluginInstance_t>(::GetProcAddress(dllHandle, "GetOPDIDPluginInstance"));
+
+	if (!getPluginInstance) {
+		::FreeLibrary(dllHandle);
+		throw Poco::ApplicationException("Invalid plugin driver DLL (could not locate function 'GetOPDIDPluginInstance')", driver);
+	}
+
+	// call the DLL function to get the plugin instance
+	return getPluginInstance();
 }

@@ -8,7 +8,7 @@
 #include "opdi_constants.h"
 
 #include "AbstractOPDID.h"
-#include "EmulatedPorts.h"
+#include "OPDI_Ports.h"
 
 #define DEFAULT_IDLETIMEOUT_MS	180000
 #define DEFAULT_TCP_PORT		13110
@@ -186,6 +186,13 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 			throw Poco::DataException("Invalid configuration: Unknown analog port driver", nodeDriver);
 	}
 	else
+	if (nodeType == "Plugin") {
+		// try to load the plugin; the driver name is the (platform dependent) library file name
+		IOPDIDPlugin *plugin = this->getPlugin(nodeDriver);
+
+		// init the plugin
+		plugin->setupPlugin(this);
+	} else
 		throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 }
 
@@ -241,7 +248,6 @@ int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {
 	else
 		throw Poco::DataException("Invalid configuration; unknown connection type", connectionType);
 }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The following functions implement the glue code between C and C++.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////

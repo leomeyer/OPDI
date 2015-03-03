@@ -20,6 +20,7 @@
  * Uses serial port communication.
  */
 
+#include <cstdlib>
 #include <string.h>
 
 #include <opdi_constants.h>
@@ -31,84 +32,6 @@
 #include <opdi_platformfuncs.h>
 
 #include "OPDI.h"
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// General port functionality
-//////////////////////////////////////////////////////////////////////////////////////////
-
-OPDI_Port::OPDI_Port(const char *id, const char *name, const char *type, const char *dircaps) {
-	// protected constructor
-	// assign buffers, clear fields
-	this->port.id = (const char*)&this->id;
-	this->port.name = (const char*)&this->name;
-	this->port.type = (const char*)&this->type;
-	this->port.caps = (const char*)&this->caps;
-	this->port.info.i = 0;
-	this->port.next = NULL;
-	this->next = NULL;
-
-	// copy ID to class buffer
-	strncpy(this->id, id, (MAX_PORTIDLENGTH) - 1);
-	this->setName(name);
-	strcpy(this->type, type);
-	strcpy(this->caps, dircaps);
-}
-
-uint8_t OPDI_Port::doWork() {
-	return OPDI_STATUS_OK;
-}
-
-void OPDI_Port::setName(const char *name) {
-	// copy name to class buffer
-	strncpy(this->name, name, (MAX_PORTNAMELENGTH) - 1);
-}
-
-uint8_t OPDI_Port::refresh() {
-	OPDI_Port **ports = new OPDI_Port*[2];
-	ports[0] = this;
-	ports[1] = NULL;
-
-	return opdi->refresh(ports);
-}
-
-OPDI_Port::~OPDI_Port() {
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Digital port functionality
-//////////////////////////////////////////////////////////////////////////////////////////
-
-#ifndef OPDI_NO_DIGITAL_PORTS
-
-OPDI_DigitalPort::OPDI_DigitalPort(const char *id, const char *name, const char *dircaps, const uint8_t flags) :
-	// call base constructor
-	OPDI_Port(id, name, OPDI_PORTTYPE_DIGITAL, dircaps) {
-
-	this->port.info.i = flags;
-}
-
-OPDI_DigitalPort::~OPDI_DigitalPort() {
-}
-
-#endif		// NO_DIGITAL_PORTS
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Analog port functionality
-//////////////////////////////////////////////////////////////////////////////////////////
-
-#ifndef OPDI_NO_ANALOG_PORTS
-
-OPDI_AnalogPort::OPDI_AnalogPort(const char *id, const char *name, const char *dircaps, const uint8_t flags) :
-	// call base constructor
-	OPDI_Port(id, name, OPDI_PORTTYPE_ANALOG, dircaps) {
-
-	this->port.info.i = flags;
-}
-
-OPDI_AnalogPort::~OPDI_AnalogPort() {
-}
-
-#endif		// NO_ANALOG_PORTS
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Main class for OPDI functionality
@@ -135,6 +58,10 @@ void OPDI::setIdleTimeout(uint32_t idleTimeoutMs) {
 	this->idle_timeout_ms = idleTimeoutMs;
 }
 
+void OPDI::setEncoding(const char* encoding) {
+	strncpy((char*)opdi_encoding, encoding, MAX_ENCODINGNAMELENGTH - 1);
+}
+
 uint8_t OPDI::addPort(OPDI_Port *port) {
 	// associate port with this instance
 	port->opdi = this;
@@ -149,14 +76,36 @@ uint8_t OPDI::addPort(OPDI_Port *port) {
 		this->last_port = port;
 	}
 
-	return opdi_add_port(&port->port);
+	this->updatePortData(port);
+
+	return opdi_add_port((opdi_Port*)port->data);
+}
+
+void OPDI::updatePortData(OPDI_Port *port) {
+	// allocate port data structure if necessary
+	opdi_Port *oPort = (opdi_Port *)port->data;
+	if (oPort == NULL) {
+		oPort = (opdi_Port *)malloc(sizeof(opdi_Port));
+		port->data = oPort;
+		oPort->info.i = 0;
+		oPort->next = NULL;
+	}
+	// update data
+	oPort->id = (const char*)port->id;
+	oPort->name = (const char*)port->label;
+	oPort->type = (const char*)port->type;
+	oPort->caps = (const char*)port->caps;
+	if (port->flags != 0)
+		oPort->info.i = port->flags;
+	else
+		oPort->info.ptr = port->ptr;
 }
 
 OPDI_Port *OPDI::findPort(opdi_Port *port) {
 	OPDI_Port *p = this->first_port;
 	// go through linked list
 	while (p != NULL) {
-		if (&p->port == port)
+		if ((opdi_Port*)p->data == port)
 			return p;
 		p = p->next;
 	}
@@ -168,7 +117,8 @@ OPDI_Port *OPDI::findPortByID(const char *portID) {
 	OPDI_Port *p = this->first_port;
 	// go through linked list
 	while (p != NULL) {
-		if (strcmp(p->port.id, portID) == 0)
+		opdi_Port *oPort = (opdi_Port *)p->data;
+		if (strcmp(oPort->id, portID) == 0)
 			return p;
 		p = p->next;
 	}
@@ -224,7 +174,7 @@ uint8_t OPDI::waiting(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-uint8_t isConnected() {
+uint8_t OPDI::isConnected() {
 	return opdi_slave_connected();
 }
 
@@ -233,16 +183,21 @@ uint8_t OPDI::disconnect() {
 }
 
 uint8_t OPDI::reconfigure() {
+	if (!this->isConnected())
+		return OPDI_DISCONNECTED;
 	return opdi_reconfigure();
 }
 
 uint8_t OPDI::refresh(OPDI_Port **ports) {
+	if (!this->isConnected())
+		return OPDI_DISCONNECTED;
 	// target array of internal ports to refresh
 	opdi_Port **iPorts = new opdi_Port*[OPDI_MAX_MESSAGE_PARTS + 1];
 	OPDI_Port *port = ports[0];
 	uint8_t i = 0;
 	while (port != NULL) {
-		iPorts[i] = &port->port;
+		opdi_Port *oPort = (opdi_Port *)port->data;
+		iPorts[i] = oPort;
 		port = port->next;
 		if (++i > OPDI_MAX_MESSAGE_PARTS)
 			return OPDI_ERROR_PARTS_OVERFLOW;

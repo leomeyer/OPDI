@@ -1,5 +1,5 @@
-#ifndef __OPDI_PORT_H
-#define __OPDI_PORT_H
+#ifndef __OPDI_OPDIPort_H
+#define __OPDI_OPDIPort_H
 
 #include <string>
 #include <vector>
@@ -37,7 +37,7 @@ class IBasicProtocol;
  * @author Leo
  *
  */
-class Port {
+class OPDIPort {
 	
 protected:
 	IBasicProtocol& protocol;
@@ -54,7 +54,7 @@ protected:
 	 * @param name
 	 * @param type
 	 */
-	Port(IBasicProtocol& protocol, std::string id, std::string name, PortType type, PortDirCaps dirCaps);
+	OPDIPort(IBasicProtocol& protocol, std::string id, std::string name, PortType type, PortDirCaps dirCaps);
 
 public:
 	/** Returns the protocol.

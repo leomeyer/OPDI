@@ -96,17 +96,17 @@
     <ClInclude Include="..\..\common\master\opdi_IDevice.h" />
     <ClInclude Include="..\..\common\master\opdi_IODevice.h" />
     <ClInclude Include="..\..\common\master\opdi_main_io.h" />
-    <ClInclude Include="..\..\common\master\opdi_Message.h" />
+    <ClInclude Include="..\..\common\master\opdi_OPDIMessage.h" />
     <ClInclude Include="..\..\common\master\opdi_MessageQueueDevice.h" />
-    <ClInclude Include="..\..\common\master\opdi_Port.h" />
+    <ClInclude Include="..\..\common\master\opdi_OPDIPort.h" />
     <ClInclude Include="..\..\common\master\opdi_PortFactory.h" />
     <ClInclude Include="..\..\common\master\opdi_ProtocolFactory.h" />
     <ClInclude Include="..\..\common\master\opdi_StringTools.h" />
     <ClInclude Include="..\..\common\master\opdi_TCPIPDevice.h" />
     <ClInclude Include="..\..\common\opdi_constants.h" />
     <ClInclude Include="..\..\common\opdi_config.h" />
-    <ClInclude Include="..\..\common\opdi_messages.h" />
-    <ClInclude Include="..\..\common\opdi_ports.h" />
+    <ClInclude Include="..\..\common\opdi_message.h" />
+    <ClInclude Include="..\..\common\opdi_port.h" />
     <ClInclude Include="..\..\common\opdi_protocol.h" />
     <ClInclude Include="..\..\common\opdi_protocol_constants.h" />
     <ClInclude Include="..\..\common\opdi_rijndael.h" />
@@ -128,9 +128,9 @@
     <ClCompile Include="..\..\common\master\opdi_DigitalPort.cpp" />
     <ClCompile Include="..\..\common\master\opdi_IODevice.cpp" />
     <ClCompile Include="..\..\common\master\opdi_main_io.cpp" />
-    <ClCompile Include="..\..\common\master\opdi_Message.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_OPDIMessage.cpp" />
     <ClCompile Include="..\..\common\master\opdi_MessageQueueDevice.cpp" />
-    <ClCompile Include="..\..\common\master\opdi_Port.cpp">
+    <ClCompile Include="..\..\common\master\opdi_OPDIPort.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NOMINMAX;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ClCompile Include="..\..\common\master\opdi_PortFactory.cpp" />
@@ -138,8 +138,8 @@
     <ClCompile Include="..\..\common\master\opdi_StringTools.cpp" />
     <ClCompile Include="..\..\common\master\opdi_TCPIPDevice.cpp" />
     <ClCompile Include="..\..\common\opdi_aes.cpp" />
-    <ClCompile Include="..\..\common\opdi_ports.c" />
-    <ClCompile Include="..\..\common\opdi_messages.c" />
+    <ClCompile Include="..\..\common\opdi_message.c" />
+    <ClCompile Include="..\..\common\opdi_port.c" />
     <ClCompile Include="..\..\common\opdi_protocol.c" />
     <ClCompile Include="..\..\common\opdi_rijndael.cpp" />
     <ClCompile Include="..\..\common\opdi_slave_protocol.c" />

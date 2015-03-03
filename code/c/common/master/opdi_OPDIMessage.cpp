@@ -8,7 +8,7 @@
 #include <Poco/NumberParser.h>
 #include "Poco/NumberFormatter.h"
 
-#include "opdi_Message.h"
+#include "opdi_OPDIMessage.h"
 #include "opdi_StringTools.h"
 
 
@@ -17,13 +17,13 @@
  * @author Leo
  *
  */
-Message::Message(int channel, std::string payload)
+OPDIMessage::OPDIMessage(int channel, std::string payload)
 {
 	this->channel = channel;
 	this->payload = payload;
 }
 
-Message::Message(int channel, std::string payload, int checksum)
+OPDIMessage::OPDIMessage(int channel, std::string payload, int checksum)
 {
 	this->channel = channel;
 	this->payload = payload;
@@ -39,7 +39,7 @@ int calcChecksum(char *message) {
 			// add unsigned byte values
 			myChecksum += message[i] & 0xFF;
 		else
-			colonFound = message[i] == Message::SEPARATOR;
+			colonFound = message[i] == OPDIMessage::SEPARATOR;
 	return myChecksum;
 }
 
@@ -47,7 +47,7 @@ int calcChecksum(char *message) {
  *
  * @return
  */
-Message* Message::decode(char *serialForm/*, Charset encoding*/)
+OPDIMessage* OPDIMessage::decode(char *serialForm/*, Charset encoding*/)
 {
 	std::string message(serialForm);
 	// split at ":"
@@ -76,13 +76,13 @@ Message* Message::decode(char *serialForm/*, Charset encoding*/)
 		// the first part is the channel
 		int pid = Poco::NumberParser::parse(parts[0]);
 		// the payload doesn't contain the channel
-		return new Message(pid, content, checksum);
+		return new OPDIMessage(pid, content, checksum);
 	} catch (Poco::SyntaxException nfe) {
 		throw MessageException("Message channel number invalid");
 	}
 }
 
-int Message::encode(int encoding, char buffer[], int maxlength)
+int OPDIMessage::encode(int encoding, char buffer[], int maxlength)
 {
 	// message content is channel plus payload
 	std::stringstream content;
@@ -111,15 +111,15 @@ int Message::encode(int encoding, char buffer[], int maxlength)
 	return strlen(bytes);
 }
 
-std::string Message::getPayload() {
+std::string OPDIMessage::getPayload() {
 	return payload;
 }
 
-int Message::getChannel() {
+int OPDIMessage::getChannel() {
 	return channel;
 }
 
-std::string Message::toString()
+std::string OPDIMessage::toString()
 {
 	return Poco::NumberFormatter::format(channel) + ":" + payload;
 }

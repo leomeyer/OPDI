@@ -18,12 +18,12 @@
     
 // Port functions
 
-#ifndef __OPDI_PORTS_H
-#define __OPDI_PORTS_H
+#ifndef __OPDI_PORT_H
+#define __OPDI_PORT_H
 
 #include "opdi_platformtypes.h"
 #include "opdi_configspecs.h"
-#include "opdi_messages.h"
+#include "opdi_message.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -207,4 +207,4 @@ const char *opdi_get_port_message(void);
 #endif
 
 
-#endif		// __OPDI_PORTS_H
+#endif		// __OPDI_PORT_H

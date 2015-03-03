@@ -2,7 +2,7 @@
 #ifndef __OPDI_BASICDEVICECAPABILITIES_H
 #define __OPDI_BASICDEVICECAPABILITIES_H
 
-#include "opdi_Port.h"
+#include "opdi_OPDIPort.h"
 
 #define OPDI_BASIC_DEVICE_CAPABILITIES_MAGIC "BDC"
 
@@ -14,14 +14,14 @@
 class BasicDeviceCapabilities {
 
 protected:
-	std::vector<Port*> ports;
+	std::vector<OPDIPort*> ports;
 	
 public:
 	BasicDeviceCapabilities(IBasicProtocol* protocol, int channel, std::string serialForm);
 	
-	Port* findPortByID(std::string portID);
+	OPDIPort* findPortByID(std::string portID);
 
-	std::vector<Port*> & getPorts();
+	std::vector<OPDIPort*> & getPorts();
 };
 
 #endif

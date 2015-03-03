@@ -18,8 +18,8 @@
     
 // OPDI high level IO functions (messaging subsystem)
 
-#ifndef __OPDI_MESSAGES_H
-#define __OPDI_MESSAGES_H
+#ifndef __OPDI_MESSAGE_H
+#define __OPDI_MESSAGE_H
 
 #include "opdi_platformtypes.h"
 #include "opdi_configspecs.h"
@@ -98,4 +98,4 @@ uint16_t opdi_get_timeout(void);
 }
 #endif
 
-#endif		// __OPDI_MESSAGES_H
+#endif		// __OPDI_MESSAGE_H

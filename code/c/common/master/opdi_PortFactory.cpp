@@ -5,7 +5,7 @@
 #include "opdi_PortFactory.h"
 
 
-Port* PortFactory::createPort(IBasicProtocol& protocol, std::vector<std::string> parts)
+OPDIPort* PortFactory::createPort(IBasicProtocol& protocol, std::vector<std::string> parts)
 {
 	// the "magic" in the first part decides about the port type		
 	if (parts[0] == OPDI_digitalPort)
