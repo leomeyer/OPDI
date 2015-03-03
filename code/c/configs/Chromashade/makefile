@@ -75,7 +75,7 @@ SRC = $(TARGET).c uart.c timer0/timer0.c
 SRC += $(PPATH)/opdi_platformfuncs.c
 
 # common files
-SRC += $(CPATH)/opdi_messages.c $(CPATH)/opdi_ports.c $(CPATH)/opdi_protocol.c $(CPATH)/opdi_slave_protocol.c $(CPATH)/opdi_strings.c
+SRC += $(CPATH)/opdi_message.c $(CPATH)/opdi_port.c $(CPATH)/opdi_protocol.c $(CPATH)/opdi_slave_protocol.c $(CPATH)/opdi_strings.c
 
 # List Assembler source files here.
 # Make them always end in a capital .S.  Files ending in a lowercase .s

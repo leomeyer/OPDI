@@ -81,6 +81,8 @@ uint8_t OPDI::addPort(OPDI_Port *port) {
 	return opdi_add_port((opdi_Port*)port->data);
 }
 
+// possible race conditions here, if one thread updates port data while the other retrieves it
+// how to avoid this problem?
 void OPDI::updatePortData(OPDI_Port *port) {
 	// allocate port data structure if necessary
 	opdi_Port *oPort = (opdi_Port *)port->data;

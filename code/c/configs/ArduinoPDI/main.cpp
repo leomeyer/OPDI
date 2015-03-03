@@ -36,7 +36,7 @@
 ArduinOPDI ArduinOpdi = ArduinOPDI();
 // define global OPDI instance
 // important: for polymorphism to work, assign own OPDI instance
-OPDI *Opdi = &ArduinOpdi;
+OPDI* Opdi = &ArduinOpdi;
 
 // Port definitions
 
@@ -77,7 +77,7 @@ uint8_t setupDevice() {
 	Serial.begin(9600);
 
 	// initialize the OPDI system
-	uint8_t result = Opdi->setup("ArduinOPDI", 20000);
+	uint8_t result = ArduinOpdi.setup("ArduinOPDI", 20000);
 	if (checkerror(result) == 0)
 		return 0;
 

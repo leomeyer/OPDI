@@ -92,7 +92,3 @@ public:
 };
 
 #endif // OPDI_NO_ANALOG_PORTS
-
-
-// declare a singleton instance that must be defined by the implementation
-extern OPDI *Opdi;
