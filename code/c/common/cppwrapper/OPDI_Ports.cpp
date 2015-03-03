@@ -38,6 +38,9 @@ void OPDI_Port::setLabel(const char *label) {
 		free(this->label);
 	this->label = (char*)malloc(strlen(label) + 1);
 	strcpy(this->label, label);
+	// label changed; update internal data
+	if (this->opdi != NULL)
+		this->opdi->updatePortData(this);
 }
 
 uint8_t OPDI_Port::refresh() {

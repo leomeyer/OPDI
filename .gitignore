@@ -29,3 +29,4 @@
 *.cache
 *.rc
 /code/c/configs/WinOPDI/Debug/*.unsuccessfulbuild
+/code/c/configs/opdid/plugins/linux_test/*.so

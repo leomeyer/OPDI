@@ -46,7 +46,8 @@ INCLUDES = -I "." -I "../../../../platforms" -I "../../../../platforms/avr" -I "
 LIBS = -lm
 
 ## Objects that must be built in order to link
-OBJECTS = opdi_platformfuncs.o opdi_messages.o opdi_ports.o opdi_protocol.o opdi_slave_protocol.o opdi_strings.o OPDI.o
+OBJECTS = opdi_platformfuncs.o opdi_message.o opdi_port.o opdi_protocol.o opdi_slave_protocol.o opdi_strings.o
+# OPDI.o
 
 ## Build
 all: $(TARGET)
@@ -54,9 +55,9 @@ all: $(TARGET)
 ## Compile
 opdi_platformfuncs.o: ../../../../platforms/avr/opdi_platformfuncs.c 
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
-opdi_messages.o: ../../../../common/opdi_messages.c 
+opdi_message.o: ../../../../common/opdi_message.c 
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
-opdi_ports.o: ../../../../common/opdi_ports.c 
+opdi_port.o: ../../../../common/opdi_port.c 
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
 opdi_protocol.o: ../../../../common/opdi_protocol.c 
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
@@ -64,8 +65,6 @@ opdi_slave_protocol.o: ../../../../common/opdi_slave_protocol.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
 opdi_strings.o: ../../../../common/opdi_strings.c 
 	$(CC) $(INCLUDES) $(CFLAGS) -c $< -o $@
-OPDI.o: ../../../../common/cppwrapper/OPDI.cpp 
-	$(CPP) $(INCLUDES) $(CPPFLAGS) -MMD -MP -MF"OPDI.d" -MT"OPDI.d" -c -o "OPDI.o" "../../../../common/cppwrapper/OPDI.cpp"
 	
 ##Link
 $(TARGET): $(OBJECTS)
