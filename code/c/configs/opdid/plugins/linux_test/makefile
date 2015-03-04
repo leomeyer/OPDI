@@ -13,11 +13,8 @@ CPATH = ../../../../common
 PPATHBASE = ../../../../platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
-# List C source files of the plugin here.
+# List source files of the plugin here.
 SRC = $(TARGET).cpp
-
-# platform specific files
-SRC += $(PPATH)/opdi_platformfuncs.c
 
 # OPDID includes
 OPDIDPATH = ../../opdid
@@ -50,7 +47,7 @@ LIBS = -lpthread
 CC = g++
 
 # List any extra directories to look for include files here.
-# Each directory must be seperated by a space.
+# Each directory must be separated by a space.
 EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(OPDIDPATH) .
 
 # Place -I options here
