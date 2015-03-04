@@ -101,13 +101,12 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 	return this->setupConnection(connection);
 }
 
-void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	this->print("Setting up emulated digital port: ");
-	this->println(port.c_str());
+void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port) {
 
 	std::string portLabel = this->getConfigString(portConfig, "Label", "", true);
+	port->setLabel(portLabel.c_str());
+
 	std::string portDirCaps = this->getConfigString(portConfig, "DirCaps", "Bidi", false);
-	
 	const char *dircaps;
 	if (portDirCaps == "Input") {
 		dircaps = OPDI_PORTDIRCAP_INPUT;
@@ -117,21 +116,26 @@ void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *
 		dircaps = OPDI_PORTDIRCAP_BIDI;
 	} else
 		throw Poco::DataException("Unknown port DirCaps specifier; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
-	
-	uint8_t flags = portConfig->getInt("Flags", 0);
+	port->setDirCaps(dircaps);
 
-	OPDI_EmulatedDigitalPort *digPort = new OPDI_EmulatedDigitalPort(port.c_str(), portLabel.c_str(), dircaps, flags);
+	uint8_t flags = portConfig->getInt("Flags", 0);
+	port->flags = flags;
+}
+
+void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	this->println("Setting up emulated digital port: " + port);
+
+	OPDI_DigitalPort *digPort = new OPDI_DigitalPort(port.c_str());
+	this->configureDigitalPort(portConfig, digPort);
 
 	this->addPort(digPort);
 }
 
-void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	this->print("Setting up emulated analog port: ");
-	this->println(port.c_str());
-
+void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_AnalogPort *port) {
 	std::string portLabel = this->getConfigString(portConfig, "Label", "", true);
+	port->setLabel(portLabel.c_str());
+
 	std::string portDirCaps = this->getConfigString(portConfig, "DirCaps", "Bidi", false);
-	
 	const char *dircaps;
 	if (portDirCaps == "Input") {
 		dircaps = OPDI_PORTDIRCAP_INPUT;
@@ -141,37 +145,103 @@ void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *p
 		dircaps = OPDI_PORTDIRCAP_BIDI;
 	} else
 		throw Poco::DataException("Unknown port DirCaps specifier; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
-	
-	uint8_t flags = portConfig->getInt("Flags", 0);
-
-	OPDI_EmulatedAnalogPort *anaPort = new OPDI_EmulatedAnalogPort(port.c_str(), portLabel.c_str(), dircaps, flags);
+	port->setDirCaps(dircaps);
 
 	// set initial values
 	if (portConfig->hasProperty("Mode")) {
 		std::string mode = this->getConfigString(portConfig, "Mode", "Output", false);
 		if (mode == "Input")
-			anaPort->setMode(0);
+			port->setMode(0);
 		else if (mode == "Output")
-			anaPort->setMode(1);
+			port->setMode(1);
 		else
 			throw Poco::ApplicationException("Unknown analog port mode, expected 'Input' or 'Output'", mode);
 	} else
 		// default mode: output
-		anaPort->setMode(1);
+		port->setMode(1);
 
 	if (portConfig->hasProperty("Resolution")) {
 		uint8_t resolution = portConfig->getInt("Resolution", OPDI_ANALOG_PORT_RESOLUTION_12);
-		if (anaPort->setResolution(resolution) != OPDI_STATUS_OK) {
+		if (port->setResolution(resolution) != OPDI_STATUS_OK) {
 			throw Poco::ApplicationException("Unable to set resolution from configuration", this->to_string(resolution));
 		}
 	}
 	if (portConfig->hasProperty("Value")) {
 		uint32_t value = portConfig->getInt("Value", 0);
-		if (anaPort->setValue(value) != OPDI_STATUS_OK) {
+		if (port->setValue(value) != OPDI_STATUS_OK) {
 			throw Poco::ApplicationException("Unable to set value from configuration", this->to_string(value));
 		}
 	}
+
+	uint8_t flags = portConfig->getInt("Flags", 0);
+	port->flags = flags;
+}
+
+void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	this->println("Setting up emulated analog port: " + port);
+
+	OPDI_AnalogPort *anaPort = new OPDI_AnalogPort(port.c_str());
+	this->configureAnalogPort(portConfig, anaPort);
+
 	this->addPort(anaPort);
+}
+
+void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_SelectPort *port) {
+	std::string portLabel = this->getConfigString(portConfig, "Label", "", true);
+	port->setLabel(portLabel.c_str());
+
+	// the select port requires a prefix or section "<portID>.Items"
+	Poco::Util::AbstractConfiguration *portItems = this->configuration->createView(std::string(port->getID()) + ".Items");
+
+	// get ordered list of items
+	Poco::Util::AbstractConfiguration::Keys itemKeys;
+	portItems->keys("", itemKeys);
+
+	typedef Poco::Tuple<int, std::string> Item;
+	typedef std::vector<Item> ItemList;
+	ItemList orderedItems;
+
+	// create ordered list of items (by priority)
+	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = itemKeys.begin(); it != itemKeys.end(); ++it) {
+		int itemNumber = portItems->getInt(*it, 0);
+		// check whether the item is active
+		if (itemNumber <= 0)
+			continue;
+
+		// insert at the correct position to create a sorted list of items
+		ItemList::iterator nli = orderedItems.begin();
+		while (nli != orderedItems.end()) {
+			if (nli->get<0>() > itemNumber)
+				break;
+			nli++;
+		}
+		Item item(itemNumber, *it);
+		orderedItems.insert(nli, item);
+	}
+
+	if (orderedItems.size() == 0)
+		throw Poco::DataException("The select port " + std::string(port->getID()) + " requires at least one item in its config section", std::string(port->getID()) + ".Items");
+
+	// go through items, create ordered list of char* items
+	std::vector<const char*> charItems;
+	ItemList::const_iterator nli = orderedItems.begin();
+	while (nli != orderedItems.end()) {
+		charItems.push_back(nli->get<1>().c_str());
+		nli++;
+	}
+	charItems.push_back(NULL);
+
+	// set port items
+	port->setItems(&charItems[0]);
+}
+
+void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	this->println("Setting up emulated select port: " + port);
+
+	OPDI_SelectPort *selPort = new OPDI_SelectPort(port.c_str());
+	this->configureSelectPort(portConfig, selPort);
+
+	this->addPort(selPort);
 }
 
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
@@ -183,29 +253,28 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 
 	// get node information
 	std::string nodeType = this->getConfigString(nodeConfig, "Type", "", true);
-	std::string nodeDriver = this->getConfigString(nodeConfig, "Driver", "", true);
+	std::string nodeDriver = this->getConfigString(nodeConfig, "Driver", "", false);
 
-	if (nodeType == "DigitalPort") {
-		if (nodeDriver == "EmulatedDigitalPort") {
-			this->setupEmulatedDigitalPort(nodeConfig, node);
-		} else
-			throw Poco::DataException("Invalid configuration: Unknown digital port driver", nodeDriver);
-	} else
-	if (nodeType == "AnalogPort") {
-		if (nodeDriver == "EmulatedAnalogPort") {
-			this->setupEmulatedAnalogPort(nodeConfig, node);
-		} else
-			throw Poco::DataException("Invalid configuration: Unknown analog port driver", nodeDriver);
-	}
-	else
-	if (nodeType == "Plugin") {
+	// driver specified?
+	if (nodeDriver != "") {
 		// try to load the plugin; the driver name is the (platform dependent) library file name
 		IOPDIDPlugin *plugin = this->getPlugin(nodeDriver);
 
 		// init the plugin
-		plugin->setupPlugin(this, node);
-	} else
-		throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
+		plugin->setupPlugin(this, node, nodeConfig);
+	} else {
+		// standard driver (internal ports)
+		if (nodeType == "DigitalPort") {
+			this->setupEmulatedDigitalPort(nodeConfig, node);
+		} else
+		if (nodeType == "AnalogPort") {
+			this->setupEmulatedAnalogPort(nodeConfig, node);
+		} else
+		if (nodeType == "SelectPort") {
+			this->setupEmulatedSelectPort(nodeConfig, node);
+		} else
+			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
+	}
 }
 
 void AbstractOPDID::setupNodes(Poco::Util::AbstractConfiguration *config) {
@@ -419,7 +488,47 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 	return aPort->setReference(aRef);
 }
 
-#endif
+#endif	// NO_ANALOG_PORTS
+
+#ifndef OPDI_NO_SELECT_PORTS
+
+uint8_t opdi_get_select_port_state(opdi_Port *port, uint16_t *position) {
+	OPDI_SelectPort *sPort = (OPDI_SelectPort *)Opdi->findPort(port);
+	if (sPort == NULL)
+		return OPDI_PORT_UNKNOWN;
+
+	return sPort->getState(position);
+}
+
+uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
+	OPDI_SelectPort *sPort = (OPDI_SelectPort *)Opdi->findPort(port);
+	if (sPort == NULL)
+		return OPDI_PORT_UNKNOWN;
+
+	return sPort->setPosition(position);
+}
+
+#endif	//  OPDI_NO_SELECT_PORTS
+
+#ifndef OPDI_NO_DIAL_PORTS
+
+uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
+	OPDI_DialPort *dPort = (OPDI_DialPort *)Opdi->findPort(port);
+	if (dPort == NULL)
+		return OPDI_PORT_UNKNOWN;
+
+	return dPort->getState(position);
+}
+
+uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
+	OPDI_DialPort *dPort = (OPDI_DialPort *)Opdi->findPort(port);
+	if (dPort == NULL)
+		return OPDI_PORT_UNKNOWN;
+
+	return dPort->setPosition(position);
+}
+
+#endif	// OPDI_NO_DIAL_PORTS
 
 uint8_t opdi_choose_language(const char *languages) {
 	// TODO

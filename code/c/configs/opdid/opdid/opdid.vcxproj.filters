@@ -25,6 +25,12 @@
     <Filter Include="Quelldateien\common\cppwrapper">
       <UniqueIdentifier>{ec6597fa-f6eb-4783-94ac-6944857f7cdd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Headerdateien\platforms">
+      <UniqueIdentifier>{9851a252-4391-40fc-b477-5506542e3eb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\platforms\win32">
+      <UniqueIdentifier>{325682c2-3221-40f1-99e9-a07a446c2b58}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -49,9 +55,6 @@
       <Filter>Headerdateien\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\common\opdi_strings.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="opdi_configspecs.h">
       <Filter>Headerdateien\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\common\opdi_constants.h">
@@ -80,6 +83,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\common\opdi_message.h">
       <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="opdi_configspecs.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\platforms\win32\opdi_platformtypes.h">
+      <Filter>Headerdateien\platforms\win32</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

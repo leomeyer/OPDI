@@ -92,6 +92,7 @@
     <ClInclude Include="..\..\..\common\opdi_rijndael.h" />
     <ClInclude Include="..\..\..\common\opdi_slave_protocol.h" />
     <ClInclude Include="..\..\..\common\opdi_strings.h" />
+    <ClInclude Include="..\..\..\platforms\win32\opdi_platformtypes.h" />
     <ClInclude Include="AbstractOPDID.h" />
     <ClInclude Include="opdi_configspecs.h" />
     <ClInclude Include="stdafx.h" />

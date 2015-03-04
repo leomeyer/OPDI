@@ -1,15 +1,9 @@
 #pragma once
 
+#include <string>
+
 #include "opdi_platformtypes.h"
-
-class OPDI_AbstractPort {
-
-	virtual const char *getID(void) = 0;
-	virtual const char *getlabel(void) = 0;
-	virtual const char *getType(void) = 0;
-	virtual const char *getDirCaps(void) = 0;
-
-};
+#include "opdi_configspecs.h"
 
 class OPDI;
 
@@ -18,11 +12,24 @@ class OPDI;
  */
 class OPDI_Port {
 
+friend class AbstractOPDID;
 friend class OPDI;
 
 protected:
+	// protected constructor - for use by friend classes only
+	OPDI_Port(const char *id, const char *type);
+
 	// Protected constructor: This class can't be instantiated directly
 	OPDI_Port(const char *id, const char *label, const char *type, const char* dircaps, int32_t flags, void* ptr);
+
+	char *id;
+	char *label;
+	char type[2];	// type constants are one character (see opdi_port.h)
+	char caps[2];	// caps constants are one character (port direction constants)
+	int32_t flags;
+	void* ptr;
+
+	template <class T> inline std::string to_string(const T& t);
 
 	/** Called regularly by the OPDI system. Enables the port to do work.
 	 * Override this in subclasses to implement more complex functionality.
@@ -32,13 +39,6 @@ protected:
 	 * This will usually signal a device error to the master or cause the master to time out.
 	 */
 	virtual uint8_t doWork();
-
-	char *id;
-	char *label;
-	char type[2];	// type constants are one character (see opdi_port.h)
-	char caps[2];	// caps constants are one character (port direction constants)
-	int32_t flags;
-	void* ptr;
 
 	// pointer to OPDI class instance
 	OPDI *opdi;
@@ -50,29 +50,47 @@ protected:
 	OPDI_Port *next;
 
 public:
+
+	/** Pointer for help structures. Not used internally; may be used by the application. */
+	void* tag;
+
 	/** Virtual destructor for the port. */
 	virtual ~OPDI_Port();
 
+	virtual const char *getID(void);
+
 	/** Sets the label of the port. */
-	void setLabel(const char *label);
+	virtual void setLabel(const char *label);
+
+	virtual const char *getLabel(void);
+
+	/** Sets the direction capabilities of the port. */
+	virtual void setDirCaps(const char *dirCaps);
 
 	/** Causes the port to be refreshed by sending a refresh message to a connected master. */
-	uint8_t refresh();
+	virtual uint8_t refresh();
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Abstract port definitions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef OPDI_NO_DIGITAL_PORTS
+
 /** Defines a general digital port.
  *
  */
-class OPDI_DigitalPort : public OPDI_Port {
+class OPDI_AbstractDigitalPort : public OPDI_Port {
+
+protected:
+	// protected constructor - for use by friend classes only
+	OPDI_AbstractDigitalPort(const char *id);
 
 public:
 	// Initialize a digital port. Specify one of the OPDI_PORTDIR_CAPS* values for dircaps.
 	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
-	// Note: OPDI_DIGITAL_PORT_HAS_PULLDN is not supported.
-	OPDI_DigitalPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
-	virtual ~OPDI_DigitalPort();
+	OPDI_AbstractDigitalPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
+	virtual ~OPDI_AbstractDigitalPort();
 
 	// pure virtual methods that need to be implemented by subclasses
 
@@ -96,16 +114,23 @@ public:
 #endif // OPDI_NO_DIGITAL_PORTS
 
 #ifndef OPDI_NO_ANALOG_PORTS
+
 /** Defines a general analog port.
  *
  */
-class OPDI_AnalogPort : public OPDI_Port {
+class OPDI_AbstractAnalogPort : public OPDI_Port {
+
+friend class AbstractOPDID;
+friend class OPDI;
+
+protected:
+	OPDI_AbstractAnalogPort(const char *id);
 
 public:
 	// Initialize an analog port. Specify one of the OPDI_PORTDIR_CAPS* values for dircaps.
 	// Specify one or more of the OPDI_ANALOG_PORT_* values for flags, or'ed together, to specify possible settings.
-	OPDI_AnalogPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
-	virtual ~OPDI_AnalogPort();
+	OPDI_AbstractAnalogPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
+	virtual ~OPDI_AbstractAnalogPort();
 
 	// pure virtual methods that need to be implemented by subclasses
 
@@ -133,24 +158,31 @@ public:
 
 #endif // OPDI_NO_ANALOG_PORTS
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Concrete port definitions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef OPDI_NO_DIGITAL_PORTS
 
-/** Defines an emulated digital port.
+/** Defines a digital port.
  */
-class OPDI_EmulatedDigitalPort : public OPDI_DigitalPort {
+class OPDI_DigitalPort : public OPDI_AbstractDigitalPort {
+
+friend class AbstractOPDID;
+friend class OPDI;
 
 protected:
 	uint8_t mode;
 	uint8_t line;
 
+	// protected constructor - for use by friend classes only
+	OPDI_DigitalPort(const char *id);
+
 public:
 	// Initialize a digital port. Specify one of the OPDI_PORTDIRCAPS_* values for dircaps.
 	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
-	// Note: OPDI_DIGITAL_PORT_HAS_PULLDN is not supported.
-	OPDI_EmulatedDigitalPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
-	virtual ~OPDI_EmulatedDigitalPort();
+	OPDI_DigitalPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
+	virtual ~OPDI_DigitalPort();
 
 	// function that handles the set mode command (opdi_set_digital_port_mode)
 	// mode = 0: floating input
@@ -172,9 +204,12 @@ public:
 
 #ifndef OPDI_NO_ANALOG_PORTS
 
-/** Defines an emulated analog port.
+/** Defines an analog port.
  */
-class OPDI_EmulatedAnalogPort : public OPDI_AnalogPort {
+class OPDI_AnalogPort : public OPDI_AbstractAnalogPort {
+
+friend class AbstractOPDID;
+friend class OPDI;
 
 protected:
 	uint8_t mode;
@@ -182,9 +217,12 @@ protected:
 	uint8_t resolution;
 	int32_t value;
 
+	// protected constructor - for use by friend classes only
+	OPDI_AnalogPort(const char *id);
+
 public:
-	OPDI_EmulatedAnalogPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
-	virtual ~OPDI_EmulatedAnalogPort();
+	OPDI_AnalogPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
+	virtual ~OPDI_AnalogPort();
 
 	// mode = 0: input
 	// mode = 1: output
@@ -203,4 +241,76 @@ public:
 };
 
 #endif // OPDI_NO_ANALOG_PORTS
+
+#ifndef OPDI_NO_SELECT_PORTS
+
+/** Defines a select port.
+ *
+ */
+class OPDI_SelectPort : public OPDI_Port {
+
+friend class AbstractOPDID;
+friend class OPDI;
+
+protected:
+	char **items;
+	uint16_t position;
+
+	// protected constructor - for use by friend classes only
+	OPDI_SelectPort(const char *id);
+
+	// frees the internal items memory
+	void freeItems();
+public:
+	// Initialize a select port. The direction of a select port is output only.
+	// You have to specify a list of items that are the labels of the different select positions. The last element must be NULL.
+	// The items are copied into the privately managed data structure of this class.
+	OPDI_SelectPort(const char *id, const char *label, const char **items);
+	virtual ~OPDI_SelectPort();
+
+	// Copies the items into the privately managed data structure of this class.
+	virtual void setItems(const char **items);
+
+	// function that handles position setting; position may be in the range of 0..(items.length - 1)
+	virtual uint8_t setPosition(uint16_t position);
+
+	// function that fills in the current port state
+	virtual uint8_t getState(uint16_t *position);
+};
+
+#endif // OPDI_NO_SELECT_PORTS
+
+#ifndef OPDI_NO_DIAL_PORTS
+
+/** Defines a dial port.
+ *
+ */
+class OPDI_DialPort : public OPDI_Port {
+
+friend class AbstractOPDID;
+friend class OPDI;
+
+protected:
+	int32_t minValue;
+	int32_t maxValue;
+	uint32_t step;
+	uint16_t position;
+
+	// protected constructor - for use by friend classes only
+	OPDI_DialPort(const char *id);
+
+public:
+	// Initialize a dial port. The direction of a dial port is output only.
+	// You have to specify boundary values and a step size.
+	OPDI_DialPort(const char *id, const char *label, int32_t minValue, int32_t maxValue, uint32_t step);
+	virtual ~OPDI_DialPort();
+
+	// function that handles position setting; position may be in the range of minValue..maxValue
+	virtual uint8_t setPosition(int32_t position);
+
+	// function that fills in the current port state
+	virtual uint8_t getState(int32_t *position);
+};
+
+#endif // OPDI_NO_DIAL_PORTS
 

@@ -60,10 +60,10 @@ extern "C" {
 //#define OPDI_NO_ANALOG_PORTS
 
 // define to conserve RAM and ROM
-#define OPDI_NO_SELECT_PORTS
+// #define OPDI_NO_SELECT_PORTS
 
 // define to conserve RAM and ROM
-#define OPDI_NO_DIAL_PORTS
+// #define OPDI_NO_DIAL_PORTS
 
 // Defines the number of possible streaming ports on this device.
 // May be set to 0 to conserve memory.

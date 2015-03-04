@@ -9,7 +9,7 @@ class AbstractOPDID;
 
 /* The abstract plugin interface. */
 struct IOPDIDPlugin {
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string nodeName) = 0;
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string nodeName, Poco::Util::AbstractConfiguration *nodeConfig) = 0;
 };
 
 /** The abstract base class for OPDID implementations. */
@@ -53,9 +53,17 @@ public:
 	/** Starts processing the supplied arguments. */
 	virtual int startup(std::vector<std::string>);
 
+	virtual void configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port);
+
 	virtual void setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
+	virtual void configureAnalogPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_AnalogPort *port);
+
 	virtual void setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
+	virtual void configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_SelectPort *port);
+
+	virtual void setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);
 

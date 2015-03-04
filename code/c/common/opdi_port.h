@@ -40,6 +40,7 @@ extern "C" {
 
 /** Port direction constants. 
 */
+#define OPDI_PORTDIRCAP_UNKNOWN	""
 // the port is an input port from the slave's perspective
 // i. e. peripherals provide input to the slave
 #define OPDI_PORTDIRCAP_INPUT	"0"
