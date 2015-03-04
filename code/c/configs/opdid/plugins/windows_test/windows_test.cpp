@@ -32,23 +32,23 @@ protected:
 	AbstractOPDID *opdid;
 
 public:
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID);
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node);
 };
 
 
-void WindowsTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID) {
+void WindowsTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node) {
 	this->opdid = abstractOPDID;
 
 	// add emulated test port
 	DigitalTestPort *emuPort = new DigitalTestPort();
 	abstractOPDID->addPort(emuPort);
 
-	this->opdid->println("WindowsTestOPDIDPlugin setup completed successfully");
+	this->opdid->println("WindowsTestOPDIDPlugin setup completed successfully as node " + node);
 
 	this->opdid->reconfigure();
 }
 
-
+// plugin instance factory function
 extern "C" __declspec(dllexport) IOPDIDPlugin* __cdecl GetOPDIDPluginInstance() {
 	// return a new instance of this plugin
 	return new WindowsTestOPDIDPlugin();

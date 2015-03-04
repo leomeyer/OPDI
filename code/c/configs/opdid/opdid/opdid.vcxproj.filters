@@ -28,7 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
-    <None Include="opdid.ini">
+    <None Include="win_opdid.ini">
       <Filter>Ressourcendateien</Filter>
     </None>
   </ItemGroup>

@@ -77,7 +77,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="opdid.ini" />
+    <None Include="win_opdid.ini" />
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>

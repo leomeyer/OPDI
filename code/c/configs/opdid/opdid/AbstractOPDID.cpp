@@ -41,10 +41,22 @@ std::string AbstractOPDID::getConfigString(Poco::Util::AbstractConfiguration *co
 	return config->getString(key, defaultValue);
 }
 
+Poco::Util::AbstractConfiguration *AbstractOPDID::getConfiguration() {
+	return this->configuration;
+}
+
 template <class T> inline std::string AbstractOPDID::to_string(const T& t) {
 	std::stringstream ss;
 	ss << t;
 	return ss.str();
+}
+
+void AbstractOPDID::print(std::string text) {
+	this->print(text.c_str());
+}
+
+void AbstractOPDID::println(std::string text) {
+	this->println(text.c_str());
 }
 
 void AbstractOPDID::printlni(int i) {
@@ -191,7 +203,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		IOPDIDPlugin *plugin = this->getPlugin(nodeDriver);
 
 		// init the plugin
-		plugin->setupPlugin(this);
+		plugin->setupPlugin(this, node);
 	} else
 		throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 }
