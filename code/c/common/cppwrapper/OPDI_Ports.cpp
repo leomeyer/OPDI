@@ -151,28 +151,40 @@ OPDI_AbstractAnalogPort::~OPDI_AbstractAnalogPort() {
 OPDI_DigitalPort::OPDI_DigitalPort(const char *id) : OPDI_AbstractDigitalPort(id) {
 	this->mode = 0;
 	this->line = 0;
+	this->setDirCaps(OPDI_PORTDIRCAP_UNKNOWN);
 }
 
 OPDI_DigitalPort::OPDI_DigitalPort(const char *id, const char *label, const char *dircaps, const uint8_t flags) :
 	// call base constructor; mask unsupported flags
 	OPDI_AbstractDigitalPort(id, label, dircaps, flags & (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) & (OPDI_DIGITAL_PORT_HAS_PULLDN | OPDI_DIGITAL_PORT_PULLDN_ALWAYS)) {
 
+	this->mode = 0;
 	this->line = 0;
-	// set mode depending on dircaps and flags
-	if (!strcmp(dircaps, OPDI_PORTDIRCAP_INPUT) || !strcmp(dircaps, OPDI_PORTDIRCAP_BIDI))  {
-		if ((flags & OPDI_DIGITAL_PORT_PULLUP_ALWAYS) == OPDI_DIGITAL_PORT_PULLUP_ALWAYS)
-			mode = 1;
-		else
-			mode = 0;
-	} else
-		// mode is output
-		mode = 3;
-
-	// configure pin
-	this->setMode(mode);
+	this->setDirCaps(dircaps);
 }
 
 OPDI_DigitalPort::~OPDI_DigitalPort() {
+}
+
+void OPDI_DigitalPort::setDirCaps(const char *dirCaps) {
+	OPDI_Port::setDirCaps(dirCaps);
+
+	if (!strcmp(dirCaps, OPDI_PORTDIRCAP_UNKNOWN))
+		return;
+
+	// adjust mode to fit capabilities
+	// set mode depending on dircaps and flags
+	if (!strcmp(dirCaps, OPDI_PORTDIRCAP_INPUT) || !strcmp(dirCaps, OPDI_PORTDIRCAP_BIDI))  {
+		if ((flags & OPDI_DIGITAL_PORT_PULLUP_ALWAYS) == OPDI_DIGITAL_PORT_PULLUP_ALWAYS)
+			mode = 1;
+		else
+		if ((flags & OPDI_DIGITAL_PORT_PULLDN_ALWAYS) == OPDI_DIGITAL_PORT_PULLDN_ALWAYS)
+			mode = 2;
+		else
+			mode = 0;
+	} else
+		// direction is output only
+		mode = 3;
 }
 
 // function that handles the set direction command (opdi_set_digital_port_mode)

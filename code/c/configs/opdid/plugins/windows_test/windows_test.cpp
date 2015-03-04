@@ -51,8 +51,6 @@ void WindowsTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::stri
 		throw Poco::DataException("This plugin supports only node type 'DigitalPort'", portType);
 
 	this->opdid->println("WindowsTestOPDIDPlugin setup completed successfully as node " + node);
-
-	this->opdid->reconfigure();
 }
 
 // plugin instance factory function

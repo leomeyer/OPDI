@@ -184,6 +184,8 @@ public:
 	OPDI_DigitalPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
 	virtual ~OPDI_DigitalPort();
 
+	virtual void setDirCaps(const char *dirCaps);
+
 	// function that handles the set mode command (opdi_set_digital_port_mode)
 	// mode = 0: floating input
 	// mode = 1: input with pullup on
