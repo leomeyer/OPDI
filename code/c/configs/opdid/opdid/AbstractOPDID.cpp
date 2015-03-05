@@ -1,9 +1,10 @@
 
 #include <vector>
-#include <sstream>
 
 #include "Poco/Exception.h"
 #include "Poco/Tuple.h"
+#include "Poco/Timestamp.h"
+#include "Poco/DateTimeFormatter.h"
 
 #include "opdi_constants.h"
 
@@ -15,6 +16,7 @@
 
 AbstractOPDID::AbstractOPDID(void)
 {
+	this->logVerbosity = NORMAL;
 	this->configuration = NULL;
 }
 
@@ -23,7 +25,18 @@ AbstractOPDID::~AbstractOPDID(void)
 }
 
 void AbstractOPDID::sayHello(void) {
-	this->println("OPDID version 0.1 (c) Leo Meyer 2015");
+	if (this->logVerbosity == QUIET)
+		return;
+
+	this->log("OPDID version 0.1 (c) Leo Meyer 2015");
+
+	if (this->logVerbosity == VERBOSE) {
+		this->log("Build: " + std::string(__DATE__) + " " + std::string(__TIME__));
+	}
+}
+
+std::string AbstractOPDID::getTimestampStr(void) {
+	return "[" + Poco::DateTimeFormatter::format(Poco::Timestamp(), "%Y-%m-%d %H:%M:%S.%i") + "] ";
 }
 
 void AbstractOPDID::readConfiguration(const std::string filename) {
@@ -45,36 +58,29 @@ Poco::Util::AbstractConfiguration *AbstractOPDID::getConfiguration() {
 	return this->configuration;
 }
 
-template <class T> inline std::string AbstractOPDID::to_string(const T& t) {
-	std::stringstream ss;
-	ss << t;
-	return ss.str();
-}
-
-void AbstractOPDID::print(std::string text) {
-	this->print(text.c_str());
-}
-
 void AbstractOPDID::println(std::string text) {
 	this->println(text.c_str());
 }
 
-void AbstractOPDID::printlni(int i) {
-	std::stringstream str;
-	str << i;
-	this->println(str.str().c_str());
+void AbstractOPDID::log(std::string text) {
+	this->println(this->getTimestampStr() + text);
 }
 
 int AbstractOPDID::startup(std::vector<std::string> args) {
 	// evaluate arguments
 	for (unsigned int i = 0; i < args.size(); i++) {
+		if (args.at(i) == "-v") {
+			this->logVerbosity = VERBOSE;
+		}
+		if (args.at(i) == "-q") {
+			this->logVerbosity = QUIET;
+		}
 		if (args.at(i) == "-c") {
 			i++;
 			if (args.size() == i) {
+				Opdi->sayHello();
 				throw Poco::SyntaxException("Expected configuration file name after argument -c");
 			} else {
-				this->print("Using configuration file: ");
-				this->println(args.at(i).c_str());
 				this->readConfiguration(args.at(i));
 			}
 		}
@@ -82,16 +88,13 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 
 	// no configuration?
 	if (this->configuration == NULL)
-		throw Poco::SyntaxException("Expected argument: -c <config_file_path>");
+		throw Poco::SyntaxException("Expected argument: -c <config_file>");
 
 	// create view to "General" section
 	Poco::Util::AbstractConfiguration *general = this->configuration->createView("General");
-	this->println("Setting up general configuration");
+	this->setGeneralConfiguration(general);
 
-	std::string slaveName = this->getConfigString(general, "SlaveName", "", true);
-	int timeout = general->getInt("IdleTimeout", DEFAULT_IDLETIMEOUT_MS);
-
-	this->setup(slaveName.c_str(), timeout);
+	Opdi->sayHello(); 
 
 	this->setupNodes(this->configuration);
 
@@ -99,6 +102,29 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 	Poco::Util::AbstractConfiguration *connection = this->configuration->createView("Connection");
 
 	return this->setupConnection(connection);
+}
+
+void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *general) {
+	if (this->logVerbosity == VERBOSE)
+		this->log("Setting up general configuration");
+
+	std::string slaveName = this->getConfigString(general, "SlaveName", "", true);
+	int timeout = general->getInt("IdleTimeout", DEFAULT_IDLETIMEOUT_MS);
+	std::string logVerbosityStr = this->getConfigString(general, "LogVerbosity", "Normal", false);
+
+	if (logVerbosityStr == "Quiet") {
+		this->logVerbosity = QUIET;
+	} else
+	if (logVerbosityStr == "Normal") {
+		this->logVerbosity = NORMAL;
+	} else
+	if (logVerbosityStr == "Verbose") {
+		this->logVerbosity = VERBOSE;
+	} else
+		throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', or 'Verbose')", logVerbosityStr);
+
+	// initialize OPDI slave
+	this->setup(slaveName.c_str(), timeout);
 }
 
 void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port) {
@@ -123,7 +149,8 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 }
 
 void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	this->println("Setting up emulated digital port: " + port);
+	if (this->logVerbosity == VERBOSE)
+		this->log("Setting up emulated digital port: " + port);
 
 	OPDI_DigitalPort *digPort = new OPDI_DigitalPort(port.c_str());
 	this->configureDigitalPort(portConfig, digPort);
@@ -178,7 +205,8 @@ void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portC
 }
 
 void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	this->println("Setting up emulated analog port: " + port);
+	if (this->logVerbosity == VERBOSE)
+		this->log("Setting up emulated analog port: " + port);
 
 	OPDI_AnalogPort *anaPort = new OPDI_AnalogPort(port.c_str());
 	this->configureAnalogPort(portConfig, anaPort);
@@ -236,7 +264,8 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 }
 
 void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	this->println("Setting up emulated select port: " + port);
+	if (this->logVerbosity == VERBOSE)
+		this->log("Setting up emulated select port: " + port);
 
 	OPDI_SelectPort *selPort = new OPDI_SelectPort(port.c_str());
 	this->configureSelectPort(portConfig, selPort);
@@ -245,8 +274,8 @@ void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *p
 }
 
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
-	this->print("Setting up node: ");
-	this->println(node.c_str());
+	if (this->logVerbosity == VERBOSE)
+		this->log("Setting up node: " + node);
 
 	// create node section view
 	Poco::Util::AbstractConfiguration *nodeConfig = this->configuration->createView(node);
@@ -280,7 +309,8 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 void AbstractOPDID::setupNodes(Poco::Util::AbstractConfiguration *config) {
 	// enumerate section "Nodes"
 	Poco::Util::AbstractConfiguration *nodes = this->configuration->createView("Nodes");
-	this->println("Setting up nodes");
+	if (this->logVerbosity == VERBOSE)
+		this->log("Setting up nodes");
 
 	Poco::Util::AbstractConfiguration::Keys nodeKeys;
 	nodes->keys("", nodeKeys);
@@ -317,7 +347,8 @@ void AbstractOPDID::setupNodes(Poco::Util::AbstractConfiguration *config) {
 
 int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {
 
-	this->println("Setting up connection");
+	if (this->logVerbosity == VERBOSE)
+		this->log("Setting up connection");
 	std::string connectionType = this->getConfigString(config, "Type", "", true);
 
 	if (connectionType == "TCP") {
@@ -337,20 +368,21 @@ int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {
  *
  */
 uint8_t opdi_debug_msg(const uint8_t *message, uint8_t direction) {
+	if (Opdi->logVerbosity != AbstractOPDID::VERBOSE)
+		return OPDI_STATUS_OK;
+	std::string dirChar = "-";
 	if (direction == OPDI_DIR_INCOMING)
-		Opdi->print(">");
+		dirChar = ">";
 	else
 	if (direction == OPDI_DIR_OUTGOING)
-		Opdi->print("<");
+		dirChar = "<";
 	else
 	if (direction == OPDI_DIR_INCOMING_ENCR)
-		Opdi->print("}");
+		dirChar = "}";
 	else
 	if (direction == OPDI_DIR_OUTGOING_ENCR)
-		Opdi->print("{");
-	else
-		Opdi->print("-");
-	Opdi->println((const char *)message);
+		dirChar = "{";
+	Opdi->log(dirChar + (const char *)message);
 	return OPDI_STATUS_OK;
 }
 

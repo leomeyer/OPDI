@@ -253,7 +253,7 @@ uint8_t OPDI_AnalogPort::setMode(uint8_t mode) {
 
 uint8_t OPDI_AnalogPort::setResolution(uint8_t resolution) {
 	if (resolution < 8 || resolution > 12)
-		throw Poco::InvalidArgumentException("Analog port resolution not supported", this->to_string((int)resolution));
+		throw Poco::InvalidArgumentException("Analog port resolution not supported; allowed values are 8..12 (bits)", this->to_string((int)resolution));
 	this->resolution = resolution;
 	return OPDI_STATUS_OK;
 }

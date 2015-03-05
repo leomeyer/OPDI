@@ -18,9 +18,9 @@ uint8_t DigitalTestPort::setLine(uint8_t line) {
 
 	AbstractOPDID *opdid = (AbstractOPDID *)this->opdi;
 	if (line == 0) {
-		opdid->println("DigitalTestPort line set to Low");
+		opdid->log("DigitalTestPort line set to Low");
 	} else {
-		opdid->println("DigitalTestPort line set to High");
+		opdid->log("DigitalTestPort line set to High");
 	}
 
 	return OPDI_STATUS_OK;
@@ -50,7 +50,8 @@ void WindowsTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::stri
 	} else
 		throw Poco::DataException("This plugin supports only node type 'DigitalPort'", portType);
 
-	this->opdid->println("WindowsTestOPDIDPlugin setup completed successfully as node " + node);
+	if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
+		this->opdid->log("WindowsTestOPDIDPlugin setup completed successfully as node " + node);
 }
 
 // plugin instance factory function

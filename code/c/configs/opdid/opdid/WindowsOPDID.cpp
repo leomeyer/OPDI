@@ -83,8 +83,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 			FD_ZERO(&sockset);
 			FD_SET(*csock, &sockset);
 			if ((result = select(0, &sockset, NULL, NULL, &aTimeout)) == SOCKET_ERROR) {
-				Opdi->print("Network error: ");
-				Opdi->printlni(WSAGetLastError());
+				Opdi->log("Network error: " + WSAGetLastError());
 				return OPDI_NETWORK_ERROR;
 			}
 			if (result == 0) {
@@ -177,15 +176,16 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 
 // slave protocoll callback
 static void my_protocol_callback(uint8_t state) {
+	if (Opdi->logVerbosity == AbstractOPDID::QUIET)
+		return;
 	if (state == OPDI_PROTOCOL_START_HANDSHAKE) {
-		Opdi->println("Handshake started");
+		Opdi->log("Handshake started");
 	} else
 	if (state == OPDI_PROTOCOL_CONNECTED) {
-		Opdi->print("Connected to: ");
-		Opdi->println(opdi_master_name);
+		Opdi->log("Connected to: " + std::string(opdi_master_name));
 	} else
 	if (state == OPDI_PROTOCOL_DISCONNECTED) {
-		Opdi->println("Disconnected");
+		Opdi->log("Disconnected");
 	}
 }
 
@@ -292,22 +292,21 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
     int addr_size = sizeof(SOCKADDR);
     
     while (true) {
-		this->print("Listening for a connection on port ");
-		this->printlni(port);
+		if (Opdi->logVerbosity != QUIET)
+			this->log(std::string("Listening for a connection on port ") + this->to_string(port));
         csock = (int *)malloc(sizeof(int));
         
         if ((*csock = accept(hsock, (SOCKADDR *)&sadr, &addr_size)) != INVALID_SOCKET) {
-            this->print("Connection attempt from ");
-			this->println(inet_ntoa(sadr.sin_addr));
+			if (Opdi->logVerbosity != QUIET)
+				this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(sadr.sin_addr))).c_str());
 
             err = HandleTCPConnection(csock);
 			
-			this->print("Result: ");
-			this->printlni(err);
+			if (Opdi->logVerbosity != QUIET)
+				this->log(std::string("Result: ") + this->to_string(err));
         }
         else {
-            this->print("Error accepting connection: ");
-			this->printlni(WSAGetLastError());
+            this->log(std::string("Error accepting connection: ") + this->to_string(WSAGetLastError()));
         }
 	}
 

@@ -29,14 +29,12 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	Opdi = new WindowsOPDID();
 
-	Opdi->sayHello();
-
 	try
 	{
 		return Opdi->startup(args);
 	}
 	catch (Poco::Exception& e) {
-		std::wcout << utf8_decode(e.displayText()) << std::endl;
+		std::wcout << utf8_decode(Opdi->getTimestampStr() + e.displayText()) << std::endl;
 	}
 }
 
