@@ -40,6 +40,8 @@ public:
 	/** Outputs a hello message. */
 	virtual void sayHello(void);
 
+	virtual void showHelp(void);
+
 	virtual std::string getTimestampStr();
 
 	/** Returns the key's value from the configuration or the default value, if it is missing. If missing and isRequired is true, throws an exception. */

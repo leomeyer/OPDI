@@ -33,6 +33,18 @@ void AbstractOPDID::sayHello(void) {
 	}
 }
 
+void AbstractOPDID::showHelp(void) {
+	this->sayHello();
+	this->println("OPDI (Open Protocol for Device Interaction) service");
+	this->println("Mandatory command line parameters:");
+	this->println("  -c <config_file>: use the specified configuration file");
+	this->println("Optional command line parameters:");
+	this->println("  --version: print version number and exit");
+	this->println("  -h or -?: print help text and exit");
+	this->println("  -q: quiet mode (print errors only)");
+	this->println("  -v: verbose mode");
+}
+
 std::string AbstractOPDID::getTimestampStr(void) {
 	return "[" + Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y-%m-%d %H:%M:%S.%i") + "] ";
 }
@@ -67,6 +79,15 @@ void AbstractOPDID::log(std::string text) {
 int AbstractOPDID::startup(std::vector<std::string> args) {
 	// evaluate arguments
 	for (unsigned int i = 0; i < args.size(); i++) {
+		if (args.at(i) == "-h" || args.at(i) == "-?") {
+			this->showHelp();
+			return 0;
+		}
+		if (args.at(i) == "--version") {
+			this->logVerbosity = VERBOSE;
+			this->sayHello();
+			return 0;
+		}
 		if (args.at(i) == "-v") {
 			this->logVerbosity = VERBOSE;
 		}
