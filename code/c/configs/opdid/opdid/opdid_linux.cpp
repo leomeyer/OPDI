@@ -19,8 +19,6 @@ int main(int argc, char *argv[])
 
 	Opdi = new LinuxOPDID();
 
-	Opdi->sayHello();
-
 	try
 	{
 		return Opdi->startup(args);

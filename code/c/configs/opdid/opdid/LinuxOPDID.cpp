@@ -153,15 +153,16 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 
 // slave protocoll callback
 static void my_protocol_callback(uint8_t state) {
+	if (Opdi->logVerbosity == AbstractOPDID::QUIET)
+		return;
 	if (state == OPDI_PROTOCOL_START_HANDSHAKE) {
-		Opdi->println("Handshake started");
+		Opdi->log("Handshake started");
 	} else
 	if (state == OPDI_PROTOCOL_CONNECTED) {
-		Opdi->print("Connected to: ");
-		Opdi->println(opdi_master_name);
+		Opdi->log("Connected to: " + std::string(opdi_master_name));
 	} else
 	if (state == OPDI_PROTOCOL_DISCONNECTED) {
-		Opdi->println("Disconnected");
+		Opdi->log("Disconnected");
 	}
 }
 
@@ -256,22 +257,22 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 	listen(sockfd, 5);
 
 	while (true) {
-        	this->print("Listening for a connection on port ");
-		this->printlni(port);
+        	if (Opdi->logVerbosity != QUIET)
+			this->log(std::string("Listening for a connection on port ") + this->to_string(port));
 		clilen = sizeof(cli_addr);
 		newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
 		if (newsockfd < 0) {
 			throw Poco::ApplicationException("ERROR on accept");
 		}
 
-            	this->print("Connection attempt from ");
-		this->println(inet_ntoa(cli_addr.sin_addr));
+		if (Opdi->logVerbosity != QUIET)
+			this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(serv_addr.sin_addr))).c_str());
 		
 		err = HandleTCPConnection(newsockfd);
 
 		close(newsockfd);
-		this->print("Result: ");
-		this->printlni(err);
+		if (Opdi->logVerbosity != QUIET)
+			this->log(std::string("Result: ") + this->to_string(err));
         }
 
 	return 0;
