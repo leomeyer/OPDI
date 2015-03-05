@@ -14,14 +14,12 @@
 #define DEFAULT_IDLETIMEOUT_MS	180000
 #define DEFAULT_TCP_PORT		13110
 
-AbstractOPDID::AbstractOPDID(void)
-{
+AbstractOPDID::AbstractOPDID(void) {
 	this->logVerbosity = NORMAL;
 	this->configuration = NULL;
 }
 
-AbstractOPDID::~AbstractOPDID(void)
-{
+AbstractOPDID::~AbstractOPDID(void) {
 }
 
 void AbstractOPDID::sayHello(void) {
@@ -36,7 +34,7 @@ void AbstractOPDID::sayHello(void) {
 }
 
 std::string AbstractOPDID::getTimestampStr(void) {
-	return "[" + Poco::DateTimeFormatter::format(Poco::Timestamp(), "%Y-%m-%d %H:%M:%S.%i") + "] ";
+	return "[" + Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y-%m-%d %H:%M:%S.%i") + "] ";
 }
 
 void AbstractOPDID::readConfiguration(const std::string filename) {
@@ -110,18 +108,20 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 
 	std::string slaveName = this->getConfigString(general, "SlaveName", "", true);
 	int timeout = general->getInt("IdleTimeout", DEFAULT_IDLETIMEOUT_MS);
-	std::string logVerbosityStr = this->getConfigString(general, "LogVerbosity", "Normal", false);
+	std::string logVerbosityStr = this->getConfigString(general, "LogVerbosity", "", false);
 
-	if (logVerbosityStr == "Quiet") {
-		this->logVerbosity = QUIET;
-	} else
-	if (logVerbosityStr == "Normal") {
-		this->logVerbosity = NORMAL;
-	} else
-	if (logVerbosityStr == "Verbose") {
-		this->logVerbosity = VERBOSE;
-	} else
-		throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', or 'Verbose')", logVerbosityStr);
+	if (logVerbosityStr != "") { 
+		if (logVerbosityStr == "Quiet") {
+			this->logVerbosity = QUIET;
+		} else
+		if (logVerbosityStr == "Normal") {
+			this->logVerbosity = NORMAL;
+		} else
+		if (logVerbosityStr == "Verbose") {
+			this->logVerbosity = VERBOSE;
+		} else
+			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', or 'Verbose')", logVerbosityStr);
+	}
 
 	// initialize OPDI slave
 	this->setup(slaveName.c_str(), timeout);

@@ -29,7 +29,7 @@ SRC += $(CPPPATH)/OPDI_Ports.cpp
 # SRC += 
 
 # conio include path
-CONIOINCPATH = ../../../libraries/conio
+CONIOINCPATH = ../../../../libraries/conio
 
 # POCO include path
 POCOINCPATH = ../../../../libraries/POCO/Util/include ../../../../libraries/POCO/Foundation/include ../../../../libraries/POCO/Net/include

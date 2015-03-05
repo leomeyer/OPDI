@@ -5,16 +5,16 @@
 
 #include "LinuxOPDID.h"
 
-class DigitalTestPort : public OPDI_EmulatedDigitalPort {
+class DigitalTestPort : public OPDI_DigitalPort {
 public:
 	DigitalTestPort();
 	virtual uint8_t setLine(uint8_t line) override;
 };
 
-DigitalTestPort::DigitalTestPort() : OPDI_EmulatedDigitalPort("PluginPort", "Windows Test Plugin Port", OPDI_PORTDIRCAP_OUTPUT, 0) {}
+DigitalTestPort::DigitalTestPort() : OPDI_DigitalPort("PluginPort", "Windows Test Plugin Port", OPDI_PORTDIRCAP_OUTPUT, 0) {}
 
 uint8_t DigitalTestPort::setLine(uint8_t line) {
-	OPDI_EmulatedDigitalPort::setLine(line);
+	OPDI_DigitalPort::setLine(line);
 
 	AbstractOPDID *opdid = (AbstractOPDID *)this->opdi;
 	if (line == 0) {
@@ -32,20 +32,25 @@ protected:
 	AbstractOPDID *opdid;
 
 public:
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID);
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig);
 };
 
 
-void LinuxTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID) {
+void LinuxTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) {
 	this->opdid = abstractOPDID;
 
-	// add emulated test port
-	DigitalTestPort *emuPort = new DigitalTestPort();
-	abstractOPDID->addPort(emuPort);
+	// get port type
+	std::string portType = nodeConfig->getString("Type", "");
 
-	this->opdid->println("LinuxTestOPDIDPlugin setup completed successfully");
+	if (portType == "DigitalPort") {
+		// add emulated test port
+		DigitalTestPort *port = new DigitalTestPort();
+		abstractOPDID->configureDigitalPort(nodeConfig, port);
+		abstractOPDID->addPort(port);
+	} else
+		throw Poco::DataException("This plugin supports only node type 'DigitalPort'", portType);
 
-	this->opdid->reconfigure();
+	this->opdid->println("LinuxTestOPDIDPlugin setup completed successfully as node " + node);
 }
 
 
