@@ -14,12 +14,71 @@
 #define DEFAULT_IDLETIMEOUT_MS	180000
 #define DEFAULT_TCP_PORT		13110
 
+
+// slave protocoll callback
+void protocol_callback(uint8_t state) {
+	Opdi->protocolCallback(state);
+}
+
+
 AbstractOPDID::AbstractOPDID(void) {
 	this->logVerbosity = NORMAL;
 	this->configuration = NULL;
 }
 
 AbstractOPDID::~AbstractOPDID(void) {
+}
+
+void AbstractOPDID::protocolCallback(uint8_t protState) {
+	if (protState == OPDI_PROTOCOL_START_HANDSHAKE) {
+		if (this->logVerbosity != AbstractOPDID::QUIET)
+			this->log("Handshake started");
+	} else
+	if (protState == OPDI_PROTOCOL_CONNECTED) {
+		this->connected(opdi_master_name);
+	} else
+	if (protState == OPDI_PROTOCOL_DISCONNECTED) {
+		this->disconnected();
+	}
+}
+
+void AbstractOPDID::connected(const char *masterName) {
+	this->masterName = std::string(masterName);
+
+	if (this->logVerbosity != AbstractOPDID::QUIET)
+		this->log("Connected to: " + this->masterName);
+	
+	// notify registered listeners
+	ConnectionListenerList::iterator it = this->connectionListeners.begin();
+	while (it != this->connectionListeners.end()) {
+		(*it)->masterConnected();
+		it++;
+	}
+}
+
+void AbstractOPDID::disconnected() {
+	if (this->logVerbosity != AbstractOPDID::QUIET)
+		this->log("Disconnected from: " + this->masterName);
+	
+	this->masterName = std::string();
+
+	// notify registered listeners
+	ConnectionListenerList::iterator it = this->connectionListeners.begin();
+	while (it != this->connectionListeners.end()) {
+		(*it)->masterDisconnected();
+		it++;
+	}
+}
+
+void AbstractOPDID::addConnectionListener(IOPDIDConnectionListener *listener) {
+	this->removeConnectionListener(listener);
+	this->connectionListeners.push_back(listener);
+}
+
+void AbstractOPDID::removeConnectionListener(IOPDIDConnectionListener *listener) {
+	ConnectionListenerList::iterator it = std::find(this->connectionListeners.begin(), this->connectionListeners.end(), listener);
+	if (it != this->connectionListeners.end())
+		this->connectionListeners.erase(it);
 }
 
 void AbstractOPDID::sayHello(void) {
@@ -97,7 +156,6 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 		if (args.at(i) == "-c") {
 			i++;
 			if (args.size() == i) {
-				Opdi->sayHello();
 				throw Poco::SyntaxException("Expected configuration file name after argument -c");
 			} else {
 				this->readConfiguration(args.at(i));

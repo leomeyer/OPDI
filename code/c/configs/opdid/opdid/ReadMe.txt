@@ -1,45 +1,11 @@
-﻿========================================================================
-    KONSOLENANWENDUNG: opdid-Projektübersicht
-========================================================================
+﻿
 
-Diese opdid-Anwendung wurde vom Anwendungs-Assistenten 
-für Sie erstellt.
+Building on Linux
 
-Diese Datei bietet eine Übersicht über den Inhalt der einzelnen Dateien, 
-aus denen Ihre opdid-Anwendung besteht.
+Building on Linux requires a compiler supporting C++11. GCC will support C++11 from version 4.8 onwards.
 
 
-opdid.vcxproj
-    Dies ist die Hauptprojektdatei für VC++-Projekte, die mit dem 
-    Anwendungs-Assistenten generiert werden.
-    Sie enthält Informationen zur Visual C++-Version, mit der die Datei 
-    generiert wurde, sowie Informationen zu Plattformen, Konfigurationen und 
-    Projektfunktionen, die mit dem Anwendungs-Assistenten ausgewählt wurden.
+Building on Raspberry Pi
 
-opdid.vcxproj.filters
-    Dies ist die Filterdatei für VC++-Projekte, die mithilfe eines 
-    Anwendungs-Assistenten erstellt werden. 
-    Sie enthält Informationen über die Zuordnung zwischen den Dateien im 
-    Projekt und den Filtern. Diese Zuordnung wird in der IDE zur Darstellung 
-    der Gruppierung von Dateien mit ähnlichen Erweiterungen unter einem 
-    bestimmten Knoten verwendet (z. B. sind CPP-Dateien dem Filter 
-    "Quelldateien" zugeordnet).
-
-opdid.cpp
-    Dies ist die Hauptquelldatei der Anwendung.
-
-/////////////////////////////////////////////////////////////////////////////
-Andere Standarddateien:
-
-StdAfx.h, StdAfx.cpp
-    Diese Dateien werden verwendet, um eine vorkompilierte Headerdatei
-    (PCH-Datei) mit dem Namen "opdid.pch und eine 
-    vorkompilierte Typendatei mit dem Namen "StdAfx.obj" zu erstellen.
-
-/////////////////////////////////////////////////////////////////////////////
-Weitere Hinweise:
-
-Der Anwendungs-Assistent weist Sie mit "TODO:"-Kommentaren auf Teile des
-Quellcodes hin, die Sie ergänzen oder anpassen sollten.
-
-/////////////////////////////////////////////////////////////////////////////
+Set /usr/bin/g++ to link to a gcc version >= 4.8!
+You might need to install a more recent version of gcc first.

@@ -26,15 +26,17 @@ uint8_t DigitalTestPort::setLine(uint8_t line) {
 	return OPDI_STATUS_OK;
 }
 
-class WindowsTestOPDIDPlugin : public IOPDIDPlugin {
+class WindowsTestOPDIDPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener {
 
 protected:
 	AbstractOPDID *opdid;
 
 public:
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig);
-};
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) override;
 
+	virtual void masterConnected(void) override;
+	virtual void masterDisconnected(void) override;
+};
 
 void WindowsTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) {
 	this->opdid = abstractOPDID;
@@ -50,8 +52,20 @@ void WindowsTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::stri
 	} else
 		throw Poco::DataException("This plugin supports only node type 'DigitalPort'", portType);
 
+	this->opdid->addConnectionListener(this);
+
 	if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
 		this->opdid->log("WindowsTestOPDIDPlugin setup completed successfully as node " + node);
+}
+
+void WindowsTestOPDIDPlugin::masterConnected() {
+	if (this->opdid->logVerbosity != AbstractOPDID::QUIET)
+		this->opdid->log("Test plugin: master connected");
+}
+
+void WindowsTestOPDIDPlugin::masterDisconnected() {
+	if (this->opdid->logVerbosity != AbstractOPDID::QUIET)
+		this->opdid->log("Test plugin: master disconnected");
 }
 
 // plugin instance factory function

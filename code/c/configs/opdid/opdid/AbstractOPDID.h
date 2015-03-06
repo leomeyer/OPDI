@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sstream>
+#include <list>
 
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/Util/IniFileConfiguration.h"
@@ -9,9 +10,21 @@
 
 class AbstractOPDID;
 
-/* The abstract plugin interface. */
+// protocol callback function for the OPDI slave implementation
+extern void protocol_callback(uint8_t state);
+
+/** The abstract plugin interface. */
 struct IOPDIDPlugin {
 	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string nodeName, Poco::Util::AbstractConfiguration *nodeConfig) = 0;
+};
+
+/** The listener interface for plugin registrations. */
+struct IOPDIDConnectionListener {
+	/** Is called when a master successfully completed the handshake. */
+	virtual void masterConnected(void) = 0;
+
+	/** Is called when a master has disconnected. */
+	virtual void masterDisconnected(void) = 0;
 };
 
 /** The abstract base class for OPDID implementations. */
@@ -22,6 +35,11 @@ protected:
 	Poco::Util::AbstractConfiguration *configuration;
 
 	virtual void readConfiguration(std::string fileName);
+
+	std::string masterName;
+
+	typedef std::list<IOPDIDConnectionListener *> ConnectionListenerList;
+	ConnectionListenerList connectionListeners;
 
 public:
 
@@ -36,6 +54,16 @@ public:
 	AbstractOPDID(void);
 
 	virtual ~AbstractOPDID(void);
+
+	virtual void protocolCallback(uint8_t protState);
+
+	virtual void connected(const char *masterName);
+
+	virtual void disconnected(void);
+
+	virtual void addConnectionListener(IOPDIDConnectionListener *listener);
+
+	virtual void removeConnectionListener(IOPDIDConnectionListener *listener);
 
 	/** Outputs a hello message. */
 	virtual void sayHello(void);

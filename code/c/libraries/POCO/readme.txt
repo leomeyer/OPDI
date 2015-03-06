@@ -24,9 +24,24 @@ Then, compile POCO:
 > make -s
 For multiprocessor machines:
 > make -s -j4
-Install the libraries
+Install the libraries:
 > sudo make -s install
-Reload LD cache
+Reload LD cache:
 > sudo ldconfig
 
 The linux configs should link the POCO libraries dynamically. This avoids problems ("Using 'gethostbyname' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking").
+
+------------------------------------------------------------------------------------------------------
+
+On Raspberry Pi, make sure that the libssl-dev library is installed:
+> sudo apt-get install libssl-dev
+
+Compile without ODBC and MySQL support:
+> ./configure --no-tests --no-samples --omit=Data/ODBC,Data/MySQL
+Then, compile POCO:
+> make -s
+Compiling can take quite a long time. Check for errors; install missing libraries if necessary.
+Install the libraries:
+> sudo make -s install
+Reload LD cache:
+> sudo ldconfig
