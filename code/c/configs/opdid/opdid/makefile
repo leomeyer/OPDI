@@ -51,7 +51,7 @@ POCOLIBPATH = ../../../libraries/POCO/lib/Linux/x86_64
 POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
 
 # Additional libraries
-LIBS = -lpthread -ldl
+LIBS = -lpthread -ldl -lrt
 
 # The compiler to be used.
 CC = g++
