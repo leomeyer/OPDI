@@ -266,6 +266,8 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 
 IOPDIDPlugin *LinuxOPDID::getPlugin(std::string driver) {
 
+	this->warnIfPluginMoreRecent(driver);
+
 	void *hndl = dlopen(driver.c_str(), RTLD_NOW);
 	if (hndl == NULL){
 		throw Poco::FileException("Could not load the plugin library", dlerror());
@@ -281,5 +283,5 @@ IOPDIDPlugin *LinuxOPDID::getPlugin(std::string driver) {
 	}
 
 	// call the library function to get the plugin instance
-	return ((IOPDIDPlugin *(*)())(getPluginInstance))();
+	return ((IOPDIDPlugin *(*)(int, int, int))(getPluginInstance))(this->majorVersion, this->minorVersion, this->patchVersion);
 }
