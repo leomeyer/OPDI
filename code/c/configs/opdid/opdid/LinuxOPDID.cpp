@@ -151,21 +151,6 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 	return OPDI_STATUS_OK;
 }
 
-// slave protocoll callback
-static void my_protocol_callback(uint8_t state) {
-	if (Opdi->logVerbosity == AbstractOPDID::QUIET)
-		return;
-	if (state == OPDI_PROTOCOL_START_HANDSHAKE) {
-		Opdi->log("Handshake started");
-	} else
-	if (state == OPDI_PROTOCOL_CONNECTED) {
-		Opdi->log("Connected to: " + std::string(opdi_master_name));
-	} else
-	if (state == OPDI_PROTOCOL_DISCONNECTED) {
-		Opdi->log("Disconnected");
-	}
-}
-
 LinuxOPDID::LinuxOPDID(void)
 {
 }
@@ -219,7 +204,7 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 	last_activity = opdi_get_time_ms();
 
 	// initiate handshake
-	result = opdi_slave_start(&message, NULL, &my_protocol_callback);
+	result = opdi_slave_start(&message, NULL, &protocol_callback);
 
 	// release the socket
 	return result;

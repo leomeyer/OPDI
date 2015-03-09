@@ -26,13 +26,16 @@ uint8_t DigitalTestPort::setLine(uint8_t line) {
 	return OPDI_STATUS_OK;
 }
 
-class LinuxTestOPDIDPlugin : public IOPDIDPlugin {
+class LinuxTestOPDIDPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener {
 
 protected:
 	AbstractOPDID *opdid;
 
 public:
 	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig);
+
+	virtual void masterConnected(void) override;
+	virtual void masterDisconnected(void) override;
 };
 
 
@@ -50,9 +53,19 @@ void LinuxTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 	} else
 		throw Poco::DataException("This plugin supports only node type 'DigitalPort'", portType);
 
-	this->opdid->println("LinuxTestOPDIDPlugin setup completed successfully as node " + node);
+	if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
+		this->opdid->println("LinuxTestOPDIDPlugin setup completed successfully as node " + node);
 }
 
+void LinuxTestOPDIDPlugin::masterConnected() {
+	if (this->opdid->logVerbosity != AbstractOPDID::QUIET)
+		this->opdid->log("Test plugin: master connected");
+}
+
+void LinuxTestOPDIDPlugin::masterDisconnected() {
+	if (this->opdid->logVerbosity != AbstractOPDID::QUIET)
+		this->opdid->log("Test plugin: master disconnected");
+}
 
 extern "C" IOPDIDPlugin* GetOPDIDPluginInstance() {
 	// return a new instance of this plugin
