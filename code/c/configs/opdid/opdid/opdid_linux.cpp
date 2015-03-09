@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 		return Opdi->startup(args);
 	}
 	catch (Poco::Exception& e) {
-		std::cout << e.displayText() << std::endl;
+		Opdi->log(e.displayText());
 	}
 }
 

@@ -1,5 +1,5 @@
 
-// Test plugin for OPDID (Windows version)
+// Test plugin for OPDID (Linux version)
 
 #include "opdi_constants.h"
 
@@ -11,7 +11,7 @@ public:
 	virtual uint8_t setLine(uint8_t line) override;
 };
 
-DigitalTestPort::DigitalTestPort() : OPDI_DigitalPort("PluginPort", "Windows Test Plugin Port", OPDI_PORTDIRCAP_OUTPUT, 0) {}
+DigitalTestPort::DigitalTestPort() : OPDI_DigitalPort("PluginPort", "Linux Test Plugin Port", OPDI_PORTDIRCAP_OUTPUT, 0) {}
 
 uint8_t DigitalTestPort::setLine(uint8_t line) {
 	OPDI_DigitalPort::setLine(line);
@@ -54,7 +54,7 @@ void LinuxTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 		throw Poco::DataException("This plugin supports only node type 'DigitalPort'", portType);
 
 	if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
-		this->opdid->println("LinuxTestOPDIDPlugin setup completed successfully as node " + node);
+		this->opdid->log("LinuxTestOPDIDPlugin setup completed successfully as node " + node);
 }
 
 void LinuxTestOPDIDPlugin::masterConnected() {
@@ -67,7 +67,12 @@ void LinuxTestOPDIDPlugin::masterDisconnected() {
 		this->opdid->log("Test plugin: master disconnected");
 }
 
-extern "C" IOPDIDPlugin* GetOPDIDPluginInstance() {
+extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
+
+	// check whether the version is supported
+	if ((majorVersion > 0) || (minorVersion > 1))
+		throw Poco::Exception("This version of the LinuxTestOPDIPlugin supports only OPDID versions up to 0.1");
+
 	// return a new instance of this plugin
 	return new LinuxTestOPDIDPlugin();
 }
