@@ -316,7 +316,7 @@ IBasicProtocol* IODevice::handshake(ICredentialsCallback* credCallback)
 	if (AbstractProtocol::HANDSHAKE_VERSION_DOUBLE < AbstractProtocol::parseDouble(parts[VERSION], "Handshake version", 0, std::numeric_limits<double>::max())) {
 		// send error message to the device
 		sendSynchronous(&msgDisagreement);
-		throw ProtocolException("Handshake version not supported"); //, parts[VERSION]);
+		throw ProtocolException("Handshake version not supported: " + parts[VERSION]);
 	}
 
 	// encoding name supplied?
