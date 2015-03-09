@@ -72,7 +72,6 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 				}
 				else {
 					// other error condition
-					perror("ERROR reading from socket");
 					return OPDI_NETWORK_ERROR;
 				}
 			}
@@ -184,11 +183,11 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 
 	// set timeouts on socket
 	if (setsockopt (csock, SOL_SOCKET, SO_RCVTIMEO, (char *)&aTimeout, sizeof(aTimeout)) < 0) {
-		printf("setsockopt failed\n");
+		this->log("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
 	if (setsockopt (csock, SOL_SOCKET, SO_SNDTIMEO, (char *)&aTimeout, sizeof(aTimeout)) < 0) {
-		printf("setsockopt failed\n");
+		this->log("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
 
@@ -257,7 +256,7 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 
 		close(newsockfd);
 		if (Opdi->logVerbosity != QUIET)
-			this->log(std::string("Result: ") + this->to_string(err));
+			this->log(std::string("Result: ") + this->getOPDIResult(err));
         }
 
 	return 0;
