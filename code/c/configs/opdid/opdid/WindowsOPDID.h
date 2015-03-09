@@ -33,4 +33,4 @@ public:
 
 
 // The plugin DLL entry function that returns the plugin instance
-typedef IOPDIDPlugin* (__cdecl *GetOPDIDPluginInstance_t)();
+typedef IOPDIDPlugin* (__cdecl *GetOPDIDPluginInstance_t)(int majorVersion, int minorVersion, int patchVersion);

@@ -485,6 +485,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	int tcp_port = 13110;
 	int com_port = 0;
 
+	// set console to display special characters correctly
+	setlocale(LC_ALL, "");
+
 	printf("WinOPDI test program. Arguments: [-i] [-tcp <port>] [-com <port>]\n");
 	printf("-i starts the interactive master.\n");
 

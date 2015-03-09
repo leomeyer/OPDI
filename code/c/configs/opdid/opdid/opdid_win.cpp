@@ -34,7 +34,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		return Opdi->startup(args);
 	}
 	catch (Poco::Exception& e) {
-		std::wcout << utf8_decode(Opdi->getTimestampStr() + e.displayText()) << std::endl;
+		Opdi->log(e.displayText());
 	}
 
 	// signal error

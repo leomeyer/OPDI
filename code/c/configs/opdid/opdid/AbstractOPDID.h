@@ -10,6 +10,10 @@
 
 class AbstractOPDID;
 
+#define OPDID_MAJOR_VERSION		0
+#define OPDID_MINOR_VERSION		1
+#define OPDID_PATCH_VERSION		0
+
 // protocol callback function for the OPDI slave implementation
 extern void protocol_callback(uint8_t state);
 
@@ -31,6 +35,10 @@ struct IOPDIDConnectionListener {
 class AbstractOPDID: public OPDI
 {
 protected:
+
+	int majorVersion;
+	int minorVersion;
+	int patchVersion;
 
 	Poco::Util::AbstractConfiguration *configuration;
 
@@ -113,6 +121,8 @@ public:
 	virtual int setupConnection(Poco::Util::AbstractConfiguration *config);
 
 	virtual int setupTCP(std::string interface_, int port) = 0;
+
+	virtual void warnIfPluginMoreRecent(std::string driver);
 
 	virtual IOPDIDPlugin *getPlugin(std::string driver) = 0;
 };
