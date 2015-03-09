@@ -42,12 +42,15 @@ protected:
 
 	Poco::Util::AbstractConfiguration *configuration;
 
-	virtual void readConfiguration(std::string fileName);
-
 	std::string masterName;
 
 	typedef std::list<IOPDIDConnectionListener *> ConnectionListenerList;
 	ConnectionListenerList connectionListeners;
+
+	typedef std::map<uint8_t, std::string> OPDICodeTexts;
+	OPDICodeTexts opdiCodeTexts;
+
+	virtual void readConfiguration(std::string fileName);
 
 public:
 
@@ -78,7 +81,9 @@ public:
 
 	virtual void showHelp(void);
 
-	virtual std::string getTimestampStr();
+	virtual std::string getTimestampStr(void);
+
+	virtual std::string getOPDIResult(uint8_t code);
 
 	/** Returns the key's value from the configuration or the default value, if it is missing. If missing and isRequired is true, throws an exception. */
 	virtual std::string getConfigString(Poco::Util::AbstractConfiguration *config, const std::string &key, const std::string &defaultValue, const bool isRequired);

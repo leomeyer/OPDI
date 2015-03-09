@@ -32,6 +32,39 @@ AbstractOPDID::AbstractOPDID(void) {
 
 	this->logVerbosity = NORMAL;
 	this->configuration = NULL;
+
+	// map result codes
+	opdiCodeTexts[0] = "STATUS_OK";
+	opdiCodeTexts[1] = "DISCONNECTED";
+	opdiCodeTexts[2] = "TIMEOUT";
+	opdiCodeTexts[3] = "CANCELLED";
+	opdiCodeTexts[4] = "ERROR_MALFORMED_MESSAGE";
+	opdiCodeTexts[5] = "ERROR_CONVERSION";
+	opdiCodeTexts[6] = "ERROR_MSGBUF_OVERFLOW";
+	opdiCodeTexts[7] = "ERROR_DEST_OVERFLOW";
+	opdiCodeTexts[8] = "ERROR_STRINGS_OVERFLOW";
+	opdiCodeTexts[9] = "ERROR_PARTS_OVERFLOW";
+	opdiCodeTexts[10] = "PROTOCOL_ERROR";
+	opdiCodeTexts[11] = "PROTOCOL_NOT_SUPPORTED";
+	opdiCodeTexts[12] = "ENCRYPTION_NOT_SUPPORTED";
+	opdiCodeTexts[13] = "ENCRYPTION_REQUIRED";
+	opdiCodeTexts[14] = "ENCRYPTION_ERROR";
+	opdiCodeTexts[15] = "AUTH_NOT_SUPPORTED";
+	opdiCodeTexts[16] = "AUTHENTICATION_EXPECTED";
+	opdiCodeTexts[17] = "AUTHENTICATION_FAILED";
+	opdiCodeTexts[18] = "DEVICE_ERROR";
+	opdiCodeTexts[19] = "TOO_MANY_PORTS";
+	opdiCodeTexts[20] = "PORTTYPE_UNKNOWN";
+	opdiCodeTexts[21] = "PORT_UNKNOWN";
+	opdiCodeTexts[22] = "WRONG_PORT_TYPE";
+	opdiCodeTexts[23] = "TOO_MANY_BINDINGS";
+	opdiCodeTexts[24] = "NO_BINDING";
+	opdiCodeTexts[25] = "CHANNEL_INVALID";
+	opdiCodeTexts[26] = "POSITION_INVALID";
+	opdiCodeTexts[27] = "NETWORK_ERROR";
+	opdiCodeTexts[28] = "TERMINATOR_IN_PAYLOAD";
+	opdiCodeTexts[29] = "PORT_ACCESS_DENIED";
+	opdiCodeTexts[30] = "PORT_ERROR";
 }
 
 AbstractOPDID::~AbstractOPDID(void) {
@@ -114,6 +147,13 @@ void AbstractOPDID::showHelp(void) {
 
 std::string AbstractOPDID::getTimestampStr(void) {
 	return "[" + Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y-%m-%d %H:%M:%S.%i") + "] ";
+}
+
+std::string AbstractOPDID::getOPDIResult(uint8_t code) {
+	OPDICodeTexts::const_iterator it = this->opdiCodeTexts.find(code);
+	if (it == this->opdiCodeTexts.end())
+		return "Unknown status code: " + code;
+	return it->second;
 }
 
 void AbstractOPDID::readConfiguration(const std::string filename) {
@@ -497,10 +537,10 @@ uint8_t opdi_debug_msg(const uint8_t *message, uint8_t direction) {
 	return OPDI_STATUS_OK;
 }
 
-const char *opdi_encoding = new char[MAX_ENCODINGNAMELENGTH];
+const char *opdi_encoding = new char[OPDI_MAX_ENCODINGNAMELENGTH];
 uint16_t opdi_device_flags = 0;
 const char *opdi_supported_protocols = "BP";
-const char *opdi_config_name = new char[MAX_SLAVENAMELENGTH];
+const char *opdi_config_name = new char[OPDI_MAX_SLAVENAMELENGTH];
 char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
 
 // digital port functions
@@ -534,7 +574,15 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 		dLine = 1;
 	else
 		dLine = 0;
-	return dPort->setLine(dLine);
+	try {
+		return dPort->setLine(dLine);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 }
 
 uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
@@ -549,8 +597,15 @@ uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 	else
 		// mode not supported
 		return OPDI_PROTOCOL_ERROR;
-
-	return dPort->setMode(dMode);
+	try {
+		return dPort->setMode(dMode);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 }
 
 #endif 		// NO_DIGITAL_PORTS
@@ -582,7 +637,15 @@ uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	return aPort->setValue(value);
+	try {
+		return aPort->setValue(value);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 }
 
 uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
@@ -598,7 +661,15 @@ uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
 		// mode not supported
 		return OPDI_PROTOCOL_ERROR;
 
-	return aPort->setMode(aMode);
+	try {
+		return aPort->setMode(aMode);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 }
 
 uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
@@ -613,7 +684,15 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
 		// resolution not supported
 		return OPDI_PROTOCOL_ERROR;
 
-	return aPort->setResolution(aRes);
+	try {
+		return aPort->setResolution(aRes);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 }
 
 uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
@@ -628,7 +707,15 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 		// mode not supported
 		return OPDI_PROTOCOL_ERROR;
 
-	return aPort->setReference(aRef);
+	try {
+		return aPort->setReference(aRef);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 }
 
 #endif	// NO_ANALOG_PORTS
@@ -648,7 +735,15 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 	if (sPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	return sPort->setPosition(position);
+	try {
+		return sPort->setPosition(position);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 }
 
 #endif	//  OPDI_NO_SELECT_PORTS
@@ -668,7 +763,15 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	return dPort->setPosition(position);
+	try {
+		return dPort->setPosition(position);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 }
 
 #endif	// OPDI_NO_DIAL_PORTS

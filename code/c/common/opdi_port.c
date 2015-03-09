@@ -28,7 +28,7 @@ static uint8_t portCount = 0;
 static opdi_Port *portHead = NULL;
 static opdi_Port *portTail = NULL;
 
-const char *port_info_message;
+static char port_info_message[OPDI_MAX_PORT_INFO_MESSAGE];
 
 #if (OPDI_STREAMING_PORTS > 0)
 
@@ -195,7 +195,7 @@ uint16_t opdi_get_port_bind_count() {
 #endif
 
 void opdi_set_port_message(const char *message) {
-	port_info_message = message;
+	strncpy(port_info_message, message, OPDI_MAX_PORT_INFO_MESSAGE);
 }
 
 const char *opdi_get_port_message() {

@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "Poco/Exception.h"
+
 #include "opdi_platformtypes.h"
 #include "opdi_configspecs.h"
 
@@ -16,6 +18,7 @@ friend class AbstractOPDID;
 friend class OPDI;
 
 protected:
+
 	// protected constructor - for use by friend classes only
 	OPDI_Port(const char *id, const char *type);
 
@@ -50,6 +53,22 @@ protected:
 	OPDI_Port *next;
 
 public:
+
+	/** This exception can be used by implementations to indicate an error during a port operation.
+	 *  Its message will be transferred to the master. */
+	class PortError : public Poco::Exception
+	{
+	public:
+		PortError(std::string message): Poco::Exception(message) {};
+	};
+
+	/** This exception can be used by implementations to indicate that a port operation is not allowed.
+	 *  Its message will be transferred to the master. */
+	class AccessDenied : public Poco::Exception
+	{
+	public:
+		AccessDenied(std::string message): Poco::Exception(message) {};
+	};
 
 	/** Pointer for help structures. Not used internally; may be used by the application. */
 	void* tag;
@@ -256,6 +275,7 @@ friend class OPDI;
 
 protected:
 	char **items;
+	uint16_t count;
 	uint16_t position;
 
 	// protected constructor - for use by friend classes only

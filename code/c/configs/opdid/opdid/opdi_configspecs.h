@@ -89,10 +89,12 @@ extern "C" {
 #define OPDI_HAS_MESSAGE_HANDLED
 
 // keep these numbers as low as possible to conserve memory
-#define MAX_PORTIDLENGTH		32
-#define MAX_PORTNAMELENGTH		32
-#define MAX_SLAVENAMELENGTH		32
-#define MAX_ENCODINGNAMELENGTH	32
+#define OPDI_MAX_PORTIDLENGTH		32
+#define OPDI_MAX_PORTNAMELENGTH		32
+#define OPDI_MAX_SLAVENAMELENGTH	32
+#define OPDI_MAX_ENCODINGNAMELENGTH	32
+
+#define OPDI_MAX_PORT_INFO_MESSAGE	256
 
 #ifdef __cplusplus
 }

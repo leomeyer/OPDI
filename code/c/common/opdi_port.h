@@ -196,6 +196,7 @@ uint16_t opdi_get_port_bind_count(void);
 #endif
 
 /** Used to set the port info message for OPDI_PORT_ACCESS_DENIED and OPDI_PORT_ERROR.
+*   The message is copied into an internal buffer.
 */
 void opdi_set_port_message(const char *message);
 

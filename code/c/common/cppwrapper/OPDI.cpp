@@ -45,9 +45,9 @@ uint8_t OPDI::setup(const char *slaveName, int idleTimeout) {
 	this->workFunction = NULL;
 
 	// copy slave name to internal buffer
-	strncpy((char*)opdi_config_name, slaveName, MAX_SLAVENAMELENGTH - 1);
+	strncpy((char*)opdi_config_name, slaveName, OPDI_MAX_SLAVENAMELENGTH - 1);
 	// set standard encoding to "utf-8"
-	strncpy((char*)opdi_encoding, "utf-8", MAX_ENCODINGNAMELENGTH - 1);
+	strncpy((char*)opdi_encoding, "utf-8", OPDI_MAX_ENCODINGNAMELENGTH - 1);
 
 	this->idle_timeout_ms = idleTimeout;
 
@@ -59,7 +59,7 @@ void OPDI::setIdleTimeout(uint32_t idleTimeoutMs) {
 }
 
 void OPDI::setEncoding(const char* encoding) {
-	strncpy((char*)opdi_encoding, encoding, MAX_ENCODINGNAMELENGTH - 1);
+	strncpy((char*)opdi_encoding, encoding, OPDI_MAX_ENCODINGNAMELENGTH - 1);
 }
 
 uint8_t OPDI::addPort(OPDI_Port *port) {

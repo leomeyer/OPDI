@@ -21,10 +21,6 @@
 #ifndef __OPDI_CONSTANTS_H
 #define __OPDI_CONSTANTS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif 
-
 // common status codes
 
 #define OPDI_STATUS_OK					0
@@ -112,9 +108,5 @@ extern "C" {
 *   Authentication without encryption causes the password to be sent in plain text! 
 */
 #define OPDI_FLAG_AUTHENTICATION_REQUIRED	0x04
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

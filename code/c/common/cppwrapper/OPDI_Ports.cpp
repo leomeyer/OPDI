@@ -12,9 +12,14 @@
 #include "OPDI.h"
 #include "OPDI_Ports.h"
 
+// Strings in this class don't have to be localized.
+// They are either misconfiguration errors or responses to master programming errors.
+// They should never be displayed to the user of a master if code and configuration are correct.
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // General port functionality
 //////////////////////////////////////////////////////////////////////////////////////////
+
 OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->data = NULL;
 	this->next = NULL;
@@ -190,17 +195,15 @@ void OPDI_DigitalPort::setDirCaps(const char *dirCaps) {
 // function that handles the set direction command (opdi_set_digital_port_mode)
 uint8_t OPDI_DigitalPort::setMode(uint8_t mode) {
 	if (mode > 3)
-		throw Poco::InvalidArgumentException("Digital port mode not supported", this->to_string((int)mode));
-
+		throw PortError("Digital port mode not supported: " + this->to_string((int)mode));
 	this->mode = mode;
 	return OPDI_STATUS_OK;
 }
 
 // function that handles the set line command (opdi_set_digital_port_line)
 uint8_t OPDI_DigitalPort::setLine(uint8_t line) {
-	if (this->mode != 3)		
-		throw Poco::InvalidArgumentException("Cannot set digital port line in input mode");
-
+	if (this->mode != 3)
+		throw PortError("Cannot set digital port line in input mode");
 	this->line = line;
 
 	return OPDI_STATUS_OK;
@@ -245,22 +248,21 @@ OPDI_AnalogPort::~OPDI_AnalogPort() {
 // function that handles the set direction command (opdi_set_digital_port_mode)
 uint8_t OPDI_AnalogPort::setMode(uint8_t mode) {
 	if (mode > 2)
-		throw Poco::InvalidArgumentException("Analog port mode not supported", this->to_string((int)mode));
-
+		throw PortError("Analog port mode not supported: " + this->to_string((int)mode));
 	this->mode = mode;
 	return OPDI_STATUS_OK;
 }
 
 uint8_t OPDI_AnalogPort::setResolution(uint8_t resolution) {
 	if (resolution < 8 || resolution > 12)
-		throw Poco::InvalidArgumentException("Analog port resolution not supported; allowed values are 8..12 (bits)", this->to_string((int)resolution));
+		throw PortError("Analog port resolution not supported; allowed values are 8..12 (bits): " + this->to_string((int)resolution));
 	this->resolution = resolution;
 	return OPDI_STATUS_OK;
 }
 
 uint8_t OPDI_AnalogPort::setReference(uint8_t reference) {
 	if (reference > 2)
-		throw Poco::InvalidArgumentException("Analog port reference not supported", this->to_string((int)reference));
+		throw PortError("Analog port reference not supported: " + this->to_string((int)reference));
 	this->reference = reference;
 	return OPDI_STATUS_OK;
 }
@@ -348,9 +350,13 @@ void OPDI_SelectPort::setItems(const char **items) {
 	}
 	// end token
 	this->items[itemCount] = NULL;
+	this->count = itemCount - 1;
 }
 
 uint8_t OPDI_SelectPort::setPosition(uint16_t position) {
+	if (position > count)
+		throw PortError("Position must not exceed the number of items: " + this->count);
+
 	this->position = position;
 	return OPDI_STATUS_OK;
 }
@@ -379,7 +385,12 @@ OPDI_DialPort::~OPDI_DialPort() {}
 
 // function that handles position setting; position may be in the range of minValue..maxValue
 uint8_t OPDI_DialPort::setPosition(int32_t position) {
-	this->position = position;
+	if (position < this->minValue)
+		throw PortError("Position must not be less than the minimum: " + this->minValue);
+	if (position > this->maxValue)
+		throw PortError("Position must not be greater than the maximum: " + this->maxValue);
+	// correct position to next possible step
+	this->position = ((position - this->minValue) / this->step) * this->step + this->minValue;
 	return OPDI_STATUS_OK;
 }
 

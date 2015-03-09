@@ -88,6 +88,7 @@ extern "C" {
 
 #define OPDI_HAS_MESSAGE_HANDLED
 
+#define OPDI_MAX_PORT_INFO_MESSAGE	256
 
 #ifdef __cplusplus
 }

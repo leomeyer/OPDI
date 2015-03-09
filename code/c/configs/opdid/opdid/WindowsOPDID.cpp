@@ -286,7 +286,7 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
             err = HandleTCPConnection(csock);
 			
 			if (Opdi->logVerbosity != QUIET)
-				this->log(std::string("Result: ") + this->to_string(err));
+				this->log(std::string("Result: ") + this->getOPDIResult(err));
         }
         else {
             this->log(std::string("Error accepting connection: ") + this->to_string(WSAGetLastError()));

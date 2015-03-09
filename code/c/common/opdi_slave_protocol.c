@@ -1037,7 +1037,7 @@ static uint8_t basic_protocol_handler(void) {
 #endif
 		} else {
 			// clear port info message
-			opdi_set_port_message(NULL);
+			opdi_set_port_message("");
 
 			// message other than control message received
 			// let the protocol handle the message
