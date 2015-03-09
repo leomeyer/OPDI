@@ -4,20 +4,22 @@ TARGET = linux_test
 # OPDI platform specifier
 PLATFORM = linux
 
+# Relative path to the opdid application directory.
+# All other paths are calculated relative to this path, so if you create a plugin anywhere it should be enough
+# just to adjust this path.
+OPDIDPATH = ../../opdid
+
 # Relative path to common directory (without trailing slash)
 # This also becomes an additional include directory.
-CPATH = ../../../../common
+CPATH = $(OPDIDPATH)/../../../common
 
 # Relative path to platform directory (without trailing slash)
 # This also becomes an additional include directory.
-PPATHBASE = ../../../../platforms
+PPATHBASE = $(OPDIDPATH)/../../../platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List source files of the plugin here.
 SRC = $(TARGET).cpp
-
-# OPDID includes
-OPDIDPATH = ../../opdid
 
 # C++ wrapper
 CPPPATH = $(CPATH)/cppwrapper
@@ -29,13 +31,13 @@ SRC += $(CPPPATH)/OPDI_Ports.cpp
 # SRC += 
 
 # conio include path
-CONIOINCPATH = ../../../../libraries/conio
+CONIOINCPATH = $(OPDIDPATH)/../../../libraries/conio
 
 # POCO include path
-POCOINCPATH = ../../../../libraries/POCO/Util/include ../../../../libraries/POCO/Foundation/include ../../../../libraries/POCO/Net/include
+POCOINCPATH = $(OPDIDPATH)/../../../libraries/POCO/Util/include $(OPDIDPATH)/../../../libraries/POCO/Foundation/include $(OPDIDPATH)/../../../libraries/POCO/Net/include
 
 # POCO library path
-POCOLIBPATH = ../../../../libraries/POCO/lib/Linux/x86_64
+POCOLIBPATH = $(OPDIDPATH)/../../../libraries/POCO/lib/Linux/x86_64
 
 # POCO libraries
 POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 

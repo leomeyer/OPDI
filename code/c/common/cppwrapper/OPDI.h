@@ -115,11 +115,10 @@ public:
 	 */
 	virtual uint8_t refresh(OPDI_Port **ports);
 
-	/** Returns the current system time in milliseconds. Used to implement the idle timer.
-	 * Override this function to return the correct time. The default implementation always returns 0.
-	 * This effectively disables the idle timer.
+	/** This method is called when the idle timeout is reached. The default implementation sends a message
+	 *  to the master and disconnects by returning OPDI_DISCONNECT. The method may return OPDI_STATUS_OK to stay connected.
 	 */
-	// virtual uint32_t getTimeMs() = 0;
+	virtual uint8_t idleTimeoutReached(void);
 
 	/** An internal handler which is used to implement the idle timer.
 	 */

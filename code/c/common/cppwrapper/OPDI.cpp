@@ -227,6 +227,11 @@ uint8_t OPDI::refresh(OPDI_Port **ports) {
 	return opdi_refresh(iPorts);
 }
 
+uint8_t OPDI::idleTimeoutReached() {
+	opdi_send_debug("Idle timeout!");
+	return this->disconnect();
+}
+
 uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 	if (this->idle_timeout_ms > 0) {
 		if (channel != 0) {
@@ -234,9 +239,10 @@ uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 			this->last_activity = opdi_get_time_ms();
 		} else {
 			// control channel message
+
+			// check idle timeout
 			if (opdi_get_time_ms() - this->last_activity > this->idle_timeout_ms) {
-				opdi_send_debug("Idle timeout!");
-				return this->disconnect();
+				return this->idleTimeoutReached();
 			}
 		}
 	}

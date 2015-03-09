@@ -251,7 +251,7 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 		}
 
 		if (Opdi->logVerbosity != QUIET)
-			this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(serv_addr.sin_addr))).c_str());
+			this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(cli_addr.sin_addr))).c_str());
 		
 		err = HandleTCPConnection(newsockfd);
 

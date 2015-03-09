@@ -31,7 +31,7 @@ AbstractOPDID::~AbstractOPDID(void) {
 
 void AbstractOPDID::protocolCallback(uint8_t protState) {
 	if (protState == OPDI_PROTOCOL_START_HANDSHAKE) {
-		if (this->logVerbosity != AbstractOPDID::QUIET)
+		if (this->logVerbosity == AbstractOPDID::VERBOSE)
 			this->log("Handshake started");
 	} else
 	if (protState == OPDI_PROTOCOL_CONNECTED) {
