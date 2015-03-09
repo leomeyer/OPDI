@@ -5,6 +5,7 @@
 #include "Poco/Exception.h"
 #include "Poco/Tuple.h"
 #include "Poco/Timestamp.h"
+#include "Poco/Timezone.h"
 #include "Poco/DateTimeFormatter.h"
 #include "Poco/DateTimeParser.h"
 #include "Poco/File.h"
@@ -462,7 +463,9 @@ void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
 	} else {
 		// check whether the plugin driver file is more recent
 		Poco::File driverFile(driver);
-
+		// convert build time to UTC
+		buildTime.makeUTC(Poco::Timezone::tzd());
+		// assume both files have been built in the same time zone (getLastModified also returns UTC)
 		if ((driverFile.getLastModified() < buildTime.timestamp()) && (this->logVerbosity != AbstractOPDID::QUIET))
 			this->log("Warning: Plugin module " + driver + " is older than the main binary; possible ABI conflict! In case of strange errors please recompile the plugin!");
 	}
