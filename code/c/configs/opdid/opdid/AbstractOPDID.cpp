@@ -1,10 +1,14 @@
 
 #include <vector>
+#include <time.h>
 
 #include "Poco/Exception.h"
 #include "Poco/Tuple.h"
 #include "Poco/Timestamp.h"
+#include "Poco/Timezone.h"
 #include "Poco/DateTimeFormatter.h"
+#include "Poco/DateTimeParser.h"
+#include "Poco/File.h"
 
 #include "opdi_constants.h"
 
@@ -22,6 +26,10 @@ void protocol_callback(uint8_t state) {
 
 
 AbstractOPDID::AbstractOPDID(void) {
+	this->majorVersion = OPDID_MAJOR_VERSION;
+	this->minorVersion = OPDID_MINOR_VERSION;
+	this->patchVersion = OPDID_PATCH_VERSION;
+
 	this->logVerbosity = NORMAL;
 	this->configuration = NULL;
 }
@@ -85,7 +93,7 @@ void AbstractOPDID::sayHello(void) {
 	if (this->logVerbosity == QUIET)
 		return;
 
-	this->log("OPDID version 0.1 (c) Leo Meyer 2015");
+	this->log("OPDID version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion) + " (c) Leo Meyer 2015");
 
 	if (this->logVerbosity == VERBOSE) {
 		this->log("Build: " + std::string(__DATE__) + " " + std::string(__TIME__));
@@ -136,6 +144,7 @@ void AbstractOPDID::log(std::string text) {
 }
 
 int AbstractOPDID::startup(std::vector<std::string> args) {
+
 	// evaluate arguments
 	for (unsigned int i = 0; i < args.size(); i++) {
 		if (args.at(i) == "-h" || args.at(i) == "-?") {
@@ -167,11 +176,11 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 	if (this->configuration == NULL)
 		throw Poco::SyntaxException("Expected argument: -c <config_file>");
 
+	this->sayHello();
+
 	// create view to "General" section
 	Poco::Util::AbstractConfiguration *general = this->configuration->createView("General");
 	this->setGeneralConfiguration(general);
-
-	Opdi->sayHello(); 
 
 	this->setupNodes(this->configuration);
 
@@ -439,6 +448,29 @@ int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {
 	else
 		throw Poco::DataException("Invalid configuration; unknown connection type", connectionType);
 }
+
+void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
+	// parse compile date and time
+    std::stringstream compiled;
+    compiled << __DATE__ << " " << __TIME__;
+
+	Poco::DateTime buildTime;
+	int tzd;
+
+	if (!Poco::DateTimeParser::tryParse("%b %e %Y %H:%M:%s", compiled.str(), buildTime, tzd)) {
+		if (this->logVerbosity != AbstractOPDID::QUIET)
+			this->log("Warning: Could not parse build date and time to check possible ABI violation of driver " + driver + ": " + __DATE__ + " " + __TIME__);
+	} else {
+		// check whether the plugin driver file is more recent
+		Poco::File driverFile(driver);
+		// convert build time to UTC
+		buildTime.makeUTC(Poco::Timezone::tzd());
+		// assume both files have been built in the same time zone (getLastModified also returns UTC)
+		if ((driverFile.getLastModified() < buildTime.timestamp()) && (this->logVerbosity != AbstractOPDID::QUIET))
+			this->log("Warning: Plugin module " + driver + " is older than the main binary; possible ABI conflict! In case of strange errors please recompile the plugin!");
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The following functions implement the glue code between C and C++.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////

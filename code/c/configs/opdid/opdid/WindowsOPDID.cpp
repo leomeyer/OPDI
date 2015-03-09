@@ -297,6 +297,9 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 }
 
 IOPDIDPlugin *WindowsOPDID::getPlugin(std::string driver) {
+
+	this->warnIfPluginMoreRecent(driver);
+
 	// attempt to load the specified DLL
 	HINSTANCE dllHandle = LoadLibraryW(utf8_decode(driver).c_str());
 
@@ -312,5 +315,5 @@ IOPDIDPlugin *WindowsOPDID::getPlugin(std::string driver) {
 	}
 
 	// call the DLL function to get the plugin instance
-	return getPluginInstance();
+	return getPluginInstance(this->majorVersion, this->minorVersion, this->patchVersion);
 }
