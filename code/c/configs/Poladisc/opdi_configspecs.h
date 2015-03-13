@@ -43,6 +43,8 @@ extern "C" {
 // Define to conserve memory
 #define	OPDI_NO_AUTHENTICATION
 
+#define OPDI_MAX_PORT_INFO_MESSAGE	0
+
 #ifdef __cplusplus
 }
 #endif
