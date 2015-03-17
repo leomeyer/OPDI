@@ -36,8 +36,8 @@
 #include "opdi_platformtypes.h"
 #include "opdi_configspecs.h"
 #include "opdi_constants.h"
-#include "opdi_ports.h"
-#include "opdi_messages.h"
+#include "opdi_port.h"
+#include "opdi_message.h"
 #include "opdi_slave_protocol.h"
 #include "slave.h"
 

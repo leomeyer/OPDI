@@ -83,6 +83,8 @@ extern "C" {
 */
 #define OPDI_ENCRYPTION_BLOCKSIZE	16
 
+#define OPDI_MAX_PORT_INFO_MESSAGE	240
+
 #ifdef __cplusplus
 }
 #endif
