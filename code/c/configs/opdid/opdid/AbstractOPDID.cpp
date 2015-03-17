@@ -230,6 +230,19 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 	return this->setupConnection(connection);
 }
 
+void AbstractOPDID::lockResource(std::string resourceID, std::string lockerID) {
+	if (this->logVerbosity == AbstractOPDID::VERBOSE)
+		this->log("Trying to lock resource '" + resourceID + "' for " + lockerID);
+	// try to locate the resource ID
+	LockedResources::const_iterator it = this->lockedResources.find(resourceID);
+	// resource already used?
+	if (it != this->lockedResources.end())
+		throw Poco::DataException("Resource already in use by " + it->second + ": " + resourceID);
+
+	// store the resource
+	this->lockedResources[resourceID] = lockerID;
+}
+
 void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *general) {
 	if (this->logVerbosity == VERBOSE)
 		this->log("Setting up general configuration");
@@ -260,20 +273,20 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 	std::string portLabel = this->getConfigString(portConfig, "Label", "", true);
 	port->setLabel(portLabel.c_str());
 
-	std::string portDirCaps = this->getConfigString(portConfig, "DirCaps", "Bidi", false);
-	const char *dircaps;
+	std::string portDirCaps = this->getConfigString(portConfig, "DirCaps", "", false);
 	if (portDirCaps == "Input") {
-		dircaps = OPDI_PORTDIRCAP_INPUT;
+		port->setDirCaps(OPDI_PORTDIRCAP_INPUT);
 	} else if (portDirCaps == "Output") {
-		dircaps = OPDI_PORTDIRCAP_OUTPUT;
+		port->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
 	} else if (portDirCaps == "Bidi") {
-		dircaps = OPDI_PORTDIRCAP_BIDI;
-	} else
+		port->setDirCaps(OPDI_PORTDIRCAP_BIDI);
+	} else if (portDirCaps != "")
 		throw Poco::DataException("Unknown port DirCaps specifier; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
-	port->setDirCaps(dircaps);
-
-	uint8_t flags = portConfig->getInt("Flags", 0);
-	port->flags = flags;
+	
+	int8_t flags = portConfig->getInt("Flags", -1);
+	if (flags >= 0) {
+		port->setFlags((uint8_t)flags);
+	}
 	
 	std::string portMode = this->getConfigString(portConfig, "Mode", "", false);
 	if (portMode == "Input") {
@@ -286,6 +299,14 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 		port->setMode(3);
 	} else if (portMode != "")
 		throw Poco::DataException("Unknown port mode specifier; expected 'Input', 'Input with pullup', 'Input with pulldown', or 'Output'", portMode);
+
+	std::string portLine = this->getConfigString(portConfig, "Line", "", false);
+	if (portLine == "High") {
+		port->setLine(1);
+	} else if (portMode == "Low") {
+		port->setLine(0);
+	} else if (portLine != "")
+		throw Poco::DataException("Unknown port line specifier; expected 'Low' or 'High'", portLine);
 }
 
 void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
@@ -303,45 +324,37 @@ void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portC
 	port->setLabel(portLabel.c_str());
 
 	std::string portDirCaps = this->getConfigString(portConfig, "DirCaps", "Bidi", false);
-	const char *dircaps;
 	if (portDirCaps == "Input") {
-		dircaps = OPDI_PORTDIRCAP_INPUT;
+		port->setDirCaps(OPDI_PORTDIRCAP_INPUT);
 	} else if (portDirCaps == "Output") {
-		dircaps = OPDI_PORTDIRCAP_OUTPUT;
+		port->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
 	} else if (portDirCaps == "Bidi") {
-		dircaps = OPDI_PORTDIRCAP_BIDI;
-	} else
+		port->setDirCaps(OPDI_PORTDIRCAP_BIDI);
+	} else if (portDirCaps != "")
 		throw Poco::DataException("Unknown port DirCaps specifier; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
-	port->setDirCaps(dircaps);
 
+	int8_t flags = portConfig->getInt("Flags", -1);
+	if (flags >= 0) {
+		port->setFlags((uint8_t)flags);
+	}
+		
 	// set initial values
-	if (portConfig->hasProperty("Mode")) {
-		std::string mode = this->getConfigString(portConfig, "Mode", "Output", false);
-		if (mode == "Input")
-			port->setMode(0);
-		else if (mode == "Output")
-			port->setMode(1);
-		else
-			throw Poco::ApplicationException("Unknown analog port mode, expected 'Input' or 'Output'", mode);
-	} else
-		// default mode: output
+	std::string mode = this->getConfigString(portConfig, "Mode", "", false);
+	if (mode == "Input")
+		port->setMode(0);
+	else if (mode == "Output")
 		port->setMode(1);
+	else if (mode != "")
+		throw Poco::ApplicationException("Unknown analog port mode, expected 'Input' or 'Output'", mode);
 
 	if (portConfig->hasProperty("Resolution")) {
 		uint8_t resolution = portConfig->getInt("Resolution", OPDI_ANALOG_PORT_RESOLUTION_12);
-		if (port->setResolution(resolution) != OPDI_STATUS_OK) {
-			throw Poco::ApplicationException("Unable to set resolution from configuration", this->to_string(resolution));
-		}
+		port->setResolution(resolution);
 	}
 	if (portConfig->hasProperty("Value")) {
 		uint32_t value = portConfig->getInt("Value", 0);
-		if (port->setValue(value) != OPDI_STATUS_OK) {
-			throw Poco::ApplicationException("Unable to set value from configuration", this->to_string(value));
-		}
+		port->setValue(value);
 	}
-
-	uint8_t flags = portConfig->getInt("Flags", 0);
-	port->flags = flags;
 }
 
 void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
@@ -448,10 +461,10 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 }
 
 void AbstractOPDID::setupNodes(Poco::Util::AbstractConfiguration *config) {
-	// enumerate section "Nodes"
-	Poco::Util::AbstractConfiguration *nodes = this->configuration->createView("Nodes");
+	// enumerate section "Root"
+	Poco::Util::AbstractConfiguration *nodes = this->configuration->createView("Root");
 	if (this->logVerbosity == VERBOSE)
-		this->log("Setting up nodes");
+		this->log("Setting up root nodes");
 
 	Poco::Util::AbstractConfiguration::Keys nodeKeys;
 	nodes->keys("", nodeKeys);
@@ -560,16 +573,13 @@ char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
 #ifndef NO_DIGITAL_PORTS
 
 uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
-	uint8_t result;
 	uint8_t dMode;
 	uint8_t dLine;
 	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	result = dPort->getState(&dMode, &dLine);
-	if (result != OPDI_STATUS_OK)
-		return result;
+	dPort->getState(&dMode, &dLine);
 	mode[0] = '0' + dMode;
 	line[0] = '0' + dLine;
 
@@ -588,7 +598,7 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 	else
 		dLine = 0;
 	try {
-		return dPort->setLine(dLine);
+		dPort->setLine(dLine);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -596,6 +606,7 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ERROR;
 	}
+	return OPDI_STATUS_OK;
 }
 
 uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
@@ -611,7 +622,7 @@ uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 		// mode not supported
 		return OPDI_PROTOCOL_ERROR;
 	try {
-		return dPort->setMode(dMode);
+		dPort->setMode(dMode);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -619,6 +630,7 @@ uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ERROR;
 	}
+	return OPDI_STATUS_OK;
 }
 
 #endif 		// NO_DIGITAL_PORTS
@@ -626,7 +638,6 @@ uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 #ifndef NO_ANALOG_PORTS
 
 uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], char ref[], int32_t *value) {
-	uint8_t result;
 	uint8_t aMode;
 	uint8_t aRef;
 	uint8_t aRes;
@@ -635,9 +646,7 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	result = aPort->getState(&aMode, &aRes, &aRef, value);
-	if (result != OPDI_STATUS_OK)
-		return result;
+	aPort->getState(&aMode, &aRes, &aRef, value);
 	mode[0] = '0' + aMode;
 	res[0] = '0' + (aRes - 8);
 	ref[0] = '0' + aRef;
@@ -651,7 +660,7 @@ uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 		return OPDI_PORT_UNKNOWN;
 
 	try {
-		return aPort->setValue(value);
+		aPort->setValue(value);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -659,6 +668,7 @@ uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ERROR;
 	}
+	return OPDI_STATUS_OK;
 }
 
 uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
@@ -675,7 +685,7 @@ uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
 		return OPDI_PROTOCOL_ERROR;
 
 	try {
-		return aPort->setMode(aMode);
+		aPort->setMode(aMode);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -683,6 +693,7 @@ uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ERROR;
 	}
+	return OPDI_STATUS_OK;
 }
 
 uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
@@ -698,7 +709,7 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
 		return OPDI_PROTOCOL_ERROR;
 
 	try {
-		return aPort->setResolution(aRes);
+		aPort->setResolution(aRes);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -706,6 +717,7 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ERROR;
 	}
+	return OPDI_STATUS_OK;
 }
 
 uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
@@ -721,7 +733,7 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 		return OPDI_PROTOCOL_ERROR;
 
 	try {
-		return aPort->setReference(aRef);
+		aPort->setReference(aRef);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -729,6 +741,7 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ERROR;
 	}
+	return OPDI_STATUS_OK;
 }
 
 #endif	// NO_ANALOG_PORTS
@@ -740,7 +753,8 @@ uint8_t opdi_get_select_port_state(opdi_Port *port, uint16_t *position) {
 	if (sPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	return sPort->getState(position);
+	sPort->getState(position);
+	return OPDI_STATUS_OK;
 }
 
 uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
@@ -749,7 +763,7 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 		return OPDI_PORT_UNKNOWN;
 
 	try {
-		return sPort->setPosition(position);
+		sPort->setPosition(position);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -757,6 +771,7 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ERROR;
 	}
+	return OPDI_STATUS_OK;
 }
 
 #endif	//  OPDI_NO_SELECT_PORTS
@@ -768,7 +783,8 @@ uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	return dPort->getState(position);
+	dPort->getState(position);
+	return OPDI_STATUS_OK;
 }
 
 uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
@@ -777,7 +793,7 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
 		return OPDI_PORT_UNKNOWN;
 
 	try {
-		return dPort->setPosition(position);
+		dPort->setPosition(position);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -785,6 +801,7 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ERROR;
 	}
+	return OPDI_STATUS_OK;
 }
 
 #endif	// OPDI_NO_DIAL_PORTS

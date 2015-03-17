@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 
 #include "Poco/Exception.h"
 
@@ -32,7 +33,7 @@ protected:
 	int32_t flags;
 	void* ptr;
 
-	template <class T> inline std::string to_string(const T& t);
+	template <class T> std::string to_string(const T& t);
 
 	/** Called regularly by the OPDI system. Enables the port to do work.
 	 * Override this in subclasses to implement more complex functionality.
@@ -127,15 +128,15 @@ public:
 	// mode = 1: input with pullup on
 	// mode = 2: input with pulldown on
 	// mode = 3: output
-	virtual uint8_t setMode(uint8_t mode) = 0;
+	virtual void setMode(uint8_t mode) = 0;
 
 	// function that handles the set line command (opdi_set_digital_port_line)
 	// line = 0: state low
 	// line = 1: state high
-	virtual uint8_t setLine(uint8_t line) = 0;
+	virtual void setLine(uint8_t line) = 0;
 
 	// function that fills in the current port state
-	virtual uint8_t getState(uint8_t *mode, uint8_t *line) = 0;
+	virtual void getState(uint8_t *mode, uint8_t *line) = 0;
 };
 
 
@@ -165,23 +166,23 @@ public:
 	// function that handles the set mode command (opdi_set_analog_port_mode)
 	// mode = 1: input
 	// mode = 2: output
-	virtual uint8_t setMode(uint8_t mode) = 0;
+	virtual void setMode(uint8_t mode) = 0;
 
 	// function that handles the set resolution command (opdi_set_analog_port_resolution)
 	// resolution = (8..12): resolution in bits
-	virtual uint8_t setResolution(uint8_t resolution) = 0;
+	virtual void setResolution(uint8_t resolution) = 0;
 
 	// function that handles the set reference command (opdi_set_analog_port_reference)
 	// reference = 0: internal voltage reference
 	// reference = 1: external voltage reference
-	virtual uint8_t setReference(uint8_t reference) = 0;
+	virtual void setReference(uint8_t reference) = 0;
 
 	// function that handles the set value command (opdi_set_analog_port_value)
 	// value: an integer value ranging from 0 to 2^resolution - 1
-	virtual uint8_t setValue(int32_t value) = 0;
+	virtual void setValue(int32_t value) = 0;
 
 	// function that fills in the current port state
-	virtual uint8_t getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) = 0;
+	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) = 0;
 };
 
 #endif // OPDI_NO_ANALOG_PORTS
@@ -219,15 +220,15 @@ public:
 	// mode = 1: input with pullup on
 	// mode = 2: not supported
 	// mode = 3: output
-	virtual uint8_t setMode(uint8_t mode);
+	virtual void setMode(uint8_t mode);
 
 	// function that handles the set line command (opdi_set_digital_port_line)
 	// line = 0: state low
 	// line = 1: state high
-	virtual uint8_t setLine(uint8_t line);
+	virtual void setLine(uint8_t line);
 
 	// function that fills in the current port state
-	virtual uint8_t getState(uint8_t *mode, uint8_t *line);
+	virtual void getState(uint8_t *mode, uint8_t *line);
 };
 
 #endif // OPDI_NO_DIGITAL_PORTS
@@ -256,18 +257,18 @@ public:
 
 	// mode = 0: input
 	// mode = 1: output
-	virtual uint8_t setMode(uint8_t mode);
+	virtual void setMode(uint8_t mode);
 
-	virtual uint8_t setResolution(uint8_t resolution);
+	virtual void setResolution(uint8_t resolution);
 
 	// reference = 0: internal voltage reference
 	// reference = 1: external voltage reference
-	virtual uint8_t setReference(uint8_t reference);
+	virtual void setReference(uint8_t reference);
 
 	// value: an integer value ranging from 0 to 2^resolution - 1
-	virtual uint8_t setValue(int32_t value);
+	virtual void setValue(int32_t value);
 
-	virtual uint8_t getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value);
+	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value);
 };
 
 #endif // OPDI_NO_ANALOG_PORTS
@@ -303,10 +304,10 @@ public:
 	virtual void setItems(const char **items);
 
 	// function that handles position setting; position may be in the range of 0..(items.length - 1)
-	virtual uint8_t setPosition(uint16_t position);
+	virtual void setPosition(uint16_t position);
 
 	// function that fills in the current port state
-	virtual uint8_t getState(uint16_t *position);
+	virtual void getState(uint16_t *position);
 };
 
 #endif // OPDI_NO_SELECT_PORTS
@@ -337,10 +338,10 @@ public:
 	virtual ~OPDI_DialPort();
 
 	// function that handles position setting; position may be in the range of minValue..maxValue
-	virtual uint8_t setPosition(int32_t position);
+	virtual void setPosition(int32_t position);
 
 	// function that fills in the current port state
-	virtual uint8_t getState(int32_t *position);
+	virtual void getState(int32_t *position);
 };
 
 #endif // OPDI_NO_DIAL_PORTS

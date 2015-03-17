@@ -42,18 +42,12 @@ static char first_com_byte = 0;
 static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t canSend) {
 	char c;
 	int result;
-	uint64_t ticks = opdi_get_time_ms();
-	long sendTicks = ticks;
+	long ticks = opdi_get_time_ms();
 
 	while (1) {
-		// send a message every few ms if canSend
-		// independent of connection mode
-		if (opdi_get_time_ms() - sendTicks >= 830) {
-			if (canSend) {
-				sendTicks = opdi_get_time_ms();
-
-				Opdi->waiting(canSend);
-			}
+		// call work function
+		if (canSend) {
+			Opdi->waiting(canSend);
 		}
 
 		if (connection_mode == MODE_TCP) {

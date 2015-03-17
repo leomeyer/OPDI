@@ -50,6 +50,9 @@ protected:
 	typedef std::map<uint8_t, std::string> OPDICodeTexts;
 	OPDICodeTexts opdiCodeTexts;
 
+	typedef std::map<std::string, std::string> LockedResources;
+	LockedResources lockedResources;
+
 	virtual void readConfiguration(std::string fileName);
 
 public:
@@ -104,6 +107,11 @@ public:
 
 	/** Starts processing the supplied arguments. */
 	virtual int startup(std::vector<std::string>);
+	
+	/** Attempts to lock the resource with the specified ID. The resource can be anything, a pin number, a file name or whatever.
+	 *  When the same resource is attempted to be locked twice this method throws an exception.
+	 *  Use this mechanism to avoid resource conflicts. */
+	virtual void lockResource(std::string resourceID, std::string lockerID);
 
 	virtual void setGeneralConfiguration(Poco::Util::AbstractConfiguration *general);
 
