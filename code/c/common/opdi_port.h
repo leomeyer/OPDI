@@ -29,6 +29,9 @@
 extern "C" {
 #endif 
 
+#define OPDI_Q(x) #x
+#define OPDI_QUOTE(x) OPDI_Q(x)
+
 /** Port type constants.
 *   Compared using string comparison.
 */
@@ -80,13 +83,15 @@ the current configuration should yield an OPDI_PORT_ACCESS_DENIED error. */
 
 // port state constants
 
-#define OPDI_DIGITAL_MODE_INPUT_FLOATING	"0"
-#define OPDI_DIGITAL_MODE_INPUT_PULLUP		"1"
-#define OPDI_DIGITAL_MODE_INPUT_PULLDOWN	"2"
-#define OPDI_DIGITAL_MODE_OUTPUT			"3"
+#define OPDI_DIGITAL_MODE_UNKNOWN			-1
+#define OPDI_DIGITAL_MODE_INPUT_FLOATING	0
+#define OPDI_DIGITAL_MODE_INPUT_PULLUP		1
+#define OPDI_DIGITAL_MODE_INPUT_PULLDOWN	2
+#define OPDI_DIGITAL_MODE_OUTPUT			3
 
-#define OPDI_DIGITAL_LINE_LOW				"0"
-#define OPDI_DIGITAL_LINE_HIGH				"1"
+#define OPDI_DIGITAL_LINE_UNKNOWN			-1
+#define OPDI_DIGITAL_LINE_LOW				0
+#define OPDI_DIGITAL_LINE_HIGH				1
 
 /** Used to avoid pointer casts to integer and back. 
 */

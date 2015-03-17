@@ -82,8 +82,8 @@ static struct opdi_Port digPort2 = { "DP2", "Access Denying Port" };
 static struct opdi_Port digPort3 = { "DP3", "Test Error Port" };
 static struct opdi_Port digPort4 = { "DP4", "Test Query Error" };
 
-static char digmode[] = OPDI_DIGITAL_MODE_INPUT_FLOATING;
-static char digline[] = OPDI_DIGITAL_LINE_LOW;
+static char digmode[] = OPDI_QUOTE(OPDI_DIGITAL_MODE_INPUT_FLOATING);
+static char digline[] = OPDI_QUOTE(OPDI_DIGITAL_LINE_LOW);
 
 static char anamode[] = "1";		// output
 static char anares[] = "1";		// 9 bit
@@ -139,12 +139,12 @@ uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 
 		// simulate crosstalk between pins
 		// is the digital port configured as input?
-		if (digmode[0] == OPDI_DIGITAL_MODE_INPUT_FLOATING[0]) {
+		if (digmode[0] == OPDI_QUOTE(OPDI_DIGITAL_MODE_INPUT_FLOATING)[0]) {
 			// the digital port is set to "on" if the analog value is greater than half the resolution maximum
 			if (anavalue > (1 << (7 + anares[0] - '0')))
-				digline[0] = OPDI_DIGITAL_LINE_HIGH[0];
+				digline[0] = OPDI_QUOTE(OPDI_DIGITAL_LINE_HIGH)[0];
 			else
-				digline[0] = OPDI_DIGITAL_LINE_LOW[0];
+				digline[0] = OPDI_QUOTE(OPDI_DIGITAL_LINE_LOW)[0];
 			// cause port refresh
 			refreshPort[0] = &digPort;
 			refreshPort[1] = NULL;
@@ -161,23 +161,23 @@ uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 	if (!strcmp(port->id, digPort.id)) {
 		mode[0] = digmode[0];
 		// line depends on mode
-		if (digmode[0] == OPDI_DIGITAL_MODE_INPUT_PULLUP[0])
-			line[0] = OPDI_DIGITAL_LINE_HIGH[0];
+		if (digmode[0] == OPDI_QUOTE(OPDI_DIGITAL_MODE_INPUT_PULLUP)[0])
+			line[0] = OPDI_QUOTE(OPDI_DIGITAL_LINE_HIGH)[0];
 		else
-		if (digmode[0] == OPDI_DIGITAL_MODE_INPUT_PULLDOWN[0])
-			line[0] = OPDI_DIGITAL_LINE_LOW[0];
+		if (digmode[0] == OPDI_QUOTE(OPDI_DIGITAL_MODE_INPUT_PULLDOWN)[0])
+			line[0] = OPDI_QUOTE(OPDI_DIGITAL_LINE_LOW)[0];
 		else
 			line[0] = digline[0];
 	} else
 	if (!strcmp(port->id, digPort2.id)) {
 		// fixed
-		mode[0] = OPDI_DIGITAL_MODE_INPUT_FLOATING[0];
-		line[0] = OPDI_DIGITAL_LINE_LOW[0];
+		mode[0] = OPDI_QUOTE(OPDI_DIGITAL_MODE_INPUT_FLOATING)[0];
+		line[0] = OPDI_QUOTE(OPDI_DIGITAL_LINE_LOW)[0];
 	} else
 	if (!strcmp(port->id, digPort3.id)) {
 		// fixed
-		mode[0] = OPDI_DIGITAL_MODE_INPUT_FLOATING[0];
-		line[0] = OPDI_DIGITAL_LINE_LOW[0];
+		mode[0] = OPDI_QUOTE(OPDI_DIGITAL_MODE_INPUT_FLOATING)[0];
+		line[0] = OPDI_QUOTE(OPDI_DIGITAL_LINE_LOW)[0];
 	} else
 	if (!strcmp(port->id, digPort4.id)) {
 		// query error

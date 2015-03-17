@@ -232,34 +232,34 @@ void BasicProtocol::expectDigitalPortState(DigitalPort* port, int channel)
 		throw ProtocolException("wrong port ID");
 
 	// set port state
-	port->setPortState(*this, (DigitalPortMode)AbstractProtocol::parseInt(parts[MODE], "mode", 0, 3));
+	port->setPortState(*this, (int8_t)AbstractProtocol::parseInt(parts[MODE], "mode", 0, 3));
 		
 	port->setPortLine(*this, 
-			(DigitalPortLine)AbstractProtocol::parseInt(parts[LINE], "line", 0, 1));
+			(int8_t)AbstractProtocol::parseInt(parts[LINE], "line", 0, 1));
 }
 
-void BasicProtocol::setPortMode(DigitalPort* digitalPort, DigitalPortMode mode)
+void BasicProtocol::setPortMode(DigitalPort* digitalPort, int8_t mode)
 {
 	std::string portMode;
 	switch (mode)
 	{
-	case DIGITAL_INPUT_FLOATING: portMode = OPDI_DIGITAL_MODE_INPUT_FLOATING; break;
-	case DIGITAL_INPUT_PULLUP: portMode = OPDI_DIGITAL_MODE_INPUT_PULLUP; break;
-	case DIGITAL_INPUT_PULLDOWN: portMode = OPDI_DIGITAL_MODE_INPUT_PULLDOWN; break;
-	case DIGITAL_OUTPUT: portMode = OPDI_DIGITAL_MODE_OUTPUT; break;
+	case OPDI_DIGITAL_MODE_INPUT_FLOATING: portMode = OPDI_QUOTE(OPDI_DIGITAL_MODE_INPUT_FLOATING); break;
+	case OPDI_DIGITAL_MODE_INPUT_PULLUP: portMode = OPDI_QUOTE(OPDI_DIGITAL_MODE_INPUT_PULLUP); break;
+	case OPDI_DIGITAL_MODE_INPUT_PULLDOWN: portMode = OPDI_QUOTE(OPDI_DIGITAL_MODE_INPUT_PULLDOWN); break;
+	case OPDI_DIGITAL_MODE_OUTPUT: portMode = OPDI_QUOTE(OPDI_DIGITAL_MODE_OUTPUT); break;
 	default: throw Poco::InvalidArgumentException("Invalid value for digital port mode");
 	}
 
 	expectDigitalPortState(digitalPort, send(new OPDIMessage(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_setDigitalPortMode, digitalPort->getID(), portMode))));
 }
 
-void BasicProtocol::setPortLine(DigitalPort* digitalPort, DigitalPortLine line)
+void BasicProtocol::setPortLine(DigitalPort* digitalPort, int8_t line)
 {
 	std::string portLine;
 	switch (line)
 	{
-	case DIGITAL_LOW: portLine = OPDI_DIGITAL_LINE_LOW; break;
-	case DIGITAL_HIGH: portLine = OPDI_DIGITAL_LINE_HIGH; break;
+	case OPDI_DIGITAL_LINE_LOW: portLine = OPDI_QUOTE(OPDI_DIGITAL_LINE_LOW); break;
+	case OPDI_DIGITAL_LINE_HIGH: portLine = OPDI_QUOTE(OPDI_DIGITAL_LINE_HIGH); break;
 	default: throw Poco::InvalidArgumentException("Invalid value for digital port line");
 	}
 

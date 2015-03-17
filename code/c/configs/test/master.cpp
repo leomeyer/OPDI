@@ -339,18 +339,18 @@ bool digital_port_command(std::string cmd, OPDIPort* port)
 			return false;
 		}
 
-		DigitalPortMode dpm = DIGITAL_MODE_UNKNOWN;
-		if (strcmp(part, OPDI_DIGITAL_MODE_INPUT_FLOATING) == 0)
-			dpm = DIGITAL_INPUT_FLOATING;
+		int8_t dpm = OPDI_DIGITAL_MODE_UNKNOWN;
+		if (strcmp(part, OPDI_QUOTE(OPDI_DIGITAL_MODE_INPUT_FLOATING)) == 0)
+			dpm = OPDI_DIGITAL_MODE_INPUT_FLOATING;
 		else
-		if (strcmp(part, OPDI_DIGITAL_MODE_INPUT_PULLUP) == 0)
-			dpm = DIGITAL_INPUT_PULLUP;
+		if (strcmp(part, OPDI_QUOTE(OPDI_DIGITAL_MODE_INPUT_PULLUP)) == 0)
+			dpm = OPDI_DIGITAL_MODE_INPUT_PULLUP;
 		else
-		if (strcmp(part, OPDI_DIGITAL_MODE_INPUT_PULLDOWN) == 0)
-			dpm = DIGITAL_INPUT_PULLDOWN;
+		if (strcmp(part, OPDI_QUOTE(OPDI_DIGITAL_MODE_INPUT_PULLDOWN)) == 0)
+			dpm = OPDI_DIGITAL_MODE_INPUT_PULLDOWN;
 		else
-		if (strcmp(part, OPDI_DIGITAL_MODE_OUTPUT) == 0)
-			dpm = DIGITAL_OUTPUT;
+		if (strcmp(part, OPDI_QUOTE(OPDI_DIGITAL_MODE_OUTPUT)) == 0)
+			dpm = OPDI_DIGITAL_MODE_OUTPUT;
 
 		thePort->setMode(dpm);
 		return true;
@@ -362,12 +362,12 @@ bool digital_port_command(std::string cmd, OPDIPort* port)
 			return false;
 		}
 
-		DigitalPortLine dpl = DIGITAL_LINE_UNKNOWN;
-		if (strcmp(part, OPDI_DIGITAL_LINE_LOW) == 0)
-			dpl = DIGITAL_LOW;
+		int8_t dpl = OPDI_DIGITAL_LINE_UNKNOWN;
+		if (strcmp(part, OPDI_QUOTE(OPDI_DIGITAL_LINE_LOW)) == 0)
+			dpl = OPDI_DIGITAL_LINE_LOW;
 		else
-		if (strcmp(part, OPDI_DIGITAL_LINE_HIGH) == 0)
-			dpl = DIGITAL_HIGH;
+		if (strcmp(part, OPDI_QUOTE(OPDI_DIGITAL_LINE_HIGH)) == 0)
+			dpl = OPDI_DIGITAL_LINE_HIGH;
 
 		thePort->setLine(dpl);
 		return true;

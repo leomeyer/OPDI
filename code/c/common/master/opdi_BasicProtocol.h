@@ -126,7 +126,7 @@ public:
 	 * @throws ProtocolException
 	 * @throws AbortedException
 	 */
-	void setPortMode(DigitalPort* digitalPort, DigitalPortMode mode) override;
+	void setPortMode(DigitalPort* digitalPort, int8_t mode) override;
 
 	/** Sets the line state for the given digital port and returns the new value.
 	 * 
@@ -140,7 +140,7 @@ public:
 	 * @throws ProtocolException
 	 * @throws AbortedException
 	 */
-	void setPortLine(DigitalPort* digitalPort, DigitalPortLine line) override;
+	void setPortLine(DigitalPort* digitalPort, int8_t line) override;
 
 
 	/** Gets the state for the given port.

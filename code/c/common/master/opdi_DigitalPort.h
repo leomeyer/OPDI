@@ -3,27 +3,6 @@
 
 #include "opdi_OPDIPort.h"
 
-/** The mode a digital port may be in.*/
-enum DigitalPortMode {
-	DIGITAL_MODE_UNKNOWN = -1,
-	/** The port is in input mode and floating. */
-	DIGITAL_INPUT_FLOATING,
-	/** The port is in input mode and the pull down resistor is active. */
-	DIGITAL_INPUT_PULLUP,
-	/** The port is in input mode and the pull down resistor is active. */
-	DIGITAL_INPUT_PULLDOWN,
-	/** The port is in output mode. */
-	DIGITAL_OUTPUT
-};	
-
-/** The states a digital line may be in. */
-enum DigitalPortLine {	
-	DIGITAL_LINE_UNKNOWN = -1,
-	/** Indicates that the port is low. */
-	DIGITAL_LOW,
-	/** Indicates that the port is high. */
-	DIGITAL_HIGH
-};	
 
 /** Represents a digital port on a device. This port may be of type input, output, or bidirectional.
  * 
@@ -36,8 +15,8 @@ protected:
 	int flags;
 
 	// State section
-	DigitalPortMode mode;
-	DigitalPortLine line;
+	int8_t mode;
+	int8_t line;
 	
 public:
 
@@ -58,19 +37,19 @@ public:
 	// Retrieve all port state from the device
 	void getPortState() override;
 	
-	void setPortState(IBasicProtocol& protocol, DigitalPortMode mode);
+	void setPortState(IBasicProtocol& protocol, int8_t mode);
 
-	void setPortLine(IBasicProtocol& protocol, DigitalPortLine line);
+	void setPortLine(IBasicProtocol& protocol, int8_t line);
 	
-	void checkMode(DigitalPortMode portMode);
+	void checkMode(int8_t portMode);
 
 	/** Configures the port in the given mode. Throws an IllegalArgumentException if the mode
 	 * is not supported.
 	 * @param portMode
 	 */
-	void setMode(DigitalPortMode portMode);
+	void setMode(int8_t portMode);
 	
-	DigitalPortMode getMode();
+	int8_t getMode();
 
 	std::string getModeText();
 	
@@ -78,9 +57,9 @@ public:
 	 * is not supported.
 	 * @param portState
 	 */
-	void setLine(DigitalPortLine portLine);
+	void setLine(int8_t portLine);
 	
-	DigitalPortLine getLine();
+	int8_t getLine();
 
 	std::string getLineText();
 	

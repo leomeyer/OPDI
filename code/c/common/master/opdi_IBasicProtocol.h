@@ -85,7 +85,7 @@ public:
 	 * @throws ProtocolException
 	 * @throws AbortedException
 	 */
-	virtual void setPortMode(DigitalPort* digitalPort, DigitalPortMode mode) = 0;
+	virtual void setPortMode(DigitalPort* digitalPort, int8_t mode) = 0;
 
 	/** Sets the line state for the given digital port and returns the new value.
 	 * 
@@ -99,7 +99,7 @@ public:
 	 * @throws ProtocolException
 	 * @throws AbortedException
 	 */
-	virtual void setPortLine(DigitalPort* digitalPort, DigitalPortLine line) = 0;
+	virtual void setPortLine(DigitalPort* digitalPort, int8_t line) = 0;
 	
 	/** Gets the state for the given port.
 	 * 

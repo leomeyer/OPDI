@@ -196,7 +196,42 @@ void OPDI_DigitalPort::setDirCaps(const char *dirCaps) {
 uint8_t OPDI_DigitalPort::setMode(uint8_t mode) {
 	if (mode > 3)
 		throw PortError("Digital port mode not supported: " + this->to_string((int)mode));
-	this->mode = mode;
+
+	// validate mode
+	if (!strcmp(this->caps, OPDI_PORTDIRCAP_INPUT) || !strcmp(this->caps, OPDI_PORTDIRCAP_BIDI))  {
+		switch (mode) {
+		case 0: // Input
+			// if "Input" is requested, map it to the allowed pullup/pulldown input mode if specified
+			if ((flags & OPDI_DIGITAL_PORT_PULLUP_ALWAYS) == OPDI_DIGITAL_PORT_PULLUP_ALWAYS)
+				this->mode = 1;
+			else
+			if ((flags & OPDI_DIGITAL_PORT_PULLDN_ALWAYS) == OPDI_DIGITAL_PORT_PULLDN_ALWAYS)
+				this->mode = 2;
+			else
+				this->mode = 0;
+			break;
+		case 1:
+			if ((flags & OPDI_DIGITAL_PORT_PULLUP_ALWAYS) != OPDI_DIGITAL_PORT_PULLUP_ALWAYS)
+				throw PortError("Digital port mode not supported; use mode 'Input with pullup': " + this->to_string((int)mode));
+			this->mode = 1;
+			break;
+		case 2:
+			if ((flags & OPDI_DIGITAL_PORT_PULLDN_ALWAYS) != OPDI_DIGITAL_PORT_PULLDN_ALWAYS)
+				throw PortError("Digital port mode not supported; use mode 'Input with pulldown': " + this->to_string((int)mode));
+			this->mode = 2;
+			break;
+		case 3:
+			if (!strcmp(this->caps, OPDI_PORTDIRCAP_INPUT))
+				throw PortError("Cannot set input only digital port mode to 'Output'");
+			this->mode = 3;
+		}
+	} else {
+		// direction is output only
+		if (mode < 3)
+			throw PortError("Cannot set output only digital port mode to input");
+		this->mode = 3;
+	}
+
 	return OPDI_STATUS_OK;
 }
 
