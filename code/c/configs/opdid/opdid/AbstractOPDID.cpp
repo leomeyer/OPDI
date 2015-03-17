@@ -274,6 +274,18 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 
 	uint8_t flags = portConfig->getInt("Flags", 0);
 	port->flags = flags;
+	
+	std::string portMode = this->getConfigString(portConfig, "Mode", "", false);
+	if (portMode == "Input") {
+		port->setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
+	} else if (portMode == "Input with pullup") {
+		port->setMode(1);
+	} else if (portMode == "Input with pulldown") {
+		port->setMode(2);
+	} else if (portMode == "Output") {
+		port->setMode(3);
+	} else if (portMode != "")
+		throw Poco::DataException("Unknown port mode specifier; expected 'Input', 'Input with pullup', 'Input with pulldown', or 'Output'", portMode);
 }
 
 void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
@@ -409,7 +421,6 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 	Poco::Util::AbstractConfiguration *nodeConfig = this->configuration->createView(node);
 
 	// get node information
-	std::string nodeType = this->getConfigString(nodeConfig, "Type", "", true);
 	std::string nodeDriver = this->getConfigString(nodeConfig, "Driver", "", false);
 
 	// driver specified?
@@ -420,6 +431,8 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		// init the plugin
 		plugin->setupPlugin(this, node, nodeConfig);
 	} else {
+		std::string nodeType = this->getConfigString(nodeConfig, "Type", "", true);
+		
 		// standard driver (internal ports)
 		if (nodeType == "DigitalPort") {
 			this->setupEmulatedDigitalPort(nodeConfig, node);

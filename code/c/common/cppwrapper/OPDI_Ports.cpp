@@ -53,12 +53,6 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->setDirCaps(dircaps);
 }
 
-template <class T> inline std::string OPDI_Port::to_string(const T& t) {
-	std::stringstream ss;
-	ss << t;
-	return ss.str();
-}
-
 uint8_t OPDI_Port::doWork() {
 	return OPDI_STATUS_OK;
 }
