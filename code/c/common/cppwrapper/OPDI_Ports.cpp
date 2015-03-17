@@ -93,6 +93,10 @@ void OPDI_Port::setDirCaps(const char *dirCaps) {
 		this->opdi->updatePortData(this);
 }
 
+void OPDI_Port::setFlags(int32_t flags) {
+	this->flags = flags;
+}
+
 uint8_t OPDI_Port::refresh() {
 	OPDI_Port **ports = new OPDI_Port*[2];
 	ports[0] = this;

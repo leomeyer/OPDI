@@ -86,6 +86,9 @@ public:
 	/** Sets the direction capabilities of the port. */
 	virtual void setDirCaps(const char *dirCaps);
 
+	/** Sets the flags of the port. */
+	virtual void setFlags(int32_t flags);
+
 	/** Causes the port to be refreshed by sending a refresh message to a connected master. */
 	virtual uint8_t refresh();
 };
