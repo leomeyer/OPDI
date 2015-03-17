@@ -89,6 +89,7 @@ public:
 	virtual uint8_t start(uint8_t (*workFunction)());
 
 	/** This function is called while the OPDI slave is connected and waiting for messages.
+	 * It is called about once every millisecond.
 	 * In the default implementation this function calls the workFunction if canSend is true.
 	 * You can override it to perform your own housekeeping in case you need to.
 	 * If canSend is 1, the slave may send asynchronous messages to the master.

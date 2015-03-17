@@ -58,17 +58,11 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 	char c;
 	int result;
 	long ticks = GetTickCount();
-	long sendTicks = ticks;
 
 	while (1) {
-		// send a message every few ms if canSend
-		// independent of connection mode
-		if (GetTickCount() - sendTicks >= 999) {
-			if (canSend) {
-				sendTicks = GetTickCount();
-
-				Opdi->waiting(canSend);
-			}
+		// call work function
+		if (canSend) {
+			Opdi->waiting(canSend);
 		}
 
 		if (connection_mode == MODE_TCP) {

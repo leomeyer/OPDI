@@ -93,6 +93,10 @@ the current configuration should yield an OPDI_PORT_ACCESS_DENIED error. */
 #define OPDI_DIGITAL_LINE_LOW				0
 #define OPDI_DIGITAL_LINE_HIGH				1
 
+#define OPDI_ANALOG_MODE_UNKNOWN			-1
+#define OPDI_ANALOG_MODE_INPUT				0
+#define OPDI_ANALOG_MODE_OUTPUT				1
+
 /** Used to avoid pointer casts to integer and back. 
 */
 typedef union opdi_PtrInt {

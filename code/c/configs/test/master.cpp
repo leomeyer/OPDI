@@ -427,9 +427,10 @@ bool port_command(const char *part)
 			output << port->toString() << std::endl;
 			return true;
 		}
+	} else {
+		output << "Command not implemented: " << cmd << std::endl;
 	}
 
-	output << "Command not implemented: " << cmd << std::endl;
 	return false;
 }
 
