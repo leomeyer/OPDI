@@ -133,7 +133,7 @@ AnalogGertboardOutput::AnalogGertboardOutput(AbstractOPDID *opdid, const char *i
 	(std::string("Analog Gertboard Output ") + to_string(output)).c_str(), // default label - can be changed by configuration
 	OPDI_PORTDIRCAP_OUTPUT, 
 	// possible resolutions - hardware decides which one is actually used; set value in configuration
-	OPDI_ANALOG_PORT_RESOLUTION_8 || OPDI_ANALOG_PORT_RESOLUTION_10	|| OPDI_ANALOG_PORT_RESOLUTION_12) {
+	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12) {
 	
 	this->opdid = opdid;
 	this->mode = 1;
@@ -143,9 +143,8 @@ AnalogGertboardOutput::AnalogGertboardOutput(AbstractOPDID *opdid, const char *i
 
 	// check valid output
 	if ((output < 0) || (output > 1))
-		throw Poco::DataException("Invalid analog output number (expected 0 or 1): " + to_string(output));
+		throw Poco::DataException("Invalid analog output channel number (expected 0 or 1): " + to_string(output));
 	this->output = output;
-	
 	
 	// setup analog output port
 	INP_GPIO(7);  SET_GPIO_ALT(7,0);
@@ -184,6 +183,80 @@ void AnalogGertboardOutput::getState(uint8_t *mode, uint8_t *resolution, uint8_t
 	*mode = this->mode;
 	*resolution = this->resolution;
 	*reference = this->reference;
+	// set remembered value
+	*value = this->value;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// AnalogGertboardInput: Represents an analog input pin on the Gertboard.
+///////////////////////////////////////////////////////////////////////////////
+
+class AnalogGertboardInput : public OPDI_AnalogPort {
+protected:
+	AbstractOPDID *opdid;
+	int input;
+public:
+	AnalogGertboardInput(AbstractOPDID *opdid, const char *id, int input);
+
+	virtual void setMode(uint8_t mode) override;
+	virtual void setResolution(uint8_t resolution) override;
+	virtual void setReference(uint8_t reference) override;
+	// value: an integer value ranging from 0 to 2^resolution - 1
+	virtual void setValue(int32_t value) override;
+	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) override;
+};
+
+AnalogGertboardInput::AnalogGertboardInput(AbstractOPDID *opdid, const char *id, int input) : OPDI_AnalogPort(id, 
+	(std::string("Analog Gertboard Input ") + to_string(input)).c_str(), // default label - can be changed by configuration
+	OPDI_PORTDIRCAP_OUTPUT, 
+	// possible resolutions - hardware decides which one is actually used; set value in configuration
+	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12) {
+	
+	this->opdid = opdid;
+	this->mode = 0;
+	this->resolution = 8;	// most Gertboards apparently use an 8 bit DAC; but this can be changed in the configuration
+	this->reference = 0;
+	this->value = 0;
+
+	// check valid input
+	if ((input < 0) || (input > 1))
+		throw Poco::DataException("Invalid analog input channel number (expected 0 or 1): " + to_string(input));
+	this->input = input;
+	
+	// setup analog input port
+	INP_GPIO(8);  SET_GPIO_ALT(8,0);
+	INP_GPIO(9);  SET_GPIO_ALT(9,0);
+	INP_GPIO(10); SET_GPIO_ALT(10,0);
+	INP_GPIO(11); SET_GPIO_ALT(11,0);
+
+	// Setup SPI bus
+	setup_spi();
+}
+
+// function that handles the set direction command (opdi_set_digital_port_mode)
+void AnalogGertboardInput::setMode(uint8_t mode) {
+	throw PortError("Gertboard analog input mode cannot be changed");
+}
+
+void AnalogGertboardInput::setResolution(uint8_t resolution) {
+	OPDI_AnalogPort::setResolution(resolution);
+}
+
+void AnalogGertboardInput::setReference(uint8_t reference) {
+	throw PortError("Gertboard analog input reference cannot be changed");
+}
+
+void AnalogGertboardInput::setValue(int32_t value) {
+	throw PortError("Gertboard analog input value cannot be set");
+}
+
+// function that fills in the current port state
+void AnalogGertboardInput::getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) {
+	*mode = this->mode;
+	*resolution = this->resolution;
+	*reference = this->reference;
+	// read value from ADC
+	this->value = read_adc(this->input);
 	// set remembered value
 	*value = this->value;
 }
@@ -457,6 +530,30 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 
 			// setup the port instance and add it; use internal pin number
 			AnalogGertboardOutput *port = new AnalogGertboardOutput(abstractOPDID, nodeName.c_str(), outputNumber);
+			abstractOPDID->configureAnalogPort(portConfig, port);
+			abstractOPDID->addPort(port);
+		} else
+		if (portType == "AnalogInput") {
+			// read input number
+			int inputNumber = portConfig->getInt("Input", -1);
+			// check whether the pin is valid; determine internal pin
+			if ((inputNumber < 0) || (inputNumber > 1))
+				throw Poco::DataException("An 'Input' of 0 or 1 must be specified for a Gertboard AnalogInput port: " + abstractOPDID->to_string(inputNumber));
+
+			// the analog input uses SPI; lock internal pins for SPI ports but ignore it if they are already locked
+			// because another AnalogOutput or AnalogInput may also use SPI
+			try {
+				abstractOPDID->lockResource("8", nodeName);
+				abstractOPDID->lockResource("9", nodeName);
+				abstractOPDID->lockResource("10", nodeName);
+				abstractOPDID->lockResource("11", nodeName);
+			} catch (...) {}
+
+			// lock analog input resource; this one may not be shared
+			abstractOPDID->lockResource(std::string("AnalogIn") + abstractOPDID->to_string(inputNumber), nodeName);
+
+			// setup the port instance and add it; use internal pin number
+			AnalogGertboardInput *port = new AnalogGertboardInput(abstractOPDID, nodeName.c_str(), inputNumber);
 			abstractOPDID->configureAnalogPort(portConfig, port);
 			abstractOPDID->addPort(port);
 		} else

@@ -282,6 +282,13 @@ void OPDI_AnalogPort::setMode(uint8_t mode) {
 void OPDI_AnalogPort::setResolution(uint8_t resolution) {
 	if (resolution < 8 || resolution > 12)
 		throw PortError("Analog port resolution not supported; allowed values are 8..12 (bits): " + this->to_string((int)resolution));
+	// check whether the resolution is supported
+	if (((resolution == 8) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_8) != OPDI_ANALOG_PORT_RESOLUTION_8))
+		|| ((resolution == 9) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_9) != OPDI_ANALOG_PORT_RESOLUTION_9))
+		|| ((resolution == 10) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_10) != OPDI_ANALOG_PORT_RESOLUTION_10))
+		|| ((resolution == 11) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_11) != OPDI_ANALOG_PORT_RESOLUTION_11))
+		|| ((resolution == 12) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_12) != OPDI_ANALOG_PORT_RESOLUTION_12)))
+		throw PortError("Analog port resolution not supported (port flags): " + this->to_string((int)resolution));
 	this->resolution = resolution;
 }
 

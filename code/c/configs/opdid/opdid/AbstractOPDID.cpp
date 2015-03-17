@@ -438,6 +438,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 
 	// driver specified?
 	if (nodeDriver != "") {
+		if (this->logVerbosity == VERBOSE)
+			this->log("Loading plugin driver: " + nodeDriver);
+
 		// try to load the plugin; the driver name is the (platform dependent) library file name
 		IOPDIDPlugin *plugin = this->getPlugin(nodeDriver);
 
