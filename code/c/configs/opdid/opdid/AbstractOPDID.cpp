@@ -303,7 +303,7 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 	std::string portLine = this->getConfigString(portConfig, "Line", "", false);
 	if (portLine == "High") {
 		port->setLine(1);
-	} else if (portMode == "Low") {
+	} else if (portLine == "Low") {
 		port->setLine(0);
 	} else if (portLine != "")
 		throw Poco::DataException("Unknown port line specifier; expected 'Low' or 'High'", portLine);

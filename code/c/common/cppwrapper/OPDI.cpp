@@ -219,9 +219,9 @@ uint8_t OPDI::refresh(OPDI_Port **ports) {
 	while (port != NULL) {
 		opdi_Port *oPort = (opdi_Port *)port->data;
 		iPorts[i] = oPort;
-		port = port->next;
 		if (++i > OPDI_MAX_MESSAGE_PARTS)
 			return OPDI_ERROR_PARTS_OVERFLOW;
+		port = ports[i];
 	}
 	iPorts[i] = NULL;
 	return opdi_refresh(iPorts);

@@ -26,5 +26,8 @@ int main(int argc, char *argv[])
 	catch (Poco::Exception& e) {
 		Opdi->log(e.displayText());
 	}
+	catch (...) {
+		Opdi->log("An unknown error occurred. Exiting.");
+	}
 }
 

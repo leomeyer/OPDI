@@ -33,35 +33,36 @@ static int pinMapRev2[][2] = {
 
 class DigitalGertboardPort : public OPDI_DigitalPort {
 protected:
+	AbstractOPDID *opdid;
 	int pin;
 public:
-	DigitalGertboardPort(const char *ID, int pin);
+	DigitalGertboardPort(AbstractOPDID *opdid, const char *ID, int pin);
 	virtual void setLine(uint8_t line) override;
 	virtual void setMode(uint8_t mode) override;
 	virtual void getState(uint8_t *mode, uint8_t *line) override;
 };
 
-DigitalGertboardPort::DigitalGertboardPort(const char *ID, int pin) : OPDI_DigitalPort(ID, 
+DigitalGertboardPort::DigitalGertboardPort(AbstractOPDID *opdid, const char *ID, int pin) : OPDI_DigitalPort(ID, 
 	(std::string("Digital Gertboard Port ") + to_string(pin)).c_str(), // default label - can be changed by configuration
 	OPDI_PORTDIRCAP_INPUT,	// default: input
 	0) {
+	this->opdid = opdid;
 	this->pin = pin;
 }
 
 void DigitalGertboardPort::setLine(uint8_t line) {
 	OPDI_DigitalPort::setLine(line);
 
-	AbstractOPDID *opdid = (AbstractOPDID *)this->opdi;
 	if (line == 0) {
 		GPIO_CLR0 = (1 << this->pin);
 		
-		if (opdid->logVerbosity == AbstractOPDID::VERBOSE)
-			opdid->log("DigitalGertboardPort line set to Low of internal pin: " + to_string(this->pin));
+		if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
+			this->opdid->log("DigitalGertboardPort line set to Low of internal pin: " + to_string(this->pin));
 	} else {
 		GPIO_SET0 = (1 << this->pin);
 		
-		if (opdid->logVerbosity == AbstractOPDID::VERBOSE)
-			opdid->log("DigitalGertboardPort line set to High of internal pin: " + to_string(this->pin));
+		if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
+			this->opdid->log("DigitalGertboardPort line set to High of internal pin: " + to_string(this->pin));
 	}
 }
 
@@ -291,25 +292,28 @@ public:
 
 GertboardButton::GertboardButton(AbstractOPDID *opdid, const char *ID, int pin) : OPDI_DigitalPort(ID, 
 	(std::string("Gertboard Button on pin ") + to_string(pin)).c_str(), // default label - can be changed by configuration
-	OPDI_PORTDIRCAP_INPUT,	// default: input only
-	0) {
+	OPDI_PORTDIRCAP_INPUT,	// default: input with pullup always on
+	OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) {
 	this->opdid = opdid;
 	this->pin = pin;
+	this->mode = OPDI_DIGITAL_MODE_INPUT_PULLUP;
+
 	// configure as input with pullup
 	INP_GPIO(this->pin);
 	GPIO_PULL = 2;
 	short_wait();
-	GPIO_PULLCLK0 = (1 < this->pin);
+	GPIO_PULLCLK0 = (1 << this->pin);
 	short_wait();
 	GPIO_PULL = 0;
 	GPIO_PULLCLK0 = 0;
+
 	this->lastQueryTime = opdi_get_time_ms();
 	this->lastQueriedState = this->queryState();
 	this->queryInterval = 100;	// milliseconds
 	// set the refresh interval to a reasonably high number
 	// to avoid dos'ing the master with refresh requests in case
 	// the button pin toggles too fast
-	this->refreshInterval = 1000;
+	this->refreshInterval = 100;
 }
 
 // main work function of the button port - regularly called by the OPDID system
@@ -327,10 +331,12 @@ uint8_t GertboardButton::doWork(void) {
 	
 	// current state different from last submitted state?
 	if (this->lastQueriedState != this->queryState()) {
+		if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
+			this->opdid->log(std::string("Gertboard Button change detected: ") + this->id);
 		// refresh interval not exceeded?
-		if (opdi_get_time_ms() - this->lastRefreshTime < this->refreshInterval) {
+		if (opdi_get_time_ms() - this->lastRefreshTime > this->refreshInterval) {
 			this->lastRefreshTime = opdi_get_time_ms();
-			// notify master to refresh this state
+			// notify master to refresh this port's state
 			this->refresh();
 		}
 	}
@@ -346,7 +352,12 @@ uint8_t GertboardButton::queryState(void) {
 	unsigned int b = GPIO_IN0;
 	// bit set?
 	// button logic is inverse (low = pressed)
-	return (b & (1 << this->pin)) == (unsigned int)(1 << this->pin) ? 0 : 1;
+	uint8_t result = (b & (1 << this->pin)) == (unsigned int)(1 << this->pin) ? 0 : 1;
+	
+//	if (opdid->logVerbosity == AbstractOPDID::VERBOSE)
+//		opdid->log("Gertboard button pin state is " + to_string((int)result));
+		
+	return result;
 }
 
 void GertboardButton::setLine(uint8_t line) {
@@ -431,8 +442,8 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 
 	// create ordered list of port keys (by priority)
 	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = portKeys.begin(); it != portKeys.end(); ++it) {
-		// there will be an item "Driver"; ignore it
-		if (*it == "Driver")
+		// there will be an item "Driver" and possibly "Revision"; ignore them
+		if ((*it == "Driver") || (*it == "Revision"))
 			continue;
 	
 		int itemNumber = nodeConfig->getInt(*it, 0);
@@ -491,7 +502,7 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 			int internalPin = this->mapAndLockPin(pinNumber, nodeName);
 			
 			// setup the port instance and add it; use internal pin number
-			DigitalGertboardPort *port = new DigitalGertboardPort(nodeName.c_str(), internalPin);
+			DigitalGertboardPort *port = new DigitalGertboardPort(abstractOPDID, nodeName.c_str(), internalPin);
 			abstractOPDID->configureDigitalPort(portConfig, port);
 			abstractOPDID->addPort(port);
 		} else
