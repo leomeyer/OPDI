@@ -176,7 +176,9 @@ void AnalogGertboardOutput::setValue(int32_t value) {
 	// restrict input to possible values
 	this->value = value & ((1 << this->resolution) - 1);
 	
-	write_dac(this->output, this->value);	
+	write_dac(this->output, this->value);
+	
+	this->doAutoRefresh();
 }
 
 // function that fills in the current port state
@@ -266,7 +268,8 @@ void AnalogGertboardInput::getState(uint8_t *mode, uint8_t *resolution, uint8_t 
 // GertboardButton: Represents a button on the Gertboard.
 // If the button is pressed, a connected master will be notified to update
 // its state. This port permanently queries the state of the button's pin.
-// If the state changes it will cause a Refresh message on this port.
+// If the state changes it will cause a Refresh message on this port as well
+// as all ports that are specifed for AutoRefresh.
 ///////////////////////////////////////////////////////////////////////////////
 
 class GertboardButton : public OPDI_DigitalPort {
@@ -338,6 +341,8 @@ uint8_t GertboardButton::doWork(void) {
 			this->lastRefreshTime = opdi_get_time_ms();
 			// notify master to refresh this port's state
 			this->refresh();
+			// auto-refresh additional ports
+			this->doAutoRefresh();
 		}
 	}
 		
