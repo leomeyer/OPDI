@@ -46,11 +46,9 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 
 	while (1) {
 		// call work function
-		if (canSend) {
-			uint8_t waitResult = Opdi->waiting(canSend);
-			if (waitResult != OPDI_STATUS_OK)
-				return waitResult;
-		}
+		uint8_t waitResult = Opdi->waiting(canSend);
+		if (waitResult != OPDI_STATUS_OK)
+			return waitResult;
 
 		if (connection_mode == MODE_TCP) {
 
@@ -65,8 +63,13 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 					// "real" timeout condition
 					if (opdi_get_time_ms() - ticks >= timeout)
 						return OPDI_TIMEOUT;
+				} else
+				// perhaps Ctrl+C
+				if (errno == EINTR) {
+					Opdi->shutdown();
 				}
 				else {
+					printf("Error: %d\n", errno);
 					// other error condition
 					return OPDI_NETWORK_ERROR;
 				}
@@ -259,11 +262,12 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 		
 				err = HandleTCPConnection(newsockfd);
 
+				close(newsockfd);
+
 				// shutdown requested?
 				if (this->shutdownRequested)
 					return OPDI_SHUTDOWN;
 
-				close(newsockfd);
 				if (Opdi->logVerbosity != QUIET)
 					this->log(std::string("Result: ") + this->getOPDIResult(err));
 

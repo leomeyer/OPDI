@@ -22,6 +22,8 @@ void signal_handler(int s){
 
 int main(int argc, char *argv[])
 {
+	Opdi = new LinuxOPDID();
+
 	// install Ctrl+C intercept handler
 	struct sigaction sigIntHandler;
 
@@ -37,8 +39,6 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < argc; i++) {
 		args.push_back(argv[i]);
 	}
-
-	Opdi = new LinuxOPDID();
 
 	try
 	{
