@@ -13,7 +13,7 @@
 #include "LinuxOPDID.h"
 
 // mapping to different revisions of RPi
-// first number indicates Gertboard label, second specifies internal pin number
+// first number indicates Gertboard label (GPxx), second specifies internal pin number
 static int pinMapRev1[][2] = { 
 	{0, 0}, {1, 1}, {4, 4}, {7, 7}, {8, 8}, {9, 9}, 
 	{10, 10}, {11, 11}, {14, 14}, {15, 15}, {17, 17}, 
@@ -28,6 +28,8 @@ static int pinMapRev2[][2] = {
 	{-1, -1}
 };
 
+class GertboardOPDIDPlugin;
+
 ///////////////////////////////////////////////////////////////////////////////
 // DigitalGertboardPort: Represents a digital input/output pin on the Gertboard.
 ///////////////////////////////////////////////////////////////////////////////
@@ -38,6 +40,7 @@ protected:
 	int pin;
 public:
 	DigitalGertboardPort(AbstractOPDID *opdid, const char *ID, int pin);
+	virtual ~DigitalGertboardPort(void);
 	virtual void setLine(uint8_t line) override;
 	virtual void setMode(uint8_t mode) override;
 	virtual void getState(uint8_t *mode, uint8_t *line) override;
@@ -51,19 +54,26 @@ DigitalGertboardPort::DigitalGertboardPort(AbstractOPDID *opdid, const char *ID,
 	this->pin = pin;
 }
 
+DigitalGertboardPort::~DigitalGertboardPort(void) {
+	// release resources; configure as floating input
+	// configure as floating input
+	INP_GPIO(this->pin);
+	
+	GPIO_PULL = 0;
+	short_wait();
+	GPIO_PULLCLK0 = (1 < this->pin);
+	short_wait();
+	GPIO_PULL = 0;
+	GPIO_PULLCLK0 = 0;
+}
+
 void DigitalGertboardPort::setLine(uint8_t line) {
 	OPDI_DigitalPort::setLine(line);
 
 	if (line == 0) {
 		GPIO_CLR0 = (1 << this->pin);
-		
-		if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
-			this->opdid->log("DigitalGertboardPort line set to Low of internal pin: " + to_string(this->pin));
 	} else {
 		GPIO_SET0 = (1 << this->pin);
-		
-		if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
-			this->opdid->log("DigitalGertboardPort line set to High of internal pin: " + to_string(this->pin));
 	}
 }
 
@@ -123,6 +133,7 @@ protected:
 public:
 	AnalogGertboardOutput(AbstractOPDID *opdid, const char *id, int output);
 
+	virtual void setFlags(int32_t flags) override;
 	virtual void setMode(uint8_t mode) override;
 	virtual void setResolution(uint8_t resolution) override;
 	virtual void setReference(uint8_t reference) override;
@@ -160,6 +171,10 @@ AnalogGertboardOutput::AnalogGertboardOutput(AbstractOPDID *opdid, const char *i
 	write_dac(this->output, this->value);
 }
 
+void AnalogGertboardOutput::setFlags(int32_t flags) {
+	// ignore flag changes
+}
+
 // function that handles the set direction command (opdi_set_digital_port_mode)
 void AnalogGertboardOutput::setMode(uint8_t mode) {
 	throw PortError("Gertboard analog output mode cannot be changed");
@@ -174,12 +189,9 @@ void AnalogGertboardOutput::setReference(uint8_t reference) {
 }
 
 void AnalogGertboardOutput::setValue(int32_t value) {
-	// restrict input to possible values
-	this->value = value & ((1 << this->resolution) - 1);
+	OPDI_AnalogPort::setValue(value);
 	
 	write_dac(this->output, this->value);
-	
-	this->doAutoRefresh();
 }
 
 // function that fills in the current port state
@@ -202,6 +214,7 @@ protected:
 public:
 	AnalogGertboardInput(AbstractOPDID *opdid, const char *id, int input);
 
+	virtual void setFlags(int32_t flags) override;
 	virtual void setMode(uint8_t mode) override;
 	virtual void setResolution(uint8_t resolution) override;
 	virtual void setReference(uint8_t reference) override;
@@ -237,6 +250,10 @@ AnalogGertboardInput::AnalogGertboardInput(AbstractOPDID *opdid, const char *id,
 	setup_spi();
 }
 
+void AnalogGertboardInput::setFlags(int32_t flags) {
+	// ignore flag changes
+}
+
 // function that handles the set direction command (opdi_set_digital_port_mode)
 void AnalogGertboardInput::setMode(uint8_t mode) {
 	throw PortError("Gertboard analog input mode cannot be changed");
@@ -259,8 +276,8 @@ void AnalogGertboardInput::getState(uint8_t *mode, uint8_t *resolution, uint8_t 
 	*mode = this->mode;
 	*resolution = this->resolution;
 	*reference = this->reference;
-	// read value from ADC
-	this->value = read_adc(this->input);
+	// read value from ADC; correct range
+	this->value = OPDI_AnalogPort::validateValue(read_adc(this->input));
 	// set remembered value
 	*value = this->value;
 }
@@ -283,7 +300,7 @@ protected:
 	uint64_t lastRefreshTime;
 	uint64_t refreshInterval;
 	
-	virtual uint8_t doWork(void) override;
+	virtual uint8_t doWork(uint8_t canSend) override;
 	virtual uint8_t queryState(void);
 public:
 	GertboardButton(AbstractOPDID *opdid, const char *ID, int pin);
@@ -321,22 +338,22 @@ GertboardButton::GertboardButton(AbstractOPDID *opdid, const char *ID, int pin) 
 }
 
 // main work function of the button port - regularly called by the OPDID system
-uint8_t GertboardButton::doWork(void) {
+uint8_t GertboardButton::doWork(uint8_t canSend) {
 	// query the pin only if a master is connected
 	if (!opdi->isConnected())
 		return OPDI_STATUS_OK;
-	
+
 	// query interval not yet reached?
 	if (opdi_get_time_ms() - this->lastQueryTime < this->queryInterval)
 		return OPDI_STATUS_OK;
-	
+
 	// query now
 	this->lastQueryTime = opdi_get_time_ms();
-	
+
 	// current state different from last submitted state?
 	if (this->lastQueriedState != this->queryState()) {
-		if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
-			this->opdid->log(std::string("Gertboard Button change detected: ") + this->id);
+//		if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
+//			this->opdid->log(std::string("Gertboard Button change detected: ") + this->id);
 		// refresh interval not exceeded?
 		if (opdi_get_time_ms() - this->lastRefreshTime > this->refreshInterval) {
 			this->lastRefreshTime = opdi_get_time_ms();
@@ -346,7 +363,7 @@ uint8_t GertboardButton::doWork(void) {
 			this->doAutoRefresh();
 		}
 	}
-		
+
 	return OPDI_STATUS_OK;
 }
 
@@ -359,10 +376,10 @@ uint8_t GertboardButton::queryState(void) {
 	// bit set?
 	// button logic is inverse (low = pressed)
 	uint8_t result = (b & (1 << this->pin)) == (unsigned int)(1 << this->pin) ? 0 : 1;
-	
+
 //	if (opdid->logVerbosity == AbstractOPDID::VERBOSE)
 //		opdid->log("Gertboard button pin state is " + to_string((int)result));
-		
+
 	return result;
 }
 
@@ -418,20 +435,21 @@ GertboardPWM::GertboardPWM(AbstractOPDID *opdid, const int pin, const char *ID, 
 	this->step = 1;
 	
 	// initialize PWM
-	INP_GPIO(18);  SET_GPIO_ALT(18, 5);
-	this->setPosition(0);
+	INP_GPIO(this->pin);  SET_GPIO_ALT(this->pin, 5);
+	setup_pwm();
+	force_pwm0(0, PWM0_ENABLE);
 }
 
 GertboardPWM::~GertboardPWM(void) {
 	// stop PWM when the port is freed
-	this->opdid->log("Freeing GertboardPWM port; stopping PWM");
+//	this->opdid->log("Freeing GertboardPWM port; stopping PWM");
 	
 	pwm_off();
 }
 
 void GertboardPWM::setPosition(int32_t position) {
 	// calculate nearest position according to step
-	this->position = ((position - this->minValue) / this->step) * this->step + this->minValue;
+	OPDI_DialPort::setPosition(position);
 	
 	// set PWM value; inverse polarity if specified
 	force_pwm0(this->position, PWM0_ENABLE | (this->inverse ? PWM0_REVPOLAR : 0));
@@ -633,6 +651,11 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 			// setup the port instance and add it; use internal pin number
 			GertboardPWM *port = new GertboardPWM(abstractOPDID, internalPin, nodeName.c_str(), inverse);
 			abstractOPDID->configurePort(portConfig, port, 0);
+			
+			int value = portConfig->getInt("Value", -1);
+			if (value > -1) {
+				port->setPosition(value);
+			}
 			abstractOPDID->addPort(port);
 		} else
 			throw Poco::DataException("This plugin does not support the port type", portType);

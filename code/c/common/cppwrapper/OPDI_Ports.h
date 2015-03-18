@@ -287,6 +287,8 @@ protected:
 
 	/** An analog port performs a self refresh only if it is in input mode.	*/
 	virtual void doSelfRefresh(void) override;
+	
+	virtual int32_t validateValue(int32_t value);
 
 public:
 	OPDI_AnalogPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);

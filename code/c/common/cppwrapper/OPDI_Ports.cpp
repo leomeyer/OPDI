@@ -355,6 +355,14 @@ void OPDI_AnalogPort::setMode(uint8_t mode) {
 	this->doAutoRefresh();
 }
 
+int32_t OPDI_AnalogPort::validateValue(int32_t value) {
+	if (value < 0)
+		return 0;
+	if (value > (1 << this->resolution) - 1)
+		return (1 << this->resolution) - 1;
+	return value;
+}
+
 void OPDI_AnalogPort::setResolution(uint8_t resolution) {
 	if (resolution < 8 || resolution > 12)
 		throw PortError("Analog port resolution not supported; allowed values are 8..12 (bits): " + this->to_string((int)resolution));
@@ -366,7 +374,12 @@ void OPDI_AnalogPort::setResolution(uint8_t resolution) {
 		|| ((resolution == 12) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_12) != OPDI_ANALOG_PORT_RESOLUTION_12)))
 		throw PortError("Analog port resolution not supported (port flags): " + this->to_string((int)resolution));
 	this->resolution = resolution;
-	this->doAutoRefresh();
+	// restrict value to possible range
+	this->value = this->validateValue(this->value);
+	if (this->mode == 0)
+		this->doAutoRefresh();
+	else
+		this->setValue(this->value);
 }
 
 void OPDI_AnalogPort::setReference(uint8_t reference) {
@@ -382,7 +395,7 @@ void OPDI_AnalogPort::setValue(int32_t value) {
 		throw PortError("Cannot set analog value on port configured as input");
 
 	// restrict input to possible values
-	this->value = value & ((1 << this->resolution) - 1);
+	this->value = this->validateValue(value);
 	this->doAutoRefresh();
 }
 
