@@ -46,11 +46,9 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 
 	while (1) {
 		// call work function
-		if (canSend) {
-			uint8_t waitResult = Opdi->waiting(canSend);
-			if (waitResult != OPDI_STATUS_OK)
-				return waitResult;
-		}
+		uint8_t waitResult = Opdi->waiting(canSend);
+		if (waitResult != OPDI_STATUS_OK)
+			return waitResult;
 
 		if (connection_mode == MODE_TCP) {
 
@@ -65,8 +63,13 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 					// "real" timeout condition
 					if (opdi_get_time_ms() - ticks >= timeout)
 						return OPDI_TIMEOUT;
+				} else
+				// perhaps Ctrl+C
+				if (errno == EINTR) {
+					Opdi->shutdown();
 				}
 				else {
+					printf("Error: %d\n", errno);
 					// other error condition
 					return OPDI_NETWORK_ERROR;
 				}
@@ -201,7 +204,6 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 	// initiate handshake
 	result = opdi_slave_start(&message, NULL, &protocol_callback);
 
-	// release the socket
 	return result;
 }
 
@@ -215,8 +217,8 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 	socklen_t clilen;
 	struct sockaddr_in serv_addr, cli_addr;
 
-	// create socket
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	// create socket (non-blocking)
+	sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (sockfd < 0) {
 		throw Poco::ApplicationException("ERROR opening socket");
 	}
@@ -239,20 +241,39 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 	while (true) {
         	if (Opdi->logVerbosity != QUIET)
 			this->log(std::string("Listening for a connection on port ") + this->to_string(port));
-		clilen = sizeof(cli_addr);
-		newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
-		if (newsockfd < 0) {
-			throw Poco::ApplicationException("ERROR on accept");
-		}
 
-		if (Opdi->logVerbosity != QUIET)
-			this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(cli_addr.sin_addr))).c_str());
+		while (true) {
+
+			clilen = sizeof(cli_addr);
+			newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
+			if (newsockfd < 0) {
+				if ((errno == EWOULDBLOCK) || (errno == EAGAIN)) {
+					// not yet connected; process housekeeping about every millisecond
+					uint8_t waitResult = this->waiting(false);
+					if (waitResult != OPDI_STATUS_OK)
+						return waitResult;
+					usleep(1000);
+				} else 
+					this->log(std::string("Error accepting connection: ") + this->to_string(errno));
+			} else {
+
+				if (Opdi->logVerbosity != QUIET)
+					this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(cli_addr.sin_addr))).c_str());
 		
-		err = HandleTCPConnection(newsockfd);
+				err = HandleTCPConnection(newsockfd);
 
-		close(newsockfd);
-		if (Opdi->logVerbosity != QUIET)
-			this->log(std::string("Result: ") + this->getOPDIResult(err));
+				close(newsockfd);
+
+				// shutdown requested?
+				if (this->shutdownRequested)
+					return OPDI_SHUTDOWN;
+
+				if (Opdi->logVerbosity != QUIET)
+					this->log(std::string("Result: ") + this->getOPDIResult(err));
+
+				break;
+			}
+		}
         }
 
 	return 0;
