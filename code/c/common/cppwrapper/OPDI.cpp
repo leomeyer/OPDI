@@ -90,6 +90,7 @@ void OPDI::updatePortData(OPDI_Port *port) {
 		oPort = (opdi_Port *)malloc(sizeof(opdi_Port));
 		port->data = oPort;
 		oPort->info.i = 0;
+		oPort->info.ptr = NULL;
 		oPort->next = NULL;
 	}
 	// update data

@@ -32,6 +32,8 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->opdi = NULL;
 	this->flags = 0;
 	this->ptr = NULL;
+	this->selfRefreshTime = 0;
+	this->lastSelfRefreshTime = 0;
 
 	this->id = (char*)malloc(strlen(id) + 1);
 	strcpy(this->id, id);
@@ -46,6 +48,8 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->opdi = NULL;
 	this->flags = flags;
 	this->ptr = ptr;
+	this->selfRefreshTime = 0;
+	this->lastSelfRefreshTime = 0;
 
 	this->id = (char*)malloc(strlen(id) + 1);
 	strcpy(this->id, id);
