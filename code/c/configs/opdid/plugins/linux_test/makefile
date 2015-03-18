@@ -28,7 +28,7 @@ CPPPATH = $(CPATH)/cppwrapper
 SRC += $(CPPPATH)/OPDI_Ports.cpp
 
 # additional source files
-# SRC += 
+SRC += $(PPATH)/opdi_platformfuncs.c
 
 # conio include path
 CONIOINCPATH = $(OPDIDPATH)/../../../libraries/conio
