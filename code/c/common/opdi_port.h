@@ -57,7 +57,7 @@ extern "C" {
 // port flag constants
 
 /** Indicates that a port is not always present, for example if a menu structure
-is implemented using dial ports. Accessing a temporary port that is not present in
+is implemented using select ports. Accessing a temporary port that is not present in
 the current configuration should yield an OPDI_PORT_ACCESS_DENIED error. */
 #define OPDI_PORT_TEMPORARY					0x8000
 

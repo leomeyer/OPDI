@@ -8,12 +8,12 @@
 class DigitalTestPort : public OPDI_DigitalPort {
 public:
 	DigitalTestPort();
-	virtual uint8_t setLine(uint8_t line) override;
+	virtual void setLine(uint8_t line) override;
 };
 
 DigitalTestPort::DigitalTestPort() : OPDI_DigitalPort("PluginPort", "Windows Test Plugin Port", OPDI_PORTDIRCAP_OUTPUT, 0) {}
 
-uint8_t DigitalTestPort::setLine(uint8_t line) {
+void DigitalTestPort::setLine(uint8_t line) {
 	OPDI_DigitalPort::setLine(line);
 
 	AbstractOPDID *opdid = (AbstractOPDID *)this->opdi;
@@ -22,8 +22,6 @@ uint8_t DigitalTestPort::setLine(uint8_t line) {
 	} else {
 		opdid->log("DigitalTestPort line set to High");
 	}
-
-	return OPDI_STATUS_OK;
 }
 
 class WindowsTestOPDIDPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener {

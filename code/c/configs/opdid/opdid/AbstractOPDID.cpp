@@ -222,7 +222,7 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 	Poco::Util::AbstractConfiguration *general = this->configuration->createView("General");
 	this->setGeneralConfiguration(general);
 
-	this->setupNodes(this->configuration);
+	this->setupRoot(this->configuration);
 
 	// create view to "Connection" section
 	Poco::Util::AbstractConfiguration *connection = this->configuration->createView("Connection");
@@ -268,8 +268,7 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 	this->setup(slaveName.c_str(), timeout);
 }
 
-void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port) {
-
+void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags) {
 	std::string portLabel = this->getConfigString(portConfig, "Label", "", true);
 	port->setLabel(portLabel.c_str());
 
@@ -283,10 +282,19 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 	} else if (portDirCaps != "")
 		throw Poco::DataException("Unknown port DirCaps specifier; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
 	
-	int8_t flags = portConfig->getInt("Flags", -1);
+	int flags = portConfig->getInt("Flags", -1);
 	if (flags >= 0) {
-		port->setFlags((uint8_t)flags);
-	}
+		port->setFlags(flags);
+	} else
+		port->setFlags(defaultFlags);
+
+	std::string autoRefreshPorts = this->getConfigString(portConfig, "AutoRefresh", "", false);
+	port->setAutoRefreshPorts(autoRefreshPorts);
+}
+
+
+void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port) {
+	this->configurePort(portConfig, port, 0);
 	
 	std::string portMode = this->getConfigString(portConfig, "Mode", "", false);
 	if (portMode == "Input") {
@@ -320,25 +328,18 @@ void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *
 }
 
 void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_AnalogPort *port) {
-	std::string portLabel = this->getConfigString(portConfig, "Label", "", true);
-	port->setLabel(portLabel.c_str());
-
-	std::string portDirCaps = this->getConfigString(portConfig, "DirCaps", "Bidi", false);
-	if (portDirCaps == "Input") {
-		port->setDirCaps(OPDI_PORTDIRCAP_INPUT);
-	} else if (portDirCaps == "Output") {
-		port->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
-	} else if (portDirCaps == "Bidi") {
-		port->setDirCaps(OPDI_PORTDIRCAP_BIDI);
-	} else if (portDirCaps != "")
-		throw Poco::DataException("Unknown port DirCaps specifier; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
-
-	int8_t flags = portConfig->getInt("Flags", -1);
-	if (flags >= 0) {
-		port->setFlags((uint8_t)flags);
-	}
+	this->configurePort(portConfig, port, 
+		// default flags: assume everything is supported
+		OPDI_ANALOG_PORT_CAN_CHANGE_RES |
+		OPDI_ANALOG_PORT_RESOLUTION_8 |
+		OPDI_ANALOG_PORT_RESOLUTION_9 |
+		OPDI_ANALOG_PORT_RESOLUTION_10 |	
+		OPDI_ANALOG_PORT_RESOLUTION_11 |
+		OPDI_ANALOG_PORT_RESOLUTION_12 |
+		OPDI_ANALOG_PORT_CAN_CHANGE_REF |
+		OPDI_ANALOG_PORT_REFERENCE_INT |
+		OPDI_ANALOG_PORT_REFERENCE_EXT);	
 		
-	// set initial values
 	std::string mode = this->getConfigString(portConfig, "Mode", "", false);
 	if (mode == "Input")
 		port->setMode(0);
@@ -368,8 +369,7 @@ void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *p
 }
 
 void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_SelectPort *port) {
-	std::string portLabel = this->getConfigString(portConfig, "Label", "", true);
-	port->setLabel(portLabel.c_str());
+	this->configurePort(portConfig, port, 0);
 
 	// the select port requires a prefix or section "<portID>.Items"
 	Poco::Util::AbstractConfiguration *portItems = this->configuration->createView(std::string(port->getID()) + ".Items");
@@ -463,7 +463,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 	}
 }
 
-void AbstractOPDID::setupNodes(Poco::Util::AbstractConfiguration *config) {
+void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 	// enumerate section "Root"
 	Poco::Util::AbstractConfiguration *nodes = this->configuration->createView("Root");
 	if (this->logVerbosity == VERBOSE)

@@ -1,6 +1,6 @@
 
 #include <cstdlib>
-#include <string.h>
+#include <string>
 #include <sstream>
 
 #include "Poco/Exception.h"
@@ -89,6 +89,40 @@ void OPDI_Port::setDirCaps(const char *dirCaps) {
 
 void OPDI_Port::setFlags(int32_t flags) {
 	this->flags = flags;
+}
+
+void OPDI_Port::doAutoRefresh(void) {
+	// only while connected
+	// this is important because if an auto refresh is issued during startup
+	// (because a port state may be changed by the configuration) it may fail
+	// if the ports to auto-refresh have not already been added.
+	if ((this->opdi != NULL) && (!this->opdi->isConnected()))
+		return;
+
+	std::vector<OPDI_Port *> portsToRefresh;
+	// go through port list
+	for(std::vector<std::string>::iterator it = this->autoRefreshPorts.begin(); it != this->autoRefreshPorts.end(); ++it) {
+		OPDI_Port *port = opdi->findPortByID((*it).c_str());
+		if (port == NULL)
+			throw Poco::DataException(std::string("Specified auto-refresh port could not be found while auto-refreshing port ") + this->id + ": " + *it);
+		portsToRefresh.push_back(port);
+	}
+	if (portsToRefresh.size() > 0) {
+		// add end token
+		portsToRefresh.push_back(NULL);
+		opdi->refresh(&portsToRefresh[0]);
+	}
+}
+
+void OPDI_Port::setAutoRefreshPorts(std::string portList) {
+	// split list at blanks
+	std::stringstream ss(portList);
+	std::string item;
+	while (std::getline(ss, item, ' ')) {
+		// ignore empty items
+		if (item != "")
+			this->autoRefreshPorts.push_back(item);
+	}
 }
 
 uint8_t OPDI_Port::refresh() {
@@ -229,6 +263,7 @@ void OPDI_DigitalPort::setMode(uint8_t mode) {
 			throw PortError("Cannot set output only digital port mode to input");
 		this->mode = 3;
 	}
+	this->doAutoRefresh();
 }
 
 // function that handles the set line command (opdi_set_digital_port_line)
@@ -236,6 +271,7 @@ void OPDI_DigitalPort::setLine(uint8_t line) {
 	if (this->mode != 3)
 		throw PortError("Cannot set digital port line in input mode");
 	this->line = line;
+	this->doAutoRefresh();
 }
 
 // function that fills in the current port state
@@ -277,6 +313,7 @@ void OPDI_AnalogPort::setMode(uint8_t mode) {
 	if (mode > 2)
 		throw PortError("Analog port mode not supported: " + this->to_string((int)mode));
 	this->mode = mode;
+	this->doAutoRefresh();
 }
 
 void OPDI_AnalogPort::setResolution(uint8_t resolution) {
@@ -290,12 +327,14 @@ void OPDI_AnalogPort::setResolution(uint8_t resolution) {
 		|| ((resolution == 12) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_12) != OPDI_ANALOG_PORT_RESOLUTION_12)))
 		throw PortError("Analog port resolution not supported (port flags): " + this->to_string((int)resolution));
 	this->resolution = resolution;
+	this->doAutoRefresh();
 }
 
 void OPDI_AnalogPort::setReference(uint8_t reference) {
 	if (reference > 2)
 		throw PortError("Analog port reference not supported: " + this->to_string((int)reference));
 	this->reference = reference;
+	this->doAutoRefresh();
 }
 
 void OPDI_AnalogPort::setValue(int32_t value) {
@@ -305,6 +344,7 @@ void OPDI_AnalogPort::setValue(int32_t value) {
 
 	// restrict input to possible values
 	this->value = value & ((1 << this->resolution) - 1);
+	this->doAutoRefresh();
 }
 
 // function that fills in the current port state
@@ -385,6 +425,7 @@ void OPDI_SelectPort::setPosition(uint16_t position) {
 		throw PortError("Position must not exceed the number of items: " + this->count);
 
 	this->position = position;
+	this->doAutoRefresh();
 }
 
 void OPDI_SelectPort::getState(uint16_t *position) {
@@ -416,6 +457,7 @@ void OPDI_DialPort::setPosition(int32_t position) {
 		throw PortError("Position must not be greater than the maximum: " + this->maxValue);
 	// correct position to next possible step
 	this->position = ((position - this->minValue) / this->step) * this->step + this->minValue;
+	this->doAutoRefresh();
 }
 
 // function that fills in the current port state

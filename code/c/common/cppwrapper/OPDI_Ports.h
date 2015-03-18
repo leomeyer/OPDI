@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <sstream>
 
 #include "Poco/Exception.h"
@@ -33,6 +34,7 @@ protected:
 	int32_t flags;
 	void* ptr;
 
+	// Utility function for string conversion 
 	template <class T> std::string to_string(const T& t);
 
 	/** Called regularly by the OPDI system. Enables the port to do work.
@@ -52,6 +54,16 @@ protected:
 
 	// linked list of ports - pointer to next port
 	OPDI_Port *next;
+
+	// A list of ports that should automatically refresh when the port state changes.
+	// How this state change is handled depends on the port implementation.
+	std::vector<std::string> autoRefreshPorts;
+
+	/** Locates the ports specified in autoRefreshPorts and refreshes them if a master is connected. 
+	* This method can be called by subclasses when an auto-refresh is required.
+	* Throws an exception if a specified port is not found.
+	*/
+	virtual void doAutoRefresh(void);
 
 public:
 
@@ -92,6 +104,9 @@ public:
 
 	/** Causes the port to be refreshed by sending a refresh message to a connected master. */
 	virtual uint8_t refresh();
+
+	/** Sets the list of ports that should be auto-refreshed, as a space-delimited string. */
+	virtual void setAutoRefreshPorts(std::string portList);
 };
 
 template <class T> inline std::string OPDI_Port::to_string(const T& t) {
