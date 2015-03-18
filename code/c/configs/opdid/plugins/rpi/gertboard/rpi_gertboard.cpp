@@ -8,6 +8,7 @@
 
 #include "gb_common.h"
 #include "gb_spi.h"
+#include "gb_pwm.h"
 
 #include "LinuxOPDID.h"
 
@@ -366,19 +367,20 @@ uint8_t GertboardButton::queryState(void) {
 }
 
 void GertboardButton::setLine(uint8_t line) {
-	throw PortError("Gertboard Button has no output to be changed");
+	opdid->log("Warning: Gertboard Button has no output to be changed, ignoring");
 }
 
 void GertboardButton::setMode(uint8_t mode) {
-	throw PortError("Gertboard Button mode cannot be changed");
+	opdid->log("Warning: Gertboard Button mode cannot be changed, ignoring");
 }
 
 void GertboardButton::setDirCaps(const char *dirCaps) {
-	throw PortError("Gertboard Button DirCaps cannot be changed");
+	opdid->log("Warning: Gertboard Button direction capabilities cannot be changed, ignoring");
 }
 
 void GertboardButton::setFlags(int32_t flags) {
-	throw PortError("Gertboard Button Flags cannot be changed");
+	if (flags > 0)
+		opdid->log("Warning: Gertboard Button flags cannot be changed, ignoring");
 }
 
 void GertboardButton::getState(uint8_t *mode, uint8_t *line) {
@@ -387,6 +389,54 @@ void GertboardButton::getState(uint8_t *mode, uint8_t *line) {
 	this->lastQueriedState = *line = this->queryState();
 	this->lastRefreshTime = opdi_get_time_ms();
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// GertboardPWM: Represents a PWM pin on the Gertboard.
+// Pin 18 is currently the only pin that supports hardware PWM.
+///////////////////////////////////////////////////////////////////////////////
+
+class GertboardPWM: public OPDI_DialPort {
+protected:
+	AbstractOPDID *opdid;
+	int pin;
+	bool inverse;
+public:
+	GertboardPWM(AbstractOPDID *opdid, const int pin, const char *ID, bool inverse);
+	virtual ~GertboardPWM(void);
+	virtual void setPosition(int32_t position) override;
+};
+
+GertboardPWM::GertboardPWM(AbstractOPDID *opdid, const int pin, const char *ID, bool inverse) : OPDI_DialPort(ID) {
+	if (pin != 18)
+		throw Poco::ApplicationException("GertboardPWM only supports pin 18");
+	this->opdid = opdid;
+	this->pin = pin;
+	this->inverse = inverse;
+	this->minValue = 0;
+	// use 10 bit PWM
+	this->maxValue = 1024;
+	this->step = 1;
+	
+	// initialize PWM
+	INP_GPIO(18);  SET_GPIO_ALT(18, 5);
+	this->setPosition(0);
+}
+
+GertboardPWM::~GertboardPWM(void) {
+	// stop PWM when the port is freed
+	this->opdid->log("Freeing GertboardPWM port; stopping PWM");
+	
+	pwm_off();
+}
+
+void GertboardPWM::setPosition(int32_t position) {
+	// calculate nearest position according to step
+	this->position = ((position - this->minValue) / this->step) * this->step + this->minValue;
+	
+	// set PWM value; inverse polarity if specified
+	force_pwm0(this->position, PWM0_ENABLE | (this->inverse ? PWM0_REVPOLAR : 0));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // GertboardOPDIDPlugin: Plugin for providing Gertboard resources to OPDID
 ///////////////////////////////////////////////////////////////////////////////
@@ -571,6 +621,18 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 			// setup the port instance and add it; use internal pin number
 			AnalogGertboardInput *port = new AnalogGertboardInput(abstractOPDID, nodeName.c_str(), inputNumber);
 			abstractOPDID->configureAnalogPort(portConfig, port);
+			abstractOPDID->addPort(port);
+		} else
+		if (portType == "PWM") {
+			// read inverse flag
+			bool inverse = portConfig->getBool("Inverse", false);
+
+			// the PWM output uses pin 18
+			int internalPin = this->mapAndLockPin(18, nodeName);
+
+			// setup the port instance and add it; use internal pin number
+			GertboardPWM *port = new GertboardPWM(abstractOPDID, internalPin, nodeName.c_str(), inverse);
+			abstractOPDID->configurePort(portConfig, port, 0);
 			abstractOPDID->addPort(port);
 		} else
 			throw Poco::DataException("This plugin does not support the port type", portType);

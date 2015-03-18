@@ -47,7 +47,9 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 	while (1) {
 		// call work function
 		if (canSend) {
-			Opdi->waiting(canSend);
+			uint8_t waitResult = Opdi->waiting(canSend);
+			if (waitResult != OPDI_STATUS_OK)
+				return waitResult;
 		}
 
 		if (connection_mode == MODE_TCP) {

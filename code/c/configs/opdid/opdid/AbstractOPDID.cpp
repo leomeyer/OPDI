@@ -286,7 +286,10 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 	if (flags >= 0) {
 		port->setFlags(flags);
 	} else
-		port->setFlags(defaultFlags);
+		// default flags specified?
+		// avoid calling setFlags unnecessarily because subclasses may implement specific behavior
+		if (defaultFlags > 0)
+			port->setFlags(defaultFlags);
 
 	std::string autoRefreshPorts = this->getConfigString(portConfig, "AutoRefresh", "", false);
 	port->setAutoRefreshPorts(autoRefreshPorts);

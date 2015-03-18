@@ -28,7 +28,7 @@ CPPPATH = $(CPATH)/cppwrapper
 SRC += $(CPPPATH)/OPDI_Ports.cpp
 
 # additional source files
-SRC += $(OPDIDPATH)/../../../libraries/rpi/gertboard/gb_common.c $(OPDIDPATH)/../../../libraries/rpi/gertboard/gb_spi.c 
+SRC += $(OPDIDPATH)/../../../libraries/rpi/gertboard/gb_common.c $(OPDIDPATH)/../../../libraries/rpi/gertboard/gb_spi.c $(OPDIDPATH)/../../../libraries/rpi/gertboard/gb_pwm.c
 SRC += $(OPDIDPATH)/../../../platforms/linux/opdi_platformfuncs.c
 
 # Gertboard library include path

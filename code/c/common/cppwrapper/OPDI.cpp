@@ -37,7 +37,24 @@
 // Main class for OPDI functionality
 //////////////////////////////////////////////////////////////////////////////////////////
 
+uint8_t OPDI::shutdownInternal(void) {
+
+	// free all ports
+	OPDI_Port *port = this->first_port;
+	this->first_port = NULL;
+	this->last_port = NULL;
+	while (port) {
+		OPDI_Port *next = port->next;
+		delete port;
+		port = next;
+	}
+
+	return OPDI_DISCONNECTED;
+}
+
 uint8_t OPDI::setup(const char *slaveName, int idleTimeout) {
+	this->shutdownRequested = false;
+
 	// initialize linked list of ports
 	this->first_port = NULL;
 	this->last_port = NULL;
@@ -173,6 +190,10 @@ uint8_t OPDI::start(uint8_t (*workFunction)()) {
 }
 
 uint8_t OPDI::waiting(uint8_t canSend) {
+	if (this->shutdownRequested) {
+		return this->shutdownInternal();
+	}
+
 	// a work function can be performed as long as canSend is true
 	if ((this->workFunction != NULL) && canSend) {
 		uint8_t result = this->workFunction();
@@ -249,4 +270,9 @@ uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 	}
 
 	return OPDI_STATUS_OK;
+}
+
+void OPDI::shutdown(void) {
+	// set flag to indicate that the message processing should stop
+	this->shutdownRequested = true;
 }
