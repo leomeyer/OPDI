@@ -38,7 +38,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 
 uint8_t OPDI::shutdownInternal(void) {
-
+	printf("shutdownInternal()");
 	// free all ports
 	OPDI_Port *port = this->first_port;
 	this->first_port = NULL;
@@ -49,7 +49,8 @@ uint8_t OPDI::shutdownInternal(void) {
 		port = next;
 	}
 
-	return this->disconnect();
+	this->disconnect();
+	return OPDI_SHUTDOWN;
 }
 
 uint8_t OPDI::setup(const char *slaveName, int idleTimeout) {
@@ -220,6 +221,9 @@ uint8_t OPDI::isConnected() {
 }
 
 uint8_t OPDI::disconnect() {
+	if (!this->isConnected()) {
+		return OPDI_DISCONNECTED;
+	}
 	return opdi_disconnect();
 }
 

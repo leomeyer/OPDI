@@ -14,12 +14,10 @@
 AbstractOPDID *Opdi;
 
 void signal_handler(int s){
-	printf("Caught signal %d\n", s);
+	std::cout << "Interrupted, exiting" << std::endl;
 	
 	if (Opdi != NULL)
 		Opdi->shutdown();
-	
-	exit(1);
 }
 
 int main(int argc, char *argv[])
