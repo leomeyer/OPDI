@@ -20,11 +20,7 @@ BOOL WINAPI SignalHandler(_In_ DWORD dwCtrlType) {
 	case CTRL_CLOSE_EVENT:
 	case CTRL_LOGOFF_EVENT:
 		std::cout << "Interrupted, exiting" << std::endl;
-		if (Opdi->isConnected()) {
-			Opdi->shutdown();
-		} else {
-			exit(1);
-		}
+		Opdi->shutdown();
 		return TRUE;
 	case CTRL_SHUTDOWN_EVENT:
 		return FALSE;

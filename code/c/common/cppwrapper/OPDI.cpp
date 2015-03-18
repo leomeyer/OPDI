@@ -38,7 +38,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 
 uint8_t OPDI::shutdownInternal(void) {
-	printf("shutdownInternal()");
 	// free all ports
 	OPDI_Port *port = this->first_port;
 	this->first_port = NULL;
