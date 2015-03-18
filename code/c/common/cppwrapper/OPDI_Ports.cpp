@@ -115,7 +115,7 @@ void OPDI_Port::doAutoRefresh(void) {
 	for(std::vector<std::string>::iterator it = this->autoRefreshPorts.begin(); it != this->autoRefreshPorts.end(); ++it) {
 		OPDI_Port *port = opdi->findPortByID((*it).c_str());
 		if (port == NULL)
-			throw Poco::DataException(std::string("Specified auto-refresh port could not be found while auto-refreshing port ") + this->id + ": " + *it);
+			throw PortError(std::string("Specified auto-refresh port could not be found while auto-refreshing port ") + this->id + ": " + *it);
 		portsToRefresh.push_back(port);
 	}
 	if (portsToRefresh.size() > 0) {
