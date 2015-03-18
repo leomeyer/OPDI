@@ -43,6 +43,7 @@ protected:
 	 * This includes messages like Resync, Refresh, Debug etc.
 	 * Returning any other value than OPDI_STATUS_OK causes the message processing to exit.
 	 * This will usually signal a device error to the master or cause the master to time out.
+	 * This base class uses doWork to implement the self refresh timer.
 	 */
 	virtual uint8_t doWork();
 
@@ -59,11 +60,20 @@ protected:
 	// How this state change is handled depends on the port implementation.
 	std::vector<std::string> autoRefreshPorts;
 
+	// the minimum time in milliseconds between self-refresh messages
+	uint32_t selfRefreshTime;
+	uint64_t lastSelfRefreshTime;
+
 	/** Locates the ports specified in autoRefreshPorts and refreshes them if a master is connected. 
 	* This method can be called by subclasses when an auto-refresh is required.
 	* Throws an exception if a specified port is not found.
 	*/
 	virtual void doAutoRefresh(void);
+
+	/** Performs a self refresh. Called by the doWork method when the self refresh timer has been reached.
+	* Subclasses may override this method to implement conditions for the self refresh or disable it altogether.
+	*/
+	virtual void doSelfRefresh(void);
 
 public:
 
@@ -107,6 +117,10 @@ public:
 
 	/** Sets the list of ports that should be auto-refreshed, as a space-delimited string. */
 	virtual void setAutoRefreshPorts(std::string portList);
+
+	/** Sets the minimum time in milliseconds between self-refresh messages. If this time is 0 (default),
+	* the self-refresh is disabled. */
+	virtual void setSelfRefreshTime(uint32_t timeInMs);
 };
 
 template <class T> inline std::string OPDI_Port::to_string(const T& t) {
@@ -222,6 +236,9 @@ protected:
 	// protected constructor - for use by friend classes only
 	OPDI_DigitalPort(const char *id);
 
+	/** A digital port performs a self refresh only if it is in input mode.	*/
+	virtual void doSelfRefresh(void) override;
+
 public:
 	// Initialize a digital port. Specify one of the OPDI_PORTDIRCAPS_* values for dircaps.
 	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
@@ -266,6 +283,9 @@ protected:
 	// protected constructor - for use by friend classes only
 	OPDI_AnalogPort(const char *id);
 
+	/** An analog port performs a self refresh only if it is in input mode.	*/
+	virtual void doSelfRefresh(void) override;
+
 public:
 	OPDI_AnalogPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
 	virtual ~OPDI_AnalogPort();
@@ -308,6 +328,10 @@ protected:
 
 	// frees the internal items memory
 	void freeItems();
+
+	/** A select port does not support self refreshing. */
+	virtual void doSelfRefresh(void) override;
+
 public:
 	// Initialize a select port. The direction of a select port is output only.
 	// You have to specify a list of items that are the labels of the different select positions. The last element must be NULL.
@@ -345,6 +369,9 @@ protected:
 
 	// protected constructor - for use by friend classes only
 	OPDI_DialPort(const char *id);
+
+	/** A select port does not support self refreshing. */
+	virtual void doSelfRefresh(void) override;
 
 public:
 	// Initialize a dial port. The direction of a dial port is output only.

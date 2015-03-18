@@ -9,6 +9,7 @@
 #include "opdi_constants.h"
 #include "opdi_port.h"
 #include "opdi_platformtypes.h"
+#include "opdi_platformfuncs.h"
 
 #include "OPDI.h"
 #include "OPDI_Ports.h"
@@ -55,6 +56,15 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 }
 
 uint8_t OPDI_Port::doWork() {
+	// self-refresh specified?
+	if (this->selfRefreshTime > 0) {
+		// self refresh timer reached?
+		if (opdi_get_time_ms() - this->lastSelfRefreshTime > this->selfRefreshTime) {
+			this->doSelfRefresh();
+			this->lastSelfRefreshTime = opdi_get_time_ms();
+		}
+	}
+
 	return OPDI_STATUS_OK;
 }
 
@@ -97,7 +107,7 @@ void OPDI_Port::doAutoRefresh(void) {
 	// this is important because if an auto refresh is issued during startup
 	// (because a port state may be changed by the configuration) it may fail
 	// if the ports to auto-refresh have not already been added.
-	if ((this->opdi != NULL) && (!this->opdi->isConnected()))
+	if ((this->opdi == NULL) || (!this->opdi->isConnected()))
 		return;
 
 	std::vector<OPDI_Port *> portsToRefresh;
@@ -124,6 +134,14 @@ void OPDI_Port::setAutoRefreshPorts(std::string portList) {
 		if (item != "")
 			this->autoRefreshPorts.push_back(item);
 	}
+}
+
+void OPDI_Port::doSelfRefresh(void) {
+	this->refresh();
+}
+
+void OPDI_Port::setSelfRefreshTime(uint32_t timeInMs) {
+	this->selfRefreshTime = timeInMs;
 }
 
 uint8_t OPDI_Port::refresh() {
@@ -202,6 +220,15 @@ OPDI_DigitalPort::OPDI_DigitalPort(const char *id, const char *label, const char
 }
 
 OPDI_DigitalPort::~OPDI_DigitalPort() {
+}
+
+void OPDI_DigitalPort::doSelfRefresh(void) {
+	// only in input modes
+	if ((this->mode == OPDI_DIGITAL_MODE_INPUT_FLOATING)
+		|| (this->mode == OPDI_DIGITAL_MODE_INPUT_PULLUP)
+		|| (this->mode == OPDI_DIGITAL_MODE_INPUT_PULLDOWN))
+		// call base method
+		OPDI_Port::doSelfRefresh();
 }
 
 void OPDI_DigitalPort::setDirCaps(const char *dirCaps) {
@@ -309,6 +336,13 @@ OPDI_AnalogPort::OPDI_AnalogPort(const char *id, const char *label, const char *
 OPDI_AnalogPort::~OPDI_AnalogPort() {
 }
 
+void OPDI_AnalogPort::doSelfRefresh(void) {
+	// only in input mode
+	if ((this->mode == OPDI_ANALOG_MODE_INPUT))
+		// call base method
+		OPDI_Port::doSelfRefresh();
+}
+
 // function that handles the set direction command (opdi_set_digital_port_mode)
 void OPDI_AnalogPort::setMode(uint8_t mode) {
 	if (mode > 2)
@@ -381,6 +415,10 @@ OPDI_SelectPort::OPDI_SelectPort(const char *id, const char *label, const char *
 
 OPDI_SelectPort::~OPDI_SelectPort() {}
 
+void OPDI_SelectPort::doSelfRefresh(void) {
+	// disabled
+}
+
 void OPDI_SelectPort::freeItems() {
 	if (this->items != NULL) {
 		int i = 0;
@@ -437,6 +475,13 @@ void OPDI_SelectPort::getState(uint16_t *position) {
 
 #ifndef OPDI_NO_DIAL_PORTS
 
+OPDI_DialPort::OPDI_DialPort(const char *id) : OPDI_Port(id, NULL, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCAP_OUTPUT, 0, NULL) {
+	this->minValue = 0;
+	this->maxValue = 0;
+	this->step = 0;
+	this->position = 0;
+}
+
 OPDI_DialPort::OPDI_DialPort(const char *id, const char *label, int32_t minValue, int32_t maxValue, uint32_t step) 
 	: OPDI_Port(id, label, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCAP_OUTPUT, 0, NULL) {
 	if (minValue >= maxValue) {
@@ -449,6 +494,10 @@ OPDI_DialPort::OPDI_DialPort(const char *id, const char *label, int32_t minValue
 }
 
 OPDI_DialPort::~OPDI_DialPort() {}
+
+void OPDI_DialPort::doSelfRefresh(void) {
+	// disabled
+}
 
 // function that handles position setting; position may be in the range of minValue..maxValue
 void OPDI_DialPort::setPosition(int32_t position) {

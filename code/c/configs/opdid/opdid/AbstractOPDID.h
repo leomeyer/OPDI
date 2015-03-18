@@ -133,6 +133,11 @@ public:
 
 	virtual void setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
+	/** Reads special properties from the configuration and configures the dial port. */
+	virtual void configureDialPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DialPort *port);
+
+	virtual void setupEmulatedDialPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);
 

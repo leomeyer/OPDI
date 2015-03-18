@@ -25,6 +25,12 @@
     <Filter Include="Quelldateien\common\cppwrapper">
       <UniqueIdentifier>{9b01a969-7330-43e9-99bf-cda6b2f7ab01}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Quelldateien\platforms">
+      <UniqueIdentifier>{f847e595-1cd3-4439-a311-a91fb19f8c91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\platforms\win32">
+      <UniqueIdentifier>{511df7ae-a8ed-440a-b66a-c2dbe7eda0ff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="windows_test.cpp">
@@ -32,6 +38,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\..\common\cppwrapper\OPDI_Ports.cpp">
       <Filter>Quelldateien\common\cppwrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\platforms\win32\opdi_platformfuncs.c">
+      <Filter>Quelldateien\platforms\win32</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

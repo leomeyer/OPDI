@@ -290,6 +290,11 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 
 	std::string autoRefreshPorts = this->getConfigString(portConfig, "AutoRefresh", "", false);
 	port->setAutoRefreshPorts(autoRefreshPorts);
+
+	int time = portConfig->getInt("SelfRefreshTime", -1);
+	if (time >= 0) {
+		port->setSelfRefreshTime(time);
+	}
 }
 
 
@@ -426,6 +431,38 @@ void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *p
 	this->addPort(selPort);
 }
 
+void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DialPort *port) {
+	this->configurePort(portConfig, port, 0);	
+
+	int min = portConfig->getInt("Min", 0);
+	if (!portConfig->hasProperty("Max"))
+		throw Poco::DataException("Missing dial port setting: Max");
+	int max = portConfig->getInt("Max", 0);
+	if (min >= max)
+		throw Poco::DataException("Wrong dial port setting: Max must be greater than Min");
+	int step = portConfig->getInt("Step", 1);
+	if (step > (max - min))
+		throw Poco::DataException("Wrong dial port setting: Step is too large");
+	int position = portConfig->getInt("Position", min);
+	if ((position < min) || (position > max))
+		throw Poco::DataException("Wrong dial port setting: Position is out of range");
+
+	port->minValue = min;
+	port->maxValue = max;
+	port->step = step;
+	port->setPosition(position);
+}
+
+void AbstractOPDID::setupEmulatedDialPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	if (this->logVerbosity == VERBOSE)
+		this->log("Setting up emulated dial port: " + port);
+
+	OPDI_DialPort *dialPort = new OPDI_DialPort(port.c_str());
+	this->configureDialPort(portConfig, dialPort);
+
+	this->addPort(dialPort);
+}
+
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
 	if (this->logVerbosity == VERBOSE)
 		this->log("Setting up node: " + node);
@@ -458,6 +495,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else
 		if (nodeType == "SelectPort") {
 			this->setupEmulatedSelectPort(nodeConfig, node);
+		} else
+		if (nodeType == "DialPort") {
+			this->setupEmulatedDialPort(nodeConfig, node);
 		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}
