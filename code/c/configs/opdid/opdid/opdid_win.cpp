@@ -13,10 +13,31 @@
 // the main OPDI instance is declared here
 AbstractOPDID *Opdi;
 
+BOOL WINAPI SignalHandler(_In_ DWORD dwCtrlType) {
+	switch (dwCtrlType) {
+	case CTRL_C_EVENT:
+	case CTRL_BREAK_EVENT:
+	case CTRL_CLOSE_EVENT:
+	case CTRL_LOGOFF_EVENT:
+		std::cout << "Interrupted, exiting" << std::endl;
+		if (Opdi->isConnected()) {
+			Opdi->shutdown();
+		} else {
+			exit(1);
+		}
+		return TRUE;
+	case CTRL_SHUTDOWN_EVENT:
+		return FALSE;
+	}
+	return FALSE;
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	// set console to display special characters correctly
 	setlocale(LC_ALL, "");
+
+	SetConsoleCtrlHandler(SignalHandler, true);
 
 	// convert arguments to UTF8 strings
 	std::vector<std::string> args;

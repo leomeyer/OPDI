@@ -54,6 +54,7 @@
 #define OPDI_TERMINATOR_IN_PAYLOAD		28
 #define OPDI_PORT_ACCESS_DENIED			29
 #define OPDI_PORT_ERROR					30
+#define OPDI_SHUTDOWN					31
 
 // encodings
 #define OPDI_ENCODING_ASCII			"ASCII"

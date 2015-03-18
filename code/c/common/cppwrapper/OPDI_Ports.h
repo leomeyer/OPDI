@@ -39,13 +39,15 @@ protected:
 
 	/** Called regularly by the OPDI system. Enables the port to do work.
 	 * Override this in subclasses to implement more complex functionality.
-	 * In this method, an implementation may send asynchronous messages to the master.
+	 * In this method, an implementation may send asynchronous messages to the master ONLY if canSend is true.
 	 * This includes messages like Resync, Refresh, Debug etc.
+	 * If canSend is 0 (= false), it means that there is no master is connected or the system is in the middle
+	 * of sending a message of its own. It is not safe to send messages if canSend is false!
 	 * Returning any other value than OPDI_STATUS_OK causes the message processing to exit.
 	 * This will usually signal a device error to the master or cause the master to time out.
 	 * This base class uses doWork to implement the self refresh timer.
 	 */
-	virtual uint8_t doWork();
+	virtual uint8_t doWork(uint8_t canSend);
 
 	// pointer to OPDI class instance
 	OPDI *opdi;

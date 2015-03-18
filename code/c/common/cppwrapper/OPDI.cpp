@@ -49,7 +49,7 @@ uint8_t OPDI::shutdownInternal(void) {
 		port = next;
 	}
 
-	return OPDI_DISCONNECTED;
+	return this->disconnect();
 }
 
 uint8_t OPDI::setup(const char *slaveName, int idleTimeout) {
@@ -201,17 +201,15 @@ uint8_t OPDI::waiting(uint8_t canSend) {
 			return result;
 	}
 
-	// ports' doWork function can be called as long as canSend is true
-	if (canSend) {
-		OPDI_Port *p = this->first_port;
-		// go through ports
-		while (p != NULL) {
-			// call doWork function, return errors immediately
-			uint8_t result = p->doWork();
-			if (result != OPDI_STATUS_OK)
-				return result;
-			p = p->next;
-		}
+	// call ports' doWork function
+	OPDI_Port *p = this->first_port;
+	// go through ports
+	while (p != NULL) {
+		// call doWork function, return errors immediately
+		uint8_t result = p->doWork(canSend);
+		if (result != OPDI_STATUS_OK)
+			return result;
+		p = p->next;
 	}
 
 	return OPDI_STATUS_OK;

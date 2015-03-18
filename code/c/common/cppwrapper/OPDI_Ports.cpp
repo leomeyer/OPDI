@@ -59,9 +59,9 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->setDirCaps(dircaps);
 }
 
-uint8_t OPDI_Port::doWork() {
+uint8_t OPDI_Port::doWork(uint8_t canSend) {
 	// self-refresh specified?
-	if (this->selfRefreshTime > 0) {
+	if (canSend && (this->selfRefreshTime > 0)) {
 		// self refresh timer reached?
 		if (opdi_get_time_ms() - this->lastSelfRefreshTime > this->selfRefreshTime) {
 			this->doSelfRefresh();
