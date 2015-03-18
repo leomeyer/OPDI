@@ -16,10 +16,9 @@ AbstractOPDID *Opdi;
 void signal_handler(int s){
 	printf("Caught signal %d\n", s);
 	
+	// tell the OPDI system to shut down
 	if (Opdi != NULL)
 		Opdi->shutdown();
-	
-	exit(1);
 }
 
 int main(int argc, char *argv[])
