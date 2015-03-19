@@ -224,6 +224,8 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 
 	this->setupRoot(this->configuration);
 
+	this->preparePorts();
+
 	// create view to "Connection" section
 	Poco::Util::AbstractConfiguration *connection = this->configuration->createView("Connection");
 
@@ -269,7 +271,10 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 }
 
 void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags) {
-	std::string portLabel = this->getConfigString(portConfig, "Label", "", true);
+	// ports can be hidden
+	port->setHidden(portConfig->getBool("Hidden", false));
+
+	std::string portLabel = this->getConfigString(portConfig, "Label", "", false);
 	port->setLabel(portLabel.c_str());
 
 	std::string portDirCaps = this->getConfigString(portConfig, "DirCaps", "", false);
@@ -422,6 +427,11 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 
 	// set port items
 	port->setItems(&charItems[0]);
+
+	int position = portConfig->getInt("Position", 0);
+	if ((position < 0) || (position > charItems.size() - 1))
+		throw Poco::DataException("Wrong select port setting: Position is out of range: " + to_string(position));
+	port->setPosition(position);
 }
 
 void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
@@ -445,14 +455,14 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portCon
 		throw Poco::DataException("Wrong dial port setting: Max must be greater than Min");
 	int step = portConfig->getInt("Step", 1);
 	if (step > (max - min))
-		throw Poco::DataException("Wrong dial port setting: Step is too large");
+		throw Poco::DataException("Wrong dial port setting: Step is too large: " + to_string(step));
 	int position = portConfig->getInt("Position", min);
 	if ((position < min) || (position > max))
-		throw Poco::DataException("Wrong dial port setting: Position is out of range");
+		throw Poco::DataException("Wrong dial port setting: Position is out of range: " + to_string(position));
 
-	port->minValue = min;
-	port->maxValue = max;
-	port->step = step;
+	port->setMin(min);
+	port->setMax(max);
+	port->setStep(step);
 	port->setPosition(position);
 }
 

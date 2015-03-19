@@ -76,8 +76,20 @@ const char *OPDI_Port::getID(void) {
 	return this->id;
 }
 
+const char *OPDI_Port::getType(void) {
+	return this->type;
+}
+
 const char *OPDI_Port::getLabel(void) {
 	return this->label;
+}
+
+void OPDI_Port::setHidden(bool hidden) {
+	this->hidden = hidden;
+}
+
+bool OPDI_Port::isHidden(void) {
+	return this->hidden;
 }
 
 void OPDI_Port::setLabel(const char *label) {
@@ -156,6 +168,10 @@ uint8_t OPDI_Port::refresh() {
 	return opdi->refresh(ports);
 }
 
+void OPDI_Port::prepare() {
+	// nothing to do in this base class
+}
+
 OPDI_Port::~OPDI_Port() {
 	if (this->id != NULL)
 		free(this->id);
@@ -211,7 +227,7 @@ OPDI_AbstractAnalogPort::~OPDI_AbstractAnalogPort() {
 OPDI_DigitalPort::OPDI_DigitalPort(const char *id) : OPDI_AbstractDigitalPort(id) {
 	this->mode = 0;
 	this->line = 0;
-	this->setDirCaps(OPDI_PORTDIRCAP_UNKNOWN);
+	this->setDirCaps(OPDI_PORTDIRCAP_BIDI);
 }
 
 OPDI_DigitalPort::OPDI_DigitalPort(const char *id, const char *label, const char *dircaps, const uint8_t flags) :
@@ -514,6 +530,18 @@ OPDI_DialPort::~OPDI_DialPort() {}
 
 void OPDI_DialPort::doSelfRefresh(void) {
 	// disabled
+}
+
+void OPDI_DialPort::setMin(int32_t min) {
+	this->minValue = min;
+}
+
+void OPDI_DialPort::setMax(int32_t max) {
+	this->maxValue = max;
+}
+
+void OPDI_DialPort::setStep(uint32_t step) {
+	this->step = step;
 }
 
 // function that handles position setting; position may be in the range of minValue..maxValue

@@ -85,10 +85,13 @@ public:
 	/** Returns NULL if the port could not be found. */
 	virtual OPDI_Port *findPortByID(const char *portID);
 
+	/** Iterates through all ports and calls their prepare() methods. */
+	virtual void preparePorts(void);
+
 	/** Starts the OPDI handshake to accept commands from a master.
 	 * Does not use a housekeeping function.
 	 */
-	virtual uint8_t start();
+	virtual uint8_t start(void);
 
 	/** Starts the OPDI handshake to accept commands from a master.
 	 * Accepts a pointer to a housekeeping function that needs to perform regular tasks.
@@ -107,15 +110,15 @@ public:
 
 	/** This function returns 1 if a master is currently connected and 0 otherwise.
 	 */
-	virtual uint8_t isConnected();
+	virtual uint8_t isConnected(void);
 
 	/** Sends the Disconnect message to the master and stops message processing.
 	 */
-	virtual uint8_t disconnect();
+	virtual uint8_t disconnect(void);
 
 	/** Causes the Reconfigure message to be sent which prompts the master to re-read the device capabilities.
 	 */
-	virtual uint8_t reconfigure();
+	virtual uint8_t reconfigure(void);
 
 	/** Causes the Refresh message to be sent for the specified ports. The last element must be NULL.
 	 *  If the first element is NULL, sends the empty refresh message causing all ports to be

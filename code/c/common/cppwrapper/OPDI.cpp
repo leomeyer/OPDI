@@ -95,11 +95,15 @@ uint8_t OPDI::addPort(OPDI_Port *port) {
 
 	this->updatePortData(port);
 
-	return opdi_add_port((opdi_Port*)port->data);
+	// do not add hidden ports to the device capabilities
+	if (!port->isHidden())
+		return opdi_add_port((opdi_Port*)port->data);
+	else
+		return OPDI_STATUS_OK;
 }
 
 // possible race conditions here, if one thread updates port data while the other retrieves it
-// how to avoid this problem?
+// generally not a problem because slaves are usually single-threaded
 void OPDI::updatePortData(OPDI_Port *port) {
 	// allocate port data structure if necessary
 	opdi_Port *oPort = (opdi_Port *)port->data;
@@ -163,6 +167,14 @@ OPDI_Port *OPDI::findPortByID(const char *portID) {
 	}
 	// not found
 	return NULL;
+}
+
+void OPDI::preparePorts(void) {
+	OPDI_Port *port = this->first_port;
+	while (port) {
+		port->prepare();
+		port = port->next;
+	}
 }
 
 // convenience method
