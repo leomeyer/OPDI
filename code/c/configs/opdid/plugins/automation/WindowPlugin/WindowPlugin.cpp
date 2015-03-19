@@ -58,6 +58,8 @@ protected:
 	uint64_t openTimer;
 	// set to true when the state changes; next time canSend is true the port will self-refresh
 	bool requiresRefresh;
+	// set to true when the position has been just changed by the master
+	bool positionNewlySet;
 
 	OPDI_DigitalPort *findDigitalPort(std::string setting, std::string portID, bool required);
 
@@ -103,10 +105,14 @@ WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(i
 	this->targetState = UNKNOWN;
 	this->currentState = UNKNOWN;
 	this->requiresRefresh = false;
+	this->positionNewlySet = false;
 }
 
 void WindowPort::setPosition(uint16_t position) {
-	OPDI_SelectPort::setPosition(position);
+	if (this->position != position) {
+		OPDI_SelectPort::setPosition(position);
+		this->positionNewlySet = true;
+	}
 }
 
 OPDI_DigitalPort *WindowPort::findDigitalPort(std::string setting, std::string portID, bool required) {
@@ -185,33 +191,33 @@ bool WindowPort::isSensorClosed(void) {
 
 void WindowPort::enableMotor(void) {
 	if (opdid->logVerbosity == AbstractOPDID::VERBOSE)
-		opdid->log(std::string(this->id) + ": enabling motor");
+		opdid->log(std::string(this->id) + ": Enabling motor");
 	this->setOutputPortLine(this->enablePort, 1);
 }
 
 void WindowPort::disableMotor(void) {
 	if (opdid->logVerbosity == AbstractOPDID::VERBOSE)
-		opdid->log(std::string(this->id) + ": disabling motor");
+		opdid->log(std::string(this->id) + ": Disabling motor");
 	this->setOutputPortLine(this->enablePort, 0);
 }
 
 void WindowPort::setMotorOpening(void) {
 	if (opdid->logVerbosity == AbstractOPDID::VERBOSE)
-		opdid->log(std::string(this->id) + ": setting motor to 'opening'");
+		opdid->log(std::string(this->id) + ": Setting motor to 'opening'");
 	this->setOutputPortLine(this->motorAPort, 1);
 	this->setOutputPortLine(this->motorBPort, 0);
 }
 
 void WindowPort::setMotorClosing(void) {
 	if (opdid->logVerbosity == AbstractOPDID::VERBOSE)
-		opdid->log(std::string(this->id) + ": setting motor to 'closing'");
+		opdid->log(std::string(this->id) + ": Setting motor to 'closing'");
 	this->setOutputPortLine(this->motorAPort, 0);
 	this->setOutputPortLine(this->motorBPort, 1);
 }
 
 void WindowPort::setMotorOff(void) {
 	if (opdid->logVerbosity == AbstractOPDID::VERBOSE)
-		opdid->log(std::string(this->id) + ": stopping motor");
+		opdid->log(std::string(this->id) + ": Stopping motor");
 	this->setOutputPortLine(this->motorAPort, 0);
 	this->setOutputPortLine(this->motorBPort, 0);
 }
@@ -240,7 +246,7 @@ void WindowPort::setCurrentState(int state) {
 		this->currentState = state;
 
 		// undefined states reset the target
-		if ((state == UNKNOWN) || (state == ERR))
+		if ((state == UNKNOWN) || (state == UNKNOWN_WAITING))
 			this->targetState = UNKNOWN;
 		
 		if ((state != UNKNOWN_WAITING) && 
@@ -496,15 +502,6 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		// if the window has detected an error, do not automatically open or close
 		// if the position is set to automatic, evaluate auto ports
 		if ((this->currentState != ERR) && (this->position > 1)) {
-			// if one of the AutoOpen ports is High, the window should be opened
-			pi = this->autoOpenPorts.begin();
-			while (pi != this->autoOpenPorts.end()) {
-				if (this->getInputPortLine(*pi) == 1) {
-					target = OPEN;
-					break;
-				}
-				pi++;
-			}
 			// if one of the AutoClose ports is High, the window should be closed (takes precedence)
 			pi = this->autoClosePorts.begin();
 			while (pi != this->autoClosePorts.end()) {
@@ -514,16 +511,33 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 				}
 				pi++;
 			}
+			if (target == UNKNOWN) {
+				// if one of the AutoOpen ports is High, the window should be opened
+				pi = this->autoOpenPorts.begin();
+				while (pi != this->autoOpenPorts.end()) {
+					if (this->getInputPortLine(*pi) == 1) {
+						target = OPEN;
+						break;
+					}
+					pi++;
+				}
+			}
 		} else
-		if (this->position == 1) {
+		// check for position changes only - not if the previous setting is still active
+		// this helps to recover from an error state - the user must manually change the position
+		if (this->positionNewlySet && (this->position == 1)) {
 			target = OPEN;
 		} else
-		if (this->position == 0) {
+		if (this->positionNewlySet && (this->position == 0)) {
 			target = CLOSED;
 		}
+		this->positionNewlySet = false;
 
 		if (target != UNKNOWN) {
 			this->setTargetState(target);
+			// resetting from error state
+			if (this->currentState == ERR)
+				this->setCurrentState(UNKNOWN_WAITING);
 		}
 	}
 
