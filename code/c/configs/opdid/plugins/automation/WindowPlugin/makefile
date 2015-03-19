@@ -7,7 +7,7 @@ PLATFORM = linux
 # Relative path to the opdid application directory.
 # All other paths are calculated relative to this path, so if you create a plugin anywhere it should be enough
 # just to adjust this path.
-OPDIDPATH = ../../../../opdid
+OPDIDPATH = ../../../opdid
 
 # Relative path to common directory (without trailing slash)
 # This also becomes an additional include directory.

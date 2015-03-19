@@ -428,8 +428,8 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 	// set port items
 	port->setItems(&charItems[0]);
 
-	int position = portConfig->getInt("Position", 0);
-	if ((position < 0) || (position > charItems.size() - 1))
+	uint16_t position = portConfig->getInt("Position", 0);
+	if ((position < 0) || (position >= charItems.size()))
 		throw Poco::DataException("Wrong select port setting: Position is out of range: " + to_string(position));
 	port->setPosition(position);
 }
