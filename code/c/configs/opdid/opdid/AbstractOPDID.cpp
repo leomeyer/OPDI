@@ -72,7 +72,7 @@ AbstractOPDID::~AbstractOPDID(void) {
 
 void AbstractOPDID::protocolCallback(uint8_t protState) {
 	if (protState == OPDI_PROTOCOL_START_HANDSHAKE) {
-		if (this->logVerbosity == AbstractOPDID::VERBOSE)
+		if (this->logVerbosity >= AbstractOPDID::VERBOSE)
 			this->log("Handshake started");
 	} else
 	if (protState == OPDI_PROTOCOL_CONNECTED) {
@@ -128,7 +128,7 @@ void AbstractOPDID::sayHello(void) {
 
 	this->log("OPDID version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion) + " (c) Leo Meyer 2015");
 
-	if (this->logVerbosity == VERBOSE) {
+	if (this->logVerbosity >= VERBOSE) {
 		this->log("Build: " + std::string(__DATE__) + " " + std::string(__TIME__));
 	}
 }
@@ -196,6 +196,9 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 			this->sayHello();
 			return 0;
 		}
+		if (args.at(i) == "-d") {
+			this->logVerbosity = DEBUG;
+		}
 		if (args.at(i) == "-v") {
 			this->logVerbosity = VERBOSE;
 		}
@@ -233,7 +236,7 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 }
 
 void AbstractOPDID::lockResource(std::string resourceID, std::string lockerID) {
-	if (this->logVerbosity == AbstractOPDID::VERBOSE)
+	if (this->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->log("Trying to lock resource '" + resourceID + "' for " + lockerID);
 	// try to locate the resource ID
 	LockedResources::const_iterator it = this->lockedResources.find(resourceID);
@@ -246,7 +249,7 @@ void AbstractOPDID::lockResource(std::string resourceID, std::string lockerID) {
 }
 
 void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *general) {
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up general configuration");
 
 	std::string slaveName = this->getConfigString(general, "SlaveName", "", true);
@@ -263,7 +266,10 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 		if (logVerbosityStr == "Verbose") {
 			this->logVerbosity = VERBOSE;
 		} else
-			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', or 'Verbose')", logVerbosityStr);
+		if (logVerbosityStr == "Debug") {
+			this->logVerbosity = DEBUG;
+		} else
+			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', 'Verbose', or 'Debug')", logVerbosityStr);
 	}
 
 	// initialize OPDI slave
@@ -331,7 +337,7 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 }
 
 void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up emulated digital port: " + port);
 
 	OPDI_DigitalPort *digPort = new OPDI_DigitalPort(port.c_str());
@@ -372,7 +378,7 @@ void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portC
 }
 
 void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up emulated analog port: " + port);
 
 	OPDI_AnalogPort *anaPort = new OPDI_AnalogPort(port.c_str());
@@ -435,7 +441,7 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 }
 
 void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up emulated select port: " + port);
 
 	OPDI_SelectPort *selPort = new OPDI_SelectPort(port.c_str());
@@ -467,7 +473,7 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portCon
 }
 
 void AbstractOPDID::setupEmulatedDialPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up emulated dial port: " + port);
 
 	OPDI_DialPort *dialPort = new OPDI_DialPort(port.c_str());
@@ -477,7 +483,7 @@ void AbstractOPDID::setupEmulatedDialPort(Poco::Util::AbstractConfiguration *por
 }
 
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up node: " + node);
 
 	// create node section view
@@ -488,7 +494,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 
 	// driver specified?
 	if (nodeDriver != "") {
-		if (this->logVerbosity == VERBOSE)
+		if (this->logVerbosity >= VERBOSE)
 			this->log("Loading plugin driver: " + nodeDriver);
 
 		// try to load the plugin; the driver name is the (platform dependent) library file name
@@ -519,7 +525,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 	// enumerate section "Root"
 	Poco::Util::AbstractConfiguration *nodes = this->configuration->createView("Root");
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up root nodes");
 
 	Poco::Util::AbstractConfiguration::Keys nodeKeys;
@@ -557,7 +563,7 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 
 int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {
 
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up connection");
 	std::string connectionType = this->getConfigString(config, "Type", "", true);
 
@@ -601,7 +607,7 @@ void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
  *
  */
 uint8_t opdi_debug_msg(const uint8_t *message, uint8_t direction) {
-	if (Opdi->logVerbosity != AbstractOPDID::VERBOSE)
+	if (Opdi->logVerbosity < AbstractOPDID::DEBUG)
 		return OPDI_STATUS_OK;
 	std::string dirChar = "-";
 	if (direction == OPDI_DIR_INCOMING)

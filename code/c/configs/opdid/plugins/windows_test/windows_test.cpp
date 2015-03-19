@@ -52,7 +52,7 @@ void WindowsTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::stri
 
 	this->opdid->addConnectionListener(this);
 
-	if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
+	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log("WindowsTestOPDIDPlugin setup completed successfully as node " + node);
 }
 

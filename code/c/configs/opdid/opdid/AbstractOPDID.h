@@ -60,7 +60,8 @@ public:
 	enum LogVerbosity {
 		QUIET,
 		NORMAL,
-		VERBOSE
+		VERBOSE,
+		DEBUG
 	};
 
 	int logVerbosity;
