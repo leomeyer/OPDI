@@ -641,7 +641,15 @@ uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	dPort->getState(&dMode, &dLine);
+	try {
+		dPort->getState(&dMode, &dLine);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 	mode[0] = '0' + dMode;
 	line[0] = '0' + dLine;
 
@@ -708,7 +716,15 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	aPort->getState(&aMode, &aRes, &aRef, value);
+	try {
+		aPort->getState(&aMode, &aRes, &aRef, value);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 	mode[0] = '0' + aMode;
 	res[0] = '0' + (aRes - 8);
 	ref[0] = '0' + aRef;
@@ -815,7 +831,15 @@ uint8_t opdi_get_select_port_state(opdi_Port *port, uint16_t *position) {
 	if (sPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	sPort->getState(position);
+	try {
+		sPort->getState(position);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 	return OPDI_STATUS_OK;
 }
 
@@ -845,7 +869,15 @@ uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	dPort->getState(position);
+	try {
+		dPort->getState(position);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 	return OPDI_STATUS_OK;
 }
 

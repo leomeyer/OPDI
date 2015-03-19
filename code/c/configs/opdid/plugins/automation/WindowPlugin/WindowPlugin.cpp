@@ -101,6 +101,8 @@ public:
 	WindowPort(AbstractOPDID *opdid, const char *id);
 
 	virtual void setPosition(uint16_t position) override;
+	
+	virtual void getState(uint16_t *position) override;
 };
 
 WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(id) {
@@ -117,6 +119,12 @@ void WindowPort::setPosition(uint16_t position) {
 		OPDI_SelectPort::setPosition(position);
 		this->positionNewlySet = true;
 	}
+}
+
+void WindowPort::getState(uint16_t *position) {
+	if (this->currentState == ERR)
+		throw PortError("Sensor or motor failure or misconfiguration");
+	OPDI_SelectPort::getState(position);
 }
 
 OPDI_DigitalPort *WindowPort::findDigitalPort(std::string setting, std::string portID, bool required) {
@@ -250,18 +258,28 @@ void WindowPort::setCurrentState(int state) {
 		this->currentState = state;
 
 		// undefined states reset the target
-		if ((state == UNKNOWN) || (state == UNKNOWN_WAITING))
-			this->targetState = UNKNOWN;
+		if ((state == UNKNOWN) || (state == ERR))
+			this->setTargetState(UNKNOWN);
 		
 		if ((state != UNKNOWN_WAITING) && 
 			(state != WAITING_BEFORE_DISABLE_OPEN) && 
 			(state != WAITING_BEFORE_DISABLE_CLOSED) && 
 			(state != WAITING_BEFORE_DISABLE_ERROR))
 			this->requiresRefresh = true;
+			
+		// if the window has been closed or opened, reflect it in the UI
+		// except if the position is set to automatic
+		if (this->position < 2) {
+			if (state == CLOSED)
+				position = 0;
+			else if (state == OPEN)
+				position = 1;
+		}
 	}
 }
 
 void WindowPort::setTargetState(int state) {
+
 	if (this->targetState != state) {
 		if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 			opdid->log(std::string(this->id) + ": Changing target state to: " + this->getStateText(state));
@@ -301,14 +319,24 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 
 	// unknown state (first call or transition not yet implemented)? initialize
 	if (this->currentState == UNKNOWN) {
+		// do we know that we're closed?
 		if (this->isSensorClosed()) {
-			setCurrentState(CLOSED);
+			this->setCurrentState(CLOSED);
 		} else
-			setCurrentState(UNKNOWN_WAITING);
+			// we don't know
+			this->setCurrentState(UNKNOWN_WAITING);
 
 		// disable the motor
 		this->setMotorOff();
 		this->disableMotor();
+		
+		// set target state according to initial position
+		if (this->position == 1) {
+			this->setTargetState(OPEN);
+		} else
+		if (this->position == 0) {
+			this->setTargetState(CLOSED);
+		}
 	} else
 	// unknown; waiting for command
 	if ((this->currentState == UNKNOWN_WAITING)) {
@@ -353,8 +381,8 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 				this->setMotorClosing();
 				this->setCurrentState(CLOSING);
 			} else {
-				// target state is unknown; what to do?
-				this->setCurrentState(UNKNOWN);
+				// target state is unknown; wait
+				this->setCurrentState(UNKNOWN_WAITING);
 			}
 		}
 	} else
