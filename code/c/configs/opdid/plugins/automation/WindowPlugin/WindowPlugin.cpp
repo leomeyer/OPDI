@@ -6,6 +6,10 @@
 #include "WindowsOPDID.h"
 #endif
 
+#ifdef linux
+#include "LinuxOPDID.h"
+#endif
+
 #define LOCAL_DEBUG	1
 
 class WindowPort : public OPDI_SelectPort {
@@ -34,8 +38,8 @@ protected:
 	std::string motorA;
 	std::string motorB;
 	std::string enable;
-	int enableDelay;
-	int openingTime;
+	uint64_t enableDelay;
+	uint64_t openingTime;
 	std::string autoOpen;
 	std::string autoClose;
 	std::string forceClose;
@@ -612,10 +616,17 @@ void WindowPlugin::masterConnected() {
 void WindowPlugin::masterDisconnected() {
 }
 
+// plugin instance factory function
+
 #ifdef _WINDOWS
 
-// plugin instance factory function
 extern "C" __declspec(dllexport) IOPDIDPlugin* __cdecl GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
+
+#elif linux
+
+extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
+
+#endif
 
 	// check whether the version is supported
 	if ((majorVersion > 0) || (minorVersion > 1))
@@ -624,5 +635,3 @@ extern "C" __declspec(dllexport) IOPDIDPlugin* __cdecl GetOPDIDPluginInstance(in
 	// return a new instance of this plugin
 	return new WindowPlugin();
 }
-
-#endif
