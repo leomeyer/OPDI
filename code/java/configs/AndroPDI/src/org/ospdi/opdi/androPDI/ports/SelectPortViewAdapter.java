@@ -41,6 +41,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 
 	// view state values
 	boolean stateError;
+	String errorText;
 	int position = -1;
 
 	private View cachedView;
@@ -98,6 +99,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 	protected void queryState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		position = sPort.getPosition();
         stateError = sPort.hasError();
+        errorText = sPort.getErrorMessage();
 	}
 	
 	@Override
@@ -109,6 +111,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 	@Override
 	public void setError(Throwable t) {
 		stateError = true;
+		errorText = t.getMessage();
 	}
 	
 	@Override
@@ -142,12 +145,18 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 				ivPortIcon.setImageDrawable(context.getResources().getDrawable(R.drawable.select_port_error));
 				ivPortIcon.setOnClickListener(null);
 			}
-			return;
+			tvBottomtext.setText(errorText);
+		} else {
+			// set the proper icon
+			Drawable portIcon = context.getResources().getDrawable(R.drawable.select_port);
+			ivPortIcon.setImageDrawable(portIcon);
+			try {
+				tvBottomtext.setText(sPort.getLabelAt(position));
+			} catch (Throwable t) {
+				// text can't be set
+				tvBottomtext.setText("");
+			}
 		}
-		
-		// set the proper icon
-		Drawable portIcon = context.getResources().getDrawable(R.drawable.select_port);
-		ivPortIcon.setImageDrawable(portIcon);
 		// context menu when clicking
 		ivPortIcon.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -155,9 +164,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 				handleClick();
 			}
 		});
-			
-		tvBottomtext.setText(sPort.getLabelAt(position));
-	}		
+	}
 	
 	@Override
 	public void createContextMenu(ContextMenu menu,
