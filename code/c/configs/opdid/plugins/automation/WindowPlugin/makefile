@@ -1,5 +1,5 @@
 # Target file name (without extension).
-TARGET = rpi_gertboard
+TARGET = WindowPlugin
 
 # OPDI platform specifier
 PLATFORM = linux
@@ -28,11 +28,8 @@ CPPPATH = $(CPATH)/cppwrapper
 SRC += $(CPPPATH)/OPDI_Ports.cpp
 
 # additional source files
-SRC += $(OPDIDPATH)/../../../libraries/rpi/gertboard/gb_common.c $(OPDIDPATH)/../../../libraries/rpi/gertboard/gb_spi.c $(OPDIDPATH)/../../../libraries/rpi/gertboard/gb_pwm.c
+# SRC += 
 SRC += $(OPDIDPATH)/../../../platforms/linux/opdi_platformfuncs.c
-
-# Gertboard library include path
-GERTBOARDINCPATH = $(OPDIDPATH)/../../../libraries/rpi/gertboard
 
 # conio include path
 CONIOINCPATH = $(OPDIDPATH)/../../../libraries/conio
@@ -63,7 +60,7 @@ CINCS =
 CDEFINES = -Dlinux
 
 # Compiler flags.
-CFLAGS = -Wall -fpermissive $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
+CFLAGS = -Wall $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -O3 -std=c++11 -static-libstdc++
 
 OBJECTS = $(SRC)

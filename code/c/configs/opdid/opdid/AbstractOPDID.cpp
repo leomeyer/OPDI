@@ -72,7 +72,7 @@ AbstractOPDID::~AbstractOPDID(void) {
 
 void AbstractOPDID::protocolCallback(uint8_t protState) {
 	if (protState == OPDI_PROTOCOL_START_HANDSHAKE) {
-		if (this->logVerbosity == AbstractOPDID::VERBOSE)
+		if (this->logVerbosity >= AbstractOPDID::VERBOSE)
 			this->log("Handshake started");
 	} else
 	if (protState == OPDI_PROTOCOL_CONNECTED) {
@@ -128,7 +128,7 @@ void AbstractOPDID::sayHello(void) {
 
 	this->log("OPDID version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion) + " (c) Leo Meyer 2015");
 
-	if (this->logVerbosity == VERBOSE) {
+	if (this->logVerbosity >= VERBOSE) {
 		this->log("Build: " + std::string(__DATE__) + " " + std::string(__TIME__));
 	}
 }
@@ -196,6 +196,9 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 			this->sayHello();
 			return 0;
 		}
+		if (args.at(i) == "-d") {
+			this->logVerbosity = DEBUG;
+		}
 		if (args.at(i) == "-v") {
 			this->logVerbosity = VERBOSE;
 		}
@@ -222,7 +225,9 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 	Poco::Util::AbstractConfiguration *general = this->configuration->createView("General");
 	this->setGeneralConfiguration(general);
 
-	this->setupNodes(this->configuration);
+	this->setupRoot(this->configuration);
+
+	this->preparePorts();
 
 	// create view to "Connection" section
 	Poco::Util::AbstractConfiguration *connection = this->configuration->createView("Connection");
@@ -231,7 +236,7 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 }
 
 void AbstractOPDID::lockResource(std::string resourceID, std::string lockerID) {
-	if (this->logVerbosity == AbstractOPDID::VERBOSE)
+	if (this->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->log("Trying to lock resource '" + resourceID + "' for " + lockerID);
 	// try to locate the resource ID
 	LockedResources::const_iterator it = this->lockedResources.find(resourceID);
@@ -244,7 +249,7 @@ void AbstractOPDID::lockResource(std::string resourceID, std::string lockerID) {
 }
 
 void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *general) {
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up general configuration");
 
 	std::string slaveName = this->getConfigString(general, "SlaveName", "", true);
@@ -261,16 +266,21 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 		if (logVerbosityStr == "Verbose") {
 			this->logVerbosity = VERBOSE;
 		} else
-			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', or 'Verbose')", logVerbosityStr);
+		if (logVerbosityStr == "Debug") {
+			this->logVerbosity = DEBUG;
+		} else
+			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', 'Verbose', or 'Debug')", logVerbosityStr);
 	}
 
 	// initialize OPDI slave
 	this->setup(slaveName.c_str(), timeout);
 }
 
-void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port) {
+void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags) {
+	// ports can be hidden
+	port->setHidden(portConfig->getBool("Hidden", false));
 
-	std::string portLabel = this->getConfigString(portConfig, "Label", "", true);
+	std::string portLabel = this->getConfigString(portConfig, "Label", "", false);
 	port->setLabel(portLabel.c_str());
 
 	std::string portDirCaps = this->getConfigString(portConfig, "DirCaps", "", false);
@@ -283,10 +293,27 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 	} else if (portDirCaps != "")
 		throw Poco::DataException("Unknown port DirCaps specifier; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
 	
-	int8_t flags = portConfig->getInt("Flags", -1);
+	int flags = portConfig->getInt("Flags", -1);
 	if (flags >= 0) {
-		port->setFlags((uint8_t)flags);
+		port->setFlags(flags);
+	} else
+		// default flags specified?
+		// avoid calling setFlags unnecessarily because subclasses may implement specific behavior
+		if (defaultFlags > 0)
+			port->setFlags(defaultFlags);
+
+	std::string autoRefreshPorts = this->getConfigString(portConfig, "AutoRefresh", "", false);
+	port->setAutoRefreshPorts(autoRefreshPorts);
+
+	int time = portConfig->getInt("SelfRefreshTime", -1);
+	if (time >= 0) {
+		port->setSelfRefreshTime(time);
 	}
+}
+
+
+void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port) {
+	this->configurePort(portConfig, port, 0);
 	
 	std::string portMode = this->getConfigString(portConfig, "Mode", "", false);
 	if (portMode == "Input") {
@@ -310,7 +337,7 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 }
 
 void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up emulated digital port: " + port);
 
 	OPDI_DigitalPort *digPort = new OPDI_DigitalPort(port.c_str());
@@ -320,25 +347,18 @@ void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *
 }
 
 void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_AnalogPort *port) {
-	std::string portLabel = this->getConfigString(portConfig, "Label", "", true);
-	port->setLabel(portLabel.c_str());
-
-	std::string portDirCaps = this->getConfigString(portConfig, "DirCaps", "Bidi", false);
-	if (portDirCaps == "Input") {
-		port->setDirCaps(OPDI_PORTDIRCAP_INPUT);
-	} else if (portDirCaps == "Output") {
-		port->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
-	} else if (portDirCaps == "Bidi") {
-		port->setDirCaps(OPDI_PORTDIRCAP_BIDI);
-	} else if (portDirCaps != "")
-		throw Poco::DataException("Unknown port DirCaps specifier; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
-
-	int8_t flags = portConfig->getInt("Flags", -1);
-	if (flags >= 0) {
-		port->setFlags((uint8_t)flags);
-	}
+	this->configurePort(portConfig, port, 
+		// default flags: assume everything is supported
+		OPDI_ANALOG_PORT_CAN_CHANGE_RES |
+		OPDI_ANALOG_PORT_RESOLUTION_8 |
+		OPDI_ANALOG_PORT_RESOLUTION_9 |
+		OPDI_ANALOG_PORT_RESOLUTION_10 |	
+		OPDI_ANALOG_PORT_RESOLUTION_11 |
+		OPDI_ANALOG_PORT_RESOLUTION_12 |
+		OPDI_ANALOG_PORT_CAN_CHANGE_REF |
+		OPDI_ANALOG_PORT_REFERENCE_INT |
+		OPDI_ANALOG_PORT_REFERENCE_EXT);	
 		
-	// set initial values
 	std::string mode = this->getConfigString(portConfig, "Mode", "", false);
 	if (mode == "Input")
 		port->setMode(0);
@@ -358,7 +378,7 @@ void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portC
 }
 
 void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up emulated analog port: " + port);
 
 	OPDI_AnalogPort *anaPort = new OPDI_AnalogPort(port.c_str());
@@ -368,8 +388,7 @@ void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *p
 }
 
 void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_SelectPort *port) {
-	std::string portLabel = this->getConfigString(portConfig, "Label", "", true);
-	port->setLabel(portLabel.c_str());
+	this->configurePort(portConfig, port, 0);
 
 	// the select port requires a prefix or section "<portID>.Items"
 	Poco::Util::AbstractConfiguration *portItems = this->configuration->createView(std::string(port->getID()) + ".Items");
@@ -414,10 +433,15 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 
 	// set port items
 	port->setItems(&charItems[0]);
+
+	uint16_t position = portConfig->getInt("Position", 0);
+	if ((position < 0) || (position >= charItems.size()))
+		throw Poco::DataException("Wrong select port setting: Position is out of range: " + to_string(position));
+	port->setPosition(position);
 }
 
 void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up emulated select port: " + port);
 
 	OPDI_SelectPort *selPort = new OPDI_SelectPort(port.c_str());
@@ -426,8 +450,40 @@ void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *p
 	this->addPort(selPort);
 }
 
+void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DialPort *port) {
+	this->configurePort(portConfig, port, 0);	
+
+	int min = portConfig->getInt("Min", 0);
+	if (!portConfig->hasProperty("Max"))
+		throw Poco::DataException("Missing dial port setting: Max");
+	int max = portConfig->getInt("Max", 0);
+	if (min >= max)
+		throw Poco::DataException("Wrong dial port setting: Max must be greater than Min");
+	int step = portConfig->getInt("Step", 1);
+	if (step > (max - min))
+		throw Poco::DataException("Wrong dial port setting: Step is too large: " + to_string(step));
+	int position = portConfig->getInt("Position", min);
+	if ((position < min) || (position > max))
+		throw Poco::DataException("Wrong dial port setting: Position is out of range: " + to_string(position));
+
+	port->setMin(min);
+	port->setMax(max);
+	port->setStep(step);
+	port->setPosition(position);
+}
+
+void AbstractOPDID::setupEmulatedDialPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Setting up emulated dial port: " + port);
+
+	OPDI_DialPort *dialPort = new OPDI_DialPort(port.c_str());
+	this->configureDialPort(portConfig, dialPort);
+
+	this->addPort(dialPort);
+}
+
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up node: " + node);
 
 	// create node section view
@@ -438,7 +494,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 
 	// driver specified?
 	if (nodeDriver != "") {
-		if (this->logVerbosity == VERBOSE)
+		if (this->logVerbosity >= VERBOSE)
 			this->log("Loading plugin driver: " + nodeDriver);
 
 		// try to load the plugin; the driver name is the (platform dependent) library file name
@@ -459,14 +515,17 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		if (nodeType == "SelectPort") {
 			this->setupEmulatedSelectPort(nodeConfig, node);
 		} else
+		if (nodeType == "DialPort") {
+			this->setupEmulatedDialPort(nodeConfig, node);
+		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}
 }
 
-void AbstractOPDID::setupNodes(Poco::Util::AbstractConfiguration *config) {
+void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 	// enumerate section "Root"
 	Poco::Util::AbstractConfiguration *nodes = this->configuration->createView("Root");
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up root nodes");
 
 	Poco::Util::AbstractConfiguration::Keys nodeKeys;
@@ -504,7 +563,7 @@ void AbstractOPDID::setupNodes(Poco::Util::AbstractConfiguration *config) {
 
 int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {
 
-	if (this->logVerbosity == VERBOSE)
+	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up connection");
 	std::string connectionType = this->getConfigString(config, "Type", "", true);
 
@@ -548,7 +607,7 @@ void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
  *
  */
 uint8_t opdi_debug_msg(const uint8_t *message, uint8_t direction) {
-	if (Opdi->logVerbosity != AbstractOPDID::VERBOSE)
+	if (Opdi->logVerbosity < AbstractOPDID::DEBUG)
 		return OPDI_STATUS_OK;
 	std::string dirChar = "-";
 	if (direction == OPDI_DIR_INCOMING)
@@ -582,7 +641,15 @@ uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	dPort->getState(&dMode, &dLine);
+	try {
+		dPort->getState(&dMode, &dLine);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 	mode[0] = '0' + dMode;
 	line[0] = '0' + dLine;
 
@@ -649,7 +716,15 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	aPort->getState(&aMode, &aRes, &aRef, value);
+	try {
+		aPort->getState(&aMode, &aRes, &aRef, value);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 	mode[0] = '0' + aMode;
 	res[0] = '0' + (aRes - 8);
 	ref[0] = '0' + aRef;
@@ -756,7 +831,15 @@ uint8_t opdi_get_select_port_state(opdi_Port *port, uint16_t *position) {
 	if (sPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	sPort->getState(position);
+	try {
+		sPort->getState(position);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 	return OPDI_STATUS_OK;
 }
 
@@ -786,7 +869,15 @@ uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
-	dPort->getState(position);
+	try {
+		dPort->getState(position);
+	} catch (OPDI_Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::AccessDenied &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ERROR;
+	}
 	return OPDI_STATUS_OK;
 }
 

@@ -23,13 +23,13 @@
 #include <cstdlib>
 #include <string.h>
 
-#include <opdi_constants.h>
-#include <opdi_protocol.h>
-#include <opdi_slave_protocol.h>
-#include <opdi_config.h>
+#include "opdi_constants.h"
+#include "opdi_protocol.h"
+#include "opdi_slave_protocol.h"
+#include "opdi_config.h"
 
-#include <opdi_configspecs.h>
-#include <opdi_platformfuncs.h>
+#include "opdi_configspecs.h"
+#include "opdi_platformfuncs.h"
 
 #include "OPDI.h"
 
@@ -37,7 +37,24 @@
 // Main class for OPDI functionality
 //////////////////////////////////////////////////////////////////////////////////////////
 
+uint8_t OPDI::shutdownInternal(void) {
+	// free all ports
+	OPDI_Port *port = this->first_port;
+	this->first_port = NULL;
+	this->last_port = NULL;
+	while (port) {
+		OPDI_Port *next = port->next;
+		delete port;
+		port = next;
+	}
+
+	this->disconnect();
+	return OPDI_SHUTDOWN;
+}
+
 uint8_t OPDI::setup(const char *slaveName, int idleTimeout) {
+	this->shutdownRequested = false;
+
 	// initialize linked list of ports
 	this->first_port = NULL;
 	this->last_port = NULL;
@@ -78,11 +95,15 @@ uint8_t OPDI::addPort(OPDI_Port *port) {
 
 	this->updatePortData(port);
 
-	return opdi_add_port((opdi_Port*)port->data);
+	// do not add hidden ports to the device capabilities
+	if (!port->isHidden())
+		return opdi_add_port((opdi_Port*)port->data);
+	else
+		return OPDI_STATUS_OK;
 }
 
 // possible race conditions here, if one thread updates port data while the other retrieves it
-// how to avoid this problem?
+// generally not a problem because slaves are usually single-threaded
 void OPDI::updatePortData(OPDI_Port *port) {
 	// allocate port data structure if necessary
 	opdi_Port *oPort = (opdi_Port *)port->data;
@@ -90,6 +111,7 @@ void OPDI::updatePortData(OPDI_Port *port) {
 		oPort = (opdi_Port *)malloc(sizeof(opdi_Port));
 		port->data = oPort;
 		oPort->info.i = 0;
+		oPort->info.ptr = NULL;
 		oPort->next = NULL;
 	}
 	// update data
@@ -147,6 +169,14 @@ OPDI_Port *OPDI::findPortByID(const char *portID) {
 	return NULL;
 }
 
+void OPDI::preparePorts(void) {
+	OPDI_Port *port = this->first_port;
+	while (port) {
+		port->prepare();
+		port = port->next;
+	}
+}
+
 // convenience method
 uint8_t OPDI::start() {
 	return this->start(NULL);
@@ -172,6 +202,10 @@ uint8_t OPDI::start(uint8_t (*workFunction)()) {
 }
 
 uint8_t OPDI::waiting(uint8_t canSend) {
+	if (this->shutdownRequested) {
+		return this->shutdownInternal();
+	}
+
 	// a work function can be performed as long as canSend is true
 	if ((this->workFunction != NULL) && canSend) {
 		uint8_t result = this->workFunction();
@@ -179,17 +213,15 @@ uint8_t OPDI::waiting(uint8_t canSend) {
 			return result;
 	}
 
-	// ports' doWork function can be called as long as canSend is true
-	if (canSend) {
-		OPDI_Port *p = this->first_port;
-		// go through ports
-		while (p != NULL) {
-			// call doWork function, return errors immediately
-			uint8_t result = p->doWork();
-			if (result != OPDI_STATUS_OK)
-				return result;
-			p = p->next;
-		}
+	// call ports' doWork function
+	OPDI_Port *p = this->first_port;
+	// go through ports
+	while (p != NULL) {
+		// call doWork function, return errors immediately
+		uint8_t result = p->doWork(canSend);
+		if (result != OPDI_STATUS_OK)
+			return result;
+		p = p->next;
 	}
 
 	return OPDI_STATUS_OK;
@@ -200,6 +232,9 @@ uint8_t OPDI::isConnected() {
 }
 
 uint8_t OPDI::disconnect() {
+	if (!this->isConnected()) {
+		return OPDI_DISCONNECTED;
+	}
 	return opdi_disconnect();
 }
 
@@ -248,4 +283,9 @@ uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 	}
 
 	return OPDI_STATUS_OK;
+}
+
+void OPDI::shutdown(void) {
+	// set flag to indicate that the message processing should stop
+	this->shutdownRequested = true;
 }

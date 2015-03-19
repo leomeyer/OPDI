@@ -62,7 +62,9 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 	while (1) {
 		// call work function
 		if (canSend) {
-			Opdi->waiting(canSend);
+			uint8_t waitResult = Opdi->waiting(canSend);
+			if (waitResult != OPDI_STATUS_OK)
+				return waitResult;
 		}
 
 		if (connection_mode == MODE_TCP) {
@@ -210,8 +212,6 @@ int WindowsOPDID::HandleTCPConnection(int *csock) {
 	// initiate handshake
 	result = opdi_slave_start(&message, NULL, &protocol_callback);
 
-	// release the socket
-    free(csock);
     return result;
 }
 
@@ -236,7 +236,11 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
     if (hsock == -1) {
         throw Poco::ApplicationException("Error initializing socket", WSAGetLastError());
     }
-    
+
+	// make socket non-blocking
+	u_long iMode = 1;
+	ioctlsocket(hsock, FIONBIO, &iMode);
+
     p_int = (int*)malloc(sizeof(int));
     *p_int = 1;
     if ((setsockopt(hsock, SOL_SOCKET, SO_REUSEADDR, (char*)p_int, sizeof(int)) == -1)||
@@ -264,27 +268,43 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
     
 	// wait for connections
 
-    int *csock;
     sockaddr_in sadr;
     int addr_size = sizeof(SOCKADDR);
     
     while (true) {
 		if (Opdi->logVerbosity != QUIET)
 			this->log(std::string("Listening for a connection on port ") + this->to_string(port));
-        csock = (int *)malloc(sizeof(int));
-        
-        if ((*csock = accept(hsock, (SOCKADDR *)&sadr, &addr_size)) != INVALID_SOCKET) {
-			if (Opdi->logVerbosity != QUIET)
-				this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(sadr.sin_addr))).c_str());
 
-            err = HandleTCPConnection(csock);
+		while (true) {
+			int csock = accept(hsock, (SOCKADDR *)&sadr, &addr_size);
+
+			// error condition?
+			if (csock == INVALID_SOCKET) {
+				int lastError = WSAGetLastError();
+				if (lastError == WSAEWOULDBLOCK) {
+					// not yet connected; process housekeeping about every millisecond
+					uint8_t waitResult = this->waiting(false);
+					if (waitResult != OPDI_STATUS_OK)
+						return waitResult;
+					Sleep(1);
+				} else 
+					this->log(std::string("Error accepting connection: ") + this->to_string(lastError));
+			} else {
+				if (Opdi->logVerbosity != QUIET)
+					this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(sadr.sin_addr))).c_str());
+
+				err = HandleTCPConnection(&csock);
 			
-			if (Opdi->logVerbosity != QUIET)
-				this->log(std::string("Result: ") + this->getOPDIResult(err));
-        }
-        else {
-            this->log(std::string("Error accepting connection: ") + this->to_string(WSAGetLastError()));
-        }
+				// shutdown requested?
+				if (this->shutdownRequested)
+					return OPDI_SHUTDOWN;
+
+				if (Opdi->logVerbosity != QUIET)
+					this->log(std::string("Result: ") + this->getOPDIResult(err));
+
+				break;
+			}
+		}
 	}
 
 	return 0;

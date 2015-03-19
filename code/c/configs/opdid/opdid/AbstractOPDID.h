@@ -60,7 +60,8 @@ public:
 	enum LogVerbosity {
 		QUIET,
 		NORMAL,
-		VERBOSE
+		VERBOSE,
+		DEBUG
 	};
 
 	int logVerbosity;
@@ -115,28 +116,45 @@ public:
 
 	virtual void setGeneralConfiguration(Poco::Util::AbstractConfiguration *general);
 
+	/** Reads common properties from the configuration and configures the port. */
+	virtual void configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags);
+
+	/** Reads special properties from the configuration and configures the digital port. */
 	virtual void configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port);
 
 	virtual void setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
+	/** Reads special properties from the configuration and configures the analog port. */
 	virtual void configureAnalogPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_AnalogPort *port);
 
 	virtual void setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
+	/** Reads special properties from the configuration and configures the select port. */
 	virtual void configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_SelectPort *port);
 
 	virtual void setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
+	/** Reads special properties from the configuration and configures the dial port. */
+	virtual void configureDialPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DialPort *port);
+
+	virtual void setupEmulatedDialPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
+	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);
 
-	virtual void setupNodes(Poco::Util::AbstractConfiguration *config);
+	/** Starts enumerating the nodes of the Root section and configures the nodes. */
+	virtual void setupRoot(Poco::Util::AbstractConfiguration *config);
 
+	/** Sets up the connection from the specified configuration. */
 	virtual int setupConnection(Poco::Util::AbstractConfiguration *config);
 
+	/** Sets up a TCP listener and listens for incoming requests. This method does not return unless the program should exit. */
 	virtual int setupTCP(std::string interface_, int port) = 0;
 
+	/** Checks whether the supplied file is more recent than the current binary and logs a warning if yes. */
 	virtual void warnIfPluginMoreRecent(std::string driver);
 
+	/** Returns a pointer to the plugin object instance specified by the given driver. */
 	virtual IOPDIDPlugin *getPlugin(std::string driver) = 0;
 };
 

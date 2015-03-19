@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <sstream>
 
 #include "Poco/Exception.h"
@@ -15,7 +16,6 @@ class OPDI;
  */
 class OPDI_Port {
 
-friend class AbstractOPDID;
 friend class OPDI;
 
 protected:
@@ -33,16 +33,23 @@ protected:
 	int32_t flags;
 	void* ptr;
 
+	// If a port is hidden it is not included in the device capabilities as queried by the master.
+	bool hidden;
+
+	// Utility function for string conversion 
 	template <class T> std::string to_string(const T& t);
 
 	/** Called regularly by the OPDI system. Enables the port to do work.
 	 * Override this in subclasses to implement more complex functionality.
-	 * In this method, an implementation may send asynchronous messages to the master.
+	 * In this method, an implementation may send asynchronous messages to the master ONLY if canSend is true.
 	 * This includes messages like Resync, Refresh, Debug etc.
+	 * If canSend is 0 (= false), it means that there is no master is connected or the system is in the middle
+	 * of sending a message of its own. It is not safe to send messages if canSend is false!
 	 * Returning any other value than OPDI_STATUS_OK causes the message processing to exit.
 	 * This will usually signal a device error to the master or cause the master to time out.
+	 * This base class uses doWork to implement the self refresh timer.
 	 */
-	virtual uint8_t doWork();
+	virtual uint8_t doWork(uint8_t canSend);
 
 	// pointer to OPDI class instance
 	OPDI *opdi;
@@ -52,6 +59,25 @@ protected:
 
 	// linked list of ports - pointer to next port
 	OPDI_Port *next;
+
+	// A list of ports that should automatically refresh when the port state changes.
+	// How this state change is handled depends on the port implementation.
+	std::vector<std::string> autoRefreshPorts;
+
+	// the minimum time in milliseconds between self-refresh messages
+	uint32_t selfRefreshTime;
+	uint64_t lastSelfRefreshTime;
+
+	/** Locates the ports specified in autoRefreshPorts and refreshes them if a master is connected. 
+	* This method can be called by subclasses when an auto-refresh is required.
+	* Throws an exception if a specified port is not found.
+	*/
+	virtual void doAutoRefresh(void);
+
+	/** Performs a self refresh. Called by the doWork method when the self refresh timer has been reached.
+	* Subclasses may override this method to implement conditions for the self refresh or disable it altogether.
+	*/
+	virtual void doSelfRefresh(void);
 
 public:
 
@@ -79,6 +105,12 @@ public:
 
 	virtual const char *getID(void);
 
+	virtual const char *getType(void);
+
+	virtual void setHidden(bool hidden);
+
+	virtual bool isHidden(void);
+
 	/** Sets the label of the port. */
 	virtual void setLabel(const char *label);
 
@@ -92,6 +124,17 @@ public:
 
 	/** Causes the port to be refreshed by sending a refresh message to a connected master. */
 	virtual uint8_t refresh();
+
+	/** Sets the list of ports that should be auto-refreshed, as a space-delimited string. */
+	virtual void setAutoRefreshPorts(std::string portList);
+
+	/** Sets the minimum time in milliseconds between self-refresh messages. If this time is 0 (default),
+	* the self-refresh is disabled. */
+	virtual void setSelfRefreshTime(uint32_t timeInMs);
+
+	/** This method should be called just before the OPDI system is ready to start.
+	* It gives the port the chance to do necessary initializations. */
+	virtual void prepare();
 };
 
 template <class T> inline std::string OPDI_Port::to_string(const T& t) {
@@ -119,6 +162,7 @@ public:
 	// Initialize a digital port. Specify one of the OPDI_PORTDIR_CAPS* values for dircaps.
 	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
 	OPDI_AbstractDigitalPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
+
 	virtual ~OPDI_AbstractDigitalPort();
 
 	// pure virtual methods that need to be implemented by subclasses
@@ -149,7 +193,6 @@ public:
  */
 class OPDI_AbstractAnalogPort : public OPDI_Port {
 
-friend class AbstractOPDID;
 friend class OPDI;
 
 protected:
@@ -159,6 +202,7 @@ public:
 	// Initialize an analog port. Specify one of the OPDI_PORTDIR_CAPS* values for dircaps.
 	// Specify one or more of the OPDI_ANALOG_PORT_* values for flags, or'ed together, to specify possible settings.
 	OPDI_AbstractAnalogPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
+
 	virtual ~OPDI_AbstractAnalogPort();
 
 	// pure virtual methods that need to be implemented by subclasses
@@ -197,20 +241,22 @@ public:
  */
 class OPDI_DigitalPort : public OPDI_AbstractDigitalPort {
 
-friend class AbstractOPDID;
 friend class OPDI;
 
 protected:
 	uint8_t mode;
 	uint8_t line;
 
-	// protected constructor - for use by friend classes only
-	OPDI_DigitalPort(const char *id);
+	/** A digital port performs a self refresh only if it is in input mode.	*/
+	virtual void doSelfRefresh(void) override;
 
 public:
+	OPDI_DigitalPort(const char *id);
+
 	// Initialize a digital port. Specify one of the OPDI_PORTDIRCAPS_* values for dircaps.
 	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
 	OPDI_DigitalPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
+
 	virtual ~OPDI_DigitalPort();
 
 	virtual void setDirCaps(const char *dirCaps);
@@ -239,7 +285,6 @@ public:
  */
 class OPDI_AnalogPort : public OPDI_AbstractAnalogPort {
 
-friend class AbstractOPDID;
 friend class OPDI;
 
 protected:
@@ -248,11 +293,16 @@ protected:
 	uint8_t resolution;
 	int32_t value;
 
-	// protected constructor - for use by friend classes only
-	OPDI_AnalogPort(const char *id);
+	/** An analog port performs a self refresh only if it is in input mode.	*/
+	virtual void doSelfRefresh(void) override;
+	
+	virtual int32_t validateValue(int32_t value);
 
 public:
+	OPDI_AnalogPort(const char *id);
+
 	OPDI_AnalogPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
+
 	virtual ~OPDI_AnalogPort();
 
 	// mode = 0: input
@@ -280,7 +330,6 @@ public:
  */
 class OPDI_SelectPort : public OPDI_Port {
 
-friend class AbstractOPDID;
 friend class OPDI;
 
 protected:
@@ -288,16 +337,20 @@ protected:
 	uint16_t count;
 	uint16_t position;
 
-	// protected constructor - for use by friend classes only
-	OPDI_SelectPort(const char *id);
-
 	// frees the internal items memory
 	void freeItems();
+
+	/** A select port does not support self refreshing. */
+	virtual void doSelfRefresh(void) override;
+
 public:
+	OPDI_SelectPort(const char *id);
+
 	// Initialize a select port. The direction of a select port is output only.
 	// You have to specify a list of items that are the labels of the different select positions. The last element must be NULL.
 	// The items are copied into the privately managed data structure of this class.
 	OPDI_SelectPort(const char *id, const char *label, const char **items);
+
 	virtual ~OPDI_SelectPort();
 
 	// Copies the items into the privately managed data structure of this class.
@@ -319,7 +372,6 @@ public:
  */
 class OPDI_DialPort : public OPDI_Port {
 
-friend class AbstractOPDID;
 friend class OPDI;
 
 protected:
@@ -328,14 +380,20 @@ protected:
 	uint32_t step;
 	uint16_t position;
 
-	// protected constructor - for use by friend classes only
-	OPDI_DialPort(const char *id);
+	/** A select port does not support self refreshing. */
+	virtual void doSelfRefresh(void) override;
 
 public:
+	OPDI_DialPort(const char *id);
+
 	// Initialize a dial port. The direction of a dial port is output only.
 	// You have to specify boundary values and a step size.
 	OPDI_DialPort(const char *id, const char *label, int32_t minValue, int32_t maxValue, uint32_t step);
 	virtual ~OPDI_DialPort();
+
+	virtual void setMin(int32_t min);
+	virtual void setMax(int32_t max);
+	virtual void setStep(uint32_t step);
 
 	// function that handles position setting; position may be in the range of minValue..maxValue
 	virtual void setPosition(int32_t position);

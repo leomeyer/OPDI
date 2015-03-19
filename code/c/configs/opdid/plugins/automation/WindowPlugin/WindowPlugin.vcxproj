@@ -11,9 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{9C6FD69F-B7E2-4541-B381-653AF0AC7896}</ProjectGuid>
+    <ProjectGuid>{F5A67CB6-ECF0-41EB-BABF-AA80039CA285}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>windows_test</RootNamespace>
+    <RootNamespace>window</RootNamespace>
+    <ProjectName>WindowPlugin</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -50,13 +51,13 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;WINDOWS_TEST_EXPORTS;POCO_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../../../common;../../../../platforms;../../../../platforms/win32;../../../../libraries/POCO/Foundation/include;../../../../libraries/POCO/Util/include;../../../../common/cppwrapper;../../opdid;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;WINDOW_EXPORTS;POCO_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../../../../common;../../../../../platforms;../../../../../platforms/win32;../../../../../libraries/POCO/Foundation/include;../../../../../libraries/POCO/Util/include;../../../../../common/cppwrapper;../../../opdid;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>../../../../libraries/POCO/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../../../../../libraries/POCO/lib;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -67,7 +68,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;WINDOWS_TEST_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;WINDOW_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -77,12 +78,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\common\cppwrapper\OPDI_Ports.cpp" />
-    <ClCompile Include="..\..\..\..\platforms\win32\opdi_platformfuncs.c" />
-    <ClCompile Include="windows_test.cpp" />
+    <ClInclude Include="..\..\..\..\..\common\cppwrapper\OPDI_Ports.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\common\cppwrapper\OPDI_Ports.h" />
+    <ClCompile Include="..\..\..\..\..\common\cppwrapper\OPDI_Ports.cpp" />
+    <ClCompile Include="..\..\..\..\..\platforms\win32\opdi_platformfuncs.c" />
+    <ClCompile Include="WindowPlugin.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="readme.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

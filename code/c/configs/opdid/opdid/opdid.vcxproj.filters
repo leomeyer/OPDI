@@ -31,6 +31,12 @@
     <Filter Include="Headerdateien\platforms\win32">
       <UniqueIdentifier>{325682c2-3221-40f1-99e9-a07a446c2b58}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Quelldateien\platforms">
+      <UniqueIdentifier>{53659980-84cb-4d00-ad8f-dc5951d2b410}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\platforms\win32">
+      <UniqueIdentifier>{f13281fd-89fe-4b95-afbc-51d6d5114f61}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -107,9 +113,6 @@
     <ClCompile Include="..\..\..\common\opdi_strings.c">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\platforms\win32\opdi_platformfuncs.c">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\common\opdi_protocol.c">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
@@ -127,6 +130,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\common\opdi_message.c">
       <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\platforms\win32\opdi_platformfuncs.c">
+      <Filter>Quelldateien\platforms\win32</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
