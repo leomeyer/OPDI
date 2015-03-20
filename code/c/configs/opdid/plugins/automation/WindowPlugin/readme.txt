@@ -2,42 +2,69 @@ Window automation plugin for OPDID
 
 This plugin provides the functionality to operate motor-controlled windows.
 A window can be either fully closed or fully open. Intermediate states are not supported.
-The plugin provides a SelectPort to the device that has at least two items for the closed and open state.
+The plugin provides a SelectPort that has at least two items for the closed and open state.
 You must provide the usual [<SelectPort-ID>.Items] section for the labels of the states. The first
 of these items corresponds with the closed state of the window. The second item corresponds with
 the open state of the window. All other items disable the manual control of the window and switch
 it to automatic control.
 
-The window requires at least one sensor for the closed position. You have to specify a DigitalPort
-node for the plugin to read this sensor.
+The window requires a sensor to detect the closed position. You have to specify a DigitalPort
+node (in Input mode) for the plugin to read this sensor.
 
-The motor is controlled by two lines whose truth table is as follows:
+The motor is controlled by two lines MotorA and MotorB whose truth table is as follows:
 
 MotorA | MotorB | Motor action
 -------+--------+-----------------------
      0 |      0 | No movement
      1 |      0 | Turn in "open" direction
      0 |      1 | Turn in "close" direction
-     1 |      1 | No movement
+   (1) |    (1) | Not used
 
 Optionally, there is a third line called "Enable" which can be activated before the motor action
 should take place. This is useful e. g. if there is a separate power supply for the motor which should not
-be always active. The time between enabling/disabling and the motor action can be set (in seconds).
+be always active. The delay between enabling/disabling and the motor action can be set.
 
-The lines A and B and (optionally) Enable must be connected to DigitalPort nodes.
+The lines A and B and (optionally) Enable must be connected to DigitalPort nodes (in Output mode).
 
 As there is no end position sensor for the fully open position you have to experimentally determine
-a setting for the time the window needs to open completely. This time in milliseconds is specified in the
+a setting for the time the window needs to open completely. This time in milliseconds must be specified in the
 OpeningTime setting.
 
 The select port gives the user the choice about the window state. In the automatic control setting,
 the window state is controlled by the settings AutoOpen and AutoClose. You can specify any number of
-nodes in these settings which must correspond to DigitalPorts. If any port has a line state of High
-this will activate the automatic setting. The AutoClose setting takes precedence.
+nodes in these settings which must correspond to DigitalPorts (in Input mode). If any port has a 
+line state of High this will trigger opening or closing the window respectively. The AutoClose setting takes precedence.
+AutoOpen and AutoClose will only work in the automatic mode. In manual Closed and Open modes changes of
+these lines have no effect.
 
 Additionally you can specify one or more DigitalPort nodes that force the window to the closed state 
-if at least one node has a line state of High. This mechanism can be used to close the window in 
-case there is rain etc. There is currently no way to force a window to the open state.
+if at least one node switches to a line state of High. This mechanism can be used to close the window in 
+case there is rain etc. This mechanism also works when the mode has been set to "manual open". In this case,
+if a forced close happens the position of the select port will be set to Closed.
+There is currently no way to force a window to the open state.
+
+The window can detect some errors that may arise due to hardware failures or misconfigurations.
+An error occurs if 
+a) the window is opened and after the specified opening time the sensor still reads "Closed",
+b) the window is closed and after twice the specified opening time the sensor does not read "Closed".
+
+When closing the window is given more time (2 * opening time) until the error is detected (in case the window
+needs longer to close than to open).
+
+The error can be due to
+- sensor failure (switch misaligned, contact problem, cable interruption...)
+- motor failure (power failure, contact problem, motor damage...)
+- blocked window (doesn't fully close any more due to obstructions...)
+- misconfiguration (wrong sensor or motor ports specified)
+- etc.
+
+The error will be shown on the master. In case of error there is no meaningful positional setting of the
+select port any more. Also, automatic control, including the ForceClose mechanism, will be disabled.
+The window will remain in the error state until the software restarts or the select port position is changed
+to Closed or Open. This serves as a protection in case of some serious problem.
+
+If the position is manually set after an error state the window will try to put itself into the specified
+position. If this works the mode can again be set to automatic. Otherwise the window will return to the error state.
 
 Example section:
 
