@@ -158,6 +158,9 @@ public:
 
 	/** Returns a pointer to the plugin object instance specified by the given driver. */
 	virtual IOPDIDPlugin *getPlugin(std::string driver) = 0;
+
+	virtual uint8_t waiting(uint8_t canSend) override;
+
 };
 
 

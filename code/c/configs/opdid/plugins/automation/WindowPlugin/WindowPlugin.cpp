@@ -288,6 +288,7 @@ void WindowPort::setTargetState(int state) {
 }
 
 uint8_t WindowPort::doWork(uint8_t canSend)  {
+	OPDI_SelectPort::doWork(canSend);
 
 #define CHECK_OPEN															\
 	if (this->targetState == OPEN) {										\
@@ -443,7 +444,8 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 
 			// sensor still closed? (error condition)
 			if (this->isSensorClosed()) {
-				opdid->log(std::string(this->id) + ": Warning: Closing sensor signal still present");
+				if (opdid->logVerbosity > AbstractOPDID::QUIET)
+					opdid->log(std::string(this->id) + ": Warning: Closing sensor signal still present");
 				// enable delay specified?
 				if (this->enableDelay > 0) {
 					// need to disable first
@@ -497,7 +499,8 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			// stop motor
 			this->setMotorOff();
 
-			opdid->log(std::string(this->id) + ": Warning: Closing sensor signal not detected");
+			if (opdid->logVerbosity > AbstractOPDID::QUIET)
+				opdid->log(std::string(this->id) + ": Warning: Closing sensor signal not detected");
 
 			// enable delay specified?
 			if (this->enableDelay > 0) {

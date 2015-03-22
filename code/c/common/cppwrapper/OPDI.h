@@ -38,6 +38,8 @@ class OPDI {
 protected:
 	// indicates that the OPDI system should shutdown
 	bool shutdownRequested;
+	// internal flag for the methods that possibly send messages
+	uint8_t canSend;
 
 	// list pointers
 	OPDI_Port *first_port;

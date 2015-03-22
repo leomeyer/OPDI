@@ -314,7 +314,6 @@ void OPDI_DigitalPort::setMode(uint8_t mode) {
 	this->doAutoRefresh();
 }
 
-// function that handles the set line command (opdi_set_digital_port_line)
 void OPDI_DigitalPort::setLine(uint8_t line) {
 	if (this->mode != 3)
 		throw PortError("Cannot set digital port line in input mode");

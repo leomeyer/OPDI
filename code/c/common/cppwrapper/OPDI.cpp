@@ -213,6 +213,9 @@ uint8_t OPDI::waiting(uint8_t canSend) {
 			return result;
 	}
 
+	// remember canSend flag
+	this->canSend = canSend;
+
 	// call ports' doWork function
 	OPDI_Port *p = this->first_port;
 	// go through ports
@@ -232,20 +235,20 @@ uint8_t OPDI::isConnected() {
 }
 
 uint8_t OPDI::disconnect() {
-	if (!this->isConnected()) {
+	if (!this->isConnected() || !this->canSend) {
 		return OPDI_DISCONNECTED;
 	}
 	return opdi_disconnect();
 }
 
 uint8_t OPDI::reconfigure() {
-	if (!this->isConnected())
+	if (!this->isConnected() || !this->canSend)
 		return OPDI_DISCONNECTED;
 	return opdi_reconfigure();
 }
 
 uint8_t OPDI::refresh(OPDI_Port **ports) {
-	if (!this->isConnected())
+	if (!this->isConnected() || !this->canSend)
 		return OPDI_DISCONNECTED;
 	// target array of internal ports to refresh
 	opdi_Port **iPorts = new opdi_Port*[OPDI_MAX_MESSAGE_PARTS + 1];

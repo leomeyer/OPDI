@@ -281,7 +281,8 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 	// ports can be hidden
 	port->setHidden(portConfig->getBool("Hidden", false));
 
-	std::string portLabel = this->getConfigString(portConfig, "Label", "", false);
+	// the default label is the port ID
+	std::string portLabel = this->getConfigString(portConfig, "Label", port->getID(), false);
 	port->setLabel(portLabel.c_str());
 
 	std::string portDirCaps = this->getConfigString(portConfig, "DirCaps", "", false);
@@ -612,6 +613,26 @@ void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
 			this->log("Warning: Plugin module " + driver + " is older than the main binary; possible ABI conflict! In case of strange errors please recompile the plugin!");
 	}
 }
+
+
+uint8_t AbstractOPDID::waiting(uint8_t canSend) {
+
+	// exception-safe processing
+	try {
+		return OPDI::waiting(canSend);
+	} catch (Poco::Exception &pe) {
+		this->log("Unhandled exception during wait: " + pe.message());
+	} catch (std::exception &e) {
+		this->log(std::string("Unhandled exception during wait: ") + e.what());
+	} catch (...) {
+		this->log(std::string("Unknown error during wait: "));
+	}
+
+	// TODO decide: ignore errors or abort?
+
+	return OPDI_STATUS_OK;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The following functions implement the glue code between C and C++.
