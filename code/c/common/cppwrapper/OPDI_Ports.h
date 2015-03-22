@@ -147,8 +147,6 @@ template <class T> inline std::string OPDI_Port::to_string(const T& t) {
 // Abstract port definitions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef OPDI_NO_DIGITAL_PORTS
-
 /** Defines a general digital port.
  *
  */
@@ -183,10 +181,6 @@ public:
 	virtual void getState(uint8_t *mode, uint8_t *line) = 0;
 };
 
-
-#endif // OPDI_NO_DIGITAL_PORTS
-
-#ifndef OPDI_NO_ANALOG_PORTS
 
 /** Defines a general analog port.
  *
@@ -229,13 +223,9 @@ public:
 	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) = 0;
 };
 
-#endif // OPDI_NO_ANALOG_PORTS
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Concrete port definitions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#ifndef OPDI_NO_DIGITAL_PORTS
 
 /** Defines a digital port.
  */
@@ -277,10 +267,6 @@ public:
 	virtual void getState(uint8_t *mode, uint8_t *line);
 };
 
-#endif // OPDI_NO_DIGITAL_PORTS
-
-#ifndef OPDI_NO_ANALOG_PORTS
-
 /** Defines an analog port.
  */
 class OPDI_AnalogPort : public OPDI_AbstractAnalogPort {
@@ -321,10 +307,6 @@ public:
 	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value);
 };
 
-#endif // OPDI_NO_ANALOG_PORTS
-
-#ifndef OPDI_NO_SELECT_PORTS
-
 /** Defines a select port.
  *
  */
@@ -363,10 +345,6 @@ public:
 	virtual void getState(uint16_t *position);
 };
 
-#endif // OPDI_NO_SELECT_PORTS
-
-#ifndef OPDI_NO_DIAL_PORTS
-
 /** Defines a dial port.
  *
  */
@@ -401,6 +379,3 @@ public:
 	// function that fills in the current port state
 	virtual void getState(int32_t *position);
 };
-
-#endif // OPDI_NO_DIAL_PORTS
-

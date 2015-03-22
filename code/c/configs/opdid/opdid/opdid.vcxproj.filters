@@ -96,6 +96,9 @@
     <ClInclude Include="..\..\..\platforms\win32\opdi_platformtypes.h">
       <Filter>Headerdateien\platforms\win32</Filter>
     </ClInclude>
+    <ClInclude Include="OPDID_Ports.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -133,6 +136,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\platforms\win32\opdi_platformfuncs.c">
       <Filter>Quelldateien\platforms\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="OPDID_Ports.cpp">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
