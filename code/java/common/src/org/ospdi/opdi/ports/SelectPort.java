@@ -97,12 +97,14 @@ public class SelectPort extends Port {
 		return position;
 	}
 	
-	public void setPosition(int pos) throws ProtocolException, TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException {
+	public boolean setPosition(int pos) throws ProtocolException, TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException {
 		clearError();
 		try {
 			getProtocol().setPosition(this, pos);
+			return true;
 		} catch (PortErrorException e) {
 			handlePortError(e);
+			return false;
 		}
 	}
 	

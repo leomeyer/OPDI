@@ -40,8 +40,6 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 	SelectPort sPort;
 
 	// view state values
-	boolean stateError;
-	String errorText;
 	int position = -1;
 
 	private View cachedView;
@@ -98,20 +96,14 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 	
 	protected void queryState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 		position = sPort.getPosition();
-        stateError = sPort.hasError();
-        errorText = sPort.getErrorMessage();
 	}
 	
 	@Override
 	public void startPerformAction() {
-		// reset error state
-		stateError = false;
 	}
 	
 	@Override
 	public void setError(Throwable t) {
-		stateError = true;
-		errorText = t.getMessage();
 	}
 	
 	@Override
@@ -139,13 +131,13 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 	
 	// must be called on the UI thread!
 	public void updateState() {
-		if (stateError) {
+		if (sPort.hasError()) {
 			// indicate an error
 			if (ivPortIcon != null) {
 				ivPortIcon.setImageDrawable(context.getResources().getDrawable(R.drawable.select_port_error));
 				ivPortIcon.setOnClickListener(null);
 			}
-			tvBottomtext.setText(errorText);
+			tvBottomtext.setText(sPort.getErrorMessage());
 		} else {
 			// set the proper icon
 			Drawable portIcon = context.getResources().getDrawable(R.drawable.select_port);
@@ -211,9 +203,12 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 						return SelectPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(SelectPortViewAdapter.this) {
 							@Override
 							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
-								// set mode
-								sPort.setPosition(mItem.getNumericShortcut());
-								position = sPort.getPosition();
+								// set position
+								if (sPort.setPosition(mItem.getNumericShortcut()))
+									position = sPort.getPosition();
+								else
+									// error state; no position is selected
+									position = -1;
 							}
 						});
 					}
