@@ -330,11 +330,11 @@ GertboardButton::GertboardButton(AbstractOPDID *opdid, const char *ID, int pin) 
 
 	this->lastQueryTime = opdi_get_time_ms();
 	this->lastQueriedState = this->queryState();
-	this->queryInterval = 100;	// milliseconds
+	this->queryInterval = 10;	// milliseconds
 	// set the refresh interval to a reasonably high number
 	// to avoid dos'ing the master with refresh requests in case
 	// the button pin toggles too fast
-	this->refreshInterval = 100;
+	this->refreshInterval = 10;
 }
 
 // main work function of the button port - regularly called by the OPDID system
@@ -349,9 +349,10 @@ uint8_t GertboardButton::doWork(uint8_t canSend) {
 
 	// query now
 	this->lastQueryTime = opdi_get_time_ms();
-
+	uint8_t line = this->queryState();
 	// current state different from last submitted state?
-	if (this->lastQueriedState != this->queryState()) {
+	if (this->lastQueriedState != line) {
+		this->lastQueriedState = line;
 //		if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
 //			this->opdid->log(std::string("Gertboard Button change detected: ") + this->id);
 		// refresh interval not exceeded?
@@ -359,6 +360,7 @@ uint8_t GertboardButton::doWork(uint8_t canSend) {
 			this->lastRefreshTime = opdi_get_time_ms();
 			// notify master to refresh this port's state
 			this->refresh();
+			this->lastRefreshTime = opdi_get_time_ms();
 			// auto-refresh additional ports
 			this->doAutoRefresh();
 		}
@@ -403,8 +405,7 @@ void GertboardButton::setFlags(int32_t flags) {
 void GertboardButton::getState(uint8_t *mode, uint8_t *line) {
 	*mode = this->mode;
 	// remember queried line state
-	this->lastQueriedState = *line = this->queryState();
-	this->lastRefreshTime = opdi_get_time_ms();
+	*line = this->lastQueriedState;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

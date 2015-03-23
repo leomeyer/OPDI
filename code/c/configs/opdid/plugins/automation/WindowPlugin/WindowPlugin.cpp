@@ -184,6 +184,10 @@ void WindowPort::prepare() {
 	this->findDigitalPorts("AutoOpen", this->autoOpen, autoOpenPorts);
 	this->findDigitalPorts("AutoClose", this->autoClose, autoClosePorts);
 	this->findDigitalPorts("ForceClose", this->forceClose, forceClosePorts);
+	
+	// no enable port? assume always enabled
+	if (this->enablePort == NULL)
+		this->isMotorEnabled = true;
 }
 
 uint8_t WindowPort::getInputPortLine(OPDI_DigitalPort *port) {
@@ -221,6 +225,8 @@ bool WindowPort::isSensorClosed(void) {
 }
 
 void WindowPort::enableMotor(void) {
+	if (this->enablePort == NULL)
+		return;
 	if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		opdid->log(std::string(this->id) + ": Enabling motor");
 	this->setOutputPortLine(this->enablePort, (this->enableActive == 1 ? 1 : 0));
@@ -228,6 +234,8 @@ void WindowPort::enableMotor(void) {
 }
 
 void WindowPort::disableMotor(void) {
+	if (this->enablePort == NULL)
+		return;
 	if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		opdid->log(std::string(this->id) + ": Disabling motor");
 	this->setOutputPortLine(this->enablePort, (this->enableActive == 1 ? 0 : 1));
@@ -444,7 +452,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			this->setCurrentState(OPENING);
 		} else {
 			// motor delay time up?
-			if (!this->isMotorOn && (opdi_get_time_ms() - this->delayTimer > this->motorDelay)) {
+			if (this->isMotorOn && (opdi_get_time_ms() - this->delayTimer > this->motorDelay)) {
 				// stop motor immediately
 				this->setMotorOff();
 			}
