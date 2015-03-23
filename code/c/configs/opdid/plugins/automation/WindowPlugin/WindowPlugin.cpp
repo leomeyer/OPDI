@@ -592,7 +592,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			while (pi != this->autoClosePorts.end()) {
 				if (this->getInputPortLine(*pi) == 1) {
 					// avoid repeating messages
-					if (target != CLOSED) {
+					if (this->targetState != CLOSED) {
 						if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 							opdid->log(std::string(this->id) + ": AutoClose detected from port: " + (*pi)->getID());
 					}
@@ -607,7 +607,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 				while (pi != this->autoOpenPorts.end()) {
 					if (this->getInputPortLine(*pi) == 1) {
 						// avoid repeating messages
-						if (target != OPEN) {
+						if (this->targetState != OPEN) {
 							if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 								opdid->log(std::string(this->id) + ": AutoOpen detected from port: " + (*pi)->getID());
 						}

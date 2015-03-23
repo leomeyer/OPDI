@@ -14,7 +14,7 @@
 
 #include "AbstractOPDID.h"
 #include "OPDI_Ports.h"
-//#include "OPDID_Ports.h"
+#include "OPDID_Ports.h"
 
 #define DEFAULT_IDLETIMEOUT_MS	180000
 #define DEFAULT_TCP_PORT		13110
@@ -487,12 +487,11 @@ void AbstractOPDID::setupEmulatedDialPort(Poco::Util::AbstractConfiguration *por
 void AbstractOPDID::setupDigitalLogicPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
 	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up DigitalLogic port: " + port);
-/*
+
 	OPDID_DigitalLogicPort *dlPort = new OPDID_DigitalLogicPort(this, port.c_str());
 	dlPort->configure(portConfig);
 
 	this->addPort(dlPort);
-*/
 }
 
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
