@@ -259,7 +259,7 @@ void OPDI_DigitalPort::setDirCaps(const char *dirCaps) {
 
 	// adjust mode to fit capabilities
 	// set mode depending on dircaps and flags
-	if (!strcmp(dirCaps, OPDI_PORTDIRCAP_INPUT) || !strcmp(dirCaps, OPDI_PORTDIRCAP_BIDI))  {
+	if ((dirCaps[0] == OPDI_PORTDIRCAP_INPUT[0]) || (dirCaps[0] == OPDI_PORTDIRCAP_BIDI[0]))  {
 		if ((flags & OPDI_DIGITAL_PORT_PULLUP_ALWAYS) == OPDI_DIGITAL_PORT_PULLUP_ALWAYS)
 			mode = 1;
 		else
