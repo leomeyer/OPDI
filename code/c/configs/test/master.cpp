@@ -321,16 +321,26 @@ void print_devicecaps(BasicDeviceCapabilities* bdc)
 	}
 }
 
+DigitalPort *checkDigitalPort(std::string cmd, OPDIPort *port) {
+	if (port->getType() != PORTTYPE_DIGITAL) {
+		output << "Expected digital port for command: " << cmd << std::endl;
+		return NULL;
+	}
+	return (DigitalPort *)port;
+}
+
+SelectPort *checkSelectPort(std::string cmd, OPDIPort *port) {
+	if (port->getType() != PORTTYPE_SELECT) {
+		output << "Expected select port for command: " << cmd << std::endl;
+		return NULL;
+	}
+	return (SelectPort *)port;
+}
+
 bool digital_port_command(std::string cmd, OPDIPort* port)
 {
 	const char *part;
 
-	if (port->getType() != PORTTYPE_DIGITAL) {
-		output << "Expected digital port for command: " << cmd << std::endl;
-		return false;
-	}
-
-	DigitalPort* thePort = (DigitalPort*)port;
 
 	if (cmd == OPDI_setDigitalPortMode) {
 		part = strtok(NULL, " ");
@@ -352,6 +362,9 @@ bool digital_port_command(std::string cmd, OPDIPort* port)
 		if (strcmp(part, OPDI_QUOTE(OPDI_DIGITAL_MODE_OUTPUT)) == 0)
 			dpm = OPDI_DIGITAL_MODE_OUTPUT;
 
+		DigitalPort* thePort = checkDigitalPort(cmd, port);
+		if (thePort == NULL)
+			return false;
 		thePort->setMode(dpm);
 		return true;
 	} else
@@ -369,11 +382,37 @@ bool digital_port_command(std::string cmd, OPDIPort* port)
 		if (strcmp(part, OPDI_QUOTE(OPDI_DIGITAL_LINE_HIGH)) == 0)
 			dpl = OPDI_DIGITAL_LINE_HIGH;
 
+		DigitalPort* thePort = checkDigitalPort(cmd, port);
+		if (thePort == NULL)
+			return false;
 		thePort->setLine(dpl);
 		return true;
 	} else 
 	if (cmd == OPDI_getDigitalPortState)	{
+		DigitalPort* thePort = checkDigitalPort(cmd, port);
+		if (thePort == NULL)
+			return false;
 		thePort->getPortState();
+		return true;
+	} else 
+	if (cmd == OPDI_getSelectPortState)	{
+		SelectPort* thePort = checkSelectPort(cmd, port);
+		if (thePort == NULL)
+			return false;
+		thePort->getPortState();
+	} else 
+	if (cmd == OPDI_setSelectPortPosition)	{
+		part = strtok(NULL, " ");
+		if (part == NULL) {
+			output << "Error: Select port position expected" << std::endl;
+			return false;
+		}
+		uint16_t pos = atoi(part);
+
+		SelectPort* thePort = checkSelectPort(cmd, port);
+		if (thePort == NULL)
+			return false;
+		thePort->setPosition(pos);
 		return true;
 	}
 	output << "Command not implemented: " << cmd << std::endl;
@@ -420,7 +459,8 @@ bool port_command(const char *part)
 	}
 
 	// check command
-	if (cmd == OPDI_setDigitalPortMode || cmd == OPDI_setDigitalPortLine || cmd == OPDI_getDigitalPortState)
+	if (cmd == OPDI_setDigitalPortMode || cmd == OPDI_setDigitalPortLine || cmd == OPDI_getDigitalPortState || 
+		cmd == OPDI_getSelectPortState || cmd == OPDI_setSelectPortPosition)
 	{
 		if (digital_port_command(cmd, port))
 		{
@@ -542,6 +582,9 @@ int start_master()
 				port_command(part);
 			} else 
 			if (strcmp(part, OPDI_getDigitalPortState) == 0) {
+				port_command(part);
+			} else 
+			if (strcmp(part, OPDI_setSelectPortPosition) == 0) {
 				port_command(part);
 			} else 
 			if (strcmp(part, "disconnect") == 0) {

@@ -11,6 +11,7 @@
 #include "opdi_OPDIPort.h"
 #include "opdi_BasicDeviceCapabilities.h"
 #include "opdi_DigitalPort.h"
+#include "opdi_SelectPort.h"
 
 /** This interface specifies the basic protocol that must be supported by all devices.
  * 
@@ -195,7 +196,7 @@ public:
 	 * @throws DeviceException
 	 * @throws ProtocolException
 	 */
-//	String getLabel(SelectPort selectPort, int pos) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
+	virtual std::string getLabel(SelectPort *selectPort, int pos) = 0;
 	
 	/** Retrieves the current position setting of a select port as a zero-based integer value.
 	 * 
@@ -207,7 +208,7 @@ public:
 	 * @throws DeviceException
 	 * @throws ProtocolException
 	 */
-//	void getPosition(SelectPort selectPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
+	virtual void getPortState(SelectPort *selectPort) = 0;
 
 	/** Sets the current position setting of a select port to the given value.
 	 * Returns the current setting.
@@ -219,7 +220,7 @@ public:
 	 * @throws DeviceException
 	 * @throws ProtocolException
 	 */
-//	void setPosition(SelectPort selectPort, int pos) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
+	virtual void setPosition(SelectPort *selectPort, uint16_t pos) = 0;
 
 	/** Retrieves the current position setting of a dial port.
 	 * 

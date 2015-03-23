@@ -51,6 +51,9 @@ protected:
 
 	void expectDigitalPortState(DigitalPort* port, int channel);
 
+	void expectSelectPortPosition(SelectPort* port, int channel);
+
+	std::string expectSelectPortLabel(SelectPort* port, int channel);
 public:
 
 	BasicProtocol(IDevice* device);
@@ -237,7 +240,7 @@ public:
 	 * @throws DeviceException
 	 * @throws ProtocolException
 	 */
-//	String getLabel(SelectPort selectPort, int pos) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
+	virtual std::string getLabel(SelectPort *selectPort, int pos) override;
 	
 	/** Retrieves the current position setting of a select port as a zero-based integer value.
 	 * 
@@ -249,7 +252,7 @@ public:
 	 * @throws DeviceException
 	 * @throws ProtocolException
 	 */
-//	void getPosition(SelectPort selectPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
+	virtual void getPortState(SelectPort *selectPort) override;
 
 	/** Sets the current position setting of a select port to the given value.
 	 * Returns the current setting.
@@ -261,7 +264,7 @@ public:
 	 * @throws DeviceException
 	 * @throws ProtocolException
 	 */
-//	void setPosition(SelectPort selectPort, int pos) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
+	virtual void setPosition(SelectPort *selectPort, uint16_t pos) override;
 
 	/** Retrieves the current position setting of a dial port.
 	 * 

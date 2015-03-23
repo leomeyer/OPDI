@@ -137,8 +137,5 @@
     <ClCompile Include="..\..\..\platforms\win32\opdi_platformfuncs.c">
       <Filter>Quelldateien\platforms\win32</Filter>
     </ClCompile>
-    <ClCompile Include="OPDID_Ports.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

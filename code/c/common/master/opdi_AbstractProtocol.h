@@ -1,6 +1,8 @@
 #ifndef __OPDI_ABSTRACTPROTOCOL_H
 #define __OPDI_ABSTRACTPROTOCOL_H
 
+#include <sstream>
+
 #include <Poco/Exception.h>
 
 #include "opdi_protocol_constants.h"
@@ -112,7 +114,16 @@ protected:
 	 */
 	virtual void disconnect();
 
+	
+	template <class T> std::string to_string(const T& t);
 };
+
+
+template <class T> inline std::string AbstractProtocol::to_string(const T& t) {
+	std::stringstream ss;
+	ss << t;
+	return ss.str();
+}
 
 #endif
 

@@ -272,3 +272,59 @@ void BasicProtocol::getPortState(DigitalPort* aDigitalPort)
 }
 
 
+void BasicProtocol::expectSelectPortPosition(SelectPort* port, int channel)
+{
+	OPDIMessage* m = expect(channel, DEFAULT_TIMEOUT);
+		
+	int PREFIX = 0;
+	int ID = 1;
+	int POSITION = 2;
+	unsigned int PART_COUNT = 3;
+		
+	std::vector<std::string> parts;
+	StringTools::split(m->getPayload(), SEPARATOR, parts);
+	if (parts.size() != PART_COUNT)
+		throw ProtocolException("invalid number of message parts");
+	if (parts[PREFIX] != OPDI_selectPortState)
+		throw ProtocolException(std::string("unexpected reply, expected: ") + OPDI_selectPortState);
+	if (parts[ID] != port->getID())
+		throw ProtocolException("wrong port ID");
+
+	// set port state
+	port->setPortPosition(*this, (uint16_t)AbstractProtocol::parseInt(parts[POSITION], "position", 0, port->getMaxPosition()));
+}
+
+std::string BasicProtocol::expectSelectPortLabel(SelectPort* port, int channel)
+{
+	OPDIMessage* m = expect(channel, DEFAULT_TIMEOUT);
+		
+	int PREFIX = 0;
+	int ID = 1;
+	int POSITION = 2;
+	int LABEL = 3;
+	unsigned int PART_COUNT = 4;
+		
+	std::vector<std::string> parts;
+	StringTools::split(m->getPayload(), SEPARATOR, parts);
+	if (parts.size() != PART_COUNT)
+		throw ProtocolException("invalid number of message parts");
+	if (parts[PREFIX] != OPDI_selectPortLabel)
+		throw ProtocolException(std::string("unexpected reply, expected: ") + OPDI_digitalPortState);
+	if (parts[ID] != port->getID())
+		throw ProtocolException("wrong port ID");
+
+	return parts[LABEL];
+}
+
+std::string BasicProtocol::getLabel(SelectPort *selectPort, int pos) {
+
+	return expectSelectPortLabel(selectPort, send(new OPDIMessage(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_getSelectPortLabel, selectPort->getID(), to_string((int)pos)))));
+}
+
+void BasicProtocol::getPortState(SelectPort *selectPort) {
+	expectSelectPortPosition(selectPort, send(new OPDIMessage(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_getSelectPortState, selectPort->getID()))));
+}
+
+void BasicProtocol::setPosition(SelectPort *selectPort, uint16_t pos) {
+	expectSelectPortPosition(selectPort, send(new OPDIMessage(getSynchronousChannel(), StringTools::join(SEPARATOR, OPDI_setSelectPortPosition, selectPort->getID(), to_string((int)pos)))));
+}

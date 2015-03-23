@@ -398,7 +398,7 @@ static uint8_t send_select_port_label(channel_t channel, opdi_Port *port, const 
 	if (result != OPDI_STATUS_OK)
 		return result;
 
-	// count labels up to
+	// count labels up to specified position
 	i = 0;
 	while (i < pos && labels[i])
 		i++;

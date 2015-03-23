@@ -8,8 +8,8 @@ of these items corresponds with the closed state of the window. The second item 
 the open state of the window. All other items disable the manual control of the window and switch
 it to automatic control.
 
-The window requires a sensor to detect the closed position. You have to specify a DigitalPort
-node (in Input mode) for the plugin to read this sensor.
+The window supports an optional sensor to detect the closed position. You can specify a DigitalPort
+node for the plugin to treat as a sensor input.
 
 The motor is controlled by two lines MotorA and MotorB whose truth table is as follows:
 
@@ -20,15 +20,22 @@ MotorA | MotorB | Motor action
      0 |      1 | Turn in "close" direction
    (1) |    (1) | Not used
 
-Optionally, there is a third line called "Enable" which can be activated before the motor action
+You can specify that the line levels should be inverted by setting MotorActive to 0.
+
+Optionally, there is a third line called Enable which can be activated before the motor action
 should take place. This is useful e. g. if there is a separate power supply for the motor which should not
-be always active. The delay between enabling/disabling and the motor action can be set.
+be always active. The delay between enabling/disabling and the motor action can be set using EnableDelay.
+You can specify that the line level should be inverted by setting EnableActive to 0.
 
 The lines A and B and (optionally) Enable must be connected to DigitalPort nodes (in Output mode).
 
 As there is no end position sensor for the fully open position you have to experimentally determine
 a setting for the time the window needs to open completely. This time in milliseconds must be specified in the
-OpeningTime setting.
+OpeningTime setting. If you are using no closing sensor you should also set the ClosingTime setting.
+If this setting is not specified it is set to the value of OpeningTime.
+
+After detecting a closed sensor the motor can remain active for some time to ensure that the window is fully closed.
+Use the MotorDelay setting to specify this time in milliseconds. This value must be lower or equal to EnableDelay.
 
 The select port gives the user the choice about the window state. In the automatic control setting,
 the window state is controlled by the settings AutoOpen and AutoClose. You can specify any number of

@@ -10,11 +10,11 @@ OPDIPort* PortFactory::createPort(IBasicProtocol& protocol, std::vector<std::str
 	// the "magic" in the first part decides about the port type		
 	if (parts[0] == OPDI_digitalPort)
 		return new DigitalPort(protocol, parts);
+	else if (parts[0] == OPDI_selectPort)
+		return new SelectPort(protocol, parts);
 /*
 	else if (parts[0].equals(AnalogPort.MAGIC))
 		return new AnalogPort(protocol, parts);
-	else if (parts[0].equals(SelectPort.MAGIC))
-		return new SelectPort(protocol, parts);
 	else if (parts[0].equals(DialPort.MAGIC))
 		return new DialPort(protocol, parts);
 	else if (parts[0].equals(StreamingPort.MAGIC))
