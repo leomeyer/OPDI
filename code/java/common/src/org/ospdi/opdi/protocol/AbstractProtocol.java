@@ -74,6 +74,7 @@ public abstract class AbstractProtocol {
 	 * 
 	 */
 	protected Message expect(long channel, int timeout, IAbortable abortable) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException, PortErrorException {
+		
 		if (channel < 0)
 			throw new DisconnectedException();
 		Queue<Message> queue = device.getInputMessages();

@@ -603,7 +603,8 @@ public abstract class MessageQueueDevice implements IDevice {
         		int terminatorPos = -1;
         		for (int i = 0; i < bytes; bytesReceived++, i++) {
         			message[bytesReceived] = buffer[i];
-        			if (buffer[i] == Message.TERMINATOR)
+    				// terminator position not yet set?
+        			if ((buffer[i] == Message.TERMINATOR) && (terminatorPos < 0))
         				terminatorPos = bytesReceived;
         		}
         		

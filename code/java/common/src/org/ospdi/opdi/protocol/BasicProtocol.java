@@ -1,6 +1,9 @@
 package org.ospdi.opdi.protocol;
 
+import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Queue;
 import java.util.concurrent.TimeoutException;
 
 import org.ospdi.opdi.devices.DeviceException;
@@ -15,6 +18,7 @@ import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.ports.PortFactory;
 import org.ospdi.opdi.ports.SelectPort;
 import org.ospdi.opdi.ports.StreamingPort;
+import org.ospdi.opdi.protocol.AbstractProtocol.IAbortable;
 import org.ospdi.opdi.utils.Strings;
 
 
@@ -44,6 +48,9 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	
 	private Integer currentChannel = CHANNEL_LOWEST_SYNCHRONOUS - 1;
 	private Hashtable<Integer, StreamingPort> boundStreamingPorts = new Hashtable<Integer, StreamingPort>();
+	
+	protected boolean expectingMessage;
+	protected Queue<Message> messagesToDispatch = new ArrayDeque<Message>();
 	
 	/** Returns a new unique channel for a new protocol.
 	 * 
@@ -146,6 +153,33 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		}).start();
 	}
 
+	protected Message expect(long channel, int timeout, IAbortable abortable) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException, PortErrorException {
+		try {
+			// set flag: expecting a message
+			expectingMessage = true;
+			
+			return super.expect(channel, timeout, abortable);
+			
+		} finally {
+			expectingMessage = false;
+			
+			// ignore duplicate messages
+			HashSet<String> messages = new HashSet<String>();
+			// dispatch messages collected during expect
+			while (!messagesToDispatch.isEmpty()) {
+				Message m = messagesToDispatch.poll();
+				if (messages.contains(m.toString()))
+					continue;
+				messages.add(m.toString());
+				try {
+					dispatch(m);
+				} catch (Throwable t) {
+					// ignore all errors here
+				}
+			}
+		}
+	}
+	
 	@Override
 	public boolean dispatch(Message message) {
 		
@@ -156,44 +190,53 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 				// disconnect the device (this sends a disconnect message back)
 				device.disconnect(false);
 			}
-			else
-			if (message.getPayload().equals(RECONFIGURE)) {
-				// clear cached device capabilities
-				deviceCaps = null;
-				// reset bound streaming ports (reconfigure on the device unbinds streaming ports)
-				synchronized (boundStreamingPorts) {
-					for (StreamingPort sPort: boundStreamingPorts.values()) {
-						sPort.portUnbound(this);
-					}
-					boundStreamingPorts.clear();
-				}
-				device.receivedReconfigure();
-			}
 			else {
-				// split message parts
-				String[] parts = Strings.split(message.getPayload(), SEPARATOR);
+				// messages other than DISCONNECT are processed later in case
+				// we're expecting a message
+
+				if (expectingMessage) {
+					messagesToDispatch.add(message);
+					return true;
+				}
 				
-				// received a debug message?
-				if (parts[0].equals(DEBUG)) {
-					device.receivedDebug(Strings.join(1, SEPARATOR, (Object[])parts));
-				} else
-				if (parts[0].equals(REFRESH)) {
-					// remaining components are port IDs
-					String[] portIDs = new String[parts.length - 1];
-					System.arraycopy(parts, 1, portIDs, 0, parts.length - 1);
-					device.receivedRefresh(portIDs);
-				} else
-				if (parts[0].equals(ERROR)) {
-					// remaining optional components contain the error information
-					int error = 0;
-					String text = null;
-					if (parts.length > 1) {
-						error = Integer.parseInt(parts[1]);
+				if (message.getPayload().equals(RECONFIGURE)) {
+					// clear cached device capabilities
+					deviceCaps = null;
+					// reset bound streaming ports (reconfigure on the device unbinds streaming ports)
+					synchronized (boundStreamingPorts) {
+						for (StreamingPort sPort: boundStreamingPorts.values()) {
+							sPort.portUnbound(this);
+						}
+						boundStreamingPorts.clear();
 					}
-					if (parts.length > 2) {
-						text = Strings.join(2, SEPARATOR, (Object[])parts);
+					device.receivedReconfigure();
+				}
+				else {
+					// split message parts
+					String[] parts = Strings.split(message.getPayload(), SEPARATOR);
+					
+					// received a debug message?
+					if (parts[0].equals(DEBUG)) {
+						device.receivedDebug(Strings.join(1, SEPARATOR, (Object[])parts));
+					} else
+					if (parts[0].equals(REFRESH)) {
+						// remaining components are port IDs
+						String[] portIDs = new String[parts.length - 1];
+						System.arraycopy(parts, 1, portIDs, 0, parts.length - 1);
+						device.receivedRefresh(portIDs);
+					} else
+					if (parts[0].equals(ERROR)) {
+						// remaining optional components contain the error information
+						int error = 0;
+						String text = null;
+						if (parts.length > 1) {
+							error = Integer.parseInt(parts[1]);
+						}
+						if (parts.length > 2) {
+							text = Strings.join(2, SEPARATOR, (Object[])parts);
+						}
+						device.setError(error, text);
 					}
-					device.setError(error, text);
 				}
 			}
 		}
