@@ -484,15 +484,26 @@ void AbstractOPDID::setupEmulatedDialPort(Poco::Util::AbstractConfiguration *por
 	this->addPort(dialPort);
 }
 
-void AbstractOPDID::setupDigitalLogicPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
 	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up DigitalLogic port: " + port);
+		this->log("Setting up LogicPort: " + port);
 
-	OPDID_DigitalLogicPort *dlPort = new OPDID_DigitalLogicPort(this, port.c_str());
+	OPDID_LogicPort *dlPort = new OPDID_LogicPort(this, port.c_str());
 	dlPort->configure(portConfig);
 
 	this->addPort(dlPort);
 }
+
+void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Setting up PulsePort: " + port);
+
+	OPDID_PulsePort *pulsePort = new OPDID_PulsePort(this, port.c_str());
+	pulsePort->configure(portConfig);
+
+	this->addPort(pulsePort);
+}
+
 
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
 	if (this->logVerbosity >= VERBOSE)
@@ -530,8 +541,11 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		if (nodeType == "DialPort") {
 			this->setupEmulatedDialPort(nodeConfig, node);
 		} else
-		if (nodeType == "DigitalLogicPort") {
-			this->setupDigitalLogicPort(nodeConfig, node);
+		if (nodeType == "LogicPort") {
+			this->setupLogicPort(nodeConfig, node);
+		} else
+		if (nodeType == "PulsePort") {
+			this->setupPulsePort(nodeConfig, node);
 		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}

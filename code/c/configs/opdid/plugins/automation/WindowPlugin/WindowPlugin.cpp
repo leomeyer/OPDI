@@ -149,13 +149,13 @@ OPDI_DigitalPort *WindowPort::findDigitalPort(std::string setting, std::string p
 	// no found but required?
 	if (port == NULL) { 
 		if (required)
-			throw Poco::DataException("Port required by Setting " + setting + " not found: " + portID);
+			throw Poco::DataException(std::string(this->getID()) + ": Port required by Setting " + setting + " not found: " + portID);
 		return NULL;
 	}
 
 	// port type must be Digital
 	if (port->getType()[0] != OPDI_PORTTYPE_DIGITAL[0])
-		throw Poco::DataException("Port required by Setting " + setting + " is not a digital port: " + portID);
+		throw Poco::DataException(std::string(this->getID()) + ": Port required by Setting " + setting + " is not a digital port: " + portID);
 
 	return (OPDI_DigitalPort *)port;
 }

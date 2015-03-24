@@ -9,11 +9,30 @@
 
 #include "AbstractOPDID.h"
 
+
+class OPDID_PortFunctions {
+
+protected:
+
+	typedef std::vector<OPDI_DigitalPort *> DigitalPortList;
+	typedef std::vector<OPDI_AnalogPort *> AnalogPortList;
+
+	AbstractOPDID *opdid;
+
+	virtual OPDI_DigitalPort *findDigitalPort(std::string configPort, std::string setting, std::string portID, bool required);
+	
+	virtual void findDigitalPorts(std::string configPort, std::string setting, std::string portIDs, DigitalPortList &portList);
+
+	virtual OPDI_AnalogPort *findAnalogPort(std::string configPort, std::string setting, std::string portID, bool required);
+	
+	virtual void findAnalogPorts(std::string configPort, std::string setting, std::string portIDs, AnalogPortList &portList);
+};
+
 ///////////////////////////////////////////////////////////////////////////////
-// Digital Logic Port
+// Logic Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A DigitalLogicPort implements logic functions for digital ports. It supports
+/** A LogicPort implements logic functions for digital ports. It supports
 * the following operations:
 * - OR (default): The line is High if at least one of its inputs is High
 * - AND: The line is High if all of its inputs are High
@@ -21,7 +40,7 @@
 * - ATLEAST (n): The line is High if at least n inputs are High
 * - ATMOST (n): The line is High if at most n inputs are High
 * Additionally you can specify whether the output should be negated.
-* The DigitalLogicPort requires at least one digital port as input. The output
+* The LogicPort requires at least one digital port as input. The output
 * can optionally be distributed to an arbitrary number of digital ports.
 * Processing occurs in the OPDI waiting event loop, i. e. about once a ms.
 * All input ports' state is queried. If the logic function results in a change
@@ -32,7 +51,9 @@
 * You can also specify inverted output ports who will be updated with the negated
 * state of this port.
 */
-class OPDID_DigitalLogicPort : public OPDI_DigitalPort {
+class OPDID_LogicPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+
+protected:
 
 	enum LogicFunction {
 		UNKNOWN,
@@ -43,30 +64,75 @@ class OPDID_DigitalLogicPort : public OPDI_DigitalPort {
 		ATMOST
 	};
 
-	AbstractOPDID *opdid;
 	LogicFunction function;
 	int funcN;
 	bool negate;
 	std::string inputPortStr;
 	std::string outputPortStr;
 	std::string inverseOutputPortStr;
-	typedef std::vector<OPDI_DigitalPort *> PortList;
-	PortList inputPorts;
-	PortList outputPorts;
-	PortList inverseOutputPorts;
-
-protected:
+	DigitalPortList inputPorts;
+	DigitalPortList outputPorts;
+	DigitalPortList inverseOutputPorts;
 
 	virtual uint8_t doWork(uint8_t canSend);
 
-	virtual OPDI_DigitalPort *findDigitalPort(std::string setting, std::string portID, bool required);
-	
-	virtual void findDigitalPorts(std::string setting, std::string portIDs, PortList &portList);
+public:
+	OPDID_LogicPort(AbstractOPDID *opdid, const char *id);
+
+	virtual ~OPDID_LogicPort();
+
+	virtual void configure(Poco::Util::AbstractConfiguration *config);
+
+	virtual void setDirCaps(const char *dirCaps);
+
+	virtual void setMode(uint8_t mode);
+
+	virtual void setLine(uint8_t line);
+
+	virtual void prepare();
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Pulse Port
+///////////////////////////////////////////////////////////////////////////////
+
+/** A pulse port generates a digital pulse with a defined frequency (measured
+* in OPDI ticks) and a duty cycle in percent. The frequency and duty cycle
+* can optionally be set by analog ports. The frequency is in this case 
+* calculated as the percentage of MaxFrequency. If enable digital ports are specified the
+* pulse is being generated only while at least one of the enable ports is High.
+* The output can be normal or inverted. There are two lists of output digital
+* ports which receive the normal or inverted output respectively.
+*/
+class OPDID_PulsePort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+
+protected:
+	bool negate;
+	int32_t frequency;
+	int32_t maxFrequency;
+	double dutyCycle;
+	std::string frequencyPortStr;
+	std::string dutyCyclePortStr;
+	std::string enablePortStr;
+	std::string outputPortStr;
+	std::string inverseOutputPortStr;
+	typedef std::vector<OPDI_DigitalPort *> PortList;
+	DigitalPortList enablePorts;
+	DigitalPortList outputPorts;
+	DigitalPortList inverseOutputPorts;
+	OPDI_AnalogPort *frequencyPort;
+	OPDI_AnalogPort *dutyCyclePort;
+
+	// state
+	uint64_t counter;
+
+	virtual uint8_t doWork(uint8_t canSend);
 
 public:
-	OPDID_DigitalLogicPort(AbstractOPDID *opdid, const char *id);
+	OPDID_PulsePort(AbstractOPDID *opdid, const char *id);
 
-	virtual ~OPDID_DigitalLogicPort();
+	virtual ~OPDID_PulsePort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
 
