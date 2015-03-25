@@ -1,5 +1,6 @@
 
 #include "opdi_port.h"
+#include "opdi_platformfuncs.h"
 
 #include "OPDID_Ports.h"
 
@@ -180,7 +181,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 	OPDI_DigitalPort::doWork(canSend);
 
 	// count how many input ports are High
-	int highCount = 0;
+	size_t highCount = 0;
 	DigitalPortList::iterator it = this->inputPorts.begin();
 	while (it != this->inputPorts.end()) {
 		uint8_t mode;
@@ -198,6 +199,8 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 	uint8_t newLine = (this->negate ? 1 : 0);
 
 	switch (this->function) {
+	case UNKNOWN:
+		return OPDI_STATUS_OK;
 	case OR: if (highCount > 0) 
 				 newLine = (this->negate ? 0 : 1);
 		break;
@@ -294,6 +297,7 @@ OPDID_PulsePort::OPDID_PulsePort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 	// so that all dependent output ports will be set to a defined state
 	this->line = -1;
 	this->counter = 0;
+	this->lastStateChangeTime = 0;
 }
 
 OPDID_PulsePort::~OPDID_PulsePort() {
@@ -411,9 +415,20 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 
 	// change detected?
 	if (newLine != this->line) {
-		if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		if (opdid->logVerbosity >= AbstractOPDID::VERBOSE) {
 			opdid->log(std::string(this->id) + ": Changing pulse to " + (newLine == 1 ? "High" : "Low"));
 	
+			if (this->lastStateChangeTime > 0) {
+				// calculate counts per ms
+				int32_t counterDelta = (this->counter > 0 ? this->frequency * this->dutyCycle : this->frequency - this->frequency * this->dutyCycle);
+				if (opdi_get_time_ms() > this->lastStateChangeTime)
+					opdid->log(std::string(this->id) + ": Received " + to_string(counterDelta / (opdi_get_time_ms() - this->lastStateChangeTime)) + " ticks per ms");
+			}
+		}
+	
+		this->lastStateChangeTime = opdi_get_time_ms();
+		this->lastStateChangeCounter = counter;
+		
 		// will trigger AutoRefresh
 		OPDI_DigitalPort::setLine(newLine);
 		this->refresh();

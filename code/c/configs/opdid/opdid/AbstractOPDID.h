@@ -141,7 +141,7 @@ public:
 
 	virtual void setupLogicPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
-	virtual void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+	virtual void setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);

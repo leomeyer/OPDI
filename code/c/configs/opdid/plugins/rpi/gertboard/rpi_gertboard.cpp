@@ -339,10 +339,6 @@ GertboardButton::GertboardButton(AbstractOPDID *opdid, const char *ID, int pin) 
 
 // main work function of the button port - regularly called by the OPDID system
 uint8_t GertboardButton::doWork(uint8_t canSend) {
-	// query the pin only if a master is connected
-	if (!opdi->isConnected())
-		return OPDI_STATUS_OK;
-
 	// query interval not yet reached?
 	if (opdi_get_time_ms() - this->lastQueryTime < this->queryInterval)
 		return OPDI_STATUS_OK;
@@ -353,10 +349,10 @@ uint8_t GertboardButton::doWork(uint8_t canSend) {
 	// current state different from last submitted state?
 	if (this->lastQueriedState != line) {
 		this->lastQueriedState = line;
-//		if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
-//			this->opdid->log(std::string("Gertboard Button change detected: ") + this->id);
+		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			this->opdid->log(std::string("Gertboard Button change detected: ") + this->id);
 		// refresh interval not exceeded?
-		if (opdi_get_time_ms() - this->lastRefreshTime > this->refreshInterval) {
+		if (opdi->isConnected() && (opdi_get_time_ms() - this->lastRefreshTime > this->refreshInterval)) {
 			this->lastRefreshTime = opdi_get_time_ms();
 			// notify master to refresh this port's state
 			this->refresh();

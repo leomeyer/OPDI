@@ -65,7 +65,7 @@ protected:
 	};
 
 	LogicFunction function;
-	int funcN;
+	size_t funcN;
 	bool negate;
 	std::string inputPortStr;
 	std::string outputPortStr;
@@ -125,7 +125,9 @@ protected:
 	OPDI_AnalogPort *dutyCyclePort;
 
 	// state
-	uint64_t counter;
+	int32_t counter;
+	uint64_t lastStateChangeTime;
+	int32_t lastStateChangeCounter;
 
 	virtual uint8_t doWork(uint8_t canSend);
 
