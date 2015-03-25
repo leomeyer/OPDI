@@ -305,6 +305,8 @@ public:
 	virtual void setValue(int32_t value);
 
 	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value);
+	
+	virtual double getRelativeValue(void);
 };
 
 /** Defines a select port.
