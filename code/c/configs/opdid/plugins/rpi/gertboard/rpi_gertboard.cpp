@@ -286,8 +286,6 @@ void AnalogGertboardInput::getState(uint8_t *mode, uint8_t *resolution, uint8_t 
 // GertboardButton: Represents a button on the Gertboard.
 // If the button is pressed, a connected master will be notified to update
 // its state. This port permanently queries the state of the button's pin.
-// If the state changes it will cause a Refresh message on this port as well
-// as all ports that are specifed for AutoRefresh.
 ///////////////////////////////////////////////////////////////////////////////
 
 class GertboardButton : public OPDI_DigitalPort {
@@ -339,6 +337,8 @@ GertboardButton::GertboardButton(AbstractOPDID *opdid, const char *ID, int pin) 
 
 // main work function of the button port - regularly called by the OPDID system
 uint8_t GertboardButton::doWork(uint8_t canSend) {
+	OPDI_DigitalPort::doWork(canSend);
+
 	// query interval not yet reached?
 	if (opdi_get_time_ms() - this->lastQueryTime < this->queryInterval)
 		return OPDI_STATUS_OK;
@@ -355,10 +355,8 @@ uint8_t GertboardButton::doWork(uint8_t canSend) {
 		if (opdi->isConnected() && (opdi_get_time_ms() - this->lastRefreshTime > this->refreshInterval)) {
 			this->lastRefreshTime = opdi_get_time_ms();
 			// notify master to refresh this port's state
-			this->refresh();
+			this->refreshRequired = true;
 			this->lastRefreshTime = opdi_get_time_ms();
-			// auto-refresh additional ports
-			this->doAutoRefresh();
 		}
 	}
 

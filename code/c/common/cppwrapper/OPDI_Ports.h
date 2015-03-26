@@ -19,7 +19,7 @@ class OPDI_Port {
 friend class OPDI;
 
 public:
-	enum RefreshMode;
+	enum RefreshMode : unsigned int;
 
 protected:
 
@@ -88,7 +88,7 @@ protected:
 
 public:
 
-	enum RefreshMode {
+	enum RefreshMode : unsigned int {
 		// no automatic refresh
 		REFRESH_OFF,
 		// time based refresh
