@@ -19,7 +19,11 @@ class OPDI_Port {
 friend class OPDI;
 
 public:
-	enum RefreshMode : unsigned int;
+	enum RefreshMode
+#ifdef __GNUG__
+		: unsigned int
+#endif
+		;
 
 protected:
 
