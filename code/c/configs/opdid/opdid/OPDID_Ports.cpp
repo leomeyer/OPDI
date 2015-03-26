@@ -299,13 +299,7 @@ void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->period = config->getInt("Period", -1);
 	if (this->period <= 0)
 		throw Poco::DataException("Specify a positive integer value for the Period setting of a PulsePort: " + this->to_string(this->period));
-
 	this->periodPortStr = config->getString("PeriodPort", "");
-	if (this->periodPortStr != "") {
-		this->maxPeriod = config->getInt("MaxPeriod", -1);
-		if (this->maxPeriod <= 0)
-			throw Poco::DataException("A period port has been specified. You must specify a positive integer value for MaxPeriod, too: " + this->to_string(this->maxPeriod));
-	}
 	
 	// duty cycle is specified in percent
 	this->dutyCycle = config->getDouble("DutyCycle", 50) / 100.0;
@@ -357,10 +351,11 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 		enabled |= highCount > 0;
 	}
 
+	int32_t period = this->period;
 	// period port specified?
 	if (this->periodPort != NULL) {
 		// query period port for the current relative value
-		this->period = (double)this->maxPeriod * this->periodPort->getRelativeValue();
+		period = (double)this->period * this->periodPort->getRelativeValue();
 	}
 
 	// duty cycle port specified?
@@ -378,12 +373,12 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 		// current state (logical) Low?
 		if (this->pulseState == (this->negate ? 1 : 0)) {
 			// time up to High reached?
-			if (timeDiff > this->period * (1.0 - this->dutyCycle)) 
+			if (timeDiff > period * (1.0 - this->dutyCycle)) 
 				// switch to (logical) High
 				newState = (this->negate ? 0 : 1);
 		} else {
 			// time up to Low reached?
-			if (timeDiff > this->period * this->dutyCycle)
+			if (timeDiff > period * this->dutyCycle)
 				// switch to (logical) Low
 				newState = (this->negate ? 1 : 0);
 		}

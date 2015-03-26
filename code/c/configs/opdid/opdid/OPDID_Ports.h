@@ -100,7 +100,7 @@ public:
 /** A pulse port generates a digital pulse with a defined period (measured
 * in milliseconds) and a duty cycle in percent. The period and duty cycle
 * can optionally be set by analog ports. The period is in this case 
-* calculated as the percentage of MaxPeriod. The pulse is active if the line
+* calculated as the percentage of Period. The pulse is active if the line
 * of this port is set to High. If enable digital ports are specified the
 * pulse is also being generated if at least one of the enable ports is High.
 * The output can be normal or inverted. There are two lists of output digital
@@ -111,7 +111,6 @@ class OPDID_PulsePort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
 	bool negate;
 	int32_t period;
-	int32_t maxPeriod;
 	double dutyCycle;
 	int8_t disabledState;
 	std::string periodPortStr;

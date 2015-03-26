@@ -139,6 +139,7 @@ public:
 	
 	/** Disconnects a master if connected and releases resources. Frees all ports and stops message processing. */
 	virtual void shutdown(void);
+
 };
 
 #endif
