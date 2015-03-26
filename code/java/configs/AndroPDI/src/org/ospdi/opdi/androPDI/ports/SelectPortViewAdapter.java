@@ -161,6 +161,11 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 	@Override
 	public void createContextMenu(ContextMenu menu,
 			ContextMenuInfo menuInfo) {
+		
+		// show only if the port is not readonly
+		if (sPort.isReadonly())
+			return;
+		
 		MenuInflater inflater = this.showDevicePorts.getMenuInflater();
 		
 		try {

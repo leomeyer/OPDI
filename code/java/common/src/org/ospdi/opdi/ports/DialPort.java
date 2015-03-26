@@ -22,7 +22,7 @@ import org.ospdi.opdi.utils.Strings;
 public class DialPort extends Port {
 
 	static final String MAGIC = "DL";
-
+	
 	protected int position = -1;
 	protected int minimum;
 	protected int maximum;
@@ -49,7 +49,7 @@ public class DialPort extends Port {
 		final int MIN_PART = 3;
 		final int MAX_PART = 4;
 		final int STEP_PART = 5;
-//		final int FLAGS_PART = 6;
+		final int FLAGS_PART = 6;
 		final int PART_COUNT = 7;
 		
 		checkSerialForm(parts, PART_COUNT, MAGIC);
@@ -59,6 +59,7 @@ public class DialPort extends Port {
 		setMinimum(Strings.parseInt(parts[MIN_PART], "Minimum", Integer.MIN_VALUE, Integer.MAX_VALUE));
 		setMaximum(Strings.parseInt(parts[MAX_PART], "Maximum", Integer.MIN_VALUE, Integer.MAX_VALUE));
 		setStep(Strings.parseInt(parts[STEP_PART], "Step", Integer.MIN_VALUE, Integer.MAX_VALUE));
+		flags = Strings.parseInt(parts[FLAGS_PART], "flags", 0, Integer.MAX_VALUE);
 	}
 	
 	public String serialize() {
@@ -141,5 +142,11 @@ public class DialPort extends Port {
 		} catch (PortErrorException e) {
 			handlePortError(e);
 		}
+	}
+
+
+	@Override	
+	public boolean isReadonly() {
+		return (flags & PORTFLAG_READONLY) == PORTFLAG_READONLY;
 	}
 }

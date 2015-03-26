@@ -214,4 +214,9 @@ public class StreamingPort extends Port {
 		if (streamingPortListener != null)
 			streamingPortListener.portUnbound(this);
 	}
+
+	@Override	
+	public boolean isReadonly() {
+		return (flags & PORTFLAG_READONLY) == PORTFLAG_READONLY;
+	}	
 }

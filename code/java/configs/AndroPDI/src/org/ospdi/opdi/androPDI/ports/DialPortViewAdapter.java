@@ -234,6 +234,11 @@ class DialPortViewAdapter implements IPortViewAdapter {
 	@Override
 	public void createContextMenu(ContextMenu menu,
 			ContextMenuInfo menuInfo) {
+
+		// show only if the port is not readonly
+		if (dPort.isReadonly())
+			return;
+		
 		MenuInflater inflater = this.showDevicePorts.getMenuInflater();
 		
 		try {

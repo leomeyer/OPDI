@@ -280,6 +280,8 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags) {
 	// ports can be hidden
 	port->setHidden(portConfig->getBool("Hidden", false));
+	// ports can be readonly
+	port->setReadonly(portConfig->getBool("Readonly", false));
 
 	// the default label is the port ID
 	std::string portLabel = this->getConfigString(portConfig, "Label", port->getID(), false);
@@ -326,7 +328,6 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 		}
 	}
 }
-
 
 void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port) {
 	this->configurePort(portConfig, port, 0);
@@ -728,6 +729,9 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
+	if (dPort->isReadonly())
+		return OPDI_PORT_ACCESS_DENIED;
+
 	if (line[0] == '1')
 		dLine = 1;
 	else
@@ -750,6 +754,9 @@ uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
+
+	if (dPort->isReadonly())
+		return OPDI_PORT_ACCESS_DENIED;
 
 	if ((mode[0] >= '0') && (mode[0] <= '3'))
 		dMode = mode[0] - '0';
@@ -802,6 +809,9 @@ uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
+	if (aPort->isReadonly())
+		return OPDI_PORT_ACCESS_DENIED;
+
 	try {
 		aPort->setValue(value);
 	} catch (OPDI_Port::PortError &pe) {
@@ -826,6 +836,9 @@ uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
 	else
 		// mode not supported
 		return OPDI_PROTOCOL_ERROR;
+
+	if (aPort->isReadonly())
+		return OPDI_PORT_ACCESS_DENIED;
 
 	try {
 		aPort->setMode(aMode);
@@ -913,6 +926,9 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 	if (sPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
+	if (sPort->isReadonly())
+		return OPDI_PORT_ACCESS_DENIED;
+
 	try {
 		sPort->setPosition(position);
 	} catch (OPDI_Port::PortError &pe) {
@@ -950,6 +966,9 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
 	OPDI_DialPort *dPort = (OPDI_DialPort *)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
+
+	if (dPort->isReadonly())
+		return OPDI_PORT_ACCESS_DENIED;
 
 	try {
 		dPort->setPosition(position);

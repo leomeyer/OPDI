@@ -295,4 +295,9 @@ public class AnalogPort extends Port {
 		resolution = null;
 		reference = null;
 	}
+
+	@Override	
+	public boolean isReadonly() {
+		return (flags & PORTFLAG_READONLY) == PORTFLAG_READONLY;
+	}
 }

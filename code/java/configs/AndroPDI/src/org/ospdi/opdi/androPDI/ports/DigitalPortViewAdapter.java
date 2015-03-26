@@ -153,7 +153,7 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
     		break;
     	case INPUT_FLOATING: 
     		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
-    		tvBottomtext.setText("Mode: Floating input");
+    		tvBottomtext.setText("Mode: Input");
     		break;
     	case INPUT_PULLUP: 
     		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
@@ -171,7 +171,7 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 		ivPortIcon.setImageDrawable(portIcon);
 		
 		Drawable stateIcon = null;
-		if (mode == DigitalPort.PortMode.OUTPUT) {
+		if (!dPort.isReadonly() && (mode == DigitalPort.PortMode.OUTPUT)) {
         	switch(line) {
         	case LOW: 
         		stateIcon = context.getResources().getDrawable(R.drawable.switch_off);
@@ -197,7 +197,7 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 						DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
 							@Override
 							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
-								// set mode
+								// set line
 								dPort.setLine(DigitalPort.PortLine.LOW);
 								line = dPort.getLine();
 							}						
@@ -274,7 +274,8 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 				});
 
 				// an output only port can't have its mode set
-				boolean canSetMode = dPort.getDirCaps() != PortDirCaps.OUTPUT;
+				boolean canSetMode = !dPort.isReadonly() && (dPort.getDirCaps() != PortDirCaps.OUTPUT);
+				
 				item = menu.findItem(R.id.menuitem_digital_set_mode);
 				item.setEnabled(canSetMode);
 				item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -288,7 +289,7 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 				});
 				
 				// A port set to output can have its state set
-				boolean canSetState = dPort.getMode() == DigitalPort.PortMode.OUTPUT;
+				boolean canSetState = !dPort.isReadonly() && (dPort.getMode() == DigitalPort.PortMode.OUTPUT);
 				item = menu.findItem(R.id.menuitem_digital_set_state);
 				item.setEnabled(canSetState);
 				item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {

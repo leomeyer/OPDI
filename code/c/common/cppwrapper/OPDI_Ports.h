@@ -21,6 +21,7 @@ friend class OPDI;
 public:
 	enum RefreshMode
 #ifdef __GNUG__
+// required by GCC for the forward declaration of the enum
 		: unsigned int
 #endif
 		;
@@ -42,6 +43,9 @@ protected:
 
 	// If a port is hidden it is not included in the device capabilities as queried by the master.
 	bool hidden;
+
+	// If a port is readonly its state cannot be changed from the master.
+	bool readonly;
 
 	// Utility function for string conversion 
 	template <class T> std::string to_string(const T& t);
@@ -93,6 +97,7 @@ protected:
 public:
 
 	enum RefreshMode : unsigned int {
+		REFRESH_NOT_SET,
 		// no automatic refresh
 		REFRESH_OFF,
 		// time based refresh
@@ -130,6 +135,10 @@ public:
 	virtual void setHidden(bool hidden);
 
 	virtual bool isHidden(void);
+
+	virtual void setReadonly(bool readonly);
+
+	virtual bool isReadonly(void);
 
 	/** Sets the label of the port. */
 	virtual void setLabel(const char *label);
@@ -185,7 +194,7 @@ protected:
 public:
 	// Initialize a digital port. Specify one of the OPDI_PORTDIR_CAPS* values for dircaps.
 	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
-	OPDI_AbstractDigitalPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
+	OPDI_AbstractDigitalPort(const char *id, const char *label, const char * dircaps, const int32_t flags);
 
 	virtual ~OPDI_AbstractDigitalPort();
 
@@ -221,7 +230,7 @@ protected:
 public:
 	// Initialize an analog port. Specify one of the OPDI_PORTDIR_CAPS* values for dircaps.
 	// Specify one or more of the OPDI_ANALOG_PORT_* values for flags, or'ed together, to specify possible settings.
-	OPDI_AbstractAnalogPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
+	OPDI_AbstractAnalogPort(const char *id, const char *label, const char * dircaps, const int32_t flags);
 
 	virtual ~OPDI_AbstractAnalogPort();
 
@@ -274,7 +283,7 @@ public:
 
 	// Initialize a digital port. Specify one of the OPDI_PORTDIRCAPS_* values for dircaps.
 	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
-	OPDI_DigitalPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
+	OPDI_DigitalPort(const char *id, const char *label, const char * dircaps, const int32_t flags);
 
 	virtual ~OPDI_DigitalPort();
 
@@ -316,7 +325,7 @@ protected:
 public:
 	OPDI_AnalogPort(const char *id);
 
-	OPDI_AnalogPort(const char *id, const char *label, const char * dircaps, const uint8_t flags);
+	OPDI_AnalogPort(const char *id, const char *label, const char * dircaps, const int32_t flags);
 
 	virtual ~OPDI_AnalogPort();
 

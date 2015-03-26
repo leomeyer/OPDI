@@ -119,29 +119,26 @@ void OPDI::updatePortData(OPDI_Port *port) {
 	oPort->name = (const char*)port->label;
 	oPort->type = (const char*)port->type;
 	oPort->caps = (const char*)port->caps;
-	// for "simple" ports, update flags
-	if (port->flags != 0)
-		oPort->info.i = port->flags;
-	else {
-		// more complex ports require the pointer to contain additional information
+	oPort->flags = port->flags;
 
-		// check port type
-		if (strcmp(port->type, OPDI_PORTTYPE_SELECT) == 0) {
-			oPort->info.ptr = ((OPDI_SelectPort*)port)->items;
-		} else
-		if (strcmp(port->type, OPDI_PORTTYPE_DIAL) == 0) {
-			// release additional data structure memory
-			if (oPort->info.ptr != NULL)
-				free(oPort->info.ptr);
-			// allocate additional data structure memory
-			struct opdi_DialPortInfo* dialPortInfo = (struct opdi_DialPortInfo*)malloc(sizeof(opdi_DialPortInfo));
-			oPort->info.ptr = dialPortInfo;
-			dialPortInfo->min = ((OPDI_DialPort*)port)->minValue;
-			dialPortInfo->max = ((OPDI_DialPort*)port)->maxValue;
-			dialPortInfo->step = ((OPDI_DialPort*)port)->step;
-		} else
-			oPort->info.ptr = port->ptr;
-	}
+	// more complex ports require the pointer to contain additional information
+
+	// check port type
+	if (strcmp(port->type, OPDI_PORTTYPE_SELECT) == 0) {
+		oPort->info.ptr = ((OPDI_SelectPort*)port)->items;
+	} else
+	if (strcmp(port->type, OPDI_PORTTYPE_DIAL) == 0) {
+		// release additional data structure memory
+		if (oPort->info.ptr != NULL)
+			free(oPort->info.ptr);
+		// allocate additional data structure memory
+		struct opdi_DialPortInfo* dialPortInfo = (struct opdi_DialPortInfo*)malloc(sizeof(opdi_DialPortInfo));
+		oPort->info.ptr = dialPortInfo;
+		dialPortInfo->min = ((OPDI_DialPort*)port)->minValue;
+		dialPortInfo->max = ((OPDI_DialPort*)port)->maxValue;
+		dialPortInfo->step = ((OPDI_DialPort*)port)->step;
+	} else
+		oPort->info.ptr = port->ptr;
 }
 
 OPDI_Port *OPDI::findPort(opdi_Port *port) {

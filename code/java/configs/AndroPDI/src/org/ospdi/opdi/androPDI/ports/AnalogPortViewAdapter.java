@@ -299,7 +299,9 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 				
 				final int portMaxValue = aPort.getMaxValue();
 				
-				boolean canSetValue = aPort.getMode() == AnalogPort.PortMode.OUTPUT;
+				boolean canSetValue =
+						!aPort.isReadonly() && (
+						aPort.getMode() == AnalogPort.PortMode.OUTPUT);
 				item = menu.findItem(R.id.menuitem_analog_set_value);
 				item.setVisible(canSetValue);
 				item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {

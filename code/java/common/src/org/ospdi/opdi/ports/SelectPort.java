@@ -21,7 +21,7 @@ import org.ospdi.opdi.utils.Strings;
 public class SelectPort extends Port {
 	
 	static final String MAGIC = "SLP";
-	
+
 	int posCount;
 	int position = -1;
 	List<String> labels = new ArrayList<String>();
@@ -48,7 +48,7 @@ public class SelectPort extends Port {
 		final int ID_PART = 1;
 		final int NAME_PART = 2;
 		final int POS_PART = 3;
-//		final int FLAGS_PART = 4;
+		final int FLAGS_PART = 4;
 		final int PART_COUNT = 5;
 		
 		checkSerialForm(parts, PART_COUNT, MAGIC);
@@ -56,6 +56,7 @@ public class SelectPort extends Port {
 		setID(parts[ID_PART]);
 		setName(parts[NAME_PART]);
 		posCount = Strings.parseInt(parts[POS_PART], "position count", 0, Integer.MAX_VALUE);
+		flags = Strings.parseInt(parts[FLAGS_PART], "flags", 0, Integer.MAX_VALUE);
 		
 		// query port labels
 		for (int i = 0; i < posCount; i++)
@@ -128,5 +129,10 @@ public class SelectPort extends Port {
 		} catch (PortErrorException e) {
 			handlePortError(e);
 		}
+	}
+
+	@Override	
+	public boolean isReadonly() {
+		return (flags & PORTFLAG_READONLY) == PORTFLAG_READONLY;
 	}
 }

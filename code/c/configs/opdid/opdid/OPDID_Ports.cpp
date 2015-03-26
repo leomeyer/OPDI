@@ -220,7 +220,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 				// changed?
 				if (line != newLine) {
 					if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-						opdid->log(std::string(this->id) + ": Changing line of output port " + (*it)->getID() + " to " + (newLine == 0 ? "Low" : "High"));
+						opdid->log(std::string(this->id) + ": Changing line of port " + (*it)->getID() + " to " + (newLine == 0 ? "Low" : "High"));
 					(*it)->setLine(newLine);
 				}
 			} catch (Poco::Exception &e) {
@@ -239,7 +239,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 				// changed?
 				if (line == newLine) {
 					if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-						opdid->log(std::string(this->id) + ": Changing line of inverse output port " + (*it)->getID() + " to " + (newLine == 0 ? "High" : "Low"));
+						opdid->log(std::string(this->id) + ": Changing line of inverse port " + (*it)->getID() + " to " + (newLine == 0 ? "High" : "Low"));
 					(*it)->setLine((newLine == 0 ? 1 : 0));
 				}
 			} catch (Poco::Exception &e) {
@@ -417,7 +417,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 				// changed?
 				if (line != newState) {
 					if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-						opdid->log(std::string(this->id) + ": Changing line of output port " + (*it)->getID() + " to " + (newState == 0 ? "Low" : "High"));
+						opdid->log(std::string(this->id) + ": Changing line of port " + (*it)->getID() + " to " + (newState == 0 ? "Low" : "High"));
 					(*it)->setLine(newState);
 				}
 			} catch (Poco::Exception &e) {
@@ -436,7 +436,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 				// changed?
 				if (line == newState) {
 					if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-						opdid->log(std::string(this->id) + ": Changing line of inverse output port " + (*it)->getID() + " to " + (newState == 0 ? "High" : "Low"));
+						opdid->log(std::string(this->id) + ": Changing line of inverse port " + (*it)->getID() + " to " + (newState == 0 ? "High" : "Low"));
 					(*it)->setLine((newState == 0 ? 1 : 0));
 				}
 			} catch (Poco::Exception &e) {

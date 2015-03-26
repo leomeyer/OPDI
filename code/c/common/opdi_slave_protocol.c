@@ -90,8 +90,7 @@ static uint8_t send_device_caps(channel_t channel) {
 static uint8_t send_digital_port_info(channel_t channel, opdi_Port *port) {
 	char flagStr[10];
 
-	// port info is flags
-	opdi_int32_to_str(port->info.i, flagStr);
+	opdi_int32_to_str(port->flags, flagStr);
 
 	// join payload
 	opdi_msg_parts[0] = OPDI_digitalPort;	// port magic
@@ -109,8 +108,7 @@ static uint8_t send_digital_port_info(channel_t channel, opdi_Port *port) {
 static uint8_t send_analog_port_info(channel_t channel, opdi_Port *port) {
 	char flagStr[10];
 
-	// port info is flags
-	opdi_int32_to_str(port->info.i, flagStr);
+	opdi_int32_to_str(port->flags, flagStr);
 
 	// join payload
 	opdi_msg_parts[0] = OPDI_analogPort;	// port magic
@@ -129,6 +127,7 @@ static uint8_t send_select_port_info(channel_t channel, opdi_Port *port) {
 	char **labels;
 	uint16_t positions = 0;
 	char buf[7];
+	char flagStr[10];
 
 	// port info is an array of char*
 	labels = (char**)port->info.ptr;
@@ -139,13 +138,14 @@ static uint8_t send_select_port_info(channel_t channel, opdi_Port *port) {
 
 	// convert positions to str
 	opdi_uint16_to_str(positions, (char *)&buf);
+	opdi_int32_to_str(port->flags, flagStr);
 
 	// join payload
 	opdi_msg_parts[0] = OPDI_selectPort;	// port magic
 	opdi_msg_parts[1] = port->id;
 	opdi_msg_parts[2] = port->name;
 	opdi_msg_parts[3] = buf;
-	opdi_msg_parts[4] = "0";		// flags: reserved
+	opdi_msg_parts[4] = flagStr;
 	opdi_msg_parts[5] = NULL;
 
 	return send_parts(channel);
@@ -157,12 +157,14 @@ static uint8_t send_dial_port_info(channel_t channel, opdi_Port *port) {
 	char minbuf[10];
 	char maxbuf[10];
 	char stepbuf[10];
+	char flagStr[10];
 
 	opdi_DialPortInfo *dpi = (opdi_DialPortInfo *)port->info.ptr;
 	// convert values to strings
 	opdi_int32_to_str(dpi->min, (char *)&minbuf);
 	opdi_int32_to_str(dpi->max, (char *)&maxbuf);
 	opdi_int32_to_str(dpi->step, (char *)&stepbuf);
+	opdi_int32_to_str(port->flags, flagStr);
 
 	// join payload
 	opdi_msg_parts[0] = OPDI_dialPort;	// port magic
@@ -171,7 +173,7 @@ static uint8_t send_dial_port_info(channel_t channel, opdi_Port *port) {
 	opdi_msg_parts[3] = minbuf;
 	opdi_msg_parts[4] = maxbuf;
 	opdi_msg_parts[5] = stepbuf;
-	opdi_msg_parts[6] = "0";		// flags: reserved
+	opdi_msg_parts[6] = flagStr;
 	opdi_msg_parts[7] = NULL;
 
 	return send_parts(channel);
@@ -184,7 +186,7 @@ static uint8_t send_streaming_port_info(channel_t channel, opdi_Port *port) {
 
 	opdi_StreamingPortInfo *spi = (opdi_StreamingPortInfo *)port->info.ptr;
 	// convert flags to str
-	opdi_uint16_to_str(spi->flags, (char *)&buf);
+	opdi_int32_to_str(port->flags, (char *)&buf);
 
 	// join payload
 	opdi_msg_parts[0] = OPDI_streamingPort;	// port magic

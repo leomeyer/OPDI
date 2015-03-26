@@ -40,12 +40,15 @@ public abstract class Port {
 		/** A port that can be configured for input or output. */
 		BIDIRECTIONAL
 	}
+	
+	public static final int PORTFLAG_READONLY = 0x4000;
 
 	protected IBasicProtocol protocol;
 	protected String id;
 	protected String name;
 	protected PortType type;
 	protected PortDirCaps dirCaps;
+	protected int flags;
 	protected Object viewAdapter;
 	protected boolean hasError;
 	protected String errorMessage;
@@ -201,4 +204,10 @@ public abstract class Port {
 		hasError = true;
 		errorMessage = e.getMessage();
 	}
+
+	/** Returns true if the port cannot be written.
+	 * 
+	 * @return
+	 */
+	public abstract boolean isReadonly();
 }

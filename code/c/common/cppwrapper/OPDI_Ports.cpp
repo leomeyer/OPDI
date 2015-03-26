@@ -32,6 +32,8 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->opdi = NULL;
 	this->flags = 0;
 	this->ptr = NULL;
+	this->hidden = false;
+	this->readonly = false;
 	this->refreshMode = REFRESH_OFF;
 	this->refreshRequired = false;
 	this->refreshTime = 0;
@@ -50,6 +52,8 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->opdi = NULL;
 	this->flags = flags;
 	this->ptr = ptr;
+	this->hidden = false;
+	this->readonly = false;
 	this->refreshMode = REFRESH_OFF;
 	this->refreshRequired = false;
 	this->refreshTime = 0;
@@ -107,6 +111,14 @@ bool OPDI_Port::isHidden(void) {
 	return this->hidden;
 }
 
+void OPDI_Port::setReadonly(bool readonly) {
+	this->readonly = readonly;
+}
+
+bool OPDI_Port::isReadonly(void) {
+	return this->readonly;
+}
+
 void OPDI_Port::setLabel(const char *label) {
 	if (this->label != NULL)
 		free(this->label);
@@ -130,7 +142,14 @@ void OPDI_Port::setDirCaps(const char *dirCaps) {
 }
 
 void OPDI_Port::setFlags(int32_t flags) {
-	this->flags = flags;
+	int32_t oldFlags = this->flags;
+	if (this->readonly)
+		this->flags = flags | OPDI_PORT_READONLY;
+	else
+		this->flags = flags;
+	// need to update already stored port data?
+	if ((this->opdi != NULL) && (oldFlags != this->flags))
+		this->opdi->updatePortData(this);
 }
 
 /*
@@ -192,7 +211,8 @@ uint8_t OPDI_Port::refresh() {
 }
 
 void OPDI_Port::prepare() {
-	// nothing to do in this base class
+	// update flags (for example, OR other flags to current flag settings)
+	this->setFlags(this->flags);
 }
 
 OPDI_Port::~OPDI_Port() {
@@ -212,7 +232,7 @@ OPDI_Port::~OPDI_Port() {
 
 OPDI_AbstractDigitalPort::OPDI_AbstractDigitalPort(const char *id) : OPDI_Port(id, OPDI_PORTTYPE_DIGITAL) {}
 
-OPDI_AbstractDigitalPort::OPDI_AbstractDigitalPort(const char *id, const char *label, const char *dircaps, const uint8_t flags) :
+OPDI_AbstractDigitalPort::OPDI_AbstractDigitalPort(const char *id, const char *label, const char *dircaps, const int32_t flags) :
 	// call base constructor
 	OPDI_Port(id, label, OPDI_PORTTYPE_DIGITAL, dircaps, flags, NULL) {
 }
@@ -230,7 +250,7 @@ OPDI_AbstractDigitalPort::~OPDI_AbstractDigitalPort() {
 
 OPDI_AbstractAnalogPort::OPDI_AbstractAnalogPort(const char *id) : OPDI_Port(id, OPDI_PORTTYPE_ANALOG) {}
 
-OPDI_AbstractAnalogPort::OPDI_AbstractAnalogPort(const char *id, const char *label, const char *dircaps, const uint8_t flags) :
+OPDI_AbstractAnalogPort::OPDI_AbstractAnalogPort(const char *id, const char *label, const char *dircaps, const int32_t flags) :
 	// call base constructor
 	OPDI_Port(id, label, OPDI_PORTTYPE_ANALOG, dircaps, flags, NULL) {
 }
@@ -253,7 +273,7 @@ OPDI_DigitalPort::OPDI_DigitalPort(const char *id) : OPDI_AbstractDigitalPort(id
 	this->setDirCaps(OPDI_PORTDIRCAP_BIDI);
 }
 
-OPDI_DigitalPort::OPDI_DigitalPort(const char *id, const char *label, const char *dircaps, const uint8_t flags) :
+OPDI_DigitalPort::OPDI_DigitalPort(const char *id, const char *label, const char *dircaps, const int32_t flags) :
 	// call base constructor; mask unsupported flags (?)
 	OPDI_AbstractDigitalPort(id, label, dircaps, flags) { // & (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) & (OPDI_DIGITAL_PORT_HAS_PULLDN | OPDI_DIGITAL_PORT_PULLDN_ALWAYS)) 
 
@@ -339,8 +359,8 @@ void OPDI_DigitalPort::setMode(uint8_t mode) {
 }
 
 void OPDI_DigitalPort::setLine(uint8_t line) {
-	if (this->mode != 3)
-		throw PortError("Cannot set digital port line in input mode");
+	if (line > 1)
+		throw PortError("Digital port line not supported: " + this->to_string((int)line));
 	if (line != this->line)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->line = line;
@@ -367,7 +387,7 @@ OPDI_AnalogPort::OPDI_AnalogPort(const char *id) : OPDI_AbstractAnalogPort(id) {
 	this->resolution = 0;
 }
 
-OPDI_AnalogPort::OPDI_AnalogPort(const char *id, const char *label, const char *dircaps, const uint8_t flags) :
+OPDI_AnalogPort::OPDI_AnalogPort(const char *id, const char *label, const char *dircaps, const int32_t flags) :
 	// call base constructor
 	OPDI_AbstractAnalogPort(id, label, dircaps, flags) {
 
@@ -524,7 +544,7 @@ void OPDI_SelectPort::setItems(const char **items) {
 
 void OPDI_SelectPort::setPosition(uint16_t position) {
 	if (position > count)
-		throw PortError("Position must not exceed the number of items: " + this->count);
+		throw PortError("Position must not exceed the number of items: " + to_string((int)this->count));
 
 	if (position != this->position)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);

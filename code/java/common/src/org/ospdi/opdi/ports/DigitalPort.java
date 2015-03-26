@@ -43,8 +43,6 @@ public class DigitalPort extends Port {
 	public static final int FLAG_HAS_PULLUP = 1;
 	public static final int FLAG_HAS_PULLDOWN = 2;
 
-	protected int flags;
-
 	// State section
 	protected PortMode mode;
 	protected PortLine line;
@@ -192,5 +190,10 @@ public class DigitalPort extends Port {
 		super.refresh();
 		mode = null;
 		line = null;
+	}
+
+	@Override	
+	public boolean isReadonly() {
+		return (flags & PORTFLAG_READONLY) == PORTFLAG_READONLY;
 	}
 }

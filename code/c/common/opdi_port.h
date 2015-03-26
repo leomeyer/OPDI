@@ -56,6 +56,9 @@ extern "C" {
 
 // port flag constants
 
+/** Indicates that a port is readonly. Its state cannot be changed by the master. */
+#define OPDI_PORT_READONLY					0x4000
+
 /** Indicates that a port is not always present, for example if a menu structure
 is implemented using select ports. Accessing a temporary port that is not present in
 the current configuration should yield an OPDI_PORT_ACCESS_DENIED error. */
@@ -106,8 +109,6 @@ typedef union opdi_PtrInt {
 
 /** Defines a port. Is also a node of a linked list of ports.
 *   The info member contains port specific information:
-*     digital: flags as integer value
-*     analog: flags as integer value
 *     select: pointer to an array of char* that contains the position labels;
 *             the last element of this array must be NULL
 *     dial: pointer to an opdi_DialPortInfo structure
@@ -118,6 +119,7 @@ typedef struct opdi_Port {
 	const char *name;			// the name of the port
 	const char *type;			// the type of the port
 	const char *caps;			// capabilities (port type dependent)
+	int32_t flags;				// port flags
 	opdi_PtrInt info;			// pointer to additional info (port type dependent)
 	struct opdi_Port *next;		// pointer to next port
 } opdi_Port;
@@ -139,8 +141,6 @@ typedef uint8_t (*DataReceived)(opdi_Port *port, const char *data);
 typedef struct opdi_StreamingPortInfo {
 	// ID of the driver used for this streaming port
 	const char *driverID;
-	// port flags
-	uint16_t flags;
 	// pointer to a function that receives incoming data
 	DataReceived dataReceived;
 	// the channel number which is > 0 if the port is bound
