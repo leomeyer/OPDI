@@ -221,6 +221,9 @@ public:
 
 	// function that fills in the current port state
 	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) = 0;
+
+	// returns the value as a factor between 0 and 1 of the maximum resolution
+	virtual double getRelativeValue(void) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -293,18 +296,21 @@ public:
 
 	// mode = 0: input
 	// mode = 1: output
-	virtual void setMode(uint8_t mode);
+	virtual void setMode(uint8_t mode) override;
 
-	virtual void setResolution(uint8_t resolution);
+	virtual void setResolution(uint8_t resolution) override;
 
 	// reference = 0: internal voltage reference
 	// reference = 1: external voltage reference
-	virtual void setReference(uint8_t reference);
+	virtual void setReference(uint8_t reference) override;
 
 	// value: an integer value ranging from 0 to 2^resolution - 1
-	virtual void setValue(int32_t value);
+	virtual void setValue(int32_t value) override;
 
-	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value);
+	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) override;
+
+	// returns the value as a factor between 0 and 1 of the maximum resolution
+	virtual double getRelativeValue(void) override;
 };
 
 /** Defines a select port.
