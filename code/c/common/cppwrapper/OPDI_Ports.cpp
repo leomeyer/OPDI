@@ -32,8 +32,10 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->opdi = NULL;
 	this->flags = 0;
 	this->ptr = NULL;
-	this->selfRefreshTime = 0;
-	this->lastSelfRefreshTime = 0;
+	this->refreshMode = REFRESH_OFF;
+	this->refreshRequired = false;
+	this->refreshTime = 0;
+	this->lastRefreshTime = 0;
 
 	this->id = (char*)malloc(strlen(id) + 1);
 	strcpy(this->id, id);
@@ -48,8 +50,10 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->opdi = NULL;
 	this->flags = flags;
 	this->ptr = ptr;
-	this->selfRefreshTime = 0;
-	this->lastSelfRefreshTime = 0;
+	this->refreshMode = REFRESH_OFF;
+	this->refreshRequired = false;
+	this->refreshTime = 0;
+	this->lastRefreshTime = 0;
 
 	this->id = (char*)malloc(strlen(id) + 1);
 	strcpy(this->id, id);
@@ -60,12 +64,23 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 }
 
 uint8_t OPDI_Port::doWork(uint8_t canSend) {
-	// self-refresh specified?
-	if (canSend && (this->selfRefreshTime > 0)) {
+
+	// while not connected, always reset the flag
+	if ((this->opdi == NULL) || !this->opdi->isConnected())
+		this->refreshRequired = false;
+
+	// refresh necessary?
+	if (canSend && this->refreshRequired) {
+		this->refresh();
+		this->refreshRequired = false;
+	}
+
+	// determine whether periodic self refresh is necessary
+	if ((this->refreshMode == REFRESH_PERIODIC) && (this->refreshTime > 0)) {
 		// self refresh timer reached?
-		if (opdi_get_time_ms() - this->lastSelfRefreshTime > this->selfRefreshTime) {
+		if (opdi_get_time_ms() - this->lastRefreshTime > this->refreshTime) {
 			this->doSelfRefresh();
-			this->lastSelfRefreshTime = opdi_get_time_ms();
+			this->lastRefreshTime = opdi_get_time_ms();
 		}
 	}
 
@@ -118,6 +133,7 @@ void OPDI_Port::setFlags(int32_t flags) {
 	this->flags = flags;
 }
 
+/*
 void OPDI_Port::doAutoRefresh(void) {
 	// only while connected
 	// this is important because if an auto refresh is issued during startup
@@ -140,7 +156,6 @@ void OPDI_Port::doAutoRefresh(void) {
 		opdi->refresh(&portsToRefresh[0]);
 	}
 }
-
 void OPDI_Port::setAutoRefreshPorts(std::string portList) {
 	// split list at blanks
 	std::stringstream ss(portList);
@@ -151,16 +166,24 @@ void OPDI_Port::setAutoRefreshPorts(std::string portList) {
 			this->autoRefreshPorts.push_back(item);
 	}
 }
+*/
 
-void OPDI_Port::doSelfRefresh(void) {
-	this->refresh();
+void OPDI_Port::setRefreshMode(RefreshMode refreshMode) {
+	this->refreshMode = refreshMode;
 }
 
-void OPDI_Port::setSelfRefreshTime(uint32_t timeInMs) {
-	this->selfRefreshTime = timeInMs;
+OPDI_Port::RefreshMode OPDI_Port::getRefreshMode(void) {
+	return this->refreshMode;
+}
+
+void OPDI_Port::setRefreshTime(uint32_t timeInMs) {
+	this->refreshTime = timeInMs;
 }
 
 uint8_t OPDI_Port::refresh() {
+	if (this->isHidden())
+		return OPDI_STATUS_OK;
+
 	OPDI_Port **ports = new OPDI_Port*[2];
 	ports[0] = this;
 	ports[1] = NULL;
@@ -243,12 +266,8 @@ OPDI_DigitalPort::~OPDI_DigitalPort() {
 }
 
 void OPDI_DigitalPort::doSelfRefresh(void) {
-	// only in input modes
-	if ((this->mode == OPDI_DIGITAL_MODE_INPUT_FLOATING)
-		|| (this->mode == OPDI_DIGITAL_MODE_INPUT_PULLUP)
-		|| (this->mode == OPDI_DIGITAL_MODE_INPUT_PULLDOWN))
-		// call base method
-		OPDI_Port::doSelfRefresh();
+	// set flag
+	this->refreshRequired = true;
 }
 
 void OPDI_DigitalPort::setDirCaps(const char *dirCaps) {
@@ -277,48 +296,54 @@ void OPDI_DigitalPort::setMode(uint8_t mode) {
 	if (mode > 3)
 		throw PortError("Digital port mode not supported: " + this->to_string((int)mode));
 
+	int8_t newMode = -1;
 	// validate mode
 	if (!strcmp(this->caps, OPDI_PORTDIRCAP_INPUT) || !strcmp(this->caps, OPDI_PORTDIRCAP_BIDI))  {
 		switch (mode) {
 		case 0: // Input
 			// if "Input" is requested, map it to the allowed pullup/pulldown input mode if specified
 			if ((flags & OPDI_DIGITAL_PORT_PULLUP_ALWAYS) == OPDI_DIGITAL_PORT_PULLUP_ALWAYS)
-				this->mode = 1;
+				newMode = 1;
 			else
 			if ((flags & OPDI_DIGITAL_PORT_PULLDN_ALWAYS) == OPDI_DIGITAL_PORT_PULLDN_ALWAYS)
-				this->mode = 2;
+				newMode = 2;
 			else
-				this->mode = 0;
+				newMode = 0;
 			break;
 		case 1:
 			if ((flags & OPDI_DIGITAL_PORT_PULLUP_ALWAYS) != OPDI_DIGITAL_PORT_PULLUP_ALWAYS)
 				throw PortError("Digital port mode not supported; use mode 'Input with pullup': " + this->to_string((int)mode));
-			this->mode = 1;
+			newMode = 1;
 			break;
 		case 2:
 			if ((flags & OPDI_DIGITAL_PORT_PULLDN_ALWAYS) != OPDI_DIGITAL_PORT_PULLDN_ALWAYS)
 				throw PortError("Digital port mode not supported; use mode 'Input with pulldown': " + this->to_string((int)mode));
-			this->mode = 2;
+			newMode = 2;
 			break;
 		case 3:
 			if (!strcmp(this->caps, OPDI_PORTDIRCAP_INPUT))
 				throw PortError("Cannot set input only digital port mode to 'Output'");
-			this->mode = 3;
+			newMode = 3;
 		}
 	} else {
 		// direction is output only
 		if (mode < 3)
 			throw PortError("Cannot set output only digital port mode to input");
-		this->mode = 3;
+		newMode = 3;
 	}
-	this->doAutoRefresh();
+	if (newMode > -1) {
+		if (newMode != this->mode)
+			this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+		this->mode = newMode;
+	}
 }
 
 void OPDI_DigitalPort::setLine(uint8_t line) {
 	if (this->mode != 3)
 		throw PortError("Cannot set digital port line in input mode");
+	if (line != this->line)
+		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->line = line;
-	this->doAutoRefresh();
 }
 
 // function that fills in the current port state
@@ -356,18 +381,16 @@ OPDI_AnalogPort::~OPDI_AnalogPort() {
 }
 
 void OPDI_AnalogPort::doSelfRefresh(void) {
-	// only in input mode
-	if ((this->mode == OPDI_ANALOG_MODE_INPUT))
-		// call base method
-		OPDI_Port::doSelfRefresh();
+	this->refreshRequired = true;
 }
 
 // function that handles the set direction command (opdi_set_digital_port_mode)
 void OPDI_AnalogPort::setMode(uint8_t mode) {
 	if (mode > 2)
 		throw PortError("Analog port mode not supported: " + this->to_string((int)mode));
+	if (mode != this->mode)
+		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->mode = mode;
-	this->doAutoRefresh();
 }
 
 int32_t OPDI_AnalogPort::validateValue(int32_t value) {
@@ -388,20 +411,20 @@ void OPDI_AnalogPort::setResolution(uint8_t resolution) {
 		|| ((resolution == 11) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_11) != OPDI_ANALOG_PORT_RESOLUTION_11))
 		|| ((resolution == 12) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_12) != OPDI_ANALOG_PORT_RESOLUTION_12)))
 		throw PortError("Analog port resolution not supported (port flags): " + this->to_string((int)resolution));
+	if (resolution != this->resolution)
+		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->resolution = resolution;
-	// restrict value to possible range
-	this->value = this->validateValue(this->value);
-	if (this->mode == 0)
-		this->doAutoRefresh();
-	else
+
+	if (this->mode != 0)
 		this->setValue(this->value);
 }
 
 void OPDI_AnalogPort::setReference(uint8_t reference) {
 	if (reference > 2)
 		throw PortError("Analog port reference not supported: " + this->to_string((int)reference));
+	if (reference != this->reference)
+		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->reference = reference;
-	this->doAutoRefresh();
 }
 
 void OPDI_AnalogPort::setValue(int32_t value) {
@@ -409,9 +432,11 @@ void OPDI_AnalogPort::setValue(int32_t value) {
 	if (this->mode == 0)
 		throw PortError("Cannot set analog value on port configured as input");
 
-	// restrict input to possible values
-	this->value = this->validateValue(value);
-	this->doAutoRefresh();
+	// restrict value to possible range
+	int32_t newValue = this->validateValue(value);
+	if (newValue != this->value)
+		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+	this->value = newValue;
 }
 
 // function that fills in the current port state
@@ -432,9 +457,8 @@ void OPDI_AnalogPort::getState(uint8_t *mode, uint8_t *resolution, uint8_t *refe
 double OPDI_AnalogPort::getRelativeValue(void) {
 	if (this->resolution == 0)
 		return 0;
-	return this->value * 1.0 / (2 << this->resolution - 1);
+	return this->value * 1.0 / ((1 << this->resolution) - 1);
 }
-
 
 #endif		// NO_ANALOG_PORTS
 
@@ -455,7 +479,7 @@ OPDI_SelectPort::OPDI_SelectPort(const char *id, const char *label, const char *
 OPDI_SelectPort::~OPDI_SelectPort() {}
 
 void OPDI_SelectPort::doSelfRefresh(void) {
-	// disabled
+	this->refreshRequired = true;
 }
 
 void OPDI_SelectPort::freeItems() {
@@ -502,8 +526,9 @@ void OPDI_SelectPort::setPosition(uint16_t position) {
 	if (position > count)
 		throw PortError("Position must not exceed the number of items: " + this->count);
 
+	if (position != this->position)
+		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->position = position;
-	this->doAutoRefresh();
 }
 
 void OPDI_SelectPort::getState(uint16_t *position) {
@@ -535,7 +560,7 @@ OPDI_DialPort::OPDI_DialPort(const char *id, const char *label, int32_t minValue
 OPDI_DialPort::~OPDI_DialPort() {}
 
 void OPDI_DialPort::doSelfRefresh(void) {
-	// disabled
+	this->refreshRequired = true;
 }
 
 void OPDI_DialPort::setMin(int32_t min) {
@@ -557,8 +582,10 @@ void OPDI_DialPort::setPosition(int32_t position) {
 	if (position > this->maxValue)
 		throw PortError("Position must not be greater than the maximum: " + this->maxValue);
 	// correct position to next possible step
-	this->position = ((position - this->minValue) / this->step) * this->step + this->minValue;
-	this->doAutoRefresh();
+	int32_t newPosition = ((position - this->minValue) / this->step) * this->step + this->minValue;
+	if (newPosition != this->position)
+		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+	this->position = position;
 }
 
 // function that fills in the current port state

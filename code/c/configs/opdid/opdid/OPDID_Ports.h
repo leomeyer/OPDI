@@ -65,7 +65,7 @@ protected:
 	};
 
 	LogicFunction function;
-	int funcN;
+	size_t funcN;
 	bool negate;
 	std::string inputPortStr;
 	std::string outputPortStr;
@@ -97,11 +97,12 @@ public:
 // Pulse Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A pulse port generates a digital pulse with a defined frequency (measured
-* in OPDI ticks) and a duty cycle in percent. The frequency and duty cycle
-* can optionally be set by analog ports. The frequency is in this case 
-* calculated as the percentage of MaxFrequency. If enable digital ports are specified the
-* pulse is being generated only while at least one of the enable ports is High.
+/** A pulse port generates a digital pulse with a defined period (measured
+* in milliseconds) and a duty cycle in percent. The period and duty cycle
+* can optionally be set by analog ports. The period is in this case 
+* calculated as the percentage of MaxPeriod. The pulse is active if the line
+* of this port is set to High. If enable digital ports are specified the
+* pulse is also being generated if at least one of the enable ports is High.
 * The output can be normal or inverted. There are two lists of output digital
 * ports which receive the normal or inverted output respectively.
 */
@@ -109,10 +110,11 @@ class OPDID_PulsePort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 
 protected:
 	bool negate;
-	int32_t frequency;
-	int32_t maxFrequency;
+	int32_t period;
+	int32_t maxPeriod;
 	double dutyCycle;
-	std::string frequencyPortStr;
+	int8_t disabledState;
+	std::string periodPortStr;
 	std::string dutyCyclePortStr;
 	std::string enablePortStr;
 	std::string outputPortStr;
@@ -121,11 +123,12 @@ protected:
 	DigitalPortList enablePorts;
 	DigitalPortList outputPorts;
 	DigitalPortList inverseOutputPorts;
-	OPDI_AnalogPort *frequencyPort;
+	OPDI_AnalogPort *periodPort;
 	OPDI_AnalogPort *dutyCyclePort;
 
 	// state
-	uint64_t counter;
+	uint8_t pulseState;
+	uint64_t lastStateChangeTime;
 
 	virtual uint8_t doWork(uint8_t canSend);
 
@@ -139,8 +142,6 @@ public:
 	virtual void setDirCaps(const char *dirCaps);
 
 	virtual void setMode(uint8_t mode);
-
-	virtual void setLine(uint8_t line);
 
 	virtual void prepare();
 };

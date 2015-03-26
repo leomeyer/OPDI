@@ -10,8 +10,6 @@
 #include "LinuxOPDID.h"
 #endif
 
-#define LOCAL_DEBUG	1
-
 class WindowPort : public OPDI_SelectPort {
 friend class WindowPlugin;
 protected:
@@ -47,6 +45,8 @@ protected:
 	std::string autoOpen;
 	std::string autoClose;
 	std::string forceClose;
+	std::string errorPortStr;
+	std::string resetPortStr;
 
 	// processed configuration
 	OPDI_DigitalPort *sensorPort;
@@ -58,14 +58,14 @@ protected:
 	PortList autoOpenPorts;
 	PortList autoClosePorts;
 	PortList forceClosePorts;
+	PortList errorPorts;
+	PortList resetPorts;
 
 	// state
 	int targetState;
 	int currentState;
 	uint64_t delayTimer;
 	uint64_t openTimer;
-	// set to true when the state changes; next time canSend is true the port will self-refresh
-	bool requiresRefresh;
 	// set to true when the position has been just changed by the master
 	bool positionNewlySet;
 	bool isMotorEnabled;
@@ -118,7 +118,6 @@ WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(i
 
 	this->targetState = UNKNOWN;
 	this->currentState = UNKNOWN;
-	this->requiresRefresh = false;
 	this->positionNewlySet = false;
 	this->isMotorEnabled = false;
 	this->isMotorOn = false;
@@ -181,9 +180,11 @@ void WindowPort::prepare() {
 	this->motorBPort = this->findDigitalPort("MotorB", this->motorB, true);
 	this->enablePort = this->findDigitalPort("Enable", this->enable, false);
 
-	this->findDigitalPorts("AutoOpen", this->autoOpen, autoOpenPorts);
-	this->findDigitalPorts("AutoClose", this->autoClose, autoClosePorts);
-	this->findDigitalPorts("ForceClose", this->forceClose, forceClosePorts);
+	this->findDigitalPorts("AutoOpen", this->autoOpen, this->autoOpenPorts);
+	this->findDigitalPorts("AutoClose", this->autoClose, this->autoClosePorts);
+	this->findDigitalPorts("ForceClose", this->forceClose, this->forceClosePorts);
+	this->findDigitalPorts("ErrorPorts", this->errorPortStr, this->errorPorts);
+	this->findDigitalPorts("ResetPorts", this->resetPortStr, this->resetPorts);
 	
 	// no enable port? assume always enabled
 	if (this->enablePort == NULL)
@@ -194,22 +195,16 @@ uint8_t WindowPort::getInputPortLine(OPDI_DigitalPort *port) {
 	uint8_t mode;
 	uint8_t line;
 	port->getState(&mode, &line);
-#ifndef LOCAL_DEBUG
-	if ((mode < OPDI_DIGITAL_MODE_INPUT_FLOATING) || (mode > OPDI_DIGITAL_MODE_INPUT_PULLDOWN))
-		throw Poco::AssertionViolationException(std::string("Window port ") + this->id + ": Port " + port->getID() + " is not in input mode, cannot query");
-#endif
 	return line;
 }
 
 // checks whether the port is an output port and throws an exception if not
 void WindowPort::setOutputPortLine(OPDI_DigitalPort *port, uint8_t newLine) {
-#ifndef LOCAL_DEBUG
 	uint8_t mode;
 	uint8_t line;
 	port->getState(&mode, &line);
 	if (mode != OPDI_DIGITAL_MODE_OUTPUT)
 		throw Poco::AssertionViolationException(std::string("Window port ") + this->id + ": Port " + port->getID() + " is not in output mode, cannot set");
-#endif
 	port->setLine(newLine);
 }
 
@@ -294,6 +289,19 @@ void WindowPort::setCurrentState(int state) {
 	if (this->currentState != state) {
 		if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 			opdid->log(std::string(this->id) + ": Changing current state to: " + this->getStateText(state) + this->getMotorStateText());
+
+		// if set to ERR or ERR is cleared, notify the ErrorPorts
+		if ((this->currentState == ERR) || (state == ERR)) {
+			// go through error ports
+			PortList::iterator pi = this->errorPorts.begin();
+			while (pi != this->errorPorts.end()) {
+				if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					opdid->log(std::string(this->id) + ": Notifying error port: " + (*pi)->getID() + ": " + (state == ERR ? "Entering" : "Leaving") + " error state");
+				this->setOutputPortLine((*pi), (state == ERR ? 1 : 0));
+				pi++;
+			}
+		}
+
 		this->currentState = state;
 
 		// undefined states reset the target
@@ -304,15 +312,15 @@ void WindowPort::setCurrentState(int state) {
 			(state != WAITING_BEFORE_DISABLE_OPEN) && 
 			(state != WAITING_BEFORE_DISABLE_CLOSED) && 
 			(state != WAITING_BEFORE_DISABLE_ERROR))
-			this->requiresRefresh = true;
+			this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 			
 		// if the window has been closed or opened, reflect it in the UI
 		// except if the position is set to automatic
 		if (this->position < 2) {
 			if (state == CLOSED)
-				position = 0;
+				this->setPosition(0);
 			else if (state == OPEN)
-				position = 1;
+				this->setPosition(1);
 		}
 	}
 }
@@ -586,6 +594,16 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			}
 			pi++;
 		}
+	} else {
+		// if one of the Reset ports is High, the window should be closed
+		pi = this->resetPorts.begin();
+		while (pi != this->resetPorts.end()) {
+			if (this->getInputPortLine(*pi) == 1) {
+				forceClose = true;
+				break;
+			}
+			pi++;
+		}
 	}
 
 	if (forceClose) {
@@ -642,12 +660,6 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			if (this->currentState == ERR)
 				this->setCurrentState(UNKNOWN_WAITING);
 		}
-	}
-
-	if (this->requiresRefresh && canSend) {
-		this->refresh();
-
-		this->requiresRefresh = false;
 	}
 
 	return OPDI_STATUS_OK;

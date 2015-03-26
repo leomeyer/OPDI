@@ -293,7 +293,7 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 	} else if (portDirCaps == "Bidi") {
 		port->setDirCaps(OPDI_PORTDIRCAP_BIDI);
 	} else if (portDirCaps != "")
-		throw Poco::DataException("Unknown port DirCaps specifier; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
+		throw Poco::DataException("Unknown DirCaps specified; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
 	
 	int flags = portConfig->getInt("Flags", -1);
 	if (flags >= 0) {
@@ -304,12 +304,26 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 		if (defaultFlags > 0)
 			port->setFlags(defaultFlags);
 
-	std::string autoRefreshPorts = this->getConfigString(portConfig, "AutoRefresh", "", false);
-	port->setAutoRefreshPorts(autoRefreshPorts);
+	std::string refreshMode = this->getConfigString(portConfig, "RefreshMode", "", false);
+	if (refreshMode == "Off") {
+		port->setRefreshMode(OPDI_Port::REFRESH_OFF);
+	} else
+	if (refreshMode == "Periodic") {
+		port->setRefreshMode(OPDI_Port::REFRESH_PERIODIC);
+	} else
+	if (refreshMode == "Auto") {
+		port->setRefreshMode(OPDI_Port::REFRESH_AUTO);
+	} else
+		if (refreshMode != "")
+			throw Poco::DataException("Unknown RefreshMode specified; expected 'Off', 'Periodic' or 'Auto': " + refreshMode);
 
-	int time = portConfig->getInt("SelfRefreshTime", -1);
-	if (time >= 0) {
-		port->setSelfRefreshTime(time);
+	if (port->getRefreshMode() == OPDI_Port::REFRESH_PERIODIC) {
+		int time = portConfig->getInt("RefreshTime", -1);
+		if (time >= 0) {
+			port->setRefreshTime(time);
+		} else {
+			throw Poco::DataException("A RefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
+		}
 	}
 }
 
@@ -327,7 +341,7 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 	} else if (portMode == "Output") {
 		port->setMode(3);
 	} else if (portMode != "")
-		throw Poco::DataException("Unknown port mode specifier; expected 'Input', 'Input with pullup', 'Input with pulldown', or 'Output'", portMode);
+		throw Poco::DataException("Unknown Mode specified; expected 'Input', 'Input with pullup', 'Input with pulldown', or 'Output'", portMode);
 
 	std::string portLine = this->getConfigString(portConfig, "Line", "", false);
 	if (portLine == "High") {
@@ -335,7 +349,7 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 	} else if (portLine == "Low") {
 		port->setLine(0);
 	} else if (portLine != "")
-		throw Poco::DataException("Unknown port line specifier; expected 'Low' or 'High'", portLine);
+		throw Poco::DataException("Unknown Line specified; expected 'Low' or 'High'", portLine);
 }
 
 void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
@@ -367,7 +381,7 @@ void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portC
 	else if (mode == "Output")
 		port->setMode(1);
 	else if (mode != "")
-		throw Poco::ApplicationException("Unknown analog port mode, expected 'Input' or 'Output'", mode);
+		throw Poco::ApplicationException("Unknown mode specified; expected 'Input' or 'Output'", mode);
 
 	if (portConfig->hasProperty("Resolution")) {
 		uint8_t resolution = portConfig->getInt("Resolution", OPDI_ANALOG_PORT_RESOLUTION_12);
@@ -489,6 +503,7 @@ void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration *portConfig
 		this->log("Setting up LogicPort: " + port);
 
 	OPDID_LogicPort *dlPort = new OPDID_LogicPort(this, port.c_str());
+	this->configurePort(portConfig, dlPort, 0);	
 	dlPort->configure(portConfig);
 
 	this->addPort(dlPort);
@@ -499,6 +514,7 @@ void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig
 		this->log("Setting up PulsePort: " + port);
 
 	OPDID_PulsePort *pulsePort = new OPDID_PulsePort(this, port.c_str());
+	this->configurePort(portConfig, pulsePort, 0);	
 	pulsePort->configure(portConfig);
 
 	this->addPort(pulsePort);
