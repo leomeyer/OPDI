@@ -325,8 +325,8 @@ void FritzDECT200Power::setPower(int32_t power) {
 	this->power = power;
 	if (power > -1)
 		OPDI_DialPort::setPosition(power);
-	else
-		this->refreshRequired = true;
+
+	this->refreshRequired = true;
 }
 
 void FritzDECT200Power::doSelfRefresh(void) {
@@ -406,8 +406,8 @@ void FritzDECT200Energy::setEnergy(int32_t energy) {
 	this->energy = energy;
 	if (energy > -1)
 		OPDI_DialPort::setPosition(energy);
-	else
-		this->refreshRequired = true;
+
+	this->refreshRequired = true;
 }
 
 void FritzDECT200Energy::doSelfRefresh(void) {
@@ -629,7 +629,7 @@ void FritzBoxPlugin::getSwitchEnergy(FritzPort *port) {
 
 	// parse result
 	int energy = -1;
-	Poco::NumberParser::tryParse(result, energy, ',');
+	Poco::NumberParser::tryParse(result, energy);
 
 	energyPort->setEnergy(energy);
 }
@@ -648,7 +648,7 @@ void FritzBoxPlugin::getSwitchPower(FritzPort *port) {
 
 	// parse result
 	int power = -1;
-	Poco::NumberParser::tryParse(result, power, ',');
+	Poco::NumberParser::tryParse(result, power);
 
 	powerPort->setPower(power);
 }
@@ -759,12 +759,12 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 
 void FritzBoxPlugin::masterConnected() {
 	// when the master connects, login to the FritzBox
-	this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGIN, NULL));
+	//this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGIN, NULL));
 }
 
 void FritzBoxPlugin::masterDisconnected() {
 	// when the master connects, logout from the FritzBox
-	this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGOUT, NULL));
+	//this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGOUT, NULL));
 }
 
 void FritzBoxPlugin::run(void) {

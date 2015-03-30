@@ -179,10 +179,12 @@ class DialPortViewAdapter implements IPortViewAdapter {
 
        	tvCur.setText("" + position);
 
+        sbSeek.setOnSeekBarChangeListener(null);
+
        	sbSeek.setMax(maxValue - minValue);
         sbSeek.setProgress(position - minValue);
         	
-        sbSeek.setEnabled(true);
+        sbSeek.setEnabled(!dPort.isReadonly());
 
         sbSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 			boolean ignoreNextSet;
