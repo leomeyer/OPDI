@@ -397,7 +397,7 @@ protected:
 	int32_t minValue;
 	int32_t maxValue;
 	uint32_t step;
-	uint16_t position;
+	uint32_t position;
 
 	/** A select port does not support self refreshing. */
 	virtual void doSelfRefresh(void) override;

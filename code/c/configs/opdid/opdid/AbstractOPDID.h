@@ -3,6 +3,7 @@
 #include <sstream>
 #include <list>
 
+#include "Poco/Mutex.h"
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/Util/IniFileConfiguration.h"
 
@@ -43,6 +44,8 @@ protected:
 	Poco::Util::AbstractConfiguration *configuration;
 
 	std::string masterName;
+
+	Poco::FastMutex mutex;
 
 	typedef std::list<IOPDIDConnectionListener *> ConnectionListenerList;
 	ConnectionListenerList connectionListeners;
