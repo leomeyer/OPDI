@@ -131,14 +131,17 @@ std::string FritzBoxPlugin::getResponse(std::string challenge, std::string passw
 	std::wstring toHashUTF16;
 	Poco::UnicodeConverter::toUTF16(toHash, toHashUTF16);
 	// replace chars > 255 with a dot (compatibility reasons)
+	// convert to 16 bit types (can't use wstring directly because on Linux it's more than 16 bit wide)
+	std::vector<uint16_t> charVec;
 	wchar_t *c = (wchar_t *)&toHashUTF16.c_str()[0];
 	while (*c) {
 		if (*c > 255)
 			*c = '.';
+		charVec.push_back((uint16_t)*c);
 		c++;
 	}
 	// twice the string length (each char has 2 bytes)
-	md5.update(toHashUTF16.c_str(), toHashUTF16.length() * 2);
+	md5.update(charVec.data(), charVec.size() * 2);
 	const Poco::DigestEngine::Digest& digest = md5.digest(); // obtain result
 	return challenge + "-" + Poco::DigestEngine::digestToHex(digest);
 }
@@ -160,7 +163,7 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 	this->opdid = abstractOPDID;
 
 	// test case for response calculation (see documentation: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AVM_Technical_Note_-_Session_ID.pdf)
-	//	abstractOPDID->log("Test Response: " + this->getResponse("1234567z", "äbc"));
+	abstractOPDID->log("Test Response: " + this->getResponse("1234567z", "äbc"));
 
 	// get host and credentials
 	std::string host = abstractOPDID->getConfigString(nodeConfig, "Host", "", true);
