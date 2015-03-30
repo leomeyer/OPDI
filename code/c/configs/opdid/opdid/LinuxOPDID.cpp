@@ -89,7 +89,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 			int fd = (long)info;
 			char inputData;
 			int bytesRead;
-			
+
 			// first byte of connection remembered?
 			if (first_com_byte != 0) {
 				c = first_com_byte;
@@ -192,11 +192,11 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 
 	// info value is the socket handle
 	result = opdi_message_setup(&io_receive, &io_send, (void *)(long)csock);
-	if (result != 0) 
+	if (result != 0)
 		return result;
 
 	result = opdi_get_message(&message, OPDI_CANNOT_SEND);
-	if (result != 0) 
+	if (result != 0)
 		return result;
 
 	last_activity = opdi_get_time_ms();
@@ -259,7 +259,7 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 
 				if (Opdi->logVerbosity != QUIET)
 					this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(cli_addr.sin_addr))).c_str());
-		
+
 				err = HandleTCPConnection(newsockfd);
 
 				close(newsockfd);
