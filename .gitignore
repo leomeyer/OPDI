@@ -30,3 +30,6 @@
 *.rc
 /code/c/configs/WinOPDI/Debug/*.unsuccessfulbuild
 /code/c/configs/opdid/plugins/linux_test/*.so
+/code/c/configs/opdid/plugins/automation/FritzBoxPlugin/Debug/*.dll
+/code/c/configs/opdid/plugins/automation/FritzBoxPlugin/Debug/*.exp
+/code/c/configs/opdid/plugins/automation/FritzBoxPlugin/Debug/*.lib

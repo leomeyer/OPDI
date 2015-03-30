@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "plugins", "plugins", "{8A7D
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowPlugin", "plugins\automation\WindowPlugin\WindowPlugin.vcxproj", "{F5A67CB6-ECF0-41EB-BABF-AA80039CA285}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FritzBoxPlugin", "plugins\automation\FritzBoxPlugin\FritzBoxPlugin.vcxproj", "{5433A938-14E3-41EB-B700-5D2DF80ED6B8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -27,6 +29,10 @@ Global
 		{F5A67CB6-ECF0-41EB-BABF-AA80039CA285}.Debug|Win32.Build.0 = Debug|Win32
 		{F5A67CB6-ECF0-41EB-BABF-AA80039CA285}.Release|Win32.ActiveCfg = Release|Win32
 		{F5A67CB6-ECF0-41EB-BABF-AA80039CA285}.Release|Win32.Build.0 = Release|Win32
+		{5433A938-14E3-41EB-B700-5D2DF80ED6B8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5433A938-14E3-41EB-B700-5D2DF80ED6B8}.Debug|Win32.Build.0 = Debug|Win32
+		{5433A938-14E3-41EB-B700-5D2DF80ED6B8}.Release|Win32.ActiveCfg = Release|Win32
+		{5433A938-14E3-41EB-B700-5D2DF80ED6B8}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
