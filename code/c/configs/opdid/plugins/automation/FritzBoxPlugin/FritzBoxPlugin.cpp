@@ -109,6 +109,8 @@ public:
 
 	virtual void login(void);
 
+	virtual void checkLogin(void);
+
 	virtual void logout(void);
 
 	virtual void getSwitchState(FritzPort *port);
@@ -505,7 +507,7 @@ std::string FritzBoxPlugin::getResponse(std::string challenge, std::string passw
 
 std::string FritzBoxPlugin::getSessionID(std::string host, std::string user, std::string password) {
 
-	std::string loginPage = this->httpGet("/login_sid.lua");
+	std::string loginPage = this->httpGet("/login_sid.lua?sid=" + this->sid);
 	if (loginPage == "")
 		return INVALID_SID;
 	std::string sid = getXMLValue(loginPage, "SID");
@@ -542,6 +544,22 @@ void FritzBoxPlugin::login(void) {
 	}
 }
 
+
+void FritzBoxPlugin::checkLogin(void) {
+	// check whether we're currently logged in
+	std::string loginPage = this->httpGet("/login_sid.lua?sid=" + this->sid);
+	// error case
+	if (loginPage == "") {
+		this->sid = INVALID_SID;
+		return;
+	}
+	this->sid = getXMLValue(loginPage, "SID");
+	if (sid == INVALID_SID) {
+		// try to log in
+		this->login();
+	}
+}
+
 void FritzBoxPlugin::logout(void) {
 	// not connected?
 	if (this->sid == INVALID_SID)
@@ -556,13 +574,10 @@ void FritzBoxPlugin::logout(void) {
 }
 
 void FritzBoxPlugin::getSwitchState(FritzPort *port) {
-	// not connected?
-	if (this->sid == INVALID_SID) {
-		this->login();
-		// problem?
-		if (this->sid == INVALID_SID)
-			return;
-	}
+	this->checkLogin();
+	// problem?
+	if (this->sid == INVALID_SID)
+		return;
 
 	// port must be a DECT 200 switch port
 	FritzDECT200Switch *switchPort = (FritzDECT200Switch *)port;
@@ -580,13 +595,10 @@ void FritzBoxPlugin::getSwitchState(FritzPort *port) {
 }
 
 void FritzBoxPlugin::setSwitchState(FritzPort *port, uint8_t line) {
-	// not connected?
-	if (this->sid == INVALID_SID) {
-		this->login();
-		// problem?
-		if (this->sid == INVALID_SID)
-			return;
-	}
+	this->checkLogin();
+	// problem?
+	if (this->sid == INVALID_SID)
+		return;
 
 	// port must be a DECT 200 switch port
 	FritzDECT200Switch *switchPort = (FritzDECT200Switch *)port;
@@ -604,13 +616,10 @@ void FritzBoxPlugin::setSwitchState(FritzPort *port, uint8_t line) {
 }
 
 void FritzBoxPlugin::getSwitchEnergy(FritzPort *port) {
-	// not connected?
-	if (this->sid == INVALID_SID) {
-		this->login();
-		// problem?
-		if (this->sid == INVALID_SID)
-			return;
-	}
+	this->checkLogin();
+	// problem?
+	if (this->sid == INVALID_SID)
+		return;
 
 	// port must be a DECT 200 energy port
 	FritzDECT200Energy *energyPort = (FritzDECT200Energy *)port;
@@ -626,13 +635,10 @@ void FritzBoxPlugin::getSwitchEnergy(FritzPort *port) {
 }
 
 void FritzBoxPlugin::getSwitchPower(FritzPort *port) {
-	// not connected?
-	if (this->sid == INVALID_SID) {
-		this->login();
-		// problem?
-		if (this->sid == INVALID_SID)
-			return;
-	}
+	this->checkLogin();
+	// problem?
+	if (this->sid == INVALID_SID)
+		return;
 
 	// port must be a DECT 200 power port
 	FritzDECT200Power *powerPort = (FritzDECT200Power *)port;
