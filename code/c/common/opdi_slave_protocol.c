@@ -154,10 +154,10 @@ static uint8_t send_select_port_info(channel_t channel, opdi_Port *port) {
 
 #ifndef OPDI_NO_DIAL_PORTS
 static uint8_t send_dial_port_info(channel_t channel, opdi_Port *port) {
-	char minbuf[10];
-	char maxbuf[10];
-	char stepbuf[10];
-	char flagStr[10];
+	char minbuf[11];
+	char maxbuf[11];
+	char stepbuf[11];
+	char flagStr[11];
 
 	opdi_DialPortInfo *dpi = (opdi_DialPortInfo *)port->info.ptr;
 	// convert values to strings

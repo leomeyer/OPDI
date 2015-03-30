@@ -9,6 +9,7 @@
 #include "Poco/DateTimeFormatter.h"
 #include "Poco/DateTimeParser.h"
 #include "Poco/File.h"
+#include "Poco/Mutex.h"
 
 #include "opdi_constants.h"
 
@@ -181,7 +182,15 @@ void AbstractOPDID::println(std::string text) {
 }
 
 void AbstractOPDID::log(std::string text) {
+
+	// important: log must be thread-safe.
+	// encapsulate in a mutex
+
+	// Try to lock the mutex. If this does not work in time, it will throw
+	// an exception. The calling thread should deal with this exception.
+	this->mutex.lock(1000);
 	this->println(this->getTimestampStr() + text);
+	this->mutex.unlock();
 }
 
 int AbstractOPDID::startup(std::vector<std::string> args) {
@@ -422,7 +431,7 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = itemKeys.begin(); it != itemKeys.end(); ++it) {
 		int itemNumber = portItems->getInt(*it, 0);
 		// check whether the item is active
-		if (itemNumber <= 0)
+		if (itemNumber < 0)
 			continue;
 
 		// insert at the correct position to create a sorted list of items
@@ -585,7 +594,7 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = nodeKeys.begin(); it != nodeKeys.end(); ++it) {
 		int nodeNumber = nodes->getInt(*it, 0);
 		// check whether the node is active
-		if (nodeNumber <= 0)
+		if (nodeNumber < 0)
 			continue;
 
 		// insert at the correct position to create a sorted list of nodes
