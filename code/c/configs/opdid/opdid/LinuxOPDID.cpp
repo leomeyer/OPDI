@@ -89,7 +89,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 			int fd = (long)info;
 			char inputData;
 			int bytesRead;
-			
+
 			// first byte of connection remembered?
 			if (first_com_byte != 0) {
 				c = first_com_byte;
@@ -190,13 +190,22 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 		return OPDI_DEVICE_ERROR;
 	}
 
+	// set linger on socket
+	struct linger sLinger;
+	sLinger.l_onoff = 1;
+	sLinger.l_linger = 1;
+	if (setsockopt (csock, SOL_SOCKET, SO_LINGER, (char *)&sLinger, sizeof(sLinger)) < 0) {
+		this->log("setsockopt failed");
+		return OPDI_DEVICE_ERROR;
+	}
+
 	// info value is the socket handle
 	result = opdi_message_setup(&io_receive, &io_send, (void *)(long)csock);
-	if (result != 0) 
+	if (result != 0)
 		return result;
 
 	result = opdi_get_message(&message, OPDI_CANNOT_SEND);
-	if (result != 0) 
+	if (result != 0)
 		return result;
 
 	last_activity = opdi_get_time_ms();
@@ -259,8 +268,13 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 
 				if (Opdi->logVerbosity != QUIET)
 					this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(cli_addr.sin_addr))).c_str());
-		
+
 				err = HandleTCPConnection(newsockfd);
+
+//				shutdown(newsockfd, SHUT_WR);
+
+				// TODO maybe there's a better way to ensure that data is sent?
+//				usleep(500);
 
 				close(newsockfd);
 

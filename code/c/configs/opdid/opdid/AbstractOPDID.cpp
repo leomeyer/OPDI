@@ -90,7 +90,7 @@ void AbstractOPDID::connected(const char *masterName) {
 
 	if (this->logVerbosity != AbstractOPDID::QUIET)
 		this->log("Connected to: " + this->masterName);
-	
+
 	// notify registered listeners
 	ConnectionListenerList::iterator it = this->connectionListeners.begin();
 	while (it != this->connectionListeners.end()) {
@@ -102,7 +102,7 @@ void AbstractOPDID::connected(const char *masterName) {
 void AbstractOPDID::disconnected() {
 	if (this->logVerbosity != AbstractOPDID::QUIET)
 		this->log("Disconnected from: " + this->masterName);
-	
+
 	this->masterName = std::string();
 
 	// notify registered listeners
@@ -266,7 +266,7 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 	int timeout = general->getInt("IdleTimeout", DEFAULT_IDLETIMEOUT_MS);
 	std::string logVerbosityStr = this->getConfigString(general, "LogVerbosity", "", false);
 
-	if (logVerbosityStr != "") { 
+	if (logVerbosityStr != "") {
 		if (logVerbosityStr == "Quiet") {
 			this->logVerbosity = QUIET;
 		} else
@@ -305,7 +305,7 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 		port->setDirCaps(OPDI_PORTDIRCAP_BIDI);
 	} else if (portDirCaps != "")
 		throw Poco::DataException("Unknown DirCaps specified; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
-	
+
 	int flags = portConfig->getInt("Flags", -1);
 	if (flags >= 0) {
 		port->setFlags(flags);
@@ -340,7 +340,7 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 
 void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port) {
 	this->configurePort(portConfig, port, 0);
-	
+
 	std::string portMode = this->getConfigString(portConfig, "Mode", "", false);
 	if (portMode == "Input") {
 		port->setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
@@ -373,18 +373,18 @@ void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *
 }
 
 void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_AnalogPort *port) {
-	this->configurePort(portConfig, port, 
+	this->configurePort(portConfig, port,
 		// default flags: assume everything is supported
 		OPDI_ANALOG_PORT_CAN_CHANGE_RES |
 		OPDI_ANALOG_PORT_RESOLUTION_8 |
 		OPDI_ANALOG_PORT_RESOLUTION_9 |
-		OPDI_ANALOG_PORT_RESOLUTION_10 |	
+		OPDI_ANALOG_PORT_RESOLUTION_10 |
 		OPDI_ANALOG_PORT_RESOLUTION_11 |
 		OPDI_ANALOG_PORT_RESOLUTION_12 |
 		OPDI_ANALOG_PORT_CAN_CHANGE_REF |
 		OPDI_ANALOG_PORT_REFERENCE_INT |
-		OPDI_ANALOG_PORT_REFERENCE_EXT);	
-		
+		OPDI_ANALOG_PORT_REFERENCE_EXT);
+
 	std::string mode = this->getConfigString(portConfig, "Mode", "", false);
 	if (mode == "Input")
 		port->setMode(0);
@@ -477,7 +477,7 @@ void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *p
 }
 
 void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DialPort *port) {
-	this->configurePort(portConfig, port, 0);	
+	this->configurePort(portConfig, port, 0);
 
 	int min = portConfig->getInt("Min", 0);
 	if (!portConfig->hasProperty("Max"))
@@ -513,7 +513,7 @@ void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration *portConfig
 		this->log("Setting up LogicPort: " + port);
 
 	OPDID_LogicPort *dlPort = new OPDID_LogicPort(this, port.c_str());
-	this->configurePort(portConfig, dlPort, 0);	
+	this->configurePort(portConfig, dlPort, 0);
 	dlPort->configure(portConfig);
 
 	this->addPort(dlPort);
@@ -524,7 +524,7 @@ void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig
 		this->log("Setting up PulsePort: " + port);
 
 	OPDID_PulsePort *pulsePort = new OPDID_PulsePort(this, port.c_str());
-	this->configurePort(portConfig, pulsePort, 0);	
+	this->configurePort(portConfig, pulsePort, 0);
 	pulsePort->configure(portConfig);
 
 	this->addPort(pulsePort);
@@ -553,7 +553,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		plugin->setupPlugin(this, node, nodeConfig);
 	} else {
 		std::string nodeType = this->getConfigString(nodeConfig, "Type", "", true);
-		
+
 		// standard driver (internal ports)
 		if (nodeType == "DigitalPort") {
 			this->setupEmulatedDigitalPort(nodeConfig, node);

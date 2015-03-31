@@ -319,7 +319,7 @@ protected:
 
 	/** An analog port performs a self refresh only if it is in input mode.	*/
 	virtual void doSelfRefresh(void) override;
-	
+
 	virtual int32_t validateValue(int32_t value);
 
 public:
@@ -397,7 +397,7 @@ protected:
 	int32_t minValue;
 	int32_t maxValue;
 	uint32_t step;
-	uint32_t position;
+	int32_t position;
 
 	/** A select port does not support self refreshing. */
 	virtual void doSelfRefresh(void) override;
