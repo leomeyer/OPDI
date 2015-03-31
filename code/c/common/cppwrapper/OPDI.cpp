@@ -20,6 +20,7 @@
  * Uses serial port communication.
  */
 
+// #include <iostream>
 #include <cstdlib>
 #include <string.h>
 
@@ -268,6 +269,9 @@ uint8_t OPDI::idleTimeoutReached() {
 }
 
 uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
+//	std::cout << "Last activity: " << this->last_activity << std::endl;
+//	std::cout << "Current time: " << opdi_get_time_ms() << std::endl;
+
 	if (this->idle_timeout_ms > 0) {
 		if (channel != 0) {
 			// reset activity time
