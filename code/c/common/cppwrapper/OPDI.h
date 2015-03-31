@@ -46,12 +46,12 @@ protected:
 	OPDI_Port *last_port;
 
 	uint32_t idle_timeout_ms;
-	uint32_t last_activity;
+	uint64_t last_activity;
 
 	// internal shutdown function; to be called when messages can be sent to the master
 	// May return OPDI_STATUS_OK to cancel the shutdown. Any other value stops message processing.
 	uint8_t shutdownInternal(void);
-	
+
 public:
 	/** Prepares the OPDI class for use.
 	 * You can override this method to implement your platform specific setup.
@@ -128,7 +128,7 @@ public:
 	/** An internal handler which is used to implement the idle timer.
 	 */
 	virtual uint8_t messageHandled(channel_t channel, const char **parts);
-	
+
 	/** Disconnects a master if connected and releases resources. Frees all ports and stops message processing. */
 	virtual void shutdown(void);
 
