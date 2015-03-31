@@ -263,7 +263,9 @@ uint8_t OPDI::refresh(OPDI_Port **ports) {
 }
 
 uint8_t OPDI::idleTimeoutReached() {
-	opdi_send_debug("Idle timeout!");
+	if (!this->isConnected() || !this->canSend) {
+		opdi_send_debug("Idle timeout!");
+	}
 	return this->disconnect();
 }
 
