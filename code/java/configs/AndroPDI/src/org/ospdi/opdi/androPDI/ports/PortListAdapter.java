@@ -9,6 +9,7 @@ import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.ports.SelectPort;
 import org.ospdi.opdi.ports.StreamingPort;
 import org.ospdi.opdi.androPDI.R;
+import org.ospdi.opdi.androPDI.units.Units;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -52,9 +53,14 @@ class PortListAdapter extends ArrayAdapter<Port> {
 	    		adapter = (IPortViewAdapter)port.getViewAdapter();
 	    		// assume it is already configured
 	    		return adapter.getView();
+	    	} else {
+	    		
+	    		// to display the port correctly, set its default unit
+	    		// this will also influence the layout to use for the port
+	    		port.setUnitFormat(Units.getDefaultFormat(context, port.getUnit()));
 	    	}
-	    	
-            if (port instanceof DigitalPort) {
+
+	    	if (port instanceof DigitalPort) {
             	adapter = new DigitalPortViewAdapter(showDevicePorts);
             }
             else if (port instanceof AnalogPort) {

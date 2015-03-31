@@ -336,6 +336,16 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 			throw Poco::DataException("A RefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
 		}
 	}
+
+	// extended properties
+	std::string unit = this->getConfigString(portConfig, "Unit", "", false);
+	if (unit != "") {
+		port->setUnit(unit);
+	}
+	std::string icon = this->getConfigString(portConfig, "Icon", "", false);
+	if (icon != "") {
+		port->setIcon(icon);
+	}
 }
 
 void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port) {
@@ -702,7 +712,7 @@ uint8_t opdi_debug_msg(const uint8_t *message, uint8_t direction) {
 
 const char *opdi_encoding = new char[OPDI_MAX_ENCODINGNAMELENGTH];
 uint16_t opdi_device_flags = 0;
-const char *opdi_supported_protocols = "BP";
+const char *opdi_supported_protocols = "EP,BP";
 const char *opdi_config_name = new char[OPDI_MAX_SLAVENAMELENGTH];
 char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
 
@@ -718,15 +728,15 @@ uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 
 	try {
 		dPort->getState(&dMode, &dLine);
+		mode[0] = '0' + dMode;
+		line[0] = '0' + dLine;
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
-		return OPDI_PORT_ERROR;
+		return OPDI_PORT_ACCESS_DENIED;
 	}
-	mode[0] = '0' + dMode;
-	line[0] = '0' + dLine;
 
 	return OPDI_STATUS_OK;
 }
@@ -752,7 +762,7 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
-		return OPDI_PORT_ERROR;
+		return OPDI_PORT_ACCESS_DENIED;
 	}
 	return OPDI_STATUS_OK;
 }
@@ -779,7 +789,7 @@ uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
-		return OPDI_PORT_ERROR;
+		return OPDI_PORT_ACCESS_DENIED;
 	}
 	return OPDI_STATUS_OK;
 }
@@ -804,7 +814,7 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
-		return OPDI_PORT_ERROR;
+		return OPDI_PORT_ACCESS_DENIED;
 	}
 	mode[0] = '0' + aMode;
 	res[0] = '0' + (aRes - 8);
@@ -828,7 +838,7 @@ uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
-		return OPDI_PORT_ERROR;
+		return OPDI_PORT_ACCESS_DENIED;
 	}
 	return OPDI_STATUS_OK;
 }
@@ -856,7 +866,7 @@ uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
 		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
-		return OPDI_PORT_ERROR;
+		return OPDI_PORT_ACCESS_DENIED;
 	}
 	return OPDI_STATUS_OK;
 }
@@ -880,7 +890,7 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
 		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
-		return OPDI_PORT_ERROR;
+		return OPDI_PORT_ACCESS_DENIED;
 	}
 	return OPDI_STATUS_OK;
 }
@@ -904,7 +914,7 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
-		return OPDI_PORT_ERROR;
+		return OPDI_PORT_ACCESS_DENIED;
 	}
 	return OPDI_STATUS_OK;
 }
@@ -925,7 +935,7 @@ uint8_t opdi_get_select_port_state(opdi_Port *port, uint16_t *position) {
 		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
-		return OPDI_PORT_ERROR;
+		return OPDI_PORT_ACCESS_DENIED;
 	}
 	return OPDI_STATUS_OK;
 }
@@ -945,7 +955,7 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
-		return OPDI_PORT_ERROR;
+		return OPDI_PORT_ACCESS_DENIED;
 	}
 	return OPDI_STATUS_OK;
 }
@@ -966,7 +976,7 @@ uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
 		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
-		return OPDI_PORT_ERROR;
+		return OPDI_PORT_ACCESS_DENIED;
 	}
 	return OPDI_STATUS_OK;
 }
@@ -986,7 +996,7 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
 		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
-		return OPDI_PORT_ERROR;
+		return OPDI_PORT_ACCESS_DENIED;
 	}
 	return OPDI_STATUS_OK;
 }

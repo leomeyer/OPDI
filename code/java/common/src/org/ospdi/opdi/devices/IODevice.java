@@ -429,7 +429,7 @@ public abstract class IODevice extends MessageQueueDevice {
 		String[] protos = Strings.split(parts[PROTOCOLS], ',');
 		
 		IBasicProtocol prot = null;		
-		// try each protocol indicator
+		// try each protocol indicator (preferred protocols should come first)
 		for (String proto: protos) {
 			IBasicProtocol protocol = ProtocolFactory.getProtocol(this, proto);
 			if (protocol != null) {

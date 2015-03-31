@@ -77,3 +77,6 @@
 
 // extended protocol
 #define OPDI_getAllPortStates			"gAPS"
+
+#define OPDI_getExtendedPortInfo		"gEPI"
+#define OPDI_extendedPortInfo			"EPI"

@@ -38,7 +38,7 @@ extern "C" {
 #define OPDI_MESSAGE_BUFFER_SIZE		1024
 
 // Defines the maximum message string length this config can receive.
-// Consumes this amount of bytes times sizeof(char) in RAM.
+// Consumes this amount of bytes in RAM.
 // As the channel identifier and the checksum of a message typically consume a
 // maximum amount of nine bytes, this value may be OPDI_MESSAGE_BUFFER_SIZE - 9
 // on systems with only single-byte character sets.

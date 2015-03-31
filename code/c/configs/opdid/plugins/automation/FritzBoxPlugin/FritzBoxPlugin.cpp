@@ -211,6 +211,7 @@ FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin *plugin, const char *id) :
 
 	// output only
 	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
+	this->setIcon("powersocket");
 }
 
 void FritzDECT200Switch::configure(Poco::Util::AbstractConfiguration *portConfig) {
@@ -304,6 +305,12 @@ void FritzDECT200Power::configure(Poco::Util::AbstractConfiguration *portConfig)
 			throw Poco::DataException("A PowerRefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
 		}
 	}
+
+	// extended properties
+	std::string unit = portConfig->getString("PowerUnit", "");
+	if (unit != "") {
+		this->setUnit(unit);
+	}
 }
 
 void FritzDECT200Power::query(FritzBoxPlugin *plugin) {
@@ -384,6 +391,12 @@ void FritzDECT200Energy::configure(Poco::Util::AbstractConfiguration *portConfig
 		} else {
 			throw Poco::DataException("An EnergyRefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
 		}
+	}
+
+	// extended properties
+	std::string unit = portConfig->getString("EnergyUnit", "");
+	if (unit != "") {
+		this->setUnit(unit);
 	}
 }
 

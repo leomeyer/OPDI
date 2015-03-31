@@ -119,6 +119,7 @@ void OPDI::updatePortData(OPDI_Port *port) {
 	oPort->type = (const char*)port->type;
 	oPort->caps = (const char*)port->caps;
 	oPort->flags = port->flags;
+	oPort->extendedInfo = port->extendedInfo;
 
 	// more complex ports require the pointer to contain additional information
 

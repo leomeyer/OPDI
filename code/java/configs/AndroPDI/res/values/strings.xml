@@ -151,4 +151,14 @@
     <string name="device_debug">{0} says: {1}</string>
     <string name="device_error">{0} reports error: {1}</string>
     <string name="menuitem_port_reload">Reload</string>
+
+
+    <!--  Unit specifications -->
+    
+    <string name="electricPower_mW">electricPower_mW_in_W=0;electricPower_mW_in_mW=1</string>
+    <string name="electricPower_mW_in_W">layout=dial_port_row_noslider;icon=powermeter;label=Electric Power (W);formatString=%.1f W;denominator=1000</string>
+    <string name="electricPower_mW_in_mW">layout=dial_port_row_noslider;icon=powermeter;label=Electric Power (mW);formatString=%.0f mW</string>
+    
+    <string name="electricEnergy_Wh">electricEnergy_Wh_in_Wh=0</string>
+    <string name="electricEnergy_Wh_in_Wh">layout=dial_port_row_noslider;icon=energymeter;formatString=%.0f Wh</string>
 </resources>

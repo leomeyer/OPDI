@@ -2,13 +2,13 @@ package org.ospdi.opdi.androPDI.ports;
 
 import java.util.concurrent.TimeoutException;
 
+import org.ospdi.opdi.androPDI.R;
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.ports.DialPort;
 import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.protocol.DisconnectedException;
 import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.ProtocolException;
-import org.ospdi.opdi.androPDI.R;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -37,6 +37,7 @@ class DialPortViewAdapter implements IPortViewAdapter {
 	Context context;
 
 	private TextView tvToptext;
+	private TextView tvBottomtext;
 	private TextView tvMax;
 	private TextView tvMin;
 	private TextView tvCur;
@@ -64,17 +65,25 @@ class DialPortViewAdapter implements IPortViewAdapter {
 			return cachedView;
 		
 		LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		cachedView = vi.inflate(R.layout.dial_port_row, null);
+		
+		// get layout property from UnitFormat definition
+		String layoutName = dPort.getUnitFormat().getProperty("layout", "dial_port_row");
+		// get layout identifier
+		int layoutID = context.getResources().getIdentifier(layoutName, "layout", context.getPackageName());
+		// inflate the identified layout
+		cachedView = vi.inflate(layoutID, null);
 				
         tvToptext = (TextView) cachedView.findViewById(R.id.toptext);
+        tvBottomtext = (TextView) cachedView.findViewById(R.id.bottomtext);
         tvMax = (TextView) cachedView.findViewById(R.id.dial_max_value);
         tvMin = (TextView) cachedView.findViewById(R.id.dial_min_value);
         tvCur = (TextView) cachedView.findViewById(R.id.dial_current_value);
         sbSeek = (SeekBar) cachedView.findViewById(R.id.seekBar);
         ivPortIcon = (ImageView) cachedView.findViewById(R.id.port_icon);
 
-        tvToptext.setText(dPort.getName());
-
+        if (tvToptext != null) tvToptext.setText(dPort.getName());
+        if (tvBottomtext != null) tvBottomtext.setText(dPort.getType() + " " + dPort.getDirCaps());
+        
         showDevicePorts.addPortAction(new PortAction(DialPortViewAdapter.this) {
 			@Override
 			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
@@ -150,43 +159,56 @@ class DialPortViewAdapter implements IPortViewAdapter {
 		if (stateError) {
 			// indicate an error
 	        Drawable drawable = context.getResources().getDrawable(R.drawable.dial_port_error);
-			ivPortIcon.setImageDrawable(drawable);
-			ivPortIcon.setOnClickListener(null);		// no context menu
+			if (ivPortIcon != null) ivPortIcon.setImageDrawable(drawable);
+			if (ivPortIcon != null) ivPortIcon.setOnClickListener(null);		// no context menu
 
-			tvMax.setText("");
-			tvMin.setText("");
-			tvCur.setText("");
-			sbSeek.setEnabled(false);
-    		sbSeek.setOnSeekBarChangeListener(null);
+			if (tvBottomtext != null) tvBottomtext.setText(dPort.getErrorMessage());
+			if (tvMax != null) tvMax.setText("");
+			if (tvMin != null) tvMin.setText("");
+			if (tvCur != null) tvCur.setText("");
+			if (sbSeek != null) sbSeek.setEnabled(false);
+			if (sbSeek != null) sbSeek.setOnSeekBarChangeListener(null);
 			return;
 		}
 		
 		// set the proper icon
-		Drawable drawable = context.getResources().getDrawable(R.drawable.dial_port);
-		ivPortIcon.setImageDrawable(drawable);
-		
-		// context menu when clicking
-		ivPortIcon.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				handleClick();
+		if (ivPortIcon != null) {
+			// default icon
+			Drawable drawable = context.getResources().getDrawable(R.drawable.dial_port);
+			String iconName = dPort.getUnitFormat().getProperty("icon", "");
+			if (iconName != "") {
+				// get icon identifier
+				int iconID = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
+				if (iconID == 0)
+					throw new IllegalArgumentException("Drawable resource not found: " + iconName);							
+					
+				drawable = context.getResources().getDrawable(iconID);
 			}
-		});
 			
-      	tvMax.setText("" + maxValue);
+			ivPortIcon.setImageDrawable(drawable);
 
-       	tvMin.setText("" + minValue);
+			
+			// context menu when clicking
+			ivPortIcon.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					handleClick();
+				}
+			});
+		}
+		
+			
+		if (tvBottomtext != null) tvBottomtext.setText("");
+		if (tvMax != null) tvMax.setText("" + maxValue);
+		if (tvMin != null) tvMin.setText("" + minValue);
+		if (tvCur != null) tvCur.setText(dPort.getUnitFormat().format(position));
 
-       	tvCur.setText("" + position);
+		if (sbSeek != null) sbSeek.setOnSeekBarChangeListener(null);
+		if (sbSeek != null) sbSeek.setMax(maxValue - minValue);
+		if (sbSeek != null) sbSeek.setProgress(position - minValue);
+		if (sbSeek != null) sbSeek.setEnabled(!dPort.isReadonly());
 
-        sbSeek.setOnSeekBarChangeListener(null);
-
-       	sbSeek.setMax(maxValue - minValue);
-        sbSeek.setProgress(position - minValue);
-        	
-        sbSeek.setEnabled(!dPort.isReadonly());
-
-        sbSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+		if (sbSeek != null) sbSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 			boolean ignoreNextSet;
 			
 			private void setValue(final int val) {

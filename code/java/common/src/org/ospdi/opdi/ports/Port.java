@@ -1,5 +1,7 @@
 package org.ospdi.opdi.ports;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.ospdi.opdi.devices.DeviceException;
@@ -8,6 +10,8 @@ import org.ospdi.opdi.protocol.DisconnectedException;
 import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.PortErrorException;
 import org.ospdi.opdi.protocol.ProtocolException;
+import org.ospdi.opdi.units.UnitFormat;
+import org.ospdi.opdi.utils.Strings;
 
 
 /** Defines the abstract properties and functions of a port.
@@ -49,10 +53,17 @@ public abstract class Port {
 	protected PortType type;
 	protected PortDirCaps dirCaps;
 	protected int flags;
+	protected String extendedInfo;
 	protected Object viewAdapter;
 	protected boolean hasError;
 	protected String errorMessage;
 	
+	// extended properties
+	protected String unit;
+	protected UnitFormat unitFormat = UnitFormat.DEFAULT;
+	
+	protected Map<String, String> extendedProperties = new HashMap<String, String>(); 
+
 	/** Only to be used by subclasses
 	 * 
 	 * @param protocol
@@ -210,4 +221,34 @@ public abstract class Port {
 	 * @return
 	 */
 	public abstract boolean isReadonly();
+
+	public String getUnit() {
+		return unit;
+	}
+
+	public UnitFormat getUnitFormat() {
+		return unitFormat;
+	}
+
+	public void setUnitFormat(UnitFormat unitFormat) {
+		this.unitFormat = unitFormat;
+	}
+	
+	public void setExtendedPortInfo(String info) {
+		this.extendedInfo = info;
+		
+		// extract detailed information from extended info
+		extendedProperties = Strings.getProperties(info);
+		
+		if (extendedProperties.containsKey("unit")) {
+			unit = extendedProperties.get("unit");
+		}
+	}
+	
+	public String getExtendedProperty(String property, String defaultValue) {
+		if (extendedProperties.containsKey(property)) {
+			return extendedProperties.get(property);
+		}
+		return defaultValue;
+	}
 }

@@ -31,7 +31,7 @@ import org.ospdi.opdi.utils.Strings;
  */
 public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	
-	public static final String MAGIC = "BP";
+	private static final String MAGIC = "BP";
 
 	public static final String REFRESH = "Ref";
 	public static final String RECONFIGURE = "Reconf";
@@ -108,6 +108,10 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	
 	@Override
 	public String getMagic() {
+		return MAGIC;
+	}
+
+	public static String getMAGIC() {
 		return MAGIC;
 	}
 

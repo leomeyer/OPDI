@@ -6,7 +6,7 @@ import android.content.Context;
 public class ResourceFactory extends org.ospdi.opdi.utils.ResourceFactory {
 
 	Context context;
-	static ResourceFactory instance;
+	private static ResourceFactory instance;
 	
 	public ResourceFactory(Context context) {
 		this.context = context;
@@ -22,7 +22,7 @@ public class ResourceFactory extends org.ospdi.opdi.utils.ResourceFactory {
 	public String getString(String id) {
 		
 		// get android resource string
-		int intId = context.getResources().getIdentifier(id, "string", context.getPackageName());
+		int intId = (id == null ? 0 : context.getResources().getIdentifier(id, "string", context.getPackageName()));
 	    String value = intId == 0 ? "" : (String)context.getResources().getText(intId);
 
 	    if (value == null || value.equals(""))

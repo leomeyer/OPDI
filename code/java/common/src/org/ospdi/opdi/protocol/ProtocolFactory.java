@@ -19,9 +19,9 @@ public final class ProtocolFactory {
 	
 	static {
 		// register basic protocol
-		registerProtocol(BasicProtocol.MAGIC, BasicProtocol.class);
+		registerProtocol(BasicProtocol.getMAGIC(), BasicProtocol.class);
 		// register extended protocol
-		registerProtocol(ExtendedProtocol.MAGIC, ExtendedProtocol.class);
+		registerProtocol(ExtendedProtocol.getMAGIC(), ExtendedProtocol.class);
 	}
 	
 	public static void registerProtocol(String magic, Class<? extends IBasicProtocol> clazz) {

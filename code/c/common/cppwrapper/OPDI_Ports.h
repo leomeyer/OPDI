@@ -40,12 +40,17 @@ protected:
 	char caps[2];	// caps constants are one character (port direction constants)
 	int32_t flags;
 	void* ptr;
+	char *extendedInfo;
 
 	// If a port is hidden it is not included in the device capabilities as queried by the master.
 	bool hidden;
 
 	// If a port is readonly its state cannot be changed from the master.
 	bool readonly;
+
+	// extended info variables
+	std::string unit;
+	std::string icon;
 
 	// Utility function for string conversion 
 	template <class T> std::string to_string(const T& t);
@@ -93,6 +98,8 @@ protected:
 	// Called when a periodic self-refresh is due. If a refresh is necessary, implementations
 	// should set this->refreshRequired = true.
 	virtual void doSelfRefresh(void) = 0;
+
+	virtual void updateExtendedInfo(void);
 
 public:
 
@@ -150,6 +157,10 @@ public:
 
 	/** Sets the flags of the port. */
 	virtual void setFlags(int32_t flags);
+
+	virtual void setUnit(std::string unit);
+
+	virtual void setIcon(std::string icon);
 
 	/** Causes the port to be refreshed by sending a refresh message to a connected master.
 	*   Only if the port is not hidden. */

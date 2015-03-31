@@ -32,6 +32,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->opdi = NULL;
 	this->flags = 0;
 	this->ptr = NULL;
+	this->extendedInfo = NULL;
 	this->hidden = false;
 	this->readonly = false;
 	this->refreshMode = REFRESH_OFF;
@@ -52,6 +53,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->opdi = NULL;
 	this->flags = flags;
 	this->ptr = ptr;
+	this->extendedInfo = NULL;
 	this->hidden = false;
 	this->readonly = false;
 	this->refreshMode = REFRESH_OFF;
@@ -151,6 +153,40 @@ void OPDI_Port::setFlags(int32_t flags) {
 	if ((this->opdi != NULL) && (oldFlags != this->flags))
 		this->opdi->updatePortData(this);
 }
+
+void OPDI_Port::updateExtendedInfo(void) {
+	std::string exInfo;
+	if (this->unit.size() > 0) {
+		exInfo += "unit=" + this->unit + ";";
+	}
+	if (this->icon.size() > 0) {
+		exInfo += "icon=" + this->icon + ";";
+	}
+	if (this->extendedInfo != NULL) {
+		free(this->extendedInfo);
+	}
+	this->extendedInfo = (char *)malloc(exInfo.size() + 1);
+	strcpy(this->extendedInfo, exInfo.c_str());
+}
+
+void OPDI_Port::setUnit(std::string unit) {
+	if (this->unit != unit) {
+		this->unit = unit;
+		this->updateExtendedInfo();
+		if (this->opdi != NULL)
+			this->opdi->updatePortData(this);
+	}
+}
+
+void OPDI_Port::setIcon(std::string icon) {
+	if (this->icon != icon) {
+		this->icon = icon;
+		this->updateExtendedInfo();
+		if (this->opdi != NULL)
+			this->opdi->updatePortData(this);
+	}
+}
+
 
 /*
 void OPDI_Port::doAutoRefresh(void) {

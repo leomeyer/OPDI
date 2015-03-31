@@ -7,8 +7,16 @@
     <ImageView android:src="@drawable/icon" android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/port_icon" android:paddingRight="5dip"></ImageView>
     <LinearLayout android:id="@+id/linearLayout1" android:layout_weight="1" android:layout_width="0dip" android:orientation="vertical" android:layout_height="wrap_content">
 
-        <TextView style="@style/ListTitleFont" android:layout_weight="1" android:gravity="center_vertical" android:id="@+id/toptext" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/text_querying"></TextView>
-        <SeekBar android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/seekBar"></SeekBar>
+        <TextView
+            android:id="@+id/toptext"
+            style="@style/ListTitleFont"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:contentDescription="24sp"
+            android:gravity="center_vertical"
+            android:text="@string/text_querying" >
+</TextView>
 
         <TextView
             android:id="@+id/bottomtext"
@@ -22,8 +30,18 @@
 
     </LinearLayout>
     <LinearLayout android:id="@+id/linearLayout2" android:orientation="vertical" android:layout_height="match_parent" android:layout_width="wrap_content" android:paddingLeft="5dip">
-        <TextView style="@style/StandardFont" android:layout_height="wrap_content" android:text="@string/text_querying" android:layout_gravity="top|right" android:gravity="right" android:layout_width="wrap_content" android:id="@+id/dial_max_value"></TextView>
-        <TextView style="@style/StandardFont" android:layout_height="wrap_content" android:text="@string/text_querying" android:layout_gravity="center|right" android:gravity="right" android:layout_width="match_parent" android:id="@+id/dial_current_value"></TextView>
-        <TextView style="@style/StandardFont" android:layout_height="match_parent" android:text="@string/text_querying" android:layout_gravity="bottom|right" android:gravity="right" android:layout_width="wrap_content" android:id="@+id/dial_min_value"></TextView>
+
+        <TextView
+            android:id="@+id/dial_current_value"
+            style="@style/StandardFont"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="right|center_vertical"
+            android:gravity="right|center_vertical"
+            android:text="@string/text_querying"
+            android:textSize="24sp"
+            android:textStyle="normal|bold" >
+
+</TextView>
     </LinearLayout>
 </LinearLayout>

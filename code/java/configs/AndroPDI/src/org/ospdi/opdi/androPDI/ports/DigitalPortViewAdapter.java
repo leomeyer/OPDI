@@ -60,16 +60,21 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 			return cachedView;
 		
 		LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		cachedView = vi.inflate(R.layout.digital_port_row, null);
+		// get layout property from UnitFormat definition
+		String layoutName = dPort.getUnitFormat().getProperty("layout", "digital_port_row");
+		// get layout identifier
+		int layoutID = context.getResources().getIdentifier(layoutName, "layout", context.getPackageName());
+		// inflate the identified layout
+		cachedView = vi.inflate(layoutID, null);
 		
         tvToptext = (TextView) cachedView.findViewById(R.id.toptext);
         tvBottomtext = (TextView) cachedView.findViewById(R.id.bottomtext);
         ivPortIcon = (ImageView) cachedView.findViewById(R.id.port_icon);
         ivStateIcon = (ImageView) cachedView.findViewById(R.id.state_icon);
 
-        tvToptext.setText(dPort.getName());
+        if (tvToptext != null) tvToptext.setText(dPort.getName());
 
-        tvBottomtext.setText(dPort.getType() + " " + dPort.getDirCaps());
+        if (tvBottomtext != null) tvBottomtext.setText("");
 
         showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
 			@Override
@@ -112,7 +117,6 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 	
 	@Override
 	public void setError(Throwable t) {
-		// 
 		stateError = true;
 	}
 	
@@ -136,93 +140,110 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 	// must be called on the UI thread!
 	public void updateState() {
 		if (stateError) {
-			ivPortIcon.setImageDrawable(context.getResources().getDrawable(R.drawable.digital_port_error));
-			ivPortIcon.setOnClickListener(null);
-    		ivStateIcon.setImageDrawable(context.getResources().getDrawable(R.drawable.led_yellow));
-    		ivStateIcon.setOnClickListener(null);
-    		tvBottomtext.setText(dPort.getErrorMessage());
+			if (ivPortIcon != null) ivPortIcon.setImageDrawable(context.getResources().getDrawable(R.drawable.digital_port_error));
+			if (ivPortIcon != null) ivPortIcon.setOnClickListener(null);
+			if (ivPortIcon != null) ivStateIcon.setImageDrawable(context.getResources().getDrawable(R.drawable.led_yellow));
+			if (ivPortIcon != null) ivStateIcon.setOnClickListener(null);
+			if (tvBottomtext != null) tvBottomtext.setText(dPort.getErrorMessage());
     		return;
 		}
 
 		// set the proper icon
-		Drawable portIcon = null;
-    	switch(mode) {
-    	case OUTPUT: 
-    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_output);
-    		tvBottomtext.setText("Mode: Output");
-    		break;
-    	case INPUT_FLOATING: 
-    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
-    		tvBottomtext.setText("Mode: Input");
-    		break;
-    	case INPUT_PULLUP: 
-    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
-            tvBottomtext.setText("Mode: Input, pullup on");
-    		break;
-    	case INPUT_PULLDOWN: 
-    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
-            tvBottomtext.setText("Mode: Input, pulldown on");
-    		break;
-    	default:
-    		portIcon = context.getResources().getDrawable(R.drawable.digital_port); 
-            tvBottomtext.setText("Mode: Unknown");
-    		break;
-    	}
-		ivPortIcon.setImageDrawable(portIcon);
-		
-		Drawable stateIcon = null;
-		if (!dPort.isReadonly() && (mode == DigitalPort.PortMode.OUTPUT)) {
-        	switch(line) {
-        	case LOW: 
-        		stateIcon = context.getResources().getDrawable(R.drawable.switch_off);
-        		ivStateIcon.setOnClickListener(new View.OnClickListener() {							
-					@Override
-					public void onClick(View v) {
-						DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
-							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
-								// set line
-								dPort.setLine(DigitalPort.PortLine.HIGH);
-								line = dPort.getLine();
-							}							
-						});
-					}
-				});
-        		break;
-        	case HIGH: 
-        		stateIcon = context.getResources().getDrawable(R.drawable.switch_on);
-        		ivStateIcon.setOnClickListener(new View.OnClickListener() {							
-					@Override
-					public void onClick(View v) {
-						DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
-							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
-								// set line
-								dPort.setLine(DigitalPort.PortLine.LOW);
-								line = dPort.getLine();
-							}						
-						});
-					}
-				});
-        		break;
-        	}
-		} else {
-			// an input mode is active
-			// disable click listener
-			ivStateIcon.setOnClickListener(null);				
-        	switch(line) {
-        	case LOW: 
-        		stateIcon = context.getResources().getDrawable(R.drawable.led_red);
-        		break;
-        	case HIGH: 
-        		stateIcon = context.getResources().getDrawable(R.drawable.led_green);
-        		break;
-        	default: 
-        		stateIcon = context.getResources().getDrawable(R.drawable.led_yellow);
-        		break;            		
-        	}
+		if (ivPortIcon != null) {
+			// default icon
+			Drawable portIcon = null;
+			String iconName = dPort.getExtendedProperty("icon","");
+			if (iconName != "") {
+				// get icon identifier
+				int iconID = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
+				if (iconID == 0)
+					throw new IllegalArgumentException("Drawable resource not found: " + iconName);							
+					
+				portIcon = context.getResources().getDrawable(iconID);
+			}
+			
+			if (portIcon == null) {
+		    	switch(mode) {
+		    	case OUTPUT: 
+		    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_output);
+		    		tvBottomtext.setText("Mode: Output");
+		    		break;
+		    	case INPUT_FLOATING: 
+		    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
+		    		tvBottomtext.setText("Mode: Input");
+		    		break;
+		    	case INPUT_PULLUP: 
+		    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
+		            tvBottomtext.setText("Mode: Input, pullup on");
+		    		break;
+		    	case INPUT_PULLDOWN: 
+		    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
+		            tvBottomtext.setText("Mode: Input, pulldown on");
+		    		break;
+		    	default:
+		    		portIcon = context.getResources().getDrawable(R.drawable.digital_port); 
+		            tvBottomtext.setText("Mode: Unknown");
+		    		break;
+		    	}
+			}
+			
+			ivPortIcon.setImageDrawable(portIcon);
+			
+			Drawable stateIcon = null;
+			if (!dPort.isReadonly() && (mode == DigitalPort.PortMode.OUTPUT)) {
+	        	switch(line) {
+	        	case LOW: 
+	        		stateIcon = context.getResources().getDrawable(R.drawable.switch_off);
+	        		ivStateIcon.setOnClickListener(new View.OnClickListener() {							
+						@Override
+						public void onClick(View v) {
+							DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
+								@Override
+								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+									// set line
+									dPort.setLine(DigitalPort.PortLine.HIGH);
+									line = dPort.getLine();
+								}							
+							});
+						}
+					});
+	        		break;
+	        	case HIGH: 
+	        		stateIcon = context.getResources().getDrawable(R.drawable.switch_on);
+	        		ivStateIcon.setOnClickListener(new View.OnClickListener() {							
+						@Override
+						public void onClick(View v) {
+							DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
+								@Override
+								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+									// set line
+									dPort.setLine(DigitalPort.PortLine.LOW);
+									line = dPort.getLine();
+								}						
+							});
+						}
+					});
+	        		break;
+	        	}
+			} else {
+				// an input mode is active
+				// disable click listener
+				ivStateIcon.setOnClickListener(null);				
+	        	switch(line) {
+	        	case LOW: 
+	        		stateIcon = context.getResources().getDrawable(R.drawable.led_red);
+	        		break;
+	        	case HIGH: 
+	        		stateIcon = context.getResources().getDrawable(R.drawable.led_green);
+	        		break;
+	        	default: 
+	        		stateIcon = context.getResources().getDrawable(R.drawable.led_yellow);
+	        		break;            		
+	        	}
+			}
+
+			ivStateIcon.setImageDrawable(stateIcon);
 		}
-    	ivStateIcon.setImageDrawable(stateIcon);
     			
 		// context menu when clicking
 		ivPortIcon.setOnClickListener(new View.OnClickListener() {

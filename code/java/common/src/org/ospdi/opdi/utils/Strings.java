@@ -1,8 +1,12 @@
 package org.ospdi.opdi.utils;
 
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.HashMap;
 
 import org.ospdi.opdi.protocol.ProtocolException;
+
+import com.sun.org.apache.xalan.internal.xsltc.runtime.Hashtable;
 
 
 public class Strings {
@@ -159,4 +163,180 @@ public class Strings {
 			throw new ProtocolException("Parameter " + paramName + ": number expected instead of '" + s + "'");
 		}
 	}
+	
+	public static String escape(String sStrP)
+	{
+		// replace delimiter characters, tabs and newlines
+		return sStrP.replace("\\", "\\\\").replace("=", "\\=").replace(";", "\\;").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r");
+	}
+
+	public static HashMap<String, String> getProperties(String sConfigP)
+	{
+		// loop over the string
+		int pos = 0;		// position
+		char ch = '\0';	// current character
+		char ch1 = '\0';	// lookahead character
+		String part = null;
+		String key = null;
+		HashMap<String, String> result = new HashMap<String, String>();
+		
+		while (pos < sConfigP.length())
+		{
+			ch = sConfigP.charAt(pos);
+			if (pos < sConfigP.length() - 1)
+			{
+				ch1 = sConfigP.charAt(pos + 1);
+			}
+			else
+			{
+				ch1 = '\0';
+			}
+			// in part?
+			if (part != null)
+			{
+				// end of key?
+				if (ch == '=')
+				{
+					key = part.trim();
+					part = null;
+				} 
+				// end of value?
+				else if (ch == ';')
+				{
+					if (key != null)
+					{
+						// store key => value pair
+						result.put(key, part);
+					}
+					else
+					{
+						// store key => empty string
+						result.put(key, "");
+					}
+					key = null;
+					part = null;
+				}
+				// escape char?
+				else if (ch == '\\')
+				{
+					// evaluate next character
+					if (ch1 == '\\')
+					{
+						part += '\\';
+					} 
+					else
+					if (ch1 == '=')
+					{
+						part += '=';
+					} 
+					else
+					if (ch1 == ';')
+					{
+						part += ';';
+					} 
+					else
+					if (ch1 == 't')
+					{
+						part += '\t';
+					} 
+					else
+					if (ch1 == 'n')
+					{
+						part += '\n';
+					} 
+					else
+					if (ch1 == 'r')
+					{
+						part += '\r';
+					} 
+					else
+					// ! EOS?
+					if (ch1 != 0)
+					{
+						part += ch1;
+					}
+					// skip next character
+					pos++;
+				}
+				// normal character
+				else
+					part += ch;
+			}
+			else
+			// part starting
+			{
+				part = "";
+				// end of key?
+				if (ch == '=')
+				{
+					// syntax error, ignore
+				} 
+				// end of value?
+				else if (ch == ';')
+				{
+					// syntax error, ignore
+				}
+				// escape char?
+				else if (ch == '\\')
+				{
+					// evaluate next character
+					if (ch1 == '\\')
+					{
+						part += '\\';
+					} 
+					else
+					if (ch1 == '=')
+					{
+						part += '=';
+					} 
+					else
+					if (ch1 == ';')
+					{
+						part += ';';
+					} 
+					else
+					if (ch1 == 't')
+					{
+						part += '\t';
+					} 
+					else
+					if (ch1 == 'n')
+					{
+						part += '\n';
+					} 
+					else
+					if (ch1 == 'r')
+					{
+						part += '\r';
+					} 
+					else
+					// ! EOS?
+					if (ch1 != 0)
+					{
+						part += ch1;
+					}
+					// skip next character
+					pos++;
+				}
+				// normal character
+				else
+					part += ch;			
+			}
+			pos++;
+		}
+		
+		// last property unterminated?
+		if (key != null) 
+		{
+			result.put(key, (part == null ? "" : part));
+		}
+		// key not followed by =
+		else if (part != null)
+		{
+			result.put(key, "");
+		}
+		
+		return result;
+	}
+
 }

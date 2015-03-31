@@ -23,7 +23,7 @@
 // OPDI_STREAMING_PORTS to conserve memory.
 //
 // Supported protocols are: basic protocol, extended protocol.
-// For the extended protocol, define EXTENDED_PROTOCOL in your configspecs.h.
+// For the extended protocol, define OPDI_EXTENDED_PROTOCOL in your configspecs.h.
 // By default, only the basic protocol is supported.
     
 #include <stdlib.h>
@@ -611,7 +611,7 @@ static uint8_t unbind_streaming_port(channel_t channel, opdi_Port *port) {
 }
 #endif
 
-#ifdef EXTENDED_PROTOCOL
+#ifdef OPDI_EXTENDED_PROTOCOL
 // send all port states in one message
 static uint8_t send_all_port_states(channel_t channel) {
 	opdi_Message message;
@@ -688,7 +688,20 @@ static uint8_t send_all_port_states(channel_t channel) {
 	
 	return OPDI_STATUS_OK;
 }
-#endif		// EXTENDED_PROTOCOL
+
+static uint8_t send_extended_port_info(channel_t channel, opdi_Port *port) {
+	char buffer[OPDI_MESSAGE_PAYLOAD_LENGTH];
+
+	// join payload
+	opdi_msg_parts[0] = OPDI_extendedPortInfo;
+	opdi_msg_parts[1] = port->id;
+	opdi_msg_parts[2] = port->extendedInfo;
+	opdi_msg_parts[3] = NULL;
+
+	return send_parts(channel);
+}
+
+#endif		// OPDI_EXTENDED_PROTOCOL
 
 /** Implements the basic protocol message handler.
 */
@@ -932,15 +945,29 @@ static uint8_t basic_protocol_message(channel_t channel) {
 #endif
 }
 
-#ifdef EXTENDED_PROTOCOL
-/** Implements the basic protocol message handler.
+#ifdef OPDI_EXTENDED_PROTOCOL
+
+/** Implements the extended protocol message handler.
 */
 static uint8_t extended_protocol_message(channel_t channel) {
 	uint8_t result;
+	opdi_Port *port;
 	
 	// only handle messages of the extended protocol here
 	if (!strcmp(opdi_msg_parts[0], OPDI_getAllPortStates)) {
 		result = send_all_port_states(channel);
+		if (result != OPDI_STATUS_OK)
+			return result;
+	} 
+	else
+	if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedPortInfo)) {
+		if (opdi_msg_parts[1] == NULL)
+			return OPDI_PROTOCOL_ERROR;
+		// find port
+		port = opdi_find_port_by_id(opdi_msg_parts[1]);
+		if (port == NULL)
+			return OPDI_PORT_UNKNOWN;
+		result = send_extended_port_info(channel, port);
 		if (result != OPDI_STATUS_OK)
 			return result;
 	} 
@@ -989,6 +1016,26 @@ uint8_t opdi_handle_basic_message(opdi_Message *m) {
 	return OPDI_STATUS_OK;
 }
 */
+
+static uint8_t handle_message_result(opdi_Message *m, uint8_t result) {
+	if (result != OPDI_STATUS_OK) {
+		// special case: port access denied
+		if (result == OPDI_PORT_ACCESS_DENIED) {
+			send_disagreement(m->channel, OPDI_PORT_ACCESS_DENIED, opdi_get_port_message(), NULL);
+			result = OPDI_STATUS_OK;
+		} else
+		// special case: port error
+		if (result == OPDI_PORT_ERROR) {
+			send_port_error(m->channel, opdi_get_port_message(), NULL);
+			result = OPDI_STATUS_OK;
+		} else
+		// intentional disconnects are not an error
+		if (result != OPDI_DISCONNECTED)
+			// an error occurred during message handling; send error to device and exit message processing
+			return send_error(result, NULL, NULL);
+	}
+	return result;
+}
 
 /** The protocol handler for the basic protocol.
 */
@@ -1044,27 +1091,14 @@ static uint8_t basic_protocol_handler(void) {
 			// message other than control message received
 			// let the protocol handle the message
 			result = basic_protocol_message(m.channel);
-			if (result != OPDI_STATUS_OK) {
-				// special case: port access denied
-				if (result == OPDI_PORT_ACCESS_DENIED)
-					send_disagreement(m.channel, OPDI_PORT_ACCESS_DENIED, opdi_get_port_message(), NULL);
-				else
-				// special case: port error
-				if (result == OPDI_PORT_ERROR)
-					send_port_error(m.channel, opdi_get_port_message(), NULL);
-				else
-				// intentional disconnects are not an error
-				if (result != OPDI_DISCONNECTED)
-					// an error occurred during message handling; send error to device and exit
-					return send_error(result, NULL, NULL);
-				else
+			result = handle_message_result(&m, result);
+			if (result != OPDI_STATUS_OK)
 				return result;
-			}
 		}
 	}	// while
 }
 
-#ifdef EXTENDED_PROTOCOL
+#ifdef OPDI_EXTENDED_PROTOCOL
 /** The protocol handler for the extended protocol.
 */
 static uint8_t extended_protocol_handler(void) {
@@ -1100,13 +1134,9 @@ static uint8_t extended_protocol_handler(void) {
 			// message other than control message received
 			// let the protocol handle the message
 			result = extended_protocol_message(m.channel);
-			if (result != OPDI_STATUS_OK) {
-				// intentional disconnects are not an error
-				if (result != OPDI_DISCONNECTED)
-					// an error occurred during message handling; send error to device and exit
-					return send_error(result, NULL, NULL);
+			result = handle_message_result(&m, result);
+			if (result != OPDI_STATUS_OK)
 				return result;
-			}
 		}
 	}	// while
 }
@@ -1312,7 +1342,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	if (partCount != 3)
 		return OPDI_PROTOCOL_ERROR;
 		
-#ifdef EXTENDED_PROTOCOL
+#ifdef OPDI_EXTENDED_PROTOCOL
 	// check extended protocol implementation
 	if (strcmp(opdi_msg_parts[0], OPDI_Extended_protocol_magic) == 0) {
 		protocol_handler = &extended_protocol_handler;
