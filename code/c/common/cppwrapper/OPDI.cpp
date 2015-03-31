@@ -59,8 +59,6 @@ uint8_t OPDI::setup(const char *slaveName, int idleTimeout) {
 	this->first_port = NULL;
 	this->last_port = NULL;
 
-	this->workFunction = NULL;
-
 	// copy slave name to internal buffer
 	strncpy((char*)opdi_config_name, slaveName, OPDI_MAX_SLAVENAMELENGTH - 1);
 	// set standard encoding to "utf-8"
@@ -174,12 +172,7 @@ void OPDI::preparePorts(void) {
 	}
 }
 
-// convenience method
 uint8_t OPDI::start() {
-	return this->start(NULL);
-}
-
-uint8_t OPDI::start(uint8_t (*workFunction)()) {
 	opdi_Message message;
 	uint8_t result;
 
@@ -190,7 +183,6 @@ uint8_t OPDI::start(uint8_t (*workFunction)()) {
 
 	// reset idle timer
 	this->last_activity = opdi_get_time_ms();
-	this->workFunction = workFunction;
 
 	// initiate handshake
 	result = opdi_slave_start(&message, NULL, NULL);
@@ -201,13 +193,6 @@ uint8_t OPDI::start(uint8_t (*workFunction)()) {
 uint8_t OPDI::waiting(uint8_t canSend) {
 	if (this->shutdownRequested) {
 		return this->shutdownInternal();
-	}
-
-	// a work function can be performed as long as canSend is true
-	if ((this->workFunction != NULL) && canSend) {
-		uint8_t result = this->workFunction();
-		if (result != OPDI_STATUS_OK)
-			return result;
 	}
 
 	// remember canSend flag
@@ -263,11 +248,16 @@ uint8_t OPDI::refresh(OPDI_Port **ports) {
 }
 
 uint8_t OPDI::idleTimeoutReached() {
-	opdi_send_debug("Idle timeout!");
+	if (this->isConnected() && this->canSend) {
+		opdi_send_debug("Idle timeout!");
+	}
 	return this->disconnect();
 }
 
 uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
+	// a complete message has been processed; it's now safe to send
+	this->canSend = true;
+
 	if (this->idle_timeout_ms > 0) {
 		if (channel != 0) {
 			// reset activity time

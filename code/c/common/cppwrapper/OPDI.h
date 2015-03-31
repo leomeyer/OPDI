@@ -48,9 +48,6 @@ protected:
 	uint32_t idle_timeout_ms;
 	uint32_t last_activity;
 
-	// housekeeping function
-	uint8_t (*workFunction)();
-
 	// internal shutdown function; to be called when messages can be sent to the master
 	// May return OPDI_STATUS_OK to cancel the shutdown. Any other value stops message processing.
 	uint8_t shutdownInternal(void);
@@ -95,18 +92,13 @@ public:
 	 */
 	virtual uint8_t start(void);
 
-	/** Starts the OPDI handshake to accept commands from a master.
-	 * Accepts a pointer to a housekeeping function that needs to perform regular tasks.
-	 */
-	virtual uint8_t start(uint8_t (*workFunction)());
-
 	/** This function is called while the OPDI slave is connected and waiting for messages.
 	 * It is called about once every millisecond.
-	 * In the default implementation this function calls the workFunction if canSend is true.
 	 * You can override it to perform your own housekeeping in case you need to.
 	 * If canSend is 1, the slave may send asynchronous messages to the master.
 	 * Returning any other value than OPDI_STATUS_OK causes the message processing to exit.
 	 * This will usually signal a device error to the master or cause the master to time out.
+	 * Make sure to call the base method before you do your own work.
 	 */
 	virtual uint8_t waiting(uint8_t canSend);
 

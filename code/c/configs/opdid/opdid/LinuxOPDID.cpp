@@ -190,6 +190,15 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 		return OPDI_DEVICE_ERROR;
 	}
 
+	// set linger on socket
+	struct linger sLinger;
+	sLinger.l_onoff = 1;
+	sLinger.l_linger = 1;
+	if (setsockopt (csock, SOL_SOCKET, SO_LINGER, (char *)&sLinger, sizeof(sLinger)) < 0) {
+		this->log("setsockopt failed");
+		return OPDI_DEVICE_ERROR;
+	}
+
 	// info value is the socket handle
 	result = opdi_message_setup(&io_receive, &io_send, (void *)(long)csock);
 	if (result != 0)
@@ -261,6 +270,11 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 					this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(cli_addr.sin_addr))).c_str());
 
 				err = HandleTCPConnection(newsockfd);
+
+//				shutdown(newsockfd, SHUT_WR);
+
+				// TODO maybe there's a better way to ensure that data is sent?
+//				usleep(500);
 
 				close(newsockfd);
 
