@@ -690,12 +690,38 @@ static uint8_t send_all_port_states(channel_t channel) {
 }
 
 static uint8_t send_extended_port_info(channel_t channel, opdi_Port *port) {
-	char buffer[OPDI_MESSAGE_PAYLOAD_LENGTH];
-
 	// join payload
 	opdi_msg_parts[0] = OPDI_extendedPortInfo;
 	opdi_msg_parts[1] = port->id;
 	opdi_msg_parts[2] = port->extendedInfo;
+	opdi_msg_parts[3] = NULL;
+
+	return send_parts(channel);
+}
+
+static uint8_t send_group_info(channel_t channel, opdi_PortGroup *group) {
+	char buf[11];
+
+	// convert flags
+	opdi_int32_to_str(group->flags, buf);
+
+	// join payload
+	opdi_msg_parts[0] = OPDI_groupInfo;
+	opdi_msg_parts[1] = group->id;
+	opdi_msg_parts[2] = group->label;
+	opdi_msg_parts[3] = group->parent;
+	opdi_msg_parts[4] = buf;	// flags
+	opdi_msg_parts[5] = NULL;
+
+	return send_parts(channel);
+}
+
+static uint8_t send_extended_group_info(channel_t channel, opdi_PortGroup *group) {
+
+	// join payload
+	opdi_msg_parts[0] = OPDI_extendedGroupInfo;
+	opdi_msg_parts[1] = group->id;
+	opdi_msg_parts[2] = group->extendedInfo;
 	opdi_msg_parts[3] = NULL;
 
 	return send_parts(channel);
@@ -952,6 +978,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 static uint8_t extended_protocol_message(channel_t channel) {
 	uint8_t result;
 	opdi_Port *port;
+	opdi_PortGroup *group;
 	
 	// only handle messages of the extended protocol here
 	if (!strcmp(opdi_msg_parts[0], OPDI_getAllPortStates)) {
@@ -968,6 +995,30 @@ static uint8_t extended_protocol_message(channel_t channel) {
 		if (port == NULL)
 			return OPDI_PORT_UNKNOWN;
 		result = send_extended_port_info(channel, port);
+		if (result != OPDI_STATUS_OK)
+			return result;
+	} 
+	else
+	if (!strcmp(opdi_msg_parts[0], OPDI_getGroupInfo)) {
+		if (opdi_msg_parts[1] == NULL)
+			return OPDI_PROTOCOL_ERROR;
+		// find group
+		group = opdi_find_portgroup_by_id(opdi_msg_parts[1]);
+		if (group == NULL)
+			return OPDI_GROUP_UNKNOWN;
+		result = send_group_info(channel, group);
+		if (result != OPDI_STATUS_OK)
+			return result;
+	} 
+	else
+	if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedGroupInfo)) {
+		if (opdi_msg_parts[1] == NULL)
+			return OPDI_PROTOCOL_ERROR;
+		// find group
+		group = opdi_find_portgroup_by_id(opdi_msg_parts[1]);
+		if (group == NULL)
+			return OPDI_GROUP_UNKNOWN;
+		result = send_extended_group_info(channel, group);
 		if (result != OPDI_STATUS_OK)
 			return result;
 	} 

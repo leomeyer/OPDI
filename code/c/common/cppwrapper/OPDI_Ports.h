@@ -51,6 +51,7 @@ protected:
 	// extended info variables
 	std::string unit;
 	std::string icon;
+	std::string group;
 
 	// Utility function for string conversion 
 	template <class T> std::string to_string(const T& t);
@@ -162,6 +163,8 @@ public:
 
 	virtual void setIcon(std::string icon);
 
+	virtual void setGroup(std::string group);
+
 	/** Causes the port to be refreshed by sending a refresh message to a connected master.
 	*   Only if the port is not hidden. */
 	virtual uint8_t refresh(void);
@@ -188,6 +191,57 @@ template <class T> inline std::string OPDI_Port::to_string(const T& t) {
 	ss << t;
 	return ss.str();
 }
+
+class OPDI_PortGroup {
+
+friend class OPDI;
+
+protected:
+
+	char *id;
+	char *label;
+	char *parent;
+	int32_t flags;
+	char *extendedInfo;
+
+	// pointer to OPDI class instance
+	OPDI *opdi;
+
+	// OPDI implementation management structure
+	void* data;
+
+	// linked list of port groups - pointer to next port group
+	OPDI_PortGroup *next;
+
+	std::string icon;
+
+	virtual void updateExtendedInfo(void);
+
+public:
+	OPDI_PortGroup(const char *id);
+
+	/** Virtual destructor for the port. */
+	virtual ~OPDI_PortGroup();
+
+	virtual const char *getID(void);
+
+	/** Sets the label of the port group. */
+	virtual void setLabel(const char *label);
+
+	virtual const char *getLabel(void);
+
+	/** Sets the parent of the port group. */
+	virtual void setParent(const char *parent);
+
+	virtual const char *getParent(void);
+
+	/** Sets the flags of the port group. */
+	virtual void setFlags(int32_t flags);
+
+	virtual void setIcon(std::string icon);
+};
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Abstract port definitions

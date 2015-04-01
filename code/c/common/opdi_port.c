@@ -28,6 +28,9 @@ static uint8_t portCount = 0;
 static opdi_Port *portHead = NULL;
 static opdi_Port *portTail = NULL;
 
+static opdi_PortGroup *portGroupHead = NULL;
+static opdi_PortGroup *portGroupTail = NULL;
+
 static char port_info_message[OPDI_MAX_PORT_INFO_MESSAGE];
 
 #if (OPDI_STREAMING_PORTS > 0)
@@ -82,6 +85,30 @@ opdi_Port *opdi_find_port_by_id(const char *id) {
 	}
 	return NULL;
 }
+
+#ifdef OPDI_EXTENDED_PROTOCOL
+
+uint8_t opdi_add_portgroup(opdi_PortGroup *group) {
+	if (portGroupHead == NULL)
+		portGroupHead = group;
+	if (portGroupTail != NULL)
+		portGroupTail->next = group;
+	portGroupTail = group;
+	group->next = NULL;
+	return OPDI_STATUS_OK;
+}
+
+opdi_PortGroup *opdi_find_portgroup_by_id(const char *id) {
+	opdi_PortGroup *group = portGroupHead;
+	while (group != NULL) {
+		if (!strcmp(group->id, id))
+			return group;
+		group = group->next;
+	}
+	return NULL;
+}
+
+#endif
 
 #if (OPDI_STREAMING_PORTS > 0)
 

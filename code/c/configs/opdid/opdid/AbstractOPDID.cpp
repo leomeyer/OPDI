@@ -286,6 +286,42 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 	this->setup(slaveName.c_str(), timeout);
 }
 
+	/** Reads common properties from the configuration and configures the port group. */
+void AbstractOPDID::configureGroup(Poco::Util::AbstractConfiguration *groupConfig, OPDI_PortGroup *group, int defaultFlags) {
+	// the default label is the port ID
+	std::string portLabel = this->getConfigString(groupConfig, "Label", group->getID(), false);
+	group->setLabel(portLabel.c_str());
+
+	int flags = groupConfig->getInt("Flags", -1);
+	if (flags >= 0) {
+		group->setFlags(flags);
+	} else
+		// default flags specified?
+		// avoid calling setFlags unnecessarily because subclasses may implement specific behavior
+		if (defaultFlags > 0)
+			group->setFlags(defaultFlags);
+
+	// extended properties
+	std::string icon = this->getConfigString(groupConfig, "Icon", "", false);
+	if (icon != "") {
+		group->setIcon(icon);
+	}
+	std::string parent = this->getConfigString(groupConfig, "Parent", "", false);
+	if (parent != "") {
+		group->setParent(parent.c_str());
+	}
+}
+
+void AbstractOPDID::setupGroup(Poco::Util::AbstractConfiguration *groupConfig, std::string group) {
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Setting up group: " + group);
+
+	OPDI_PortGroup *portGroup = new OPDI_PortGroup(group.c_str());
+	this->configureGroup(groupConfig, portGroup, 0);
+
+	this->addPortGroup(portGroup);
+}
+
 void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags) {
 	// ports can be hidden
 	port->setHidden(portConfig->getBool("Hidden", false));
@@ -345,6 +381,10 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 	std::string icon = this->getConfigString(portConfig, "Icon", "", false);
 	if (icon != "") {
 		port->setIcon(icon);
+	}
+	std::string group = this->getConfigString(portConfig, "Group", "", false);
+	if (group != "") {
+		port->setGroup(group);
 	}
 }
 
@@ -564,6 +604,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 	} else {
 		std::string nodeType = this->getConfigString(nodeConfig, "Type", "", true);
 
+		if (nodeType == "Group") {
+			this->setupGroup(nodeConfig, node);
+		} else 
 		// standard driver (internal ports)
 		if (nodeType == "DigitalPort") {
 			this->setupEmulatedDigitalPort(nodeConfig, node);

@@ -32,6 +32,9 @@ Password = FBSmartHome123
 ; Timeout in seconds. Use a short timeout (usually the FritzBox will be in a local network, anyway).
 Timeout = 3
 
+; Nodes of the FritzBox are defined in its own section named <node>.Nodes
+[FritzBox.Nodes]
+
 ; FritzBox actor definitions
 FritzBoxSwitch1 = 0
 
