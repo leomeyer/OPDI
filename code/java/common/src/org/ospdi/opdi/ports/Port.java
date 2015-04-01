@@ -62,6 +62,8 @@ public abstract class Port {
 	protected String unit;
 	protected UnitFormat unitFormat = UnitFormat.DEFAULT;
 	
+	protected PortGroup group;
+	
 	protected Map<String, String> extendedProperties = new HashMap<String, String>(); 
 
 	/** Only to be used by subclasses
@@ -250,5 +252,13 @@ public abstract class Port {
 			return extendedProperties.get(property);
 		}
 		return defaultValue;
+	}
+
+	public synchronized PortGroup getGroup() {
+		return group;
+	}
+
+	public synchronized void setGroup(PortGroup group) {
+		this.group = group;
 	}
 }

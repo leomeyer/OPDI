@@ -127,6 +127,19 @@ typedef struct opdi_Port {
 #endif
 } opdi_Port;
 
+#ifdef OPDI_EXTENDED_PROTOCOL
+/** Defines a port group. Is also a node of a linked list of groups.
+*/
+typedef struct opdi_PortGroup {
+	const char *id;				// the ID of the group
+	const char *label;			// the label of the group
+	const char *parent;			// the ID of the parent group
+	int32_t flags;				// group flags
+	struct opdi_PortGroup *next;	// pointer to next group
+	char *extendedInfo;			// pointer to extended group info (key=value; list)
+} opdi_PortGroup;
+#endif
+
 /** Info structure for dial ports.
 */
 typedef struct opdi_DialPortInfo {
@@ -204,6 +217,17 @@ uint8_t opdi_reset_bindings(void);
 /** Returns the number of currently bound streaming ports.
 */
 uint16_t opdi_get_port_bind_count(void);
+
+#endif
+
+#ifdef OPDI_EXTENDED_PROTOCOL
+
+uint8_t opdi_add_portgroup(opdi_PortGroup *portGroup);
+
+/** Returns the port group identified by the given ID.
+*   Returns NULL if the port group can't be found.
+*/
+opdi_PortGroup *opdi_find_portgroup_by_id(const char *id);
 
 #endif
 

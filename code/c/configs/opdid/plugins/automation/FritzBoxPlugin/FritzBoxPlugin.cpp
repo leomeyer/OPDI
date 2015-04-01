@@ -219,6 +219,10 @@ void FritzDECT200Switch::configure(Poco::Util::AbstractConfiguration *portConfig
 
 	// get actor identification number (required)
 	this->ain = plugin->opdid->getConfigString(portConfig, "AIN", "", true);
+	std::string group = plugin->opdid->getConfigString(portConfig, "Group", "", false);
+	if (group != "") {
+		this->setGroup(group);
+	}
 }
 
 void FritzDECT200Switch::query(FritzBoxPlugin *plugin) {
@@ -311,6 +315,10 @@ void FritzDECT200Power::configure(Poco::Util::AbstractConfiguration *portConfig)
 	if (unit != "") {
 		this->setUnit(unit);
 	}
+	std::string group = plugin->opdid->getConfigString(portConfig, "Group", "", false);
+	if (group != "") {
+		this->setGroup(group);
+	}
 }
 
 void FritzDECT200Power::query(FritzBoxPlugin *plugin) {
@@ -397,6 +405,10 @@ void FritzDECT200Energy::configure(Poco::Util::AbstractConfiguration *portConfig
 	std::string unit = portConfig->getString("EnergyUnit", "");
 	if (unit != "") {
 		this->setUnit(unit);
+	}
+	std::string group = plugin->opdid->getConfigString(portConfig, "Group", "", false);
+	if (group != "") {
+		this->setGroup(group);
 	}
 }
 
@@ -683,10 +695,15 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 	this->password = abstractOPDID->getConfigString(nodeConfig, "Password", "", true);
 	this->timeoutSeconds = nodeConfig->getInt("Timeout", this->timeoutSeconds);
 
-	// enumerate keys of the plugin's node (in specified order)
+	// enumerate keys of the plugin's nodes (in specified order)
+		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			this->opdid->log("Enumerating FritzBox nodes: " + node + ".Nodes");
+
+	Poco::Util::AbstractConfiguration *nodes = nodeConfig->createView("Nodes");
+
 	// get ordered list of ports
 	Poco::Util::AbstractConfiguration::Keys portKeys;
-	nodeConfig->keys("", portKeys);
+	nodes->keys("", portKeys);
 
 	typedef Poco::Tuple<int, std::string> Item;
 	typedef std::vector<Item> ItemList;
@@ -694,11 +711,8 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 
 	// create ordered list of port keys (by priority)
 	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = portKeys.begin(); it != portKeys.end(); ++it) {
-		// items to ignore
-		if ((*it == "Driver") || (*it == "Host") || (*it == "Port") || (*it == "User") || (*it == "Password") || (*it == "Timeout"))
-			continue;
 	
-		int itemNumber = nodeConfig->getInt(*it, 0);
+		int itemNumber = nodes->getInt(*it, 0);
 		// check whether the item is active
 		if (itemNumber < 0)
 			continue;

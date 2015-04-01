@@ -156,6 +156,9 @@ void OPDI_Port::setFlags(int32_t flags) {
 
 void OPDI_Port::updateExtendedInfo(void) {
 	std::string exInfo;
+	if (this->group.size() > 0) {
+		exInfo += "group=" + this->group + ";";
+	}
 	if (this->unit.size() > 0) {
 		exInfo += "unit=" + this->unit + ";";
 	}
@@ -181,6 +184,15 @@ void OPDI_Port::setUnit(std::string unit) {
 void OPDI_Port::setIcon(std::string icon) {
 	if (this->icon != icon) {
 		this->icon = icon;
+		this->updateExtendedInfo();
+		if (this->opdi != NULL)
+			this->opdi->updatePortData(this);
+	}
+}
+
+void OPDI_Port::setGroup(std::string group) {
+	if (this->group != group) {
+		this->group = group;
 		this->updateExtendedInfo();
 		if (this->opdi != NULL)
 			this->opdi->updatePortData(this);
@@ -259,6 +271,103 @@ OPDI_Port::~OPDI_Port() {
 	if (this->data != NULL)
 		free(this->data);
 }
+
+
+OPDI_PortGroup::OPDI_PortGroup(const char *id) {
+	this->data = NULL;
+	this->next = NULL;
+	this->id = NULL;
+	this->label = NULL;
+	this->parent = NULL;
+	this->opdi = NULL;
+	this->flags = 0;
+	this->extendedInfo = NULL;
+
+	this->id = (char*)malloc(strlen(id) + 1);
+	strcpy(this->id, id);
+	this->label = (char*)malloc(strlen(id) + 1);
+	strcpy(this->label, id);
+	this->parent = (char*)malloc(1);
+	this->parent[0] = '\0';
+}
+
+OPDI_PortGroup::~OPDI_PortGroup() {
+	if (this->id != NULL)
+		free(this->id);
+	if (this->label != NULL)
+		free(this->label);
+	if (this->data != NULL)
+		free(this->data);
+}
+
+const char *OPDI_PortGroup::getID(void) {
+	return this->id;
+}
+
+void OPDI_PortGroup::updateExtendedInfo(void) {
+	std::string exInfo;
+	if (this->icon.size() > 0) {
+		exInfo += "icon=" + this->icon + ";";
+	}
+	if (this->extendedInfo != NULL) {
+		free(this->extendedInfo);
+	}
+	this->extendedInfo = (char *)malloc(exInfo.size() + 1);
+	strcpy(this->extendedInfo, exInfo.c_str());
+}
+
+void OPDI_PortGroup::setLabel(const char *label) {
+	if (this->label != NULL)
+		free(this->label);
+	this->label = NULL;
+	if (label == NULL)
+		return;
+	this->label = (char*)malloc(strlen(label) + 1);
+	strcpy(this->label, label);
+	// label changed; update internal data
+	if (this->opdi != NULL)
+		this->opdi->updatePortGroupData(this);
+}
+
+const char *OPDI_PortGroup::getLabel(void) {
+	return this->label;
+}
+
+void OPDI_PortGroup::setFlags(int32_t flags) {
+	int32_t oldFlags = this->flags;
+	this->flags = flags;
+	// need to update already stored port data?
+	if ((this->opdi != NULL) && (oldFlags != this->flags))
+		this->opdi->updatePortGroupData(this);
+}
+
+void OPDI_PortGroup::setIcon(std::string icon) {
+	if (this->icon != icon) {
+		this->icon = icon;
+		this->updateExtendedInfo();
+		if (this->opdi != NULL)
+			this->opdi->updatePortGroupData(this);
+	}
+}
+
+void OPDI_PortGroup::setParent(const char *parent) {
+	if (this->parent != NULL)
+		free(this->parent);
+	this->parent = NULL;
+	if (parent == NULL)
+		throw Poco::InvalidArgumentException("Parent group ID must never be NULL");
+	this->parent = (char*)malloc(strlen(parent) + 1);
+	strcpy(this->parent, parent);
+	// label changed; update internal data
+	if (this->opdi != NULL)
+		this->opdi->updatePortGroupData(this);
+}
+
+const char *OPDI_PortGroup::getParent(void) {
+	return this->parent;
+}
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Digital port functionality

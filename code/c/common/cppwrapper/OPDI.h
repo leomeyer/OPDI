@@ -45,6 +45,9 @@ protected:
 	OPDI_Port *first_port;
 	OPDI_Port *last_port;
 
+	OPDI_PortGroup *first_portGroup;
+	OPDI_PortGroup *last_portGroup;
+
 	uint32_t idle_timeout_ms;
 	uint64_t last_activity;
 
@@ -77,6 +80,10 @@ public:
 	*/
 	virtual void updatePortData(OPDI_Port *port);
 
+	/** Updates the internal port group data structure. Is automatically called; do not use.
+	*/
+	virtual void updatePortGroupData(OPDI_PortGroup *group);
+
 	/** Internal function.
 	 */
 	virtual OPDI_Port *findPort(opdi_Port *port);
@@ -86,6 +93,9 @@ public:
 
 	/** Iterates through all ports and calls their prepare() methods. */
 	virtual void preparePorts(void);
+
+	/** Adds the specified port group. */
+	virtual void addPortGroup(OPDI_PortGroup *portGroup);
 
 	/** Starts the OPDI handshake to accept commands from a master.
 	 * Does not use a housekeeping function.

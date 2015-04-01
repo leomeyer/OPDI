@@ -56,9 +56,11 @@ uint8_t OPDI::shutdownInternal(void) {
 uint8_t OPDI::setup(const char *slaveName, int idleTimeout) {
 	this->shutdownRequested = false;
 
-	// initialize linked list of ports
+	// initialize linked lists
 	this->first_port = NULL;
 	this->last_port = NULL;
+	this->first_portGroup = NULL;
+	this->last_portGroup = NULL;
 
 	// copy slave name to internal buffer
 	strncpy((char*)opdi_config_name, slaveName, OPDI_MAX_SLAVENAMELENGTH - 1);
@@ -164,6 +166,41 @@ OPDI_Port *OPDI::findPortByID(const char *portID) {
 	}
 	// not found
 	return NULL;
+}
+
+void OPDI::updatePortGroupData(OPDI_PortGroup *group) {
+	// allocate port group data structure if necessary
+	opdi_PortGroup *oGroup = (opdi_PortGroup *)group->data;
+	if (oGroup == NULL) {
+		oGroup = (opdi_PortGroup *)malloc(sizeof(opdi_PortGroup));
+		group->data = oGroup;
+		oGroup->next = NULL;
+	}
+	// update data
+	oGroup->id = (const char*)group->id;
+	oGroup->label = (const char*)group->label;
+	oGroup->parent = (const char*)group->parent;
+	oGroup->flags = group->flags;
+	oGroup->extendedInfo = group->extendedInfo;
+}
+
+void OPDI::addPortGroup(OPDI_PortGroup *portGroup) {
+	// associate port with this instance
+	portGroup->opdi = this;
+
+	// first added port?
+	if (this->first_portGroup == NULL) {
+		this->first_portGroup = portGroup;
+		this->last_portGroup = portGroup;
+	} else {
+		// subsequently added port group, add to list
+		this->last_portGroup->next = portGroup;
+		this->last_portGroup = portGroup;
+	}
+
+	this->updatePortGroupData(portGroup);
+
+	opdi_add_portgroup((opdi_PortGroup*)portGroup->data);
 }
 
 void OPDI::preparePorts(void) {

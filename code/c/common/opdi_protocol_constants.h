@@ -80,3 +80,8 @@
 
 #define OPDI_getExtendedPortInfo		"gEPI"
 #define OPDI_extendedPortInfo			"EPI"
+
+#define OPDI_getGroupInfo				"gGI"
+#define OPDI_groupInfo					"GI"
+#define OPDI_getExtendedGroupInfo		"gEGI"
+#define OPDI_extendedGroupInfo			"EGI"

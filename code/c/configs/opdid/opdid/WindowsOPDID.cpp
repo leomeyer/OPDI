@@ -300,7 +300,7 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 					return OPDI_SHUTDOWN;
 
 				if (Opdi->logVerbosity != QUIET)
-					this->log(std::string("Result: ") + this->getOPDIResult(err));
+					this->log(std::string("Result: ") + to_string(this->getOPDIResult(err)));
 
 				break;
 			}

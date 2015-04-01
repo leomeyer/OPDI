@@ -119,6 +119,11 @@ public:
 
 	virtual void setGeneralConfiguration(Poco::Util::AbstractConfiguration *general);
 
+	/** Reads common properties from the configuration and configures the port group. */
+	virtual void configureGroup(Poco::Util::AbstractConfiguration *groupConfig, OPDI_PortGroup *group, int defaultFlags);
+
+	virtual void setupGroup(Poco::Util::AbstractConfiguration *groupConfig, std::string group);
+
 	/** Reads common properties from the configuration and configures the port. */
 	virtual void configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags);
 
