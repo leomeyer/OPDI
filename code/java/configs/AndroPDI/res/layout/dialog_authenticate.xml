@@ -16,7 +16,7 @@
 </TextView>
     </LinearLayout>
     <LinearLayout android:id="@+id/linearLayout2" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-        <ImageView android:layout_height="wrap_content" android:layout_width="wrap_content" android:src="@drawable/icon" android:paddingRight="5dip" android:id="@+id/icon"></ImageView>
+        <ImageView android:layout_height="wrap_content" android:layout_width="wrap_content" android:src="@drawable/blank" android:paddingRight="5dip" android:id="@+id/icon"></ImageView>
         <LinearLayout android:layout_height="wrap_content" android:layout_width="match_parent" android:id="@+id/linearLayout4" android:orientation="vertical">
 
             <TextView

@@ -10,11 +10,18 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingRight="5dip"
-        android:src="@drawable/icon" >
+        android:src="@android:color/transparent" >
 </ImageView>
     <LinearLayout android:id="@+id/linearLayout1" android:layout_weight="1" android:layout_width="0dip" android:orientation="vertical" android:layout_height="wrap_content">
         <TextView style="@style/ListTitleFont" android:layout_weight="1" android:gravity="center_vertical" android:id="@+id/toptext" android:layout_width="fill_parent" android:layout_height="wrap_content" android:text="@string/text_querying"></TextView>
         <TextView style="@style/ListSubFont" android:layout_weight="1" android:id="@+id/bottomtext" android:ellipsize="none" android:layout_width="fill_parent" android:layout_height="wrap_content" android:scrollHorizontally="false" android:text="@string/text_querying"></TextView>
     </LinearLayout>
-    <ImageView android:src="@drawable/icon" android:layout_height="wrap_content" android:layout_width="wrap_content" android:id="@+id/state_icon" android:paddingLeft="5dip"></ImageView>
+
+    <ImageView
+        android:id="@+id/state_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="5dip"
+        android:src="@android:color/transparent" >
+</ImageView>
 </LinearLayout>
