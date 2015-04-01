@@ -96,6 +96,8 @@ protected:
 
 	Poco::NotificationQueue queue;
 
+	Poco::Thread workThread;
+
 public:
 	AbstractOPDID *opdid;
 
@@ -152,7 +154,7 @@ public:
 	virtual void query(FritzBoxPlugin *plugin) override;
 
 	virtual void setLine(uint8_t line) override;
-	
+
 	virtual void getState(uint8_t *mode, uint8_t *line) override;
 };
 
@@ -282,7 +284,7 @@ void FritzDECT200Power::configure(Poco::Util::AbstractConfiguration *portConfig)
 	// the default label is the port ID
 	std::string portLabel = portConfig->getString("PowerLabel", this->getID());
 	this->setLabel(portLabel.c_str());
-	
+
 	int flags = portConfig->getInt("PowerFlags", -1);
 	if (flags >= 0) {
 		this->setFlags(flags);
@@ -373,7 +375,7 @@ void FritzDECT200Energy::configure(Poco::Util::AbstractConfiguration *portConfig
 	// the default label is the port ID
 	std::string portLabel = portConfig->getString("EnergyLabel", this->getID());
 	this->setLabel(portLabel.c_str());
-	
+
 	int flags = portConfig->getInt("EnergyFlags", -1);
 	if (flags >= 0) {
 		this->setFlags(flags);
@@ -627,7 +629,7 @@ void FritzBoxPlugin::setSwitchState(FritzPort *port, uint8_t line) {
 
 	// port must be a DECT 200 switch port
 	FritzDECT200Switch *switchPort = (FritzDECT200Switch *)port;
-	
+
 	std::string cmd = (line == 1 ? "setswitchon" : "setswitchoff");
 	std::string result = this->httpGet("/webservices/homeautoswitch.lua?ain=" + switchPort->ain + "&switchcmd=" + cmd + "&sid=" + this->sid);
 
@@ -711,7 +713,7 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 
 	// create ordered list of port keys (by priority)
 	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = portKeys.begin(); it != portKeys.end(); ++it) {
-	
+
 		int itemNumber = nodes->getInt(*it, 0);
 		// check whether the item is active
 		if (itemNumber < 0)
@@ -731,19 +733,19 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 	if (orderedItems.size() == 0) {
 		this->opdid->log(this->nodeID + ": Warning: No ports configured for this node; is this intended?");
 	}
-	
+
 	// go through items, create ports in specified order
 	ItemList::const_iterator nli = orderedItems.begin();
 	while (nli != orderedItems.end()) {
-	
+
 		std::string nodeName = nli->get<1>();
-	
+
 		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 			this->opdid->log("Setting up FritzBox port(s) for node: " + nodeName);
-			
+
 		// get port section from the configuration
 		Poco::Util::AbstractConfiguration *portConfig = abstractOPDID->getConfiguration()->createView(nodeName);
-	
+
 		// get port type (required)
 		std::string portType = abstractOPDID->getConfigString(portConfig, "Type", "", true);
 
@@ -777,8 +779,8 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 
 	this->opdid->addConnectionListener(this);
 
-	Poco::Thread thread(node + " work thread");
-	thread.start(*this);
+	this->workThread.setName(node + " work thread");
+	this->workThread.start(*this);
 
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log(this->nodeID + ": FritzBoxPlugin setup completed successfully");
