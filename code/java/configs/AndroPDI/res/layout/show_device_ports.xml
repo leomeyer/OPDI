@@ -33,8 +33,33 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_marginRight="5dp" />
+
         </RelativeLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <TextView
+                android:id="@+id/textView1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left|center_vertical"
+                android:text="@string/device_port_group"
+                android:textColor="#000000" />
+
+            <Spinner
+                android:id="@+id/portGroupSelect"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:layout_weight="1"
+                android:background="@android:drawable/btn_dropdown"
+                android:spinnerMode="dropdown" />
+
+        </LinearLayout>
     </LinearLayout>
     <ListView android:layout_width="match_parent" android:id="@+id/devicecaps_listview" android:cacheColorHint="#00000000" android:background="@drawable/background" android:layout_height="match_parent"></ListView>  
 </LinearLayout>

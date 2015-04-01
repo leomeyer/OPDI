@@ -1,7 +1,9 @@
 package org.ospdi.opdi.ports;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import org.ospdi.opdi.devices.DeviceException;
@@ -69,5 +71,35 @@ public class BasicDeviceCapabilities {
 
 	public List<Port> getPorts() {
 		return ports;
+	}
+
+	public List<Port> getPorts(String groupID) {
+		// filter ports by parent group ID
+		List<Port> result = new ArrayList<Port>();
+		for (Port port: ports) {
+			if (port.isInGroup(groupID))
+				result.add(port);
+		}
+		return result;
+	}
+
+	public List<PortGroup> getPortGroups(String parentGroupID) {
+		// TODO parentGroupID
+		
+		Set<PortGroup> result = new HashSet<PortGroup>();
+		
+		for (Port port: ports) { 
+			if (port.getGroup() != null) {
+				result.add(port.getGroup());
+				// add all parent groups way up the hierarchy
+				PortGroup parent = port.getGroup().getParentGroup();
+				while (parent != null) {
+					result.add(parent);
+					parent = parent.getParentGroup();
+				}
+			}
+		}
+		
+		return new ArrayList<PortGroup>(result);
 	}
 }

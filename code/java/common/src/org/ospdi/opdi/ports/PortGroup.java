@@ -24,7 +24,26 @@ public class PortGroup {
 		this.parent = parent;
 		this.flags = flags;
 	}
+	
+	@Override
+	public int hashCode() {
+		// port groups are identical when their IDs match
+		return id.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		// port groups are identical when their IDs match
+		if (obj instanceof PortGroup)
+			return this.id.equals(((PortGroup)obj).id);
+		return false;
+	}
 
+	@Override
+	public String toString() {
+		return label;
+	}
+	
 	public void setExtendedPortInfo(String info) {
 		this.extendedInfo = info;
 		
@@ -39,7 +58,7 @@ public class PortGroup {
 		return defaultValue;
 	}
 
-	public synchronized String getId() {
+	public synchronized String getID() {
 		return id;
 	}
 
@@ -56,16 +75,27 @@ public class PortGroup {
 	}
 
 	public void setParentGroup(PortGroup parent) {
-
+		this.parentGroup = parent;
 		// cycle check
 		PortGroup gParent = parent.parentGroup;
 		while (gParent != null) {
-			if (gParent.getId().equals(parent.getId()))
-				throw new IllegalArgumentException("Invalid group hierarchy: cycle for " + parent.getId());
+			if (gParent.getID().equals(parent.getID()))
+				throw new IllegalArgumentException("Invalid group hierarchy: cycle for " + parent.getID());
 			gParent = gParent.parentGroup;
 		}
-		
-		this.parentGroup = parent;
 	}
-	
+
+	public PortGroup getParentGroup() {
+		return this.parentGroup;
+	}
+
+	public boolean hasParentGroup(String groupID) {
+		PortGroup gParent = parentGroup;
+		while (gParent != null) {
+			if (gParent.getID().equals(groupID))
+				return true;
+			gParent = gParent.parentGroup;
+		}
+		return false;
+	}
 }

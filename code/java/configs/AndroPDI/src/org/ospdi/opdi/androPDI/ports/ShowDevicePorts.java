@@ -17,6 +17,7 @@ import org.ospdi.opdi.interfaces.IDeviceListener;
 import org.ospdi.opdi.ports.BasicDeviceCapabilities;
 import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.ports.Port.PortType;
+import org.ospdi.opdi.ports.PortGroup;
 import org.ospdi.opdi.ports.StreamingPort;
 import org.ospdi.opdi.protocol.DisconnectedException;
 import org.ospdi.opdi.protocol.PortAccessDeniedException;
@@ -24,6 +25,7 @@ import org.ospdi.opdi.protocol.ProtocolException;
 import org.ospdi.opdi.utils.ResourceFactory;
 import org.ospdi.opdi.androPDI.R;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -33,9 +35,12 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -46,6 +51,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 	private static final int COLOR_DEFAULT = Color.BLUE;
 	private static final int COLOR_ERROR = Color.RED;
 	
+	private ShowDevicePorts instance;
 	private ProgressBar mProgress;
     private AndroPDIDevice device;
     ListView ports_listview;
@@ -53,7 +59,52 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
     private PortListAdapter portListAdapter;
     PortAndAdapter portAndAdapter;
 
+    private Spinner groupSelect;
+    List<PortGroup> portGroups; 
+    private String currentGroup = "";	// default: no group/all ports
+
     Handler mHandler = new Handler();
+
+    /** A queue of operations to be performed sequentially.
+	 * 
+	 */
+	protected BlockingQueue<PortAction> queue = new ArrayBlockingQueue<PortAction>(10);
+	private TextView tvName; 
+	private TextView tvInfo;
+	
+	protected Thread processorThread;
+	
+	protected boolean dispatchBlocked;
+	
+	class PortGroupSelectAdapter extends ArrayAdapter<PortGroup> {
+
+        public PortGroupSelectAdapter(Context context, List<PortGroup> objects) {
+            super(context, R.layout.port_group_select_row, objects);
+        }
+
+        @Override //don't override if you don't want the default spinner to be a two line view
+        public View getView(int position, View convertView, ViewGroup parent) {
+            return initView(position, convertView);
+        }
+
+        @Override
+        public View getDropDownView(int position, View convertView,
+                                    ViewGroup parent) {
+            return initView(position, convertView);
+        }
+
+        private View initView(int position, View convertView) {
+            if(convertView == null)
+                convertView = View.inflate(getContext(),
+                                           R.layout.port_group_select_row,
+                                           null);
+            TextView tvText1 = (TextView)convertView.findViewById(R.id.text1);
+            TextView tvText2 = (TextView)convertView.findViewById(R.id.text2);
+            tvText1.setText(getItem(position).getLabel());
+            tvText2.setText(getItem(position).getID());
+            return convertView;
+        }
+    }	
 
 	/** Reloads the device capabilities and reconfigures all ports.
 	 */
@@ -79,10 +130,49 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 				port.setViewAdapter(null);
 	        }
 	        
+	        // build group list
+	    	portGroups = bdc.getPortGroups(currentGroup);
+	    	// insert "All groups" item
+	    	portGroups.add(0, new PortGroup("" /* empty ID means all ports */, "All ports", "", 0));
+	    	
+	    	final List<PortGroup> groups = portGroups; 
+	    	
             // update port information
             mHandler.post(new Runnable() {
 				public void run() {
-			    	portList = bdc.getPorts();
+					PortGroupSelectAdapter adapter = new PortGroupSelectAdapter(instance, groups);
+			    	
+			    	groupSelect.setAdapter(adapter);
+			    	
+			    	// select current group
+			    	int selection = 0;
+			    	for (PortGroup group: groups) {
+			    		if (group.getID().equals(currentGroup))
+			    			break;
+			    		selection++;
+			    	}
+			    	groupSelect.setOnItemSelectedListener(null);
+			    	if (selection < groups.size())
+			    		groupSelect.setSelection(selection, false);
+			    	
+			    	groupSelect.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+			    		@Override
+			    		public void onItemSelected(AdapterView<?> parent,
+			    				View view, int position, long id) {
+			    			String oldGroup = currentGroup; 
+			    			currentGroup = groups.get(position).getID();
+			    			if (!currentGroup.equals(oldGroup))
+				    			// reconfigure to filter the ports
+				    	        queue.add(new ReconfigureOperation());
+			    		}
+			    		
+			    		@Override
+			    		public void onNothingSelected(AdapterView<?> parent) {
+			    			
+			    		}
+			    	});
+
+			    	portList = bdc.getPorts(currentGroup);
 			        portListAdapter = new PortListAdapter(ShowDevicePorts.this, ShowDevicePorts.this, android.R.layout.simple_list_item_1, portList);
 			        ports_listview.setAdapter(portListAdapter);
 				}
@@ -169,23 +259,13 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
             }
         }
 	}
-	
-	/** A queue of operations to be performed sequentially.
-	 * 
-	 */
-	protected BlockingQueue<PortAction> queue = new ArrayBlockingQueue<PortAction>(10);
-	private TextView tvName; 
-	private TextView tvInfo;
-	
-	protected Thread processorThread;
-	
-	protected boolean dispatchBlocked;
-	
+		
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.show_device_ports);
+        this.instance = this;
         
         // get the selected device
         String devId = getIntent().getStringExtra(AndroPDI.CURRENT_DEVICE_ID);
@@ -219,6 +299,8 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 
     	mProgress = (ProgressBar)findViewById(R.id.progress);
     	mProgress.setVisibility(View.GONE);
+    	
+    	groupSelect = (Spinner)findViewById(R.id.portGroupSelect);
         
     	ports_listview = (ListView)findViewById(R.id.devicecaps_listview);
         
