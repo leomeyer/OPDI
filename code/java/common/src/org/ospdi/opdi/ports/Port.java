@@ -261,4 +261,23 @@ public abstract class Port {
 	public synchronized void setGroup(PortGroup group) {
 		this.group = group;
 	}
+
+	public String getGroupID() {
+		if (extendedProperties.containsKey("group"))
+			return extendedProperties.get("group");
+		return null;
+	}
+
+	public boolean isInGroup(String groupID) {
+		// no group means all ports
+		if ((groupID == null) || (groupID.equals("")))
+			return true;
+		if (group == null)
+			return false;
+		// A port is considered "in a group" if its group or one of its parent groups match the groupID
+		if (groupID.equals(group.getID())) {
+			return true;
+		}
+		return group.hasParentGroup(groupID);
+	}
 }
