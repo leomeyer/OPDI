@@ -580,6 +580,17 @@ void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig
 	this->addPort(pulsePort);
 }
 
+void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port){
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Setting up SelectorPort: " + port);
+
+	OPDID_SelectorPort *selectorPort = new OPDID_SelectorPort(this, port.c_str());
+	this->configurePort(portConfig, selectorPort, 0);
+	selectorPort->configure(portConfig);
+
+	this->addPort(selectorPort);
+}
+
 
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
 	if (this->logVerbosity >= VERBOSE)
@@ -625,6 +636,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else
 		if (nodeType == "PulsePort") {
 			this->setupPulsePort(nodeConfig, node);
+		} else
+		if (nodeType == "SelectorPort") {
+			this->setupSelectorPort(nodeConfig, node);
 		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}

@@ -151,6 +151,8 @@ public:
 
 	virtual void setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
+	virtual void setupSelectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);
 

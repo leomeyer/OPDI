@@ -70,6 +70,24 @@ void OPDID_PortFunctions::findAnalogPorts(std::string configPort, std::string se
 	}
 }
 
+OPDI_SelectPort *OPDID_PortFunctions::findSelectPort(std::string configPort, std::string setting, std::string portID, bool required) {
+	// locate port by ID
+	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
+	// no found but required?
+	if (port == NULL) { 
+		if (required)
+			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
+		return NULL;
+	}
+
+	// port type must be Digital
+	if (port->getType()[0] != OPDI_PORTTYPE_SELECT[0])
+		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a digital port: " + portID);
+
+	return (OPDI_SelectPort *)port;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Logic Port
 ///////////////////////////////////////////////////////////////////////////////
@@ -438,6 +456,87 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 				this->opdid->log(std::string("Changing port ") + (*it)->getID() + ": " + e.message());
 			}
 			it++;
+		}
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Selector Port
+///////////////////////////////////////////////////////////////////////////////
+
+OPDID_SelectorPort::OPDID_SelectorPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+
+	this->opdid = opdid;
+	this->negate = false;
+
+	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+	// set the line to an invalid state
+	this->line = -1;
+}
+
+OPDID_SelectorPort::~OPDID_SelectorPort() {
+}
+
+void OPDID_SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
+	this->negate = config->getBool("Negate", false);
+
+	this->selectPortStr = config->getString("SelectPort", "");
+	if (this->selectPortStr == "")
+		throw Poco::DataException("You have to specify the SelectPort");
+
+	int pos = config->getInt("Position", -1);
+	if ((pos < 0) || (pos > 65535))
+		throw Poco::DataException("You have to specify a SelectPort position that is greater than -1 and lower than 65536");
+
+	this->position = pos;
+}
+
+void OPDID_SelectorPort::setDirCaps(const char *dirCaps) {
+	throw PortError("The direction capabilities of a SelectorPort cannot be changed");
+}
+
+void OPDID_SelectorPort::setMode(uint8_t mode) {
+	throw PortError("The mode of a SelectorPort cannot be changed");
+}
+
+void OPDID_SelectorPort::setLine(uint8_t line) {
+	OPDI_DigitalPort::setLine(line);
+	if (this->line == 1) {
+		// set the specified select port to the specified position
+		this->selectPort->setPosition(this->position);
+	}
+}
+
+void OPDID_SelectorPort::prepare() {
+	OPDI_DigitalPort::prepare();
+
+	// find port; throws errors if something required is missing
+	this->selectPort = this->findSelectPort(this->getID(), "SelectPort", this->selectPortStr, true);
+
+	// check position range
+	if (this->position > this->selectPort->getMaxPosition())
+		throw Poco::DataException(std::string(this->getID()) + ": The specified selector position exceeds the maximum of port " + this->selectPort->getID() + ": " + to_string(this->selectPort->getMaxPosition()));
+}
+
+uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
+	OPDI_DigitalPort::doWork(canSend);
+
+	// check whether the select port is in the specified position
+	uint16_t pos;
+	this->selectPort->getState(&pos);
+	if (pos == this->position) {
+		if (this->line != 1) {
+			if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+				this->opdid->log(std::string(this->getID()) + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to High");
+			OPDI_DigitalPort::setLine(1);
+		}
+	} else {
+		if (this->line != 0) {
+			if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+				this->opdid->log(std::string(this->getID()) + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to Low");
+			OPDI_DigitalPort::setLine(0);
 		}
 	}
 
