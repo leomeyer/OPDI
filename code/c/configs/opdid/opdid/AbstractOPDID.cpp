@@ -254,7 +254,7 @@ void AbstractOPDID::lockResource(std::string resourceID, std::string lockerID) {
 	LockedResources::const_iterator it = this->lockedResources.find(resourceID);
 	// resource already used?
 	if (it != this->lockedResources.end())
-		throw Poco::DataException("Resource already in use by " + it->second + ": " + resourceID);
+		throw Poco::DataException("Resource requested by " + lockerID + " is already in use by " + it->second + ": " + resourceID);
 
 	// store the resource
 	this->lockedResources[resourceID] = lockerID;
