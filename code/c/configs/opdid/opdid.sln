@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowPlugin", "plugins\aut
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FritzBoxPlugin", "plugins\automation\FritzBoxPlugin\FritzBoxPlugin.vcxproj", "{5433A938-14E3-41EB-B700-5D2DF80ED6B8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WeatherPlugin", "plugins\automation\WeatherPlugin\WeatherPlugin.vcxproj", "{73E672E9-33F9-400B-8981-822B0C53FC56}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -33,11 +35,18 @@ Global
 		{5433A938-14E3-41EB-B700-5D2DF80ED6B8}.Debug|Win32.Build.0 = Debug|Win32
 		{5433A938-14E3-41EB-B700-5D2DF80ED6B8}.Release|Win32.ActiveCfg = Release|Win32
 		{5433A938-14E3-41EB-B700-5D2DF80ED6B8}.Release|Win32.Build.0 = Release|Win32
+		{73E672E9-33F9-400B-8981-822B0C53FC56}.Debug|Win32.ActiveCfg = Debug|Win32
+		{73E672E9-33F9-400B-8981-822B0C53FC56}.Debug|Win32.Build.0 = Debug|Win32
+		{73E672E9-33F9-400B-8981-822B0C53FC56}.Release|Win32.ActiveCfg = Release|Win32
+		{73E672E9-33F9-400B-8981-822B0C53FC56}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{9C6FD69F-B7E2-4541-B381-653AF0AC7896} = {8A7D0650-FA10-4924-A3D7-AB010C379C7B}
+		{5433A938-14E3-41EB-B700-5D2DF80ED6B8} = {8A7D0650-FA10-4924-A3D7-AB010C379C7B}
+		{F5A67CB6-ECF0-41EB-BABF-AA80039CA285} = {8A7D0650-FA10-4924-A3D7-AB010C379C7B}
+		{73E672E9-33F9-400B-8981-822B0C53FC56} = {8A7D0650-FA10-4924-A3D7-AB010C379C7B}
 	EndGlobalSection
 EndGlobal

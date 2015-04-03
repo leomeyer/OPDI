@@ -28,13 +28,7 @@
 #include "opdi_constants.h"
 #include "opdi_platformfuncs.h"
 
-#ifdef _WINDOWS
-#include "WindowsOPDID.h"
-#endif
-
-#ifdef linux
-#include "LinuxOPDID.h"
-#endif
+#include "AbstractOPDID.h"
 
 #define INVALID_SID		"0000000000000000"
 
@@ -685,7 +679,7 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 	this->opdid = abstractOPDID;
 	this->nodeID = node;
 	this->sid = INVALID_SID;			// default; means not connected
-	this->timeoutSeconds = 2;			// short timeout (assume ocal network)
+	this->timeoutSeconds = 2;			// short timeout (assume local network)
 
 	// test case for response calculation (see documentation: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AVM_Technical_Note_-_Session_ID.pdf)
 	// abstractOPDID->log("Test Response: " + this->getResponse("1234567z", "äbc"));
@@ -697,9 +691,12 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 	this->password = abstractOPDID->getConfigString(nodeConfig, "Password", "", true);
 	this->timeoutSeconds = nodeConfig->getInt("Timeout", this->timeoutSeconds);
 
+	// store main node's group (will become the default of ports)
+	std::string group = nodeConfig->getString("Group", "");
+
 	// enumerate keys of the plugin's nodes (in specified order)
-		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-			this->opdid->log("Enumerating FritzBox nodes: " + node + ".Nodes");
+	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		this->opdid->log("Enumerating FritzBox nodes: " + node + ".Nodes");
 
 	Poco::Util::AbstractConfiguration *nodes = nodeConfig->createView("Nodes");
 
@@ -731,7 +728,7 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 	}
 
 	if (orderedItems.size() == 0) {
-		this->opdid->log(this->nodeID + ": Warning: No ports configured for this node; is this intended?");
+		this->opdid->log("Warning: No ports configured in node " + node + ".Nodes; is this intended?");
 	}
 
 	// go through items, create ports in specified order
@@ -752,6 +749,8 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 		if (portType == "FritzDECT200") {
 			// setup the switch port instance and add it
 			FritzDECT200Switch *switchPort = new FritzDECT200Switch(this, nodeName.c_str());
+			// set default group: FritzBox's node's group
+			switchPort->setGroup(group);
 			switchPort->configure(portConfig);
 			abstractOPDID->addPort(switchPort);
 			// remember port in plugin
@@ -759,6 +758,8 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 
 			// setup the energy port instance and add it
 			FritzDECT200Energy *energyPort = new FritzDECT200Energy(this, (nodeName + "Energy").c_str());
+			// set default group: FritzBox's node's group
+			energyPort->setGroup(group);
 			energyPort->configure(portConfig);
 			abstractOPDID->addPort(energyPort);
 			// remember port in plugin
@@ -766,6 +767,8 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 
 			// setup the power port instance and add it
 			FritzDECT200Power *powerPort = new FritzDECT200Power(this, (nodeName + "Power").c_str());
+			// set default group: FritzBox's node's group
+			powerPort->setGroup(group);
 			powerPort->configure(portConfig);
 			abstractOPDID->addPort(powerPort);
 			// remember port in plugin

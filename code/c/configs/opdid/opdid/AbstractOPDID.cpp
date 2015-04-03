@@ -68,7 +68,7 @@ AbstractOPDID::AbstractOPDID(void) {
 	opdiCodeTexts[29] = "PORT_ACCESS_DENIED";
 	opdiCodeTexts[30] = "PORT_ERROR";
 	opdiCodeTexts[31] = "SHUTDOWN";
-	opdiCodeTexts[30] = "GROUP_UNKNOWN";
+	opdiCodeTexts[32] = "GROUP_UNKNOWN";
 }
 
 AbstractOPDID::~AbstractOPDID(void) {
@@ -156,7 +156,7 @@ std::string AbstractOPDID::getTimestampStr(void) {
 std::string AbstractOPDID::getOPDIResult(uint8_t code) {
 	OPDICodeTexts::const_iterator it = this->opdiCodeTexts.find(code);
 	if (it == this->opdiCodeTexts.end())
-		return "Unknown status code: " + code;
+		return std::string("Unknown status code: ") + to_string((int)code);
 	return it->second;
 }
 
