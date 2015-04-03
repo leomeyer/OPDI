@@ -32,7 +32,7 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->minorVersion = OPDID_MINOR_VERSION;
 	this->patchVersion = OPDID_PATCH_VERSION;
 
-	this->logVerbosity = NORMAL;
+	this->logVerbosity = UNKNOWN;
 	this->configuration = NULL;
 
 	// map result codes
@@ -67,6 +67,8 @@ AbstractOPDID::AbstractOPDID(void) {
 	opdiCodeTexts[28] = "TERMINATOR_IN_PAYLOAD";
 	opdiCodeTexts[29] = "PORT_ACCESS_DENIED";
 	opdiCodeTexts[30] = "PORT_ERROR";
+	opdiCodeTexts[31] = "SHUTDOWN";
+	opdiCodeTexts[30] = "GROUP_UNKNOWN";
 }
 
 AbstractOPDID::~AbstractOPDID(void) {
@@ -263,10 +265,17 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 		this->log("Setting up general configuration");
 
 	std::string slaveName = this->getConfigString(general, "SlaveName", "", true);
-	int timeout = general->getInt("IdleTimeout", DEFAULT_IDLETIMEOUT_MS);
+	int messageTimeout = general->getInt("IdleTimeout", OPDI_DEFAULT_MESSAGE_TIMEOUT);
+	if ((messageTimeout < 0) || (messageTimeout > 65535))
+			throw Poco::InvalidArgumentException("MessageTimeout must be greater than 0 and may not exceed 65535", to_string(messageTimeout));
+	opdi_set_timeout(messageTimeout);
+
+	int idleTimeout = general->getInt("IdleTimeout", DEFAULT_IDLETIMEOUT_MS);
+
 	std::string logVerbosityStr = this->getConfigString(general, "LogVerbosity", "", false);
 
-	if (logVerbosityStr != "") {
+	// set log verbosity only if it's not already set
+	if ((this->logVerbosity != UNKNOWN) && (logVerbosityStr != "")) {
 		if (logVerbosityStr == "Quiet") {
 			this->logVerbosity = QUIET;
 		} else
@@ -282,8 +291,12 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', 'Verbose', or 'Debug')", logVerbosityStr);
 	}
 
+	if (this->logVerbosity == UNKNOWN) {
+		this->logVerbosity = NORMAL;
+	}
+
 	// initialize OPDI slave
-	this->setup(slaveName.c_str(), timeout);
+	this->setup(slaveName.c_str(), idleTimeout);
 }
 
 	/** Reads common properties from the configuration and configures the port group. */
@@ -681,6 +694,8 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 		this->setupNode(config, nli->get<1>());
 		nli++;
 	}
+
+	// TODO check group hierarchy
 }
 
 int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {

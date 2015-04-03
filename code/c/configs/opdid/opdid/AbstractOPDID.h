@@ -61,6 +61,7 @@ protected:
 public:
 
 	enum LogVerbosity {
+		UNKNOWN,
 		QUIET,
 		NORMAL,
 		VERBOSE,
