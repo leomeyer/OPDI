@@ -392,8 +392,8 @@ void GertboardButton::setDirCaps(const char *dirCaps) {
 }
 
 void GertboardButton::setFlags(int32_t flags) {
-	if (flags > 0)
-		opdid->log("Warning: Gertboard Button flags cannot be changed, ignoring");
+	// TODO validate?
+	OPDI_DigitalPort::setFlags(flags);
 }
 
 void GertboardButton::getState(uint8_t *mode, uint8_t *line) {
@@ -497,12 +497,31 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 	// prepare Gertboard IO (requires root permissions)
 	setup_io();
 
+	// determine pin map to use
+	this->pinMap = (int (*)[][2])&pinMapRev1;
+	std::string revision = abstractOPDID->getConfigString(nodeConfig, "Revision", "1", false);
+	if (revision == "1") {
+		// default
+	} else
+	if (revision == "2") {
+		this->pinMap = (int (*)[][2])&pinMapRev2;
+	} else
+		throw Poco::DataException("Gertboard revision not supported (no pin map; use 1 or 2); Revision = " + revision);	
+
+	// store main node's group (will become the default of ports)
+	std::string group = nodeConfig->getString("Group", "");
+
 	// the Gertboard plugin node expects a list of node names that determine the ports that this plugin provides
 
-	// enumerate keys of the plugin's node (in specified order)
+	// enumerate keys of the plugin's nodes (in specified order)
+	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		this->opdid->log("Enumerating Gertboard nodes: " + node + ".Nodes");
+
+	Poco::Util::AbstractConfiguration *nodes = nodeConfig->createView("Nodes");
+
 	// get ordered list of ports
 	Poco::Util::AbstractConfiguration::Keys portKeys;
-	nodeConfig->keys("", portKeys);
+	nodes->keys("", portKeys);
 
 	typedef Poco::Tuple<int, std::string> Item;
 	typedef std::vector<Item> ItemList;
@@ -510,13 +529,9 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 
 	// create ordered list of port keys (by priority)
 	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = portKeys.begin(); it != portKeys.end(); ++it) {
-		// there will be an item "Driver" and possibly "Revision"; ignore them
-		if ((*it == "Driver") || (*it == "Revision"))
-			continue;
-	
-		int itemNumber = nodeConfig->getInt(*it, 0);
+		int itemNumber = nodes->getInt(*it, 0);
 		// check whether the item is active
-		if (itemNumber <= 0)
+		if (itemNumber < 0)
 			continue;
 
 		// insert at the correct position to create a sorted list of items
@@ -531,19 +546,8 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 	}
 
 	if (orderedItems.size() == 0) {
-		this->opdid->log("Warning: No Gertboard ports configured for this node; is this intended? Node: " + node);
+		this->opdid->log("Warning: No ports configured in node " + node + ".Nodes; is this intended?");
 	}
-	
-	// determine pin map to use
-	this->pinMap = (int (*)[][2])&pinMapRev1;
-	std::string revision = abstractOPDID->getConfigString(nodeConfig, "Revision", "1", false);
-	if (revision == "1") {
-		// default
-	} else
-	if (revision == "2") {
-		this->pinMap = (int (*)[][2])&pinMapRev2;
-	} else
-		throw Poco::DataException("Gertboard revision not supported (no pin map; use 1 or 2); Revision = " + revision);
 	
 	// go through items, create ports in specified order
 	ItemList::const_iterator nli = orderedItems.begin();
@@ -571,6 +575,8 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 			
 			// setup the port instance and add it; use internal pin number
 			DigitalGertboardPort *port = new DigitalGertboardPort(abstractOPDID, nodeName.c_str(), internalPin);
+			// set default group: FritzBox's node's group
+			port->setGroup(group);
 			abstractOPDID->configureDigitalPort(portConfig, port);
 			abstractOPDID->addPort(port);
 		} else
@@ -585,6 +591,8 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 
 			// setup the port instance and add it; use internal pin number
 			GertboardButton *port = new GertboardButton(abstractOPDID, nodeName.c_str(), internalPin);
+			// set default group: FritzBox's node's group
+			port->setGroup(group);
 			abstractOPDID->configureDigitalPort(portConfig, port);
 			abstractOPDID->addPort(port);
 		} else
@@ -609,6 +617,8 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 
 			// setup the port instance and add it; use internal pin number
 			AnalogGertboardOutput *port = new AnalogGertboardOutput(abstractOPDID, nodeName.c_str(), outputNumber);
+			// set default group: FritzBox's node's group
+			port->setGroup(group);
 			abstractOPDID->configureAnalogPort(portConfig, port);
 			abstractOPDID->addPort(port);
 		} else
@@ -633,6 +643,8 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 
 			// setup the port instance and add it; use internal pin number
 			AnalogGertboardInput *port = new AnalogGertboardInput(abstractOPDID, nodeName.c_str(), inputNumber);
+			// set default group: FritzBox's node's group
+			port->setGroup(group);
 			abstractOPDID->configureAnalogPort(portConfig, port);
 			abstractOPDID->addPort(port);
 		} else
@@ -645,6 +657,8 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 
 			// setup the port instance and add it; use internal pin number
 			GertboardPWM *port = new GertboardPWM(abstractOPDID, internalPin, nodeName.c_str(), inverse);
+			// set default group: FritzBox's node's group
+			port->setGroup(group);
 			abstractOPDID->configurePort(portConfig, port, 0);
 			
 			int value = portConfig->getInt("Value", -1);

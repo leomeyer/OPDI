@@ -35,7 +35,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->extendedInfo = NULL;
 	this->hidden = false;
 	this->readonly = false;
-	this->refreshMode = REFRESH_OFF;
+	this->refreshMode = REFRESH_NOT_SET;
 	this->refreshRequired = false;
 	this->refreshTime = 0;
 	this->lastRefreshTime = 0;
@@ -56,7 +56,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->extendedInfo = NULL;
 	this->hidden = false;
 	this->readonly = false;
-	this->refreshMode = REFRESH_OFF;
+	this->refreshMode = REFRESH_NOT_SET;
 	this->refreshRequired = false;
 	this->refreshTime = 0;
 	this->lastRefreshTime = 0;
@@ -631,6 +631,7 @@ double OPDI_AnalogPort::getRelativeValue(void) {
 #ifndef OPDI_NO_SELECT_PORTS
 
 OPDI_SelectPort::OPDI_SelectPort(const char *id) : OPDI_Port(id, NULL, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, NULL) {
+	this->itemCount = 0;
 	this->items = NULL;
 	this->position = 0;
 }
@@ -665,11 +666,13 @@ void OPDI_SelectPort::setItems(const char **items) {
 	this->items = NULL;
 	// determine array size
 	const char *item = items[0];
-	int itemCount = 0;
+	itemCount = 0;
 	while (item) {
 		itemCount++;
 		item = items[itemCount];
 	}
+	if (itemCount > 65535)
+		throw Poco::DataException(std::string(this->getID()) + "Too many select port items: " + to_string(itemCount));
 	// create target array
 	this->items = new char*[itemCount + 1];
 	// copy strings to array
@@ -698,6 +701,11 @@ void OPDI_SelectPort::setPosition(uint16_t position) {
 
 void OPDI_SelectPort::getState(uint16_t *position) {
 	*position = this->position;
+}
+
+
+uint16_t OPDI_SelectPort::getMaxPosition(void) {
+	return this->itemCount - 1;
 }
 
 #endif // OPDI_NO_SELECT_PORTS

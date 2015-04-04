@@ -1,4 +1,10 @@
-SUBDIRS = linux_test automation/WindowPlugin automation/FritzBoxPlugin
+SUBDIRS = linux_test automation/WindowPlugin automation/FritzBoxPlugin automation/WeatherPlugin
+
+
+UNAME_M = $(shell uname -m)
+ifeq ($(UNAME_M),armv6l)
+	SUBDIRS += rpi/gertboard
+endif
 
 .PHONY: subdirs $(SUBDIRS)
 

@@ -26,6 +26,8 @@ protected:
 	virtual OPDI_AnalogPort *findAnalogPort(std::string configPort, std::string setting, std::string portID, bool required);
 	
 	virtual void findAnalogPorts(std::string configPort, std::string setting, std::string portIDs, AnalogPortList &portList);
+
+	virtual OPDI_SelectPort *findSelectPort(std::string configPort, std::string setting, std::string portID, bool required);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -141,6 +143,41 @@ public:
 	virtual void setDirCaps(const char *dirCaps);
 
 	virtual void setMode(uint8_t mode);
+
+	virtual void prepare();
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Selector Port
+///////////////////////////////////////////////////////////////////////////////
+
+/** A SelectorPort is a DigitalPort that is High when the specified select port
+*   is in the specified position and Low otherwise. If set to High it will switch
+*   the select port to the specified position. If set to Low, it will do nothing.
+*/
+class OPDID_SelectorPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+
+protected:
+
+	bool negate;
+	std::string selectPortStr;
+	OPDI_SelectPort *selectPort;
+	uint16_t position;
+
+	virtual uint8_t doWork(uint8_t canSend);
+
+public:
+	OPDID_SelectorPort(AbstractOPDID *opdid, const char *id);
+
+	virtual ~OPDID_SelectorPort();
+
+	virtual void configure(Poco::Util::AbstractConfiguration *config);
+
+	virtual void setDirCaps(const char *dirCaps);
+
+	virtual void setMode(uint8_t mode);
+
+	virtual void setLine(uint8_t line);
 
 	virtual void prepare();
 };

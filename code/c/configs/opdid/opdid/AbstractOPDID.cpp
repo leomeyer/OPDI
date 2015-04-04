@@ -32,7 +32,7 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->minorVersion = OPDID_MINOR_VERSION;
 	this->patchVersion = OPDID_PATCH_VERSION;
 
-	this->logVerbosity = NORMAL;
+	this->logVerbosity = UNKNOWN;
 	this->configuration = NULL;
 
 	// map result codes
@@ -67,6 +67,8 @@ AbstractOPDID::AbstractOPDID(void) {
 	opdiCodeTexts[28] = "TERMINATOR_IN_PAYLOAD";
 	opdiCodeTexts[29] = "PORT_ACCESS_DENIED";
 	opdiCodeTexts[30] = "PORT_ERROR";
+	opdiCodeTexts[31] = "SHUTDOWN";
+	opdiCodeTexts[32] = "GROUP_UNKNOWN";
 }
 
 AbstractOPDID::~AbstractOPDID(void) {
@@ -154,7 +156,7 @@ std::string AbstractOPDID::getTimestampStr(void) {
 std::string AbstractOPDID::getOPDIResult(uint8_t code) {
 	OPDICodeTexts::const_iterator it = this->opdiCodeTexts.find(code);
 	if (it == this->opdiCodeTexts.end())
-		return "Unknown status code: " + code;
+		return std::string("Unknown status code: ") + to_string((int)code);
 	return it->second;
 }
 
@@ -188,7 +190,7 @@ void AbstractOPDID::log(std::string text) {
 
 	// Try to lock the mutex. If this does not work in time, it will throw
 	// an exception. The calling thread should deal with this exception.
-	this->mutex.lock(1000);
+	this->mutex.lock();
 	this->println(this->getTimestampStr() + text);
 	this->mutex.unlock();
 }
@@ -252,7 +254,7 @@ void AbstractOPDID::lockResource(std::string resourceID, std::string lockerID) {
 	LockedResources::const_iterator it = this->lockedResources.find(resourceID);
 	// resource already used?
 	if (it != this->lockedResources.end())
-		throw Poco::DataException("Resource already in use by " + it->second + ": " + resourceID);
+		throw Poco::DataException("Resource requested by " + lockerID + " is already in use by " + it->second + ": " + resourceID);
 
 	// store the resource
 	this->lockedResources[resourceID] = lockerID;
@@ -263,10 +265,17 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 		this->log("Setting up general configuration");
 
 	std::string slaveName = this->getConfigString(general, "SlaveName", "", true);
-	int timeout = general->getInt("IdleTimeout", DEFAULT_IDLETIMEOUT_MS);
+	int messageTimeout = general->getInt("MessageTimeout", OPDI_DEFAULT_MESSAGE_TIMEOUT);
+	if ((messageTimeout < 0) || (messageTimeout > 65535))
+			throw Poco::InvalidArgumentException("MessageTimeout must be greater than 0 and may not exceed 65535", to_string(messageTimeout));
+	opdi_set_timeout(messageTimeout);
+
+	int idleTimeout = general->getInt("IdleTimeout", DEFAULT_IDLETIMEOUT_MS);
+
 	std::string logVerbosityStr = this->getConfigString(general, "LogVerbosity", "", false);
 
-	if (logVerbosityStr != "") {
+	// set log verbosity only if it's not already set
+	if ((this->logVerbosity == UNKNOWN) && (logVerbosityStr != "")) {
 		if (logVerbosityStr == "Quiet") {
 			this->logVerbosity = QUIET;
 		} else
@@ -282,8 +291,12 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', 'Verbose', or 'Debug')", logVerbosityStr);
 	}
 
+	if (this->logVerbosity == UNKNOWN) {
+		this->logVerbosity = NORMAL;
+	}
+
 	// initialize OPDI slave
-	this->setup(slaveName.c_str(), timeout);
+	this->setup(slaveName.c_str(), idleTimeout);
 }
 
 	/** Reads common properties from the configuration and configures the port group. */
@@ -580,6 +593,17 @@ void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig
 	this->addPort(pulsePort);
 }
 
+void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port){
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Setting up SelectorPort: " + port);
+
+	OPDID_SelectorPort *selectorPort = new OPDID_SelectorPort(this, port.c_str());
+	this->configurePort(portConfig, selectorPort, 0);
+	selectorPort->configure(portConfig);
+
+	this->addPort(selectorPort);
+}
+
 
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
 	if (this->logVerbosity >= VERBOSE)
@@ -626,6 +650,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		if (nodeType == "PulsePort") {
 			this->setupPulsePort(nodeConfig, node);
 		} else
+		if (nodeType == "SelectorPort") {
+			this->setupSelectorPort(nodeConfig, node);
+		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}
 }
@@ -667,6 +694,8 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 		this->setupNode(config, nli->get<1>());
 		nli++;
 	}
+
+	// TODO check group hierarchy
 }
 
 int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {
