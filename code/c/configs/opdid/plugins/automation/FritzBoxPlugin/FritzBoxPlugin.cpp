@@ -203,7 +203,7 @@ public:
 FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin *plugin, const char *id) : OPDI_DigitalPort(id) {
 	this->plugin = plugin;
 	this->switchState = -1;	// unknown
-	this->refreshMode = RefreshMode::REFRESH_AUTO;
+	this->refreshMode = REFRESH_AUTO;
 
 	// output only
 	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
@@ -258,7 +258,7 @@ void FritzDECT200Switch::setSwitchState(int8_t line) {
 FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin *plugin, const char *id) : OPDI_DialPort(id) {
 	this->plugin = plugin;
 	this->power = -1;	// unknown
-	this->refreshMode = RefreshMode::REFRESH_AUTO;
+	this->refreshMode = REFRESH_AUTO;
 
 	this->minValue = 0;
 	this->maxValue = 2300000;	// measured in mW; 2300 W is maximum power load for the DECT200
@@ -349,7 +349,7 @@ void FritzDECT200Power::doSelfRefresh(void) {
 FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin *plugin, const char *id) : OPDI_DialPort(id) {
 	this->plugin = plugin;
 	this->energy = -1;	// unknown
-	this->refreshMode = RefreshMode::REFRESH_AUTO;
+	this->refreshMode = REFRESH_AUTO;
 
 	this->minValue = 0;
 	this->maxValue = 2147483647;	// measured in Wh
@@ -836,7 +836,7 @@ void FritzBoxPlugin::run(void) {
 
 #ifdef _WINDOWS
 
-extern "C" __declspec(dllexport) IOPDIDPlugin* __cdecl GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
+extern "C" __declspec(dllexport) IOPDIDPlugin* __cdecl GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion) throw (Poco::Exception) {
 
 #elif linux
 
