@@ -49,7 +49,7 @@ public class UnitFormat {
 	
 	public String format(int value) {
 		// calculate value; format the result
-		double val = value * numerator / denominator;
+		double val = value * numerator / (double)denominator;
 		return String.format(formatString, val);
 	}
 }

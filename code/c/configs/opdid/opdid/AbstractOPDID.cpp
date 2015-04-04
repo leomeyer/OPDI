@@ -190,7 +190,7 @@ void AbstractOPDID::log(std::string text) {
 
 	// Try to lock the mutex. If this does not work in time, it will throw
 	// an exception. The calling thread should deal with this exception.
-	this->mutex.lock(1000);
+	this->mutex.lock();
 	this->println(this->getTimestampStr() + text);
 	this->mutex.unlock();
 }
@@ -275,7 +275,7 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 	std::string logVerbosityStr = this->getConfigString(general, "LogVerbosity", "", false);
 
 	// set log verbosity only if it's not already set
-	if ((this->logVerbosity != UNKNOWN) && (logVerbosityStr != "")) {
+	if ((this->logVerbosity == UNKNOWN) && (logVerbosityStr != "")) {
 		if (logVerbosityStr == "Quiet") {
 			this->logVerbosity = QUIET;
 		} else

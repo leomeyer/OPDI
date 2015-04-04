@@ -259,10 +259,6 @@ class DialPortViewAdapter implements IPortViewAdapter {
 	public void createContextMenu(ContextMenu menu,
 			ContextMenuInfo menuInfo) {
 
-		// show only if the port is not readonly
-		if (dPort.isReadonly())
-			return;
-		
 		MenuInflater inflater = this.showDevicePorts.getMenuInflater();
 		
 		try {
@@ -290,61 +286,65 @@ class DialPortViewAdapter implements IPortViewAdapter {
 			final int portMaxValue = dPort.getMaximum();
 			
 			item = menu.findItem(R.id.menuitem_dial_set_value);
-			item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-				@Override
-				public boolean onMenuItemClick(MenuItem item) {
-					// open input dialog
-
-					final Dialog dl = new Dialog(showDevicePorts);
-					dl.setTitle("Dial port value");
-					dl.setContentView(R.layout.dialog_analog_value);
-					
-					final EditText value = (EditText) dl.findViewById(R.id.edittext_value);
-					try {
-						value.setText("" + dPort.getPosition());
-					} catch (Exception e1) {
-						// can't read the value
-						return false;
-					}
-
-					Button bOk = (Button) dl.findViewById(R.id.button_ok);
-					bOk.setOnClickListener(new View.OnClickListener() {
-						public void onClick(View v) {
-							// close dialog
-							dl.dismiss();
-							
-							// parse value
-							final int val;
-							try {
-								val = Integer.parseInt(value.getText().toString());
-							} catch (Exception e) {
-								// no number entered
-								return;
+			
+			if (dPort.isReadonly())
+				item.setVisible(false);
+			else
+				item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+					@Override
+					public boolean onMenuItemClick(MenuItem item) {
+						// open input dialog
+	
+						final Dialog dl = new Dialog(showDevicePorts);
+						dl.setTitle("Dial port value");
+						dl.setContentView(R.layout.dialog_analog_value);
+						
+						final EditText value = (EditText) dl.findViewById(R.id.edittext_value);
+						try {
+							value.setText("" + dPort.getPosition());
+						} catch (Exception e1) {
+							// can't read the value
+							return false;
+						}
+	
+						Button bOk = (Button) dl.findViewById(R.id.button_ok);
+						bOk.setOnClickListener(new View.OnClickListener() {
+							public void onClick(View v) {
+								// close dialog
+								dl.dismiss();
+								
+								// parse value
+								final int val;
+								try {
+									val = Integer.parseInt(value.getText().toString());
+								} catch (Exception e) {
+									// no number entered
+									return;
+								}
+								if ((val >= portMinValue) && (val <= portMaxValue))
+									// set value
+									DialPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DialPortViewAdapter.this) {
+										@Override
+										void perform()
+												throws TimeoutException,
+												InterruptedException,
+												DisconnectedException,
+												DeviceException,
+												ProtocolException, PortAccessDeniedException {
+											// set the port value
+											// this corrects to the nearest step
+											dPort.setPosition(val);
+											position = dPort.getPosition();
+										}							
+									});
 							}
-							if ((val >= portMinValue) && (val <= portMaxValue))
-								// set value
-								DialPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DialPortViewAdapter.this) {
-									@Override
-									void perform()
-											throws TimeoutException,
-											InterruptedException,
-											DisconnectedException,
-											DeviceException,
-											ProtocolException, PortAccessDeniedException {
-										// set the port value
-										// this corrects to the nearest step
-										dPort.setPosition(val);
-										position = dPort.getPosition();
-									}							
-								});
-						}
-					});
-					Button bCancel = (Button) dl.findViewById(R.id.button_cancel);
-					bCancel.setOnClickListener(new View.OnClickListener() {
-						public void onClick(View v) {
-							dl.dismiss();
-						}
-					});
+						});
+						Button bCancel = (Button) dl.findViewById(R.id.button_cancel);
+						bCancel.setOnClickListener(new View.OnClickListener() {
+							public void onClick(View v) {
+								dl.dismiss();
+							}
+						});
 					
 					dl.show();				
 					return true;

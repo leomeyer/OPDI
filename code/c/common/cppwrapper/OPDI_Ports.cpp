@@ -35,7 +35,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->extendedInfo = NULL;
 	this->hidden = false;
 	this->readonly = false;
-	this->refreshMode = REFRESH_OFF;
+	this->refreshMode = REFRESH_NOT_SET;
 	this->refreshRequired = false;
 	this->refreshTime = 0;
 	this->lastRefreshTime = 0;
@@ -56,7 +56,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->extendedInfo = NULL;
 	this->hidden = false;
 	this->readonly = false;
-	this->refreshMode = REFRESH_OFF;
+	this->refreshMode = REFRESH_NOT_SET;
 	this->refreshRequired = false;
 	this->refreshTime = 0;
 	this->lastRefreshTime = 0;
