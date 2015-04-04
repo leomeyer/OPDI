@@ -36,8 +36,6 @@
 class OPDI {
 
 protected:
-	// indicates that the OPDI system should shutdown
-	bool shutdownRequested;
 	// internal flag for the methods that possibly send messages
 	uint8_t canSend;
 
@@ -56,6 +54,9 @@ protected:
 	uint8_t shutdownInternal(void);
 
 public:
+	// indicates that the OPDI system should shutdown
+	bool shutdownRequested;
+
 	/** Prepares the OPDI class for use.
 	 * You can override this method to implement your platform specific setup.
 	 */
@@ -63,7 +64,7 @@ public:
 
 	/** Sets the idle timeout. If the master sends no meaningful messages during this time
 	 * the slave sends a disconnect message. If the value is 0 (default), the setting has no effect.
-	 * This functionality depends on the method getTimeMs to return meaningful values.
+	 * This functionality depends on the method opdi_get_time_ms to return meaningful values.
 	 */
 	virtual void setIdleTimeout(uint32_t idleTimeoutMs);
 

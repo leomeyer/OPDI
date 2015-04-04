@@ -1,5 +1,5 @@
 # Target file name (without extension).
-TARGET = FritzBoxPlugin
+TARGET = WeatherPlugin
 
 # OPDI platform specifier
 PLATFORM = linux

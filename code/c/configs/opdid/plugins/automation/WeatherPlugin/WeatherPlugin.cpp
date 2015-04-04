@@ -1,6 +1,10 @@
 #include <iostream>
 #include <sstream>
 
+#ifdef linux
+#include <memory>
+#endif
+
 #include "Poco/Tuple.h"
 #include "Poco/Runnable.h"
 #include "Poco/Mutex.h"
@@ -159,7 +163,8 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	if (this->regexReplace != "") {
 		Poco::RegularExpression regex(this->regexReplace, 0, true);
 		if (regex.subst(value, this->replaceBy, Poco::RegularExpression::RE_GLOBAL) == 0) {
-			this->opdid->log(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Replacement regex did not match in value: " + value);
+			if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+				this->opdid->log(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Replacement regex did not match in value: " + value);
 		}
 	}
 
@@ -412,7 +417,7 @@ void WeatherPlugin::refreshData(void) {
 			if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 				this->opdid->log(this->nodeID + ": Found weather data XML node: " + node->localName());
 			Poco::XML::NodeList *children = node->childNodes();
-			for (int i = 0; i < children->length(); i++) {
+			for (size_t i = 0; i < children->length(); i++) {
 				if (children->item(i)->localName() != "tr")
 					continue;
 
@@ -457,7 +462,7 @@ void WeatherPlugin::run(void) {
 	// Poco::Net::HTTPSStreamFactory::registerFactory();  
 	Poco::Net::FTPStreamFactory::registerFactory();
 
-	while (true) {
+	while (!this->opdid->shutdownRequested) {
 		try {
 			this->refreshData();
 
