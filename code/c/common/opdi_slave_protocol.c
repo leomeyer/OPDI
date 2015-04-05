@@ -88,7 +88,7 @@ static uint8_t send_device_caps(channel_t channel) {
 
 #ifndef OPDI_NO_DIGITAL_PORTS
 static uint8_t send_digital_port_info(channel_t channel, opdi_Port *port) {
-	char flagStr[10];
+	char flagStr[11];
 
 	opdi_int32_to_str(port->flags, flagStr);
 
@@ -106,7 +106,7 @@ static uint8_t send_digital_port_info(channel_t channel, opdi_Port *port) {
 
 #ifndef OPDI_NO_ANALOG_PORTS
 static uint8_t send_analog_port_info(channel_t channel, opdi_Port *port) {
-	char flagStr[10];
+	char flagStr[11];
 
 	opdi_int32_to_str(port->flags, flagStr);
 
@@ -127,7 +127,7 @@ static uint8_t send_select_port_info(channel_t channel, opdi_Port *port) {
 	char **labels;
 	uint16_t positions = 0;
 	char buf[7];
-	char flagStr[10];
+	char flagStr[11];
 
 	// port info is an array of char*
 	labels = (char**)port->info.ptr;
@@ -238,7 +238,7 @@ static uint8_t get_analog_port_state(opdi_Port *port) {
 	char res[] = " ";
 	char ref[] = " ";
 	int32_t value = 0;
-	char valStr[10];
+	char valStr[11];
 
 	if (strcmp(port->type, OPDI_PORTTYPE_ANALOG)) {
 		return OPDI_WRONG_PORT_TYPE;
@@ -422,7 +422,7 @@ static uint8_t send_select_port_label(channel_t channel, opdi_Port *port, const 
 static uint8_t get_select_port_state(opdi_Port *port) {
 	uint8_t result;
 	uint16_t pos;
-	char position[10];
+	char position[11];
 
 	if (strcmp(port->type, OPDI_PORTTYPE_SELECT)) {
 		return OPDI_WRONG_PORT_TYPE;
@@ -495,7 +495,7 @@ static uint8_t set_select_port_position(channel_t channel, opdi_Port *port, cons
 static uint8_t get_dial_port_state(opdi_Port *port) {
 	uint8_t result;
 	int32_t pos;
-	char position[10];
+	char position[11];
 
 	if (strcmp(port->type, OPDI_PORTTYPE_DIAL)) {
 		return OPDI_WRONG_PORT_TYPE;
@@ -1215,7 +1215,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	uint8_t result;
 	uint8_t partCount;
 	int32_t flags;
-	char buf[10];
+	char buf[11];
 	opdi_ProtocolHandler protocol_handler = &basic_protocol_handler;
 	
 #ifndef OPDI_NO_ENCRYPTION
