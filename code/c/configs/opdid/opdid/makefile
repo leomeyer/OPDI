@@ -71,7 +71,7 @@ CFLAGS = -Wall $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -static-libstdc++
 
 # Debug flags
-CFLAGS += -g -O0 -fbuiltin
+CFLAGS += -ggdb -O0 -fbuiltin
 
 OBJECTS = $(SRC)
 

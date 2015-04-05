@@ -804,10 +804,10 @@ void FritzBoxPlugin::run(void) {
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log(this->nodeID + ": FritzBoxPlugin worker thread started");
 
-	while (true) {
+	while (!this->opdid->shutdownRequested) {
 		try {
 
-			Poco::Notification::Ptr notification = this->queue.waitDequeueNotification();
+			Poco::Notification::Ptr notification = this->queue.waitDequeueNotification(1);
 			if (notification) {
 				ActionNotification::Ptr workNf = notification.cast<ActionNotification>();
 				if (workNf) {

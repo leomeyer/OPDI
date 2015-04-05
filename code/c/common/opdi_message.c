@@ -19,6 +19,7 @@
 // Implements the messaging layer. Synchronous sending and receiving of messages.
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "opdi_platformtypes.h"
@@ -152,7 +153,7 @@ static uint8_t decode(opdi_Message *message, uint8_t bytes[]) {
 */
 static uint8_t encode(opdi_Message *message, uint16_t *length) {
 	char channelBuf[CHANNEL_MAXBUF + 1] = {'\0'};
-	uint8_t pos = 0;
+	uint32_t pos = 0;
 	uint16_t checksum = 0;
 	uint16_t i;
 	uint8_t err;
@@ -167,7 +168,7 @@ static uint8_t encode(opdi_Message *message, uint16_t *length) {
 #else
 #error "Not implemented; unable to convert channel string to numeric value"
 #endif
-	
+
 	// transfer channel number
 	err = opdi_string_to_bytes(channelBuf, msgBuf, 0, OPDI_MESSAGE_BUFFER_SIZE, &bytelen);
 	if (err != OPDI_STATUS_OK)

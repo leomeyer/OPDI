@@ -357,17 +357,13 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, 
 	this->workThread.start(*this);
 
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-		this->opdid->log(this->nodeID + ": FritzBoxPlugin setup completed successfully");
+		this->opdid->log(this->nodeID + ": WeatherPlugin setup completed successfully");
 }
 
 void WeatherPlugin::masterConnected() {
-	// when the master connects, login to the FritzBox
-	//this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGIN, NULL));
 }
 
 void WeatherPlugin::masterDisconnected() {
-	// when the master connects, logout from the FritzBox
-	//this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGOUT, NULL));
 }
 
 void replaceAll(std::string& str, const std::string& from, const std::string& to) {
@@ -442,7 +438,7 @@ void WeatherPlugin::refreshData(void) {
 				while (it != this->weatherPorts.end()) {
 					if ((*it)->getDataElement() == dataElement) {
 						if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-							this->opdid->log(this->nodeID + ": Evaluating XML weather data element: " + dataElement);
+							this->opdid->log(this->nodeID + ": Evaluating XML weather data element: " + dataElement + " with data: " + dataNode->innerText());
 						(*it)->extract(dataNode->innerText());
 					}
 					it++;
