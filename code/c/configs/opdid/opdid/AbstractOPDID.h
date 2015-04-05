@@ -45,7 +45,7 @@ protected:
 
 	std::string masterName;
 
-	Poco::FastMutex mutex;
+	Poco::Mutex mutex;
 
 	typedef std::list<IOPDIDConnectionListener *> ConnectionListenerList;
 	ConnectionListenerList connectionListeners;

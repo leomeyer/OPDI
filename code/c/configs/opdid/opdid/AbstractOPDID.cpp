@@ -190,9 +190,8 @@ void AbstractOPDID::log(std::string text) {
 
 	// Try to lock the mutex. If this does not work in time, it will throw
 	// an exception. The calling thread should deal with this exception.
-	this->mutex.lock();
+	Poco::Mutex::ScopedLock(this->mutex);
 	this->println(this->getTimestampStr() + text);
-	this->mutex.unlock();
 }
 
 int AbstractOPDID::startup(std::vector<std::string> args) {
@@ -743,11 +742,11 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 	try {
 		return OPDI::waiting(canSend);
 	} catch (Poco::Exception &pe) {
-		this->log("Unhandled exception during wait: " + pe.message());
+		this->log(std::string("Unhandled exception while housekeeping: ") + pe.message());
 	} catch (std::exception &e) {
-		this->log(std::string("Unhandled exception during wait: ") + e.what());
+		this->log(std::string("Unhandled exception while housekeeping: ") + e.what());
 	} catch (...) {
-		this->log(std::string("Unknown error during wait: "));
+		this->log(std::string("Unknown error while housekeeping: "));
 	}
 
 	// TODO decide: ignore errors or abort?

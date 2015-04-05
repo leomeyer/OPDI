@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <exception>
 
 #ifdef linux
 #include <memory>
@@ -67,7 +68,7 @@ protected:
 
 	std::string rawValue;	// stores the value for in-thread processing
 
-	Poco::FastMutex mutex;	// mutex for thread-safe accessing
+	Poco::Mutex mutex;	// mutex for thread-safe accessing
 
 public:
 
@@ -123,24 +124,21 @@ void WeatherGaugePort::prepare(void) {
 }
 
 void WeatherGaugePort::invalidate(void) {
-	this->mutex.lock();
+	Poco::Mutex::ScopedLock lock(this->mutex);
 	this->isValid = false;
-	this->mutex.unlock();
 }
 
 void WeatherGaugePort::extract(std::string rawValue) {
 	// important! Do not process on the weather plugin's thread;
 	// instead, store the value for processing on the OPDID thread
-	this->mutex.lock();
+	Poco::Mutex::ScopedLock lock(this->mutex);
 	this->rawValue = rawValue;
-	this->mutex.unlock();
 }
 
 uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	OPDI_DialPort::doWork(canSend);
 
-	// ensure thread safety for this block
-	Poco::FastMutex::ScopedLock lock(mutex);
+	Poco::Mutex::ScopedLock lock(this->mutex);
 
 	std::string rawValue = this->rawValue;
 
@@ -185,6 +183,16 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Extracted value is: " + to_string(newPos));
 
+	// correct value; a standard dial port will throw exceptions
+	// but exceptions must be avoided in this threaded code because they will cause strange messages on Linux
+	if (newPos < this->minValue) {
+		this->opdid->log(std::string(this->getID()) + ": Warning: Value too low (" + to_string(newPos) + " < " + to_string(this->minValue) + "), correcting");
+		newPos = this->minValue;
+	}
+	if (newPos > this->maxValue) {
+		this->opdid->log(std::string(this->getID()) + ": Warning: Value too high (" + to_string(newPos) + " > " + to_string(this->maxValue) + "), correcting");
+		newPos = this->maxValue;
+	}
 	this->setPosition(newPos);
 
 	// mark as valid
@@ -203,7 +211,7 @@ void WeatherGaugePort::getState(int32_t *position) {
 
 	// ensure thread safety for this block
 	// also ensures that the doWork method and getState do not cross
-	Poco::FastMutex::ScopedLock lock(mutex);
+	Poco::Mutex::ScopedLock lock(mutex);
 
 	// remember whether the master has a valid state or not
 	this->lastRequestedValidState = this->isValid;
