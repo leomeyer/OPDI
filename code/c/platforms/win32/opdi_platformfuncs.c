@@ -73,17 +73,17 @@ uint8_t opdi_str_to_int32(const char *str, int32_t *result) {
 }
 
 uint8_t opdi_uint8_to_str(uint8_t value, char* msgBuf) {
-	_itoa(value, msgBuf, 10);
+	_itoa(value, msgBuf, 3);
 	return strlen(msgBuf);
 }
 
 uint8_t opdi_uint16_to_str(uint16_t value, char* msgBuf) {
-	_itoa(value, msgBuf, 10);
+	_itoa(value, msgBuf, 5);
 	return strlen(msgBuf);
 }
 
 uint8_t opdi_int32_to_str(int32_t value, char* msgBuf) {
-	_itoa(value, msgBuf, 10);
+	_itoa(value, msgBuf, 11);
 	return strlen(msgBuf);
 }
 
