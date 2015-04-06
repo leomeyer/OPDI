@@ -35,9 +35,9 @@
 // A value of 255 (all bits set) is the test code that returns the SIGNALCODE code.
 // Any error case returns the SIGNALCODE code.
 
-#define OUTPUT	7
-#define PULLUP	6
-#define LINESTATE 5
+#define OUTPUT	6
+#define PULLUP	5
+#define LINESTATE 4
 #define RESERVED 4
 #define PORTMASK 0x0f
 
@@ -101,7 +101,12 @@ int main(void)
 	while (1)                   // main loop
 	{	
 		data = getByte();
-
+/*
+				VP0(DDR)  = 1; VP0(PORT)  = 1;
+				_delay_ms(100);
+				VP0(DDR)  = 1; VP0(PORT)  = 0;
+				_delay_ms(100);
+*/
 		// test byte?
 		if (data == 0xff) {
 			putByte(SIGNALCODE);
@@ -119,12 +124,8 @@ int main(void)
 			putByte(SIGNALCODE);
 			continue;
 		}
+
 		if (output == 1) {
-				VP0(DDR)  = 1; VP0(PORT)  = 1;
-				_delay_ms(500);       // halbe sekunde warten
-				VP0(DDR)  = 1; VP0(PORT)  = 0;
-				_delay_ms(500);       // halbe sekunde warten
-		
 			switch (portnumber) {
 				case 0:  VP0(DDR)  = 1; VP0(PORT)  = linestate;  break;
 				case 1:  VP1(DDR)  = 1; VP1(PORT)  = linestate;  break;
@@ -147,6 +148,11 @@ int main(void)
 			// return the same byte
 			putByte(data);
 		} else {
+		
+				VP0(DDR)  = 1; VP0(PORT)  = 1;
+				_delay_ms(500);       // halbe sekunde warten
+				VP0(DDR)  = 1; VP0(PORT)  = 0;
+				_delay_ms(500);       // halbe sekunde warten
 		
 			// input
 			switch (portnumber) {
