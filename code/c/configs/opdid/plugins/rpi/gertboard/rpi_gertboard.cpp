@@ -1,6 +1,11 @@
 
 // OPDID plugin that supports the Gertboard on Raspberry Pi
 
+#include <stdio.h>
+#include <unistd.h>			//Used for UART
+#include <fcntl.h>			//Used for UART
+#include <termios.h>		//Used for UART
+
 #include "Poco/Tuple.h"
 
 #include "opdi_constants.h"
@@ -28,8 +33,34 @@ static int pinMapRev2[][2] = {
 	{-1, -1}
 };
 
-class GertboardOPDIDPlugin;
+///////////////////////////////////////////////////////////////////////////////
+// GertboardPlugin: Plugin for providing Gertboard resources to OPDID
+///////////////////////////////////////////////////////////////////////////////
 
+class GertboardPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener {
+
+protected:
+	AbstractOPDID *opdid;
+	int (*pinMap)[][2];		// the map to use for mapping Gertboard pins to internal pins
+	
+	std::string serialDevice;
+	uint32_t serialTimeoutMs;
+	// At bootup, pins 8 and 10 are already set to UART0_TXD, UART0_RXD (ie the alt0 function) respectively
+	int uart0_filestream;
+	
+	// translates external pin IDs to an internal pin; throws an exception if the pin cannot
+	// be mapped or the resource is already used
+	int mapAndLockPin(int pinNumber, std::string forNode);
+	
+public:
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig);
+	
+	virtual void masterConnected(void) override;
+	virtual void masterDisconnected(void) override;
+	
+	virtual void sendExpandedPortCode(uint8_t code);
+	virtual uint8_t receiveExpandedPortCode(void);
+};
 ///////////////////////////////////////////////////////////////////////////////
 // DigitalGertboardPort: Represents a digital input/output pin on the Gertboard.
 ///////////////////////////////////////////////////////////////////////////////
@@ -450,28 +481,136 @@ void GertboardPWM::setPosition(int32_t position) {
 	force_pwm0(this->position, PWM0_ENABLE | (this->inverse ? PWM0_REVPOLAR : 0));
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
-// GertboardOPDIDPlugin: Plugin for providing Gertboard resources to OPDID
+// DigitalExpandedPort: A digital input/output pin on the Atmega328P on the Gertboard.
+// Requires that the AtmegaExpandedPort software runs on the microcontroller.
+// Communicates via RS232, so the connections between GP14/15 and MCRX/TX (pins PD0/PD1)
+// must be present. The virtual port definitions are:
+
+#define VP0(reg) BIT(D,2,reg)
+#define VP1(reg) BIT(D,3,reg)
+#define VP2(reg) BIT(D,4,reg)
+#define VP3(reg) BIT(D,5,reg)
+#define VP4(reg) BIT(D,6,reg)
+#define VP5(reg) BIT(D,7,reg)
+#define VP6(reg) BIT(B,0,reg)
+#define VP7(reg) BIT(B,1,reg)
+#define VP8(reg) BIT(B,2,reg)
+#define VP9(reg) BIT(B,3,reg)
+#define VP10(reg) BIT(B,4,reg)
+#define VP11(reg) BIT(B,5,reg)
+#define VP12(reg) BIT(C,0,reg)
+#define VP13(reg) BIT(C,1,reg)
+#define VP14(reg) BIT(C,2,reg)
+#define VP15(reg) BIT(C,3,reg)
+
 ///////////////////////////////////////////////////////////////////////////////
 
-class GertboardOPDIDPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener {
+#define OUTPUT	6
+#define PULLUP	5
+#define LINESTATE 4
 
+
+class DigitalExpandedPort : public OPDI_DigitalPort {
 protected:
 	AbstractOPDID *opdid;
-	int (*pinMap)[][2];		// the map to use for mapping Gertboard pins to internal pins
-	
-	// translates external pin IDs to an internal pin; throws an exception if the pin cannot
-	// be mapped or the resource is already used
-	int mapAndLockPin(int pinNumber, std::string forNode);
-	
+	GertboardPlugin *gbPlugin;
+	int pin;
 public:
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig);
-	
-	virtual void masterConnected(void) override;
-	virtual void masterDisconnected(void) override;
+	DigitalExpandedPort(AbstractOPDID *opdid, GertboardPlugin *gbPlugin, const char *ID, int pin);
+	virtual ~DigitalExpandedPort(void);
+	virtual void setLine(uint8_t line) override;
+	virtual void setMode(uint8_t mode) override;
+	virtual void getState(uint8_t *mode, uint8_t *line) override;
 };
 
-int GertboardOPDIDPlugin::mapAndLockPin(int pinNumber, std::string forNode) {
+DigitalExpandedPort::DigitalExpandedPort(AbstractOPDID *opdid, GertboardPlugin *gbPlugin, const char *ID, int pin) : OPDI_DigitalPort(ID, 
+	(std::string("Digital Expanded Port ") + to_string(pin)).c_str(), // default label - can be changed by configuration
+	OPDI_PORTDIRCAP_INPUT,	// default: input
+	0) {
+	this->opdid = opdid;
+	this->gbPlugin = gbPlugin;
+	this->pin = pin;
+}
+
+DigitalExpandedPort::~DigitalExpandedPort(void) {
+}
+
+void DigitalExpandedPort::setLine(uint8_t line) {
+	OPDI_DigitalPort::setLine(line);
+	
+	uint8_t code = this->pin;
+	code |= (1 << OUTPUT);
+
+	if (this->line == 1) {
+		code |= (1 << LINESTATE);
+	}
+	
+	this->gbPlugin->sendExpandedPortCode(code);
+	uint8_t returnCode = this->gbPlugin->receiveExpandedPortCode();
+	if (returnCode != code)
+		throw PortError("Expanded port communication failure");
+}
+
+void DigitalExpandedPort::setMode(uint8_t mode) {
+
+	// cannot set pulldown mode
+	if (mode == OPDI_DIGITAL_MODE_INPUT_PULLDOWN)
+		throw PortError("Digital Expanded Port does not support pulldown mode");
+
+	OPDI_DigitalPort::setMode(mode);
+
+	uint8_t code = this->pin;
+
+	if (this->mode == OPDI_DIGITAL_MODE_INPUT_FLOATING) {
+		// configure as floating input
+	} else
+	if (this->mode == OPDI_DIGITAL_MODE_INPUT_PULLUP) {
+		code |= (1 << PULLUP);
+	} else {
+		// configure as output
+		code |= (1 << OUTPUT);
+		// default line state is low
+	}
+
+	this->gbPlugin->sendExpandedPortCode(code);
+	this->gbPlugin->receiveExpandedPortCode();
+}
+
+void DigitalExpandedPort::getState(uint8_t *mode, uint8_t *line) {
+	*mode = this->mode;
+	
+	if (this->mode == OPDI_DIGITAL_MODE_OUTPUT) {
+		// return remembered state
+		*line = this->line;
+	} else {
+		// read line state from the port expander
+		uint8_t code = this->pin;
+
+		if (this->mode == OPDI_DIGITAL_MODE_INPUT_PULLUP) {
+			code |= (1 << PULLUP);
+		}
+
+		this->gbPlugin->sendExpandedPortCode(code);
+		uint8_t returnCode = this->gbPlugin->receiveExpandedPortCode();
+		
+		if ((returnCode & ~(1 << LINESTATE)) != code)
+			throw PortError("Expanded port communication failure");
+			
+		if ((returnCode & (1 << LINESTATE)) == (1 << LINESTATE))
+			*line = 1;
+		else
+			*line = 0;
+	}
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// GertboardPlugin: Plugin for providing Gertboard resources to OPDID
+///////////////////////////////////////////////////////////////////////////////
+
+int GertboardPlugin::mapAndLockPin(int pinNumber, std::string forNode) {
 	int i = 0;
 	int internalPin = -1;
 	// linear search through pin definitions; map to internal pin if found
@@ -491,9 +630,9 @@ int GertboardOPDIDPlugin::mapAndLockPin(int pinNumber, std::string forNode) {
 	return internalPin;
 }
 
-void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) {
+void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) {
 	this->opdid = abstractOPDID;
-
+	
 	// prepare Gertboard IO (requires root permissions)
 	setup_io();
 
@@ -510,6 +649,38 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 
 	// store main node's group (will become the default of ports)
 	std::string group = nodeConfig->getString("Group", "");
+	
+	// to use the expanded ports we need to have a serial device name
+	// if this is not configured we can't use the serial port expansion
+	this->serialDevice = nodeConfig->getString("SerialDevice", "");
+	
+	// if serial device specified, open and configure it
+	if (this->serialDevice != "") {
+	
+		int timeout = nodeConfig->getInt("SerialTimeout", 100);
+		if (timeout < 0)
+			throw Poco::DataException("SerialTimeout may not be negative: " + this->opdid->to_string(timeout));
+		
+		this->serialTimeoutMs = timeout;
+	
+		this->uart0_filestream = open(this->serialDevice.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);		// open in non blocking read/write mode
+		if (this->uart0_filestream == -1)
+			throw Poco::Exception("Unable to open serial device " + this->serialDevice);
+	
+		struct termios options;
+		tcgetattr(uart0_filestream, &options);
+		options.c_cflag = B19200 | CS8 | CLOCAL | CREAD;		// set baud rate
+		options.c_iflag = IGNPAR;
+		options.c_oflag = 0;
+		options.c_lflag = 0;
+		tcflush(uart0_filestream, TCIFLUSH);
+		tcsetattr(uart0_filestream, TCSANOW, &options);
+	
+		// the serial device, if present, uses pins 14 and 15, so these need to be locked
+		// if other ports try to use these ports it will fail
+		this->mapAndLockPin(14, node + " SerialDevice Port Expansion");
+		this->mapAndLockPin(15, node + " SerialDevice Port Expansion");
+	}
 
 	// the Gertboard plugin node expects a list of node names that determine the ports that this plugin provides
 
@@ -575,7 +746,7 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 			
 			// setup the port instance and add it; use internal pin number
 			DigitalGertboardPort *port = new DigitalGertboardPort(abstractOPDID, nodeName.c_str(), internalPin);
-			// set default group: FritzBox's node's group
+			// set default group: Gertboard's node's group
 			port->setGroup(group);
 			abstractOPDID->configureDigitalPort(portConfig, port);
 			abstractOPDID->addPort(port);
@@ -591,7 +762,7 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 
 			// setup the port instance and add it; use internal pin number
 			GertboardButton *port = new GertboardButton(abstractOPDID, nodeName.c_str(), internalPin);
-			// set default group: FritzBox's node's group
+			// set default group: Gertboard's node's group
 			port->setGroup(group);
 			abstractOPDID->configureDigitalPort(portConfig, port);
 			abstractOPDID->addPort(port);
@@ -617,7 +788,7 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 
 			// setup the port instance and add it; use internal pin number
 			AnalogGertboardOutput *port = new AnalogGertboardOutput(abstractOPDID, nodeName.c_str(), outputNumber);
-			// set default group: FritzBox's node's group
+			// set default group: Gertboard's node's group
 			port->setGroup(group);
 			abstractOPDID->configureAnalogPort(portConfig, port);
 			abstractOPDID->addPort(port);
@@ -643,7 +814,7 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 
 			// setup the port instance and add it; use internal pin number
 			AnalogGertboardInput *port = new AnalogGertboardInput(abstractOPDID, nodeName.c_str(), inputNumber);
-			// set default group: FritzBox's node's group
+			// set default group: Gertboard's node's group
 			port->setGroup(group);
 			abstractOPDID->configureAnalogPort(portConfig, port);
 			abstractOPDID->addPort(port);
@@ -657,7 +828,7 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 
 			// setup the port instance and add it; use internal pin number
 			GertboardPWM *port = new GertboardPWM(abstractOPDID, internalPin, nodeName.c_str(), inverse);
-			// set default group: FritzBox's node's group
+			// set default group: Gertboard's node's group
 			port->setGroup(group);
 			abstractOPDID->configurePort(portConfig, port, 0);
 			
@@ -667,31 +838,86 @@ void GertboardOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 			}
 			abstractOPDID->addPort(port);
 		} else
+		if (portType == "DigitalExpandedPort") {
+			// serial device must be configured first
+			if (this->serialDevice == "")
+				throw Poco::DataException("To use the port expansion, please set the SerialDevice parameter in the Gertboard node");
+		
+			// read pin number
+			int pinNumber = portConfig->getInt("Pin", -1);
+			// check whether the pin is valid; determine internal pin
+			if ((pinNumber < 0) || (pinNumber > 15))
+				throw Poco::DataException("A 'Pin' greater or equal than 0 and lower than 16 must be specified for a Gertboard Digital Expanded port");
+
+			// try to lock the pin as a resource
+			this->opdid->lockResource(std::string("Gertboard Expanded Port ") + this->opdid->to_string(pinNumber), nodeName);
+			
+			// setup the port instance and add it; use internal pin number
+			DigitalExpandedPort *port = new DigitalExpandedPort(abstractOPDID, this, nodeName.c_str(), pinNumber);
+			// set default group: Gertboard's node's group
+			port->setGroup(group);
+			abstractOPDID->configureDigitalPort(portConfig, port);
+			abstractOPDID->addPort(port);
+		} else
 			throw Poco::DataException("This plugin does not support the port type", portType);
 
 		nli++;
 	}
 	
 	if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
-		this->opdid->log("GertboardOPDIDPlugin setup completed successfully as node " + node);
+		this->opdid->log("GertboardPlugin setup completed successfully as node " + node);
 }
 
-void GertboardOPDIDPlugin::masterConnected() {
-	if (this->opdid->logVerbosity != AbstractOPDID::QUIET)
-		this->opdid->log("Test plugin: master connected");
+void GertboardPlugin::masterConnected() {
 }
 
-void GertboardOPDIDPlugin::masterDisconnected() {
-	if (this->opdid->logVerbosity != AbstractOPDID::QUIET)
-		this->opdid->log("Test plugin: master disconnected");
+void GertboardPlugin::masterDisconnected() {
 }
+
+void GertboardPlugin::sendExpandedPortCode(uint8_t code){
+	printf("sending byte: 0x%x\n", (int)code);
+	if (uart0_filestream != -1) {
+	
+		// flush the input buffer
+		uint8_t rx_buffer[1];
+		while (read(uart0_filestream, (void*)rx_buffer, 1) > 0);
+	
+		int count = write(uart0_filestream, &code, 1);
+		if (count < 0)
+			throw OPDI_Port::PortError("Serial communication error while sending: " + this->opdid->to_string(errno));
+	} else
+		throw OPDI_Port::PortError("Serial communication not initialized");
+}
+
+uint8_t GertboardPlugin::receiveExpandedPortCode(void) {
+	if (uart0_filestream != -1) {
+		printf("receiving a byte with a timeout of %d ms\n", this->serialTimeoutMs);
+		uint8_t rx_buffer[1];
+		uint64_t ticks = opdi_get_time_ms();
+		
+		int rx_length = 0;
+
+		while ((rx_length <= 0) && (opdi_get_time_ms() - ticks < this->serialTimeoutMs)) {
+			rx_length = read(uart0_filestream, (void*)rx_buffer, 1);
+		}
+		if (rx_length < 0)
+			throw OPDI_Port::PortError("Serial communication error while receiving: " + this->opdid->to_string(errno));
+		else if (rx_length == 0)
+			throw OPDI_Port::PortError("Serial communication timeout");
+
+		printf("received byte: 0x%x\n", (int)rx_buffer[0]);
+		return rx_buffer[0];
+	} else
+		throw OPDI_Port::PortError("Serial communication not initialized");
+}
+
 
 extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
 
 	// check whether the version is supported
 	if ((majorVersion > 0) || (minorVersion > 1))
-		throw Poco::Exception("This version of the GertboardOPDIDPlugin supports only OPDID versions up to 0.1");
+		throw Poco::Exception("This version of the GertboardPlugin supports only OPDID versions up to 0.1");
 
 	// return a new instance of this plugin
-	return new GertboardOPDIDPlugin();
+	return new GertboardPlugin();
 }
