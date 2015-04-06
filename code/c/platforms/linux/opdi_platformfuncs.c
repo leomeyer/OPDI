@@ -68,7 +68,7 @@ uint8_t opdi_str_to_int32(const char *str, int32_t *result) {
 	// clear error
 	errno = 0;
 
-	res = strtol(str, &p, 11);
+	res = strtol(str, &p, 10);
 
 	if (errno != 0 || *p != 0 || p == str)
 	  return OPDI_ERROR_CONVERSION;
