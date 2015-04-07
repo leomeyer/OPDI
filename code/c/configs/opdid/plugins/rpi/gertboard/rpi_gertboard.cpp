@@ -41,23 +41,25 @@ class GertboardPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener {
 
 protected:
 	AbstractOPDID *opdid;
+	std::string nodeID;
+
 	int (*pinMap)[][2];		// the map to use for mapping Gertboard pins to internal pins
-	
+
 	std::string serialDevice;
 	uint32_t serialTimeoutMs;
 	// At bootup, pins 8 and 10 are already set to UART0_TXD, UART0_RXD (ie the alt0 function) respectively
 	int uart0_filestream;
-	
+
 	// translates external pin IDs to an internal pin; throws an exception if the pin cannot
 	// be mapped or the resource is already used
 	int mapAndLockPin(int pinNumber, std::string forNode);
-	
+
 public:
 	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig);
-	
+
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
-	
+
 	virtual void sendExpansionPortCode(uint8_t code);
 	virtual uint8_t receiveExpansionPortCode(void);
 };
@@ -89,7 +91,7 @@ DigitalGertboardPort::~DigitalGertboardPort(void) {
 	// release resources; configure as floating input
 	// configure as floating input
 	INP_GPIO(this->pin);
-	
+
 	GPIO_PULL = 0;
 	short_wait();
 	GPIO_PULLCLK0 = (1 < this->pin);
@@ -395,7 +397,7 @@ uint8_t GertboardButton::doWork(uint8_t canSend) {
 }
 
 uint8_t GertboardButton::queryState(void) {
-//	if (opdid->logVerbosity == AbstractOPDID::VERBOSE)
+//	if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 //		opdid->log("Querying Gertboard button pin " + to_string(this->pin) + " (" + this->id + ")");
 
 	// read line
@@ -404,7 +406,7 @@ uint8_t GertboardButton::queryState(void) {
 	// button logic is inverse (low = pressed)
 	uint8_t result = (b & (1 << this->pin)) == (unsigned int)(1 << this->pin) ? 0 : 1;
 
-//	if (opdid->logVerbosity == AbstractOPDID::VERBOSE)
+//	if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 //		opdid->log("Gertboard button pin state is " + to_string((int)result));
 
 	return result;
@@ -484,7 +486,7 @@ void GertboardPWM::setPosition(int32_t position) {
 
 ///////////////////////////////////////////////////////////////////////////////
 // DigitalExpansionPort: A digital input/output pin on the Atmega328P on the Gertboard.
-// Requires that the AtmegaExpansionPort software runs on the microcontroller.
+// Requires that the AtmegaPortExpander software runs on the microcontroller.
 // Communicates via RS232, so the connections between GP14/15 and MCRX/TX (pins PD0/PD1)
 // must be present. The virtual port definitions are:
 
@@ -514,9 +516,7 @@ void GertboardPWM::setPosition(int32_t position) {
 
 class DigitalExpansionPort : public OPDI_DigitalPort {
 friend class GertboardPlugin;
-
 protected:
-
 	// Specifies the pin behaviour in output mode.
 	enum DriverType {
 		/* Standard behaviour: if Low, the pin is connected to internal ground (current sink).
@@ -597,7 +597,6 @@ void DigitalExpansionPort::setLine(uint8_t line) {
 }
 
 void DigitalExpansionPort::setMode(uint8_t mode) {
-
 	// cannot set pulldown mode
 	if (mode == OPDI_DIGITAL_MODE_INPUT_PULLDOWN)
 		throw PortError("Digital Expansion Port does not support pulldown mode");
@@ -612,9 +611,34 @@ void DigitalExpansionPort::setMode(uint8_t mode) {
 	if (this->mode == OPDI_DIGITAL_MODE_INPUT_PULLUP) {
 		code |= (1 << PULLUP);
 	} else {
-		// configure as output
-		code |= (1 << OUTPUT);
-		// default line state is low
+		if (this->driverType == STANDARD) {
+			// set output flag
+			code |= (1 << OUTPUT);
+			// set High or Low accordingly
+			if (this->line == 1) {
+				code |= (1 << LINESTATE);
+			}
+		} else
+		if (this->driverType == LOW_SIDE) {
+			// active (High)?
+			if (this->line == 1) {
+				// set to a Low output
+				code |= (1 << OUTPUT);
+			} else {
+				// set to a floating input (no action required)
+			}
+		} else
+		if (this->driverType == HIGH_SIDE) {
+			// active (High)?
+			if (this->line == 1) {
+				// set to a Low output
+				code |= (1 << OUTPUT);
+				code |= (1 << LINESTATE);
+			} else {
+				// set to a floating input (no action required)
+			}
+		} else
+			throw PortError("Unknown driver type: " + to_string(driverType));
 	}
 
 	this->gbPlugin->sendExpansionPortCode(code);
@@ -650,7 +674,6 @@ void DigitalExpansionPort::getState(uint8_t *mode, uint8_t *line) {
 	}
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // GertboardPlugin: Plugin for providing Gertboard resources to OPDID
 ///////////////////////////////////////////////////////////////////////////////
@@ -670,13 +693,14 @@ int GertboardPlugin::mapAndLockPin(int pinNumber, std::string forNode) {
 		throw Poco::DataException(std::string("The pin is not supported: ") + this->opdid->to_string(pinNumber));
 		
 	// try to lock the pin as a resource
-	this->opdid->lockResource(this->opdid->to_string(internalPin), forNode);
+	this->opdid->lockResource(std::string("Gertboard Pin ") + this->opdid->to_string(internalPin), forNode);
 	
 	return internalPin;
 }
 
 void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) {
 	this->opdid = abstractOPDID;
+	this->nodeID = node;
 	
 	// prepare Gertboard IO (requires root permissions)
 	setup_io();
@@ -725,6 +749,9 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 		// if other ports try to use these ports it will fail
 		this->mapAndLockPin(14, node + " SerialDevice Port Expansion");
 		this->mapAndLockPin(15, node + " SerialDevice Port Expansion");
+
+		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			this->opdid->log(node + ": SerialDevice " + this->serialDevice + " setup successfully with a timeout of " + this->opdid->to_string(this->serialTimeoutMs) + " ms");
 	}
 
 	// the Gertboard plugin node expects a list of node names that determine the ports that this plugin provides
@@ -771,7 +798,7 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 	
 		std::string nodeName = nli->get<1>();
 	
-		if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
+		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 			this->opdid->log("Setting up Gertboard port(s) for node: " + nodeName);
 			
 		// get port section from the configuration
@@ -925,7 +952,7 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 		nli++;
 	}
 	
-	if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
+	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log("GertboardPlugin setup completed successfully as node " + node);
 }
 
@@ -938,7 +965,7 @@ void GertboardPlugin::masterDisconnected() {
 void GertboardPlugin::sendExpansionPortCode(uint8_t code){
 	if (uart0_filestream != -1) {
 		if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
-			this->opdid->log(std::string(this->getID()) + ": Sending expansion port control code: " + this->opdid->to_string((int)code));
+			this->opdid->log(this->nodeID + ": Sending expansion port control code: " + this->opdid->to_string((int)code));
 
 		// flush the input buffer
 		uint8_t rx_buffer[1];
@@ -967,13 +994,13 @@ uint8_t GertboardPlugin::receiveExpansionPortCode(void) {
 			throw OPDI_Port::PortError("Serial communication timeout");
 
 		if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
-			this->opdid->log(std::string(this->getID()) + ": Received expansion port return code: " + this->opdid->to_string((int)rx_buffer[0]));
+			this->opdid->log(this->nodeID + ": Received expansion port return code: " + this->opdid->to_string((int)rx_buffer[0]));
 		return rx_buffer[0];
 	} else
 		throw OPDI_Port::PortError("Serial communication not initialized");
 }
 
-
+// plugin factory function
 extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
 
 	// check whether the version is supported
