@@ -58,8 +58,8 @@ public:
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
 	
-	virtual void sendExpandedPortCode(uint8_t code);
-	virtual uint8_t receiveExpandedPortCode(void);
+	virtual void sendExpansionPortCode(uint8_t code);
+	virtual uint8_t receiveExpansionPortCode(void);
 };
 ///////////////////////////////////////////////////////////////////////////////
 // DigitalGertboardPort: Represents a digital input/output pin on the Gertboard.
@@ -483,8 +483,8 @@ void GertboardPWM::setPosition(int32_t position) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// DigitalExpandedPort: A digital input/output pin on the Atmega328P on the Gertboard.
-// Requires that the AtmegaExpandedPort software runs on the microcontroller.
+// DigitalExpansionPort: A digital input/output pin on the Atmega328P on the Gertboard.
+// Requires that the AtmegaExpansionPort software runs on the microcontroller.
 // Communicates via RS232, so the connections between GP14/15 and MCRX/TX (pins PD0/PD1)
 // must be present. The virtual port definitions are:
 
@@ -512,7 +512,7 @@ void GertboardPWM::setPosition(int32_t position) {
 #define LINESTATE 4
 #define PORTMASK 0x0f
 
-class DigitalExpandedPort : public OPDI_DigitalPort {
+class DigitalExpansionPort : public OPDI_DigitalPort {
 friend class GertboardPlugin;
 
 protected:
@@ -536,15 +536,15 @@ protected:
 	DriverType driverType;
 
 public:
-	DigitalExpandedPort(AbstractOPDID *opdid, GertboardPlugin *gbPlugin, const char *ID, int pin);
-	virtual ~DigitalExpandedPort(void);
+	DigitalExpansionPort(AbstractOPDID *opdid, GertboardPlugin *gbPlugin, const char *ID, int pin);
+	virtual ~DigitalExpansionPort(void);
 	virtual void setLine(uint8_t line) override;
 	virtual void setMode(uint8_t mode) override;
 	virtual void getState(uint8_t *mode, uint8_t *line) override;
 };
 
-DigitalExpandedPort::DigitalExpandedPort(AbstractOPDID *opdid, GertboardPlugin *gbPlugin, const char *ID, int pin) : OPDI_DigitalPort(ID, 
-	(std::string("Digital Expanded Port ") + to_string(pin)).c_str(), // default label - can be changed by configuration
+DigitalExpansionPort::DigitalExpansionPort(AbstractOPDID *opdid, GertboardPlugin *gbPlugin, const char *ID, int pin) : OPDI_DigitalPort(ID, 
+	(std::string("Digital Expansion Port ") + to_string(pin)).c_str(), // default label - can be changed by configuration
 	OPDI_PORTDIRCAP_BIDI,	// default: bidirectional
 	0) {
 	this->opdid = opdid;
@@ -553,10 +553,10 @@ DigitalExpandedPort::DigitalExpandedPort(AbstractOPDID *opdid, GertboardPlugin *
 	this->driverType = STANDARD;
 }
 
-DigitalExpandedPort::~DigitalExpandedPort(void) {
+DigitalExpansionPort::~DigitalExpansionPort(void) {
 }
 
-void DigitalExpandedPort::setLine(uint8_t line) {
+void DigitalExpansionPort::setLine(uint8_t line) {
 	OPDI_DigitalPort::setLine(line);
 
 	uint8_t code = this->pin;
@@ -590,17 +590,17 @@ void DigitalExpandedPort::setLine(uint8_t line) {
 	} else
 		throw PortError("Unknown driver type: " + to_string(driverType));
 	
-	this->gbPlugin->sendExpandedPortCode(code);
-	uint8_t returnCode = this->gbPlugin->receiveExpandedPortCode();
+	this->gbPlugin->sendExpansionPortCode(code);
+	uint8_t returnCode = this->gbPlugin->receiveExpansionPortCode();
 	if ((returnCode & PORTMASK) != (code & PORTMASK))
-		throw PortError("Expanded port communication failure");
+		throw PortError("Expansion port communication failure");
 }
 
-void DigitalExpandedPort::setMode(uint8_t mode) {
+void DigitalExpansionPort::setMode(uint8_t mode) {
 
 	// cannot set pulldown mode
 	if (mode == OPDI_DIGITAL_MODE_INPUT_PULLDOWN)
-		throw PortError("Digital Expanded Port does not support pulldown mode");
+		throw PortError("Digital Expansion Port does not support pulldown mode");
 
 	OPDI_DigitalPort::setMode(mode);
 
@@ -617,13 +617,13 @@ void DigitalExpandedPort::setMode(uint8_t mode) {
 		// default line state is low
 	}
 
-	this->gbPlugin->sendExpandedPortCode(code);
-	uint8_t returnCode = this->gbPlugin->receiveExpandedPortCode();
+	this->gbPlugin->sendExpansionPortCode(code);
+	uint8_t returnCode = this->gbPlugin->receiveExpansionPortCode();
 	if ((returnCode & PORTMASK) != (code & PORTMASK))
-		throw PortError("Expanded port communication failure");
+		throw PortError("Expansion port communication failure");
 }
 
-void DigitalExpandedPort::getState(uint8_t *mode, uint8_t *line) {
+void DigitalExpansionPort::getState(uint8_t *mode, uint8_t *line) {
 	*mode = this->mode;
 	
 	if (this->mode == OPDI_DIGITAL_MODE_OUTPUT) {
@@ -637,11 +637,11 @@ void DigitalExpandedPort::getState(uint8_t *mode, uint8_t *line) {
 			code |= (1 << PULLUP);
 		}
 
-		this->gbPlugin->sendExpandedPortCode(code);
-		uint8_t returnCode = this->gbPlugin->receiveExpandedPortCode();
+		this->gbPlugin->sendExpansionPortCode(code);
+		uint8_t returnCode = this->gbPlugin->receiveExpansionPortCode();
 		
 		if ((returnCode & ~(1 << LINESTATE)) != code)
-			throw PortError("Expanded port communication failure");
+			throw PortError("Expansion port communication failure");
 			
 		if ((returnCode & (1 << LINESTATE)) == (1 << LINESTATE))
 			*line = 1;
@@ -695,7 +695,7 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 	// store main node's group (will become the default of ports)
 	std::string group = nodeConfig->getString("Group", "");
 	
-	// to use the expanded ports we need to have a serial device name
+	// to use the expansion ports we need to have a serial device name
 	// if this is not configured we can't use the serial port expansion
 	this->serialDevice = nodeConfig->getString("SerialDevice", "");
 	
@@ -883,7 +883,7 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 			}
 			abstractOPDID->addPort(port);
 		} else
-		if (portType == "DigitalExpandedPort") {
+		if (portType == "DigitalExpansionPort") {
 			// serial device must be configured first
 			if (this->serialDevice == "")
 				throw Poco::DataException("To use the port expansion, please set the SerialDevice parameter in the Gertboard node");
@@ -892,26 +892,26 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 			int pinNumber = portConfig->getInt("Pin", -1);
 			// check whether the pin is valid; determine internal pin
 			if ((pinNumber < 0) || (pinNumber > 15))
-				throw Poco::DataException("A 'Pin' greater or equal than 0 and lower than 16 must be specified for a Gertboard Digital Expanded port");
+				throw Poco::DataException("A 'Pin' greater or equal than 0 and lower than 16 must be specified for a Gertboard Digital Expansion port");
 
 			// try to lock the pin as a resource
-			this->opdid->lockResource(std::string("Gertboard Expanded Port ") + this->opdid->to_string(pinNumber), nodeName);
+			this->opdid->lockResource(std::string("Gertboard Expansion Port ") + this->opdid->to_string(pinNumber), nodeName);
 			
 			// setup the port instance and add it; use internal pin number
-			DigitalExpandedPort *port = new DigitalExpandedPort(abstractOPDID, this, nodeName.c_str(), pinNumber);
+			DigitalExpansionPort *port = new DigitalExpansionPort(abstractOPDID, this, nodeName.c_str(), pinNumber);
 			// set default group: Gertboard's node's group
 			port->setGroup(group);
 
 			// evaluate driver type (important: before regular configuration which may set output mode and state)
 			std::string driverType = portConfig->getString("DriverType", "");
 			if (driverType == "Standard") {
-				port->driverType = DigitalExpandedPort::STANDARD;
+				port->driverType = DigitalExpansionPort::STANDARD;
 			} else
 			if (driverType == "LowSide") {
-				port->driverType = DigitalExpandedPort::LOW_SIDE;
+				port->driverType = DigitalExpansionPort::LOW_SIDE;
 			} else
 			if (driverType == "HighSide") {
-				port->driverType = DigitalExpandedPort::HIGH_SIDE;
+				port->driverType = DigitalExpansionPort::HIGH_SIDE;
 			} else
 			if (driverType != "")
 				throw Poco::DataException("Invalid value for DriverType: Expected 'Standard', 'LowSide' or 'HighSide': " + driverType);
@@ -935,10 +935,11 @@ void GertboardPlugin::masterConnected() {
 void GertboardPlugin::masterDisconnected() {
 }
 
-void GertboardPlugin::sendExpandedPortCode(uint8_t code){
-	printf("sending byte: 0x%x\n", (int)code);
+void GertboardPlugin::sendExpansionPortCode(uint8_t code){
 	if (uart0_filestream != -1) {
-	
+		if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
+			this->opdid->log(std::string(this->getID()) + ": Sending expansion port control code: " + this->opdid->to_string((int)code));
+
 		// flush the input buffer
 		uint8_t rx_buffer[1];
 		while (read(uart0_filestream, (void*)rx_buffer, 1) > 0);
@@ -950,9 +951,8 @@ void GertboardPlugin::sendExpandedPortCode(uint8_t code){
 		throw OPDI_Port::PortError("Serial communication not initialized");
 }
 
-uint8_t GertboardPlugin::receiveExpandedPortCode(void) {
+uint8_t GertboardPlugin::receiveExpansionPortCode(void) {
 	if (uart0_filestream != -1) {
-		printf("receiving a byte with a timeout of %d ms\n", this->serialTimeoutMs);
 		uint8_t rx_buffer[1];
 		uint64_t ticks = opdi_get_time_ms();
 		
@@ -966,7 +966,8 @@ uint8_t GertboardPlugin::receiveExpandedPortCode(void) {
 		else if (rx_length == 0)
 			throw OPDI_Port::PortError("Serial communication timeout");
 
-		printf("received byte: 0x%x\n", (int)rx_buffer[0]);
+		if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
+			this->opdid->log(std::string(this->getID()) + ": Received expansion port return code: " + this->opdid->to_string((int)rx_buffer[0]));
 		return rx_buffer[0];
 	} else
 		throw OPDI_Port::PortError("Serial communication not initialized");
