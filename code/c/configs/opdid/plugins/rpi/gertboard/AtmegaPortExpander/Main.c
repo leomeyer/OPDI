@@ -18,27 +18,27 @@
 
 /*
  bitmask definitions of port code
- o p l r a b c d (lsb)
+ r o p l a b c d (lsb)
  ^
  |	^
  | | ^
  | | | ^
  | | | | ^ ^ ^ ^
  | | | | + + + + --- number of (virtual) port
- | | | + ----------- reserved 
- | | + ------------- line state (for output ports)
- | + --------------- pullup flag (for input ports only)
- + ----------------- output bit (msb; if set, port is output)
+ | | | + ----------- line state (for output ports)
+ | | + ------------- pullup flag (for input ports only)
+ | + --------------- output bit (msb; if set, port is output)
+ + ----------------- reserved 
 */
 
 // Output and pullup may not be used together.
 // A value of 255 (all bits set) is the test code that returns the SIGNALCODE code.
 // Any error case returns the SIGNALCODE code.
 
+#define RESERVED 7
 #define OUTPUT	6
 #define PULLUP	5
 #define LINESTATE 4
-#define RESERVED 4
 #define PORTMASK 0x0f
 
 #define SIGNALCODE 	0xff
@@ -101,12 +101,7 @@ int main(void)
 	while (1)                   // main loop
 	{	
 		data = getByte();
-/*
-				VP0(DDR)  = 1; VP0(PORT)  = 1;
-				_delay_ms(100);
-				VP0(DDR)  = 1; VP0(PORT)  = 0;
-				_delay_ms(100);
-*/
+
 		// test byte?
 		if (data == 0xff) {
 			putByte(SIGNALCODE);
@@ -148,11 +143,6 @@ int main(void)
 			// return the same byte
 			putByte(data);
 		} else {
-		
-				VP0(DDR)  = 1; VP0(PORT)  = 1;
-				_delay_ms(500);       // halbe sekunde warten
-				VP0(DDR)  = 1; VP0(PORT)  = 0;
-				_delay_ms(500);       // halbe sekunde warten
 		
 			// input
 			switch (portnumber) {
