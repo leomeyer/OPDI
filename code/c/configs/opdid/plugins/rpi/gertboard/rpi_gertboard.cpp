@@ -510,13 +510,31 @@ void GertboardPWM::setPosition(int32_t position) {
 #define OUTPUT	6
 #define PULLUP	5
 #define LINESTATE 4
-
+#define PORTMASK 0x0f
 
 class DigitalExpandedPort : public OPDI_DigitalPort {
+friend class GertboardPlugin;
+
 protected:
+
+	// Specifies the pin behaviour in output mode.
+	enum DriverType {
+		/* Standard behaviour: if Low, the pin is connected to internal ground (current sink).
+		If High, the pin is connected to internal Vcc (current source). */
+		STANDARD,
+		/* Low side driver: if Low, the pin is floating.
+		If High, the pin is connected to internal ground (current sink). */
+		LOW_SIDE,
+		/* High side driver: if Low, the pin is floating.
+		If High, the pin is connected to internal Vcc (current source). */
+		HIGH_SIDE
+	};
+
 	AbstractOPDID *opdid;
 	GertboardPlugin *gbPlugin;
 	int pin;
+	DriverType driverType;
+
 public:
 	DigitalExpandedPort(AbstractOPDID *opdid, GertboardPlugin *gbPlugin, const char *ID, int pin);
 	virtual ~DigitalExpandedPort(void);
@@ -527,11 +545,12 @@ public:
 
 DigitalExpandedPort::DigitalExpandedPort(AbstractOPDID *opdid, GertboardPlugin *gbPlugin, const char *ID, int pin) : OPDI_DigitalPort(ID, 
 	(std::string("Digital Expanded Port ") + to_string(pin)).c_str(), // default label - can be changed by configuration
-	OPDI_PORTDIRCAP_INPUT,	// default: input
+	OPDI_PORTDIRCAP_BIDI,	// default: bidirectional
 	0) {
 	this->opdid = opdid;
 	this->gbPlugin = gbPlugin;
 	this->pin = pin;
+	this->driverType = STANDARD;
 }
 
 DigitalExpandedPort::~DigitalExpandedPort(void) {
@@ -539,17 +558,41 @@ DigitalExpandedPort::~DigitalExpandedPort(void) {
 
 void DigitalExpandedPort::setLine(uint8_t line) {
 	OPDI_DigitalPort::setLine(line);
-	
-	uint8_t code = this->pin;
-	code |= (1 << OUTPUT);
 
-	if (this->line == 1) {
-		code |= (1 << LINESTATE);
-	}
+	uint8_t code = this->pin;
+
+	if (this->driverType == STANDARD) {
+		// set output flag
+		code |= (1 << OUTPUT);
+		// set High or Low accordingly
+		if (this->line == 1) {
+			code |= (1 << LINESTATE);
+		}
+	} else
+	if (this->driverType == LOW_SIDE) {
+		// active (High)?
+		if (this->line == 1) {
+			// set to a Low output
+			code |= (1 << OUTPUT);
+		} else {
+			// set to a floating input (no action required)
+		}
+	} else
+	if (this->driverType == HIGH_SIDE) {
+		// active (High)?
+		if (this->line == 1) {
+			// set to a Low output
+			code |= (1 << OUTPUT);
+			code |= (1 << LINESTATE);
+		} else {
+			// set to a floating input (no action required)
+		}
+	} else
+		throw PortError("Unknown driver type: " + to_string(driverType));
 	
 	this->gbPlugin->sendExpandedPortCode(code);
 	uint8_t returnCode = this->gbPlugin->receiveExpandedPortCode();
-	if (returnCode != code)
+	if ((returnCode & PORTMASK) != (code & PORTMASK))
 		throw PortError("Expanded port communication failure");
 }
 
@@ -575,7 +618,9 @@ void DigitalExpandedPort::setMode(uint8_t mode) {
 	}
 
 	this->gbPlugin->sendExpandedPortCode(code);
-	this->gbPlugin->receiveExpandedPortCode();
+	uint8_t returnCode = this->gbPlugin->receiveExpandedPortCode();
+	if ((returnCode & PORTMASK) != (code & PORTMASK))
+		throw PortError("Expanded port communication failure");
 }
 
 void DigitalExpandedPort::getState(uint8_t *mode, uint8_t *line) {
@@ -856,7 +901,23 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 			DigitalExpandedPort *port = new DigitalExpandedPort(abstractOPDID, this, nodeName.c_str(), pinNumber);
 			// set default group: Gertboard's node's group
 			port->setGroup(group);
+
+			// evaluate driver type (important: before regular configuration which may set output mode and state)
+			std::string driverType = portConfig->getString("DriverType", "");
+			if (driverType == "Standard") {
+				port->driverType = DigitalExpandedPort::STANDARD;
+			} else
+			if (driverType == "LowSide") {
+				port->driverType = DigitalExpandedPort::LOW_SIDE;
+			} else
+			if (driverType == "HighSide") {
+				port->driverType = DigitalExpandedPort::HIGH_SIDE;
+			} else
+			if (driverType != "")
+				throw Poco::DataException("Invalid value for DriverType: Expected 'Standard', 'LowSide' or 'HighSide': " + driverType);
+
 			abstractOPDID->configureDigitalPort(portConfig, port);
+
 			abstractOPDID->addPort(port);
 		} else
 			throw Poco::DataException("This plugin does not support the port type", portType);
