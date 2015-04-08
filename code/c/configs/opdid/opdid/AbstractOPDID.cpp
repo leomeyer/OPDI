@@ -210,6 +210,9 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 		if (args.at(i) == "-d") {
 			this->logVerbosity = DEBUG;
 		}
+		if (args.at(i) == "-e") {
+			this->logVerbosity = EXTREME;
+		}
 		if (args.at(i) == "-v") {
 			this->logVerbosity = VERBOSE;
 		}
@@ -247,7 +250,7 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 }
 
 void AbstractOPDID::lockResource(std::string resourceID, std::string lockerID) {
-	if (this->logVerbosity >= AbstractOPDID::VERBOSE)
+	if (this->logVerbosity >= AbstractOPDID::DEBUG)
 		this->log("Trying to lock resource '" + resourceID + "' for " + lockerID);
 	// try to locate the resource ID
 	LockedResources::const_iterator it = this->lockedResources.find(resourceID);
@@ -287,7 +290,10 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 		if (logVerbosityStr == "Debug") {
 			this->logVerbosity = DEBUG;
 		} else
-			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', 'Verbose', or 'Debug')", logVerbosityStr);
+		if (logVerbosityStr == "Extreme") {
+			this->logVerbosity = EXTREME;
+		} else
+			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', 'Verbose', 'Debug' or 'Extreme')", logVerbosityStr);
 	}
 
 	if (this->logVerbosity == UNKNOWN) {
@@ -592,7 +598,7 @@ void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig
 	this->addPort(pulsePort);
 }
 
-void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port){
+void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
 	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up SelectorPort: " + port);
 
@@ -603,6 +609,18 @@ void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portCon
 	this->addPort(selectorPort);
 }
 
+#ifdef OPDI_USE_EXPRTK
+void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Setting up ExpressionPort: " + port);
+
+	OPDID_ExpressionPort *expressionPort = new OPDID_ExpressionPort(this, port.c_str());
+	this->configurePort(portConfig, expressionPort, 0);
+	expressionPort->configure(portConfig);
+
+	this->addPort(expressionPort);
+}
+#endif	// def OPDI_USE_EXPRTK
 
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
 	if (this->logVerbosity >= VERBOSE)
@@ -651,6 +669,11 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else
 		if (nodeType == "SelectorPort") {
 			this->setupSelectorPort(nodeConfig, node);
+#ifdef OPDI_USE_EXPRTK
+		} else
+		if (nodeType == "ExpressionPort") {
+			this->setupExpressionPort(nodeConfig, node);
+#endif	// def OPDI_USE_EXPRTK
 		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}
@@ -1035,7 +1058,7 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 
 #ifndef OPDI_NO_DIAL_PORTS
 
-uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
+uint8_t opdi_get_dial_port_state(opdi_Port *port, int64_t *position) {
 	OPDI_DialPort *dPort = (OPDI_DialPort *)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
@@ -1052,7 +1075,7 @@ uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
 	return OPDI_STATUS_OK;
 }
 
-uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
+uint8_t opdi_set_dial_port_position(opdi_Port *port, int64_t position) {
 	OPDI_DialPort *dPort = (OPDI_DialPort *)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;

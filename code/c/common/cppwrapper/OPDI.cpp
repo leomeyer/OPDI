@@ -155,13 +155,18 @@ OPDI_Port *OPDI::findPort(opdi_Port *port) {
 	return NULL;
 }
 
-OPDI_Port *OPDI::findPortByID(const char *portID) {
+OPDI_Port *OPDI::findPortByID(const char *portID, bool caseInsensitive) {
 	OPDI_Port *p = this->first_port;
 	// go through linked list
 	while (p != NULL) {
 		opdi_Port *oPort = (opdi_Port *)p->data;
-		if (strcmp(oPort->id, portID) == 0)
-			return p;
+		if (caseInsensitive) {
+			if (strcmpi(oPort->id, portID) == 0)
+				return p;
+		} else {
+			if (strcmp(oPort->id, portID) == 0)
+				return p;
+		}
 		p = p->next;
 	}
 	// not found

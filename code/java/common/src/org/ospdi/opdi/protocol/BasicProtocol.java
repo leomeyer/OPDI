@@ -514,7 +514,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	}
 	
 	@Override
-	public void setPosition(DialPort port, int pos)
+	public void setPosition(DialPort port, long pos)
 			throws TimeoutException, InterruptedException,
 			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		// send request

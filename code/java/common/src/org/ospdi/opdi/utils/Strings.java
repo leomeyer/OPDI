@@ -142,6 +142,28 @@ public class Strings {
 		}
 	}
 
+	/** Parses a parameter as long and throws exceptions if error conditions are met.
+	 * 
+	 * @param s
+	 * @param paramName
+	 * @param min
+	 * @param max
+	 * @return
+	 * @throws ProtocolException
+	 */
+	public static long parseLong(String s, String paramName, long min, long max) {
+		try {
+			long value = Long.parseLong(s);
+			if (value < min)
+				throw new IllegalArgumentException("Parameter " + paramName + ": value too small: " + value);
+			if (value > max)
+				throw new IllegalArgumentException("Parameter " + paramName + ": value too large: " + value);
+			return value;
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("Parameter " + paramName + ": number expected instead of '" + s + "'");
+		}
+	}
+
 	/** Parses a parameter as double and throws exceptions if error conditions are met.
 	 * 
 	 * @param s

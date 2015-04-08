@@ -47,10 +47,10 @@ class DialPortViewAdapter implements IPortViewAdapter {
 	DialPort dPort;
 	
 	// cache values
-    int position;
-    int minValue;
-    int maxValue;
-    int step;
+	long position;
+	long minValue;
+	long maxValue;
+	long step;
     boolean stateError;
 
 	private View cachedView;
@@ -204,8 +204,8 @@ class DialPortViewAdapter implements IPortViewAdapter {
 		if (tvCur != null) tvCur.setText(dPort.getUnitFormat().format(position));
 
 		if (sbSeek != null) sbSeek.setOnSeekBarChangeListener(null);
-		if (sbSeek != null) sbSeek.setMax(maxValue - minValue);
-		if (sbSeek != null) sbSeek.setProgress(position - minValue);
+		if (sbSeek != null) sbSeek.setMax((int)maxValue - (int)minValue);
+		if (sbSeek != null) sbSeek.setProgress((int)position - (int)minValue);
 		if (sbSeek != null) sbSeek.setEnabled(!dPort.isReadonly());
 
 		if (sbSeek != null) sbSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -215,7 +215,7 @@ class DialPortViewAdapter implements IPortViewAdapter {
 				DialPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DialPortViewAdapter.this) {
 					@Override
 					void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
-						dPort.setPosition(val + dPort.getMinimum());
+						dPort.setPosition((int)val + (int)dPort.getMinimum());
 						position = dPort.getPosition();
 					}
 				});
@@ -282,8 +282,8 @@ class DialPortViewAdapter implements IPortViewAdapter {
 				}
 			});
 			
-			final int portMinValue = dPort.getMinimum();
-			final int portMaxValue = dPort.getMaximum();
+			final long portMinValue = dPort.getMinimum();
+			final long portMaxValue = dPort.getMaximum();
 			
 			item = menu.findItem(R.id.menuitem_dial_set_value);
 			

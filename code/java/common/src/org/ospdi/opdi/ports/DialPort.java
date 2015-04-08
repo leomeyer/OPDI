@@ -23,10 +23,11 @@ public class DialPort extends Port {
 
 	static final String MAGIC = "DL";
 	
-	protected int position = -1;
-	protected int minimum;
-	protected int maximum;
-	protected int step;
+	protected boolean posUnknown = true;
+	protected long position = 0;
+	protected long minimum;
+	protected long maximum;
+	protected long step;
 	
 	protected DialPort(String id, String name, int minimum, int maximum, int step) {
 		super(null, id, name, PortType.OTHER, PortDirCaps.OUTPUT);
@@ -56,9 +57,9 @@ public class DialPort extends Port {
 
 		setID(parts[ID_PART]);
 		setName(parts[NAME_PART]);
-		setMinimum(Strings.parseInt(parts[MIN_PART], "Minimum", Integer.MIN_VALUE, Integer.MAX_VALUE));
-		setMaximum(Strings.parseInt(parts[MAX_PART], "Maximum", Integer.MIN_VALUE, Integer.MAX_VALUE));
-		setStep(Strings.parseInt(parts[STEP_PART], "Step", Integer.MIN_VALUE, Integer.MAX_VALUE));
+		setMinimum(Strings.parseLong(parts[MIN_PART], "Minimum", Integer.MIN_VALUE, Integer.MAX_VALUE));
+		setMaximum(Strings.parseLong(parts[MAX_PART], "Maximum", Integer.MIN_VALUE, Integer.MAX_VALUE));
+		setStep(Strings.parseLong(parts[STEP_PART], "Step", Integer.MIN_VALUE, Integer.MAX_VALUE));
 		flags = Strings.parseInt(parts[FLAGS_PART], "flags", 0, Integer.MAX_VALUE);
 	}
 	
@@ -66,27 +67,27 @@ public class DialPort extends Port {
 		return Strings.join(':', MAGIC, getID(), getName(), minimum, maximum, step);
 	}
 	
-	public int getMinimum() {
+	public long getMinimum() {
 		return minimum;
 	}
 	
-	public int getMaximum() {
+	public long getMaximum() {
 		return maximum;
 	}
 
-	public int getStep() {
+	public long getStep() {
 		return step;
 	}
 	
-	protected void setMinimum(int minimum) {
+	protected void setMinimum(long minimum) {
 		this.minimum = minimum;
 	}
 
-	protected void setMaximum(int maximum) {
+	protected void setMaximum(long maximum) {
 		this.maximum = maximum;
 	}
 
-	protected void setStep(int step) {
+	protected void setStep(long step) {
 		this.step = step;
 	}
 
@@ -99,28 +100,29 @@ public class DialPort extends Port {
 	@Override
 	public void refresh() {
 		super.refresh();
-		position = -1;
+		posUnknown = true;
 	}
 
 	public void setPortPosition(IBasicProtocol protocol, int position) {
 		if (protocol != getProtocol())
 			throw new IllegalAccessError("Setting the port state is only allowed from its protocol implementation");
 		this.position = position;
+		this.posUnknown = false;
 	}
 	
 	// Retrieve the position from the device
-	public int getPosition() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
-		if (position < 0)
+	public long getPosition() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+		if (posUnknown)
 			getPortState();
 		return position;
 	}
 		
 	public void setPosition(int pos) throws ProtocolException, TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException {
 		// limit value range
-		int val = pos;
+		long val = pos;
 		if (val < minimum) val = minimum;
 		// adjust to nearest step
-		int modulo = val % step;
+		long modulo = val % step;
 		// round up or down, depending on what's nearest
 		val = (modulo <= step / 2 ? val - modulo : val + step - modulo);
 		if (val > maximum) val = maximum;		
@@ -143,7 +145,6 @@ public class DialPort extends Port {
 			handlePortError(e);
 		}
 	}
-
 
 	@Override	
 	public boolean isReadonly() {

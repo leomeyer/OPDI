@@ -282,7 +282,7 @@ public interface IBasicProtocol {
 	 * @throws PortErrorException 
 	 * @throws PortAccessDeniedException 
 	 */
-	public void setPosition(DialPort port, int pos) throws TimeoutException,
+	public void setPosition(DialPort port, long pos) throws TimeoutException,
 			InterruptedException, DisconnectedException, DeviceException,
 			ProtocolException, PortAccessDeniedException, PortErrorException;
 	

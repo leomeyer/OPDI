@@ -242,97 +242,13 @@ public:
 };
 
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Abstract port definitions
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Defines a general digital port.
- *
- */
-class OPDI_AbstractDigitalPort : public OPDI_Port {
-
-protected:
-	// protected constructor - for use by friend classes only
-	OPDI_AbstractDigitalPort(const char *id);
-
-public:
-	// Initialize a digital port. Specify one of the OPDI_PORTDIR_CAPS* values for dircaps.
-	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
-	OPDI_AbstractDigitalPort(const char *id, const char *label, const char * dircaps, const int32_t flags);
-
-	virtual ~OPDI_AbstractDigitalPort();
-
-	// pure virtual methods that need to be implemented by subclasses
-
-	// function that handles the set mode command (opdi_set_digital_port_mode)
-	// mode = 0: floating input
-	// mode = 1: input with pullup on
-	// mode = 2: input with pulldown on
-	// mode = 3: output
-	virtual void setMode(uint8_t mode) = 0;
-
-	// function that handles the set line command (opdi_set_digital_port_line)
-	// line = 0: state low
-	// line = 1: state high
-	virtual void setLine(uint8_t line) = 0;
-
-	// function that fills in the current port state
-	virtual void getState(uint8_t *mode, uint8_t *line) = 0;
-};
-
-
-/** Defines a general analog port.
- *
- */
-class OPDI_AbstractAnalogPort : public OPDI_Port {
-
-friend class OPDI;
-
-protected:
-	OPDI_AbstractAnalogPort(const char *id);
-
-public:
-	// Initialize an analog port. Specify one of the OPDI_PORTDIR_CAPS* values for dircaps.
-	// Specify one or more of the OPDI_ANALOG_PORT_* values for flags, or'ed together, to specify possible settings.
-	OPDI_AbstractAnalogPort(const char *id, const char *label, const char * dircaps, const int32_t flags);
-
-	virtual ~OPDI_AbstractAnalogPort();
-
-	// pure virtual methods that need to be implemented by subclasses
-
-	// function that handles the set mode command (opdi_set_analog_port_mode)
-	// mode = 1: input
-	// mode = 2: output
-	virtual void setMode(uint8_t mode) = 0;
-
-	// function that handles the set resolution command (opdi_set_analog_port_resolution)
-	// resolution = (8..12): resolution in bits
-	virtual void setResolution(uint8_t resolution) = 0;
-
-	// function that handles the set reference command (opdi_set_analog_port_reference)
-	// reference = 0: internal voltage reference
-	// reference = 1: external voltage reference
-	virtual void setReference(uint8_t reference) = 0;
-
-	// function that handles the set value command (opdi_set_analog_port_value)
-	// value: an integer value ranging from 0 to 2^resolution - 1
-	virtual void setValue(int32_t value) = 0;
-
-	// function that fills in the current port state
-	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) = 0;
-
-	// returns the value as a factor between 0 and 1 of the maximum resolution
-	virtual double getRelativeValue(void) = 0;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Concrete port definitions
+// Port definitions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Defines a digital port.
  */
-class OPDI_DigitalPort : public OPDI_AbstractDigitalPort {
+class OPDI_DigitalPort : public OPDI_Port {
 
 friend class OPDI;
 
@@ -372,7 +288,7 @@ public:
 
 /** Defines an analog port.
  */
-class OPDI_AnalogPort : public OPDI_AbstractAnalogPort {
+class OPDI_AnalogPort : public OPDI_Port {
 
 friend class OPDI;
 
@@ -396,21 +312,24 @@ public:
 
 	// mode = 0: input
 	// mode = 1: output
-	virtual void setMode(uint8_t mode) override;
+	virtual void setMode(uint8_t mode);
 
-	virtual void setResolution(uint8_t resolution) override;
+	virtual void setResolution(uint8_t resolution);
 
 	// reference = 0: internal voltage reference
 	// reference = 1: external voltage reference
-	virtual void setReference(uint8_t reference) override;
+	virtual void setReference(uint8_t reference);
 
 	// value: an integer value ranging from 0 to 2^resolution - 1
-	virtual void setValue(int32_t value) override;
+	virtual void setValue(int32_t value);
 
-	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) override;
+	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value);
 
 	// returns the value as a factor between 0 and 1 of the maximum resolution
-	virtual double getRelativeValue(void) override;
+	virtual double getRelativeValue(void);
+
+	// sets the value from a factor between 0 and 1
+	virtual void setRelativeValue(double value);
 };
 
 /** Defines a select port.
@@ -462,10 +381,10 @@ class OPDI_DialPort : public OPDI_Port {
 friend class OPDI;
 
 protected:
-	int32_t minValue;
-	int32_t maxValue;
-	uint32_t step;
-	int32_t position;
+	int64_t minValue;
+	int64_t maxValue;
+	uint64_t step;
+	int64_t position;
 
 	/** A select port does not support self refreshing. */
 	virtual void doSelfRefresh(void) override;
@@ -475,16 +394,16 @@ public:
 
 	// Initialize a dial port. The direction of a dial port is output only.
 	// You have to specify boundary values and a step size.
-	OPDI_DialPort(const char *id, const char *label, int32_t minValue, int32_t maxValue, uint32_t step);
+	OPDI_DialPort(const char *id, const char *label, int64_t minValue, int64_t maxValue, uint64_t step);
 	virtual ~OPDI_DialPort();
 
-	virtual void setMin(int32_t min);
-	virtual void setMax(int32_t max);
-	virtual void setStep(uint32_t step);
+	virtual void setMin(int64_t min);
+	virtual void setMax(int64_t max);
+	virtual void setStep(uint64_t step);
 
 	// function that handles position setting; position may be in the range of minValue..maxValue
-	virtual void setPosition(int32_t position);
+	virtual void setPosition(int64_t position);
 
 	// function that fills in the current port state
-	virtual void getState(int32_t *position);
+	virtual void getState(int64_t *position);
 };

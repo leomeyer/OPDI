@@ -143,9 +143,9 @@ typedef struct opdi_PortGroup {
 /** Info structure for dial ports.
 */
 typedef struct opdi_DialPortInfo {
-	int32_t min;		// minimum value
-	int32_t max;		// maximum value
-	int32_t step;		// step width
+	int64_t min;		// minimum value
+	int64_t max;		// maximum value
+	int64_t step;		// step width
 } opdi_DialPortInfo;
 
 /** Receiving function for streaming ports.

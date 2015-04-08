@@ -99,6 +99,9 @@
     <ClInclude Include="OPDID_Ports.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\platforms\opdi_platformfuncs.h">
+      <Filter>Headerdateien\platforms</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

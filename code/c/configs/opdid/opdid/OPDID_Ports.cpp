@@ -8,6 +8,33 @@
 // PortFunctions
 ///////////////////////////////////////////////////////////////////////////////
 
+OPDI_Port *OPDID_PortFunctions::findPort(std::string configPort, std::string setting, std::string portID, bool required) {
+	// locate port by ID
+	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
+	// no found but required?
+	if (port == NULL) { 
+		if (required)
+			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
+		return NULL;
+	}
+
+	return port;
+}
+
+void OPDID_PortFunctions::findPorts(std::string configPort, std::string setting, std::string portIDs, PortList &portList) {
+	// split list at blanks
+	std::stringstream ss(portIDs);
+	std::string item;
+	while (std::getline(ss, item, ' ')) {
+		// ignore empty items
+		if (item != "") {
+			OPDI_Port *port = this->findPort(configPort, setting, item, true);
+			if (port != NULL)
+				portList.push_back(port);
+		}
+	}
+}
+
 OPDI_DigitalPort *OPDID_PortFunctions::findDigitalPort(std::string configPort, std::string setting, std::string portID, bool required) {
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
@@ -156,15 +183,15 @@ void OPDID_LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
 }
 
 void OPDID_LogicPort::setDirCaps(const char *dirCaps) {
-	throw PortError("The direction capabilities of a LogicPort cannot be changed");
+	throw PortError(std::string(this->getID()) + ": The direction capabilities of a LogicPort cannot be changed");
 }
 
 void OPDID_LogicPort::setMode(uint8_t mode) {
-	throw PortError("The mode of a LogicPort cannot be changed");
+	throw PortError(std::string(this->getID()) + ": The mode of a LogicPort cannot be changed");
 }
 
 void OPDID_LogicPort::setLine(uint8_t line) {
-	throw PortError("The line of a LogicPort cannot be set directly");
+	throw PortError(std::string(this->getID()) + ": The line of a LogicPort cannot be set directly");
 }
 
 void OPDID_LogicPort::prepare() {
@@ -222,7 +249,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 
 	// change detected?
 	if (newLine != this->line) {
-		if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 			opdid->log(std::string(this->id) + ": Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High");
 	
 		OPDI_DigitalPort::setLine(newLine);
@@ -237,7 +264,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 				(*it)->getState(&mode, &line);
 				// changed?
 				if (line != newLine) {
-					if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 						opdid->log(std::string(this->id) + ": Changing line of port " + (*it)->getID() + " to " + (newLine == 0 ? "Low" : "High"));
 					(*it)->setLine(newLine);
 				}
@@ -256,7 +283,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 				(*it)->getState(&mode, &line);
 				// changed?
 				if (line == newLine) {
-					if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 						opdid->log(std::string(this->id) + ": Changing line of inverse port " + (*it)->getID() + " to " + (newLine == 0 ? "High" : "Low"));
 					(*it)->setLine((newLine == 0 ? 1 : 0));
 				}
@@ -325,11 +352,11 @@ void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 }
 
 void OPDID_PulsePort::setDirCaps(const char *dirCaps) {
-	throw PortError("The direction capabilities of a PulsePort cannot be changed");
+	throw PortError(std::string(this->getID()) + ": The direction capabilities of a PulsePort cannot be changed");
 }
 
 void OPDID_PulsePort::setMode(uint8_t mode) {
-	throw PortError("The mode of a PulsePort cannot be changed");
+	throw PortError(std::string(this->getID()) + ": The mode of a PulsePort cannot be changed");
 }
 
 void OPDID_PulsePort::prepare() {
@@ -410,7 +437,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 
 	// change detected?
 	if (newState != this->pulseState) {
-		if (opdid->logVerbosity >= AbstractOPDID::VERBOSE) {
+		if (opdid->logVerbosity >= AbstractOPDID::DEBUG) {
 			opdid->log(std::string(this->id) + ": Changing pulse to " + (newState == 1 ? "High" : "Low") + " (dTime: " + to_string(opdi_get_time_ms() - this->lastStateChangeTime) + " ms)");
 		}
 	
@@ -429,7 +456,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 				(*it)->getState(&mode, &line);
 				// changed?
 				if (line != newState) {
-					if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 						opdid->log(std::string(this->id) + ": Changing line of port " + (*it)->getID() + " to " + (newState == 0 ? "Low" : "High"));
 					(*it)->setLine(newState);
 				}
@@ -448,7 +475,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 				(*it)->getState(&mode, &line);
 				// changed?
 				if (line == newState) {
-					if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 						opdid->log(std::string(this->id) + ": Changing line of inverse port " + (*it)->getID() + " to " + (newState == 0 ? "High" : "Low"));
 					(*it)->setLine((newState == 0 ? 1 : 0));
 				}
@@ -494,11 +521,11 @@ void OPDID_SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 }
 
 void OPDID_SelectorPort::setDirCaps(const char *dirCaps) {
-	throw PortError("The direction capabilities of a SelectorPort cannot be changed");
+	throw PortError(std::string(this->getID()) + ": The direction capabilities of a SelectorPort cannot be changed");
 }
 
 void OPDID_SelectorPort::setMode(uint8_t mode) {
-	throw PortError("The mode of a SelectorPort cannot be changed");
+	throw PortError(std::string(this->getID()) + ": The mode of a SelectorPort cannot be changed");
 }
 
 void OPDID_SelectorPort::setLine(uint8_t line) {
@@ -528,13 +555,13 @@ uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
 	this->selectPort->getState(&pos);
 	if (pos == this->position) {
 		if (this->line != 1) {
-			if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 				this->opdid->log(std::string(this->getID()) + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to High");
 			OPDI_DigitalPort::setLine(1);
 		}
 	} else {
 		if (this->line != 0) {
-			if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 				this->opdid->log(std::string(this->getID()) + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to Low");
 			OPDI_DigitalPort::setLine(0);
 		}
@@ -542,3 +569,188 @@ uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
 
 	return OPDI_STATUS_OK;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Expression Port
+///////////////////////////////////////////////////////////////////////////////
+
+#ifdef OPDI_USE_EXPRTK
+
+OPDID_ExpressionPort::OPDID_ExpressionPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+	this->opdid = opdid;
+
+	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+
+	// default: enabled
+	this->line = 1;
+}
+
+OPDID_ExpressionPort::~OPDID_ExpressionPort() {
+}
+
+void OPDID_ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) {
+
+	this->expressionStr = config->getString("Expression", "");
+	if (this->expressionStr == "")
+		throw Poco::DataException("You have to specify the Expression");
+
+	this->outputPortStr = config->getString("OutputPorts", "");
+	if (this->outputPortStr == "")
+		throw Poco::DataException("You have to specify at least one output port in the OutputPorts setting");
+}
+
+void OPDID_ExpressionPort::setDirCaps(const char *dirCaps) {
+	throw PortError(std::string(this->getID()) + ": The direction capabilities of an ExpressionPort cannot be changed");
+}
+
+void OPDID_ExpressionPort::setMode(uint8_t mode) {
+	throw PortError(std::string(this->getID()) + ": The mode of an ExpressionPort cannot be changed");
+}
+
+bool OPDID_ExpressionPort::prepareVariables(void) {
+	// clear symbol table and values
+	this->symbol_table.clear();
+	this->portValues.clear();
+
+	// go through dependent entities (variables) of the expression
+	for (std::size_t i = 0; i < this->symbol_list.size(); ++i)
+	{
+		symbol_t& symbol = this->symbol_list[i];
+
+		if (symbol.second != parser_t::e_st_variable)
+			continue;
+
+		// find port (variable name is the port ID)
+		OPDI_Port *port = this->opdid->findPortByID(symbol.first.c_str(), true);
+
+		// port not found?
+		if (port == NULL) {
+			throw PortError(std::string(this->getID()) + ": Expression variable did not resolve to an available port ID: " + symbol.first);
+		}
+
+		// calculate port value
+		double value = 0;
+		try {
+			// evaluation depends on port type
+			if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
+				// digital port: Low = 0; High = 1
+				uint8_t mode;
+				uint8_t line;
+				((OPDI_DigitalPort *)port)->getState(&mode, &line);
+				value = line;
+			} else 
+			if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+				// analog port: relative value (0..1)
+				value = ((OPDI_AnalogPort *)port)->getRelativeValue();
+			} else 
+			if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+				// dial port: absolute value
+				int64_t position;
+				((OPDI_DialPort *)port)->getState(&position);
+				value = position;
+			} else 
+			if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+				// select port: current position number
+				uint16_t position;
+				((OPDI_SelectPort *)port)->getState(&position);
+				value = position;
+			} else
+				// port type not supported
+				return false;
+		} catch (Poco::Exception &pe) {
+			if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
+				this->opdid->log(std::string(this->getID()) + ": Unable to get state of port " + port->getID() + ": " + pe.message());
+			return false;
+		}
+
+		this->portValues.push_back(value);
+
+		// add reference to the port value (by port ID)
+		if (!this->symbol_table.add_variable(port->getID(), this->portValues[i]))
+			return false;
+	}
+
+	return true;
+}
+
+void OPDID_ExpressionPort::prepare() {
+	OPDI_DigitalPort::prepare();
+
+	// find ports; throws errors if something required is missing
+	this->findPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
+
+	// prepare the expression
+	symbol_table.add_constants();
+	expression.register_symbol_table(symbol_table);
+
+	parser_t parser;
+	parser.enable_unknown_symbol_resolver();
+	// collect only variables as symbol names
+	parser.dec().collect_variables() = true;
+
+	// compile to detect variables
+	if (!parser.compile(this->expressionStr, expression))
+		throw Poco::Exception(std::string(this->getID()) + ": Error in expression: " + parser.error());
+
+	// store symbol list (input variables)
+	parser.dec().symbols(this->symbol_list);
+
+	if (!this->prepareVariables()) {
+		throw new Poco::Exception(std::string(this->getID()) + ": Unable to resolve variables");
+	}
+	parser.disable_unknown_symbol_resolver();
+
+	if (!parser.compile(this->expressionStr, expression))
+		throw Poco::Exception(std::string(this->getID()) + ": Error in expression: " + parser.error());
+}
+
+uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
+	OPDI_DigitalPort::doWork(canSend);
+
+	if (this->line == 1) {
+
+		// prepareVariables will return false in case of errors
+		if (this->prepareVariables()) {
+
+			double value = expression.value();
+
+			if (this->opdid->logVerbosity >= AbstractOPDID::EXTREME)
+				this->opdid->log(std::string(this->getID()) + ": Expression result: " + to_string(value));
+
+			// go through list of output ports
+			PortList::iterator it = this->outputPorts.begin();
+			while (it != this->outputPorts.end()) {
+				try {
+					if ((*it)->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
+						if (value == 0)
+							((OPDI_DigitalPort *)(*it))->setLine(0);
+						else
+							((OPDI_DigitalPort *)(*it))->setLine(1);
+					} else 
+					if ((*it)->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+						// analog port: relative value (0..1)
+						((OPDI_AnalogPort *)(*it))->setRelativeValue(value);
+					} else 
+					if ((*it)->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+						// dial port: absolute value
+						((OPDI_DialPort *)(*it))->setPosition((int64_t)value);
+					} else 
+					if ((*it)->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+						// select port: current position number
+						((OPDI_SelectPort *)(*it))->setPosition((uint16_t)value);
+					} else
+						throw PortError("");
+				} catch (Poco::Exception &pe) {
+
+				}
+
+				it++;
+			}
+		}
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+#endif	// def OPDI_USE_EXPRTK

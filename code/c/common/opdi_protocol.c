@@ -67,7 +67,7 @@ uint8_t expect_control_message(const char **parts, uint8_t *partCount) {
 
 uint8_t send_error(uint8_t code, const char *part1, const char *part2) {
 	// send an error message on the control channel
-	char buf[5];
+	char buf[BUFSIZE_8BIT];
 	opdi_Message message;
 	uint8_t result;
 

@@ -52,4 +52,10 @@ public class UnitFormat {
 		double val = value * numerator / (double)denominator;
 		return String.format(formatString, val);
 	}
+	
+	public String format(long value) {
+		// calculate value; format the result
+		double val = value * numerator / (double)denominator;
+		return String.format(formatString, val);
+	}
 }

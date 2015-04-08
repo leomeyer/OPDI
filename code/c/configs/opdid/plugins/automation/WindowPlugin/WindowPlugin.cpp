@@ -136,7 +136,7 @@ void WindowPort::setPosition(uint16_t position) {
 		OPDI_SelectPort::setPosition(position);
 		this->positionNewlySet = true;
 
-		if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 			opdid->log(std::string(this->id) + ": Selected position " + to_string(position) + 
 				(position == 0 ? " (CLOSED)" : (position == 1 ? " (OPEN)" : " (AUTOMATIC)")) +
 				"; current state is: " + this->getStateText(this->currentState) + this->getMotorStateText());
@@ -145,7 +145,7 @@ void WindowPort::setPosition(uint16_t position) {
 
 void WindowPort::getState(uint16_t *position) {
 	if (this->currentState == ERR)
-		throw PortError("Sensor or motor failure or misconfiguration");
+		throw PortError(std::string(this->getID()) + ": Sensor or motor failure or misconfiguration");
 	OPDI_SelectPort::getState(position);
 }
 
@@ -250,7 +250,7 @@ bool WindowPort::isSensorClosed(void) {
 void WindowPort::enableMotor(void) {
 	if (this->enablePort == NULL)
 		return;
-	if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+	if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		opdid->log(std::string(this->id) + ": Enabling motor");
 	this->setPortLine(this->enablePort, (this->enableActive == 1 ? 1 : 0));
 	this->isMotorEnabled = true;
@@ -259,14 +259,14 @@ void WindowPort::enableMotor(void) {
 void WindowPort::disableMotor(void) {
 	if (this->enablePort == NULL)
 		return;
-	if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+	if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		opdid->log(std::string(this->id) + ": Disabling motor");
 	this->setPortLine(this->enablePort, (this->enableActive == 1 ? 0 : 1));
 	this->isMotorEnabled = false;
 }
 
 void WindowPort::setMotorOpening(void) {
-	if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+	if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		opdid->log(std::string(this->id) + ": Setting motor to 'opening'");
 	this->setPortLine(this->motorAPort, (this->motorActive == 1 ? 1 : 0));
 	this->setPortLine(this->motorBPort, (this->motorActive == 1 ? 0 : 1));
@@ -274,7 +274,7 @@ void WindowPort::setMotorOpening(void) {
 }
 
 void WindowPort::setMotorClosing(void) {
-	if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+	if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		opdid->log(std::string(this->id) + ": Setting motor to 'closing'");
 	this->setPortLine(this->motorAPort, (this->motorActive == 1 ? 0 : 1));
 	this->setPortLine(this->motorBPort, (this->motorActive == 1 ? 1 : 0));
@@ -282,7 +282,7 @@ void WindowPort::setMotorClosing(void) {
 }
 
 void WindowPort::setMotorOff(void) {
-	if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+	if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		opdid->log(std::string(this->id) + ": Stopping motor");
 	this->setPortLine(this->motorAPort, (this->motorActive == 1 ? 0 : 1));
 	this->setPortLine(this->motorBPort, (this->motorActive == 1 ? 0 : 1));
@@ -326,7 +326,7 @@ void WindowPort::setCurrentState(int state) {
 			// go through error ports
 			DigitalPortList::iterator pi = this->errorPorts.begin();
 			while (pi != this->errorPorts.end()) {
-				if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 					opdid->log(std::string(this->id) + ": Notifying error port: " + (*pi)->getID() + ": " + (state == ERR ? "Entering" : "Leaving") + " error state");
 				this->setPortLine((*pi), (state == ERR ? 1 : 0));
 				pi++;
@@ -366,7 +366,7 @@ void WindowPort::setCurrentState(int state) {
 			default: break;
 			}
 
-			if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 				opdid->log(std::string(this->id) + ": Notifying status port: " + this->statusPort->getID() + ": new position = " + to_string((int)selPortPos));
 
 			this->statusPort->setPosition(selPortPos);
@@ -426,7 +426,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 	if (this->currentState == UNKNOWN) {
 		// do we know that we're closed?
 		if (this->isSensorClosed()) {
-			if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 				opdid->log(std::string(this->id) + ": Closing sensor signal detected");
 			this->setCurrentState(CLOSED);
 		} else
@@ -448,7 +448,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 	// unknown; waiting for command
 	if ((this->currentState == UNKNOWN_WAITING)) {
 		if (this->isSensorClosed()) {
-			if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 				opdid->log(std::string(this->id) + ": Closing sensor signal detected");
 			this->setCurrentState(CLOSED);
 		} else {
@@ -592,7 +592,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		} else
 		// sensor close detected?
 		if (this->isSensorClosed()) {
-			if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 				opdid->log(std::string(this->id) + ": Closing sensor signal detected");
 
 			// enable delay specified?
@@ -649,7 +649,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		pi = this->forceClosePorts.begin();
 		while (pi != this->forceClosePorts.end()) {
 			if (this->getPortLine(*pi) == 1) {
-				if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 					opdid->log(std::string(this->id) + ": ForceClose detected from port: " + (*pi)->getID());
 				forceClose = true;
 				break;
@@ -661,7 +661,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		pi = this->resetPorts.begin();
 		while (pi != this->resetPorts.end()) {
 			if (this->getPortLine(*pi) == 1) {
-				if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 					opdid->log(std::string(this->id) + ": Reset detected from port: " + (*pi)->getID());
 				this->setCurrentState(UNKNOWN);
 				forceClose = true;
@@ -684,7 +684,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 				if (this->getPortLine(*pi) == 1) {
 					// avoid repeating messages
 					if (this->targetState != CLOSED) {
-						if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+						if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 							opdid->log(std::string(this->id) + ": AutoClose detected from port: " + (*pi)->getID());
 					}
 					target = CLOSED;
@@ -699,7 +699,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 					if (this->getPortLine(*pi) == 1) {
 						// avoid repeating messages
 						if (this->targetState != OPEN) {
-							if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+							if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 								opdid->log(std::string(this->id) + ": AutoOpen detected from port: " + (*pi)->getID());
 						}
 						target = OPEN;

@@ -90,7 +90,7 @@ public:
 	virtual OPDI_Port *findPort(opdi_Port *port);
 
 	/** Returns NULL if the port could not be found. */
-	virtual OPDI_Port *findPortByID(const char *portID);
+	virtual OPDI_Port *findPortByID(const char *portID, bool caseInsensitive = false);
 
 	/** Iterates through all ports and calls their prepare() methods. */
 	virtual void preparePorts(void);

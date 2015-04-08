@@ -53,6 +53,12 @@ extern uint8_t opdi_str_to_uint16(const char *str, uint16_t *result);
 */
 extern uint8_t opdi_str_to_int32(const char *str, int32_t *result);
 
+/** Tries to parse the string in str to a number with base 10. 
+    If the value can be parsed, stores the result and returns 0.
+    Otherwise, returns a value != 0.
+*/
+extern uint8_t opdi_str_to_int64(const char *str, int64_t *result);
+
 /** Formats the value into a string (base 10). Returns the length of the string.
 * The buffer must be large enough to hold the largest possible value (4 characters).
 */
@@ -64,9 +70,14 @@ extern uint8_t opdi_uint8_to_str(uint8_t value, char* msgBuf);
 extern uint8_t opdi_uint16_to_str(uint16_t value, char* msgBuf);
 
 /** Formats the value into a string (base 10). Returns the length of the string.
-* The buffer must be large enough to hold the largest possible value (10 characters).
+* The buffer must be large enough to hold the largest possible value (11 characters).
 */
 extern uint8_t opdi_int32_to_str(int32_t value, char* msgBuf);
+
+/** Formats the value into a string (base 10). Returns the length of the string.
+* The buffer must be large enough to hold the largest possible value (23 characters).
+*/
+extern uint8_t opdi_int64_to_str(int64_t value, char* msgBuf);
 
 /** Decodes a sequence of bytes into a char array.
 *   May indicate an error by returning a value != 0.

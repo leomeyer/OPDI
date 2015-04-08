@@ -170,7 +170,7 @@ public:
 
 	virtual void query(FritzBoxPlugin *plugin) override;
 
-	virtual void getState(int32_t *position) override;
+	virtual void getState(int64_t *position) override;
 
 	virtual void doSelfRefresh(void) override;
 };
@@ -194,7 +194,7 @@ public:
 
 	virtual void query(FritzBoxPlugin *plugin) override;
 
-	virtual void getState(int32_t *position) override;
+	virtual void getState(int64_t *position) override;
 
 	virtual void doSelfRefresh(void) override;
 };
@@ -239,7 +239,7 @@ void FritzDECT200Switch::setLine(uint8_t line) {
 void FritzDECT200Switch::getState(uint8_t *mode, uint8_t *line) {
 	if (this->switchState < 0) {
 		// this->plugin->nodeID + "/" + this->id + " (" + this->ain + ") : 
-		throw PortError("The switch state is unknown");
+		throw PortError(std::string(this->getID()) + ": The switch state is unknown");
 	}
 	OPDI_DigitalPort::getState(mode, line);
 }
@@ -321,10 +321,10 @@ void FritzDECT200Power::query(FritzBoxPlugin *plugin) {
 	this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETSWITCHPOWER, this));
 }
 
-void FritzDECT200Power::getState(int32_t *position) {
+void FritzDECT200Power::getState(int64_t *position) {
 	if (this->power < 0) {
 		// this->plugin->nodeID + "/" + this->id + " (" + this->ain + ") : 
-		throw PortError("The power state is unknown");
+		throw PortError(std::string(this->getID()) + ": The power state is unknown");
 	}
 	OPDI_DialPort::getState(position);
 }
@@ -412,10 +412,10 @@ void FritzDECT200Energy::query(FritzBoxPlugin *plugin) {
 	this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETSWITCHENERGY, this));
 }
 
-void FritzDECT200Energy::getState(int32_t *position) {
+void FritzDECT200Energy::getState(int64_t *position) {
 	if (this->energy < 0) {
 		// this->plugin->nodeID + "/" + this->id + " (" + this->ain + ") : 
-		throw PortError("The energy state is unknown");
+		throw PortError(std::string(this->getID()) + ": The energy state is unknown");
 	}
 	OPDI_DialPort::getState(position);
 }
@@ -435,8 +435,6 @@ void FritzDECT200Energy::doSelfRefresh(void) {
 	this->query(this->plugin);
 }
 
-
-
 std::string FritzBoxPlugin::httpGet(std::string url) {
 	try {
 		// prepare session
@@ -448,7 +446,7 @@ std::string FritzBoxPlugin::httpGet(std::string url) {
 		std::string path(uri.getPathAndQuery());
 		if (path.empty()) path = "/";
 
-		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 			this->opdid->log(this->nodeID + ": HTTP GET: " + uri.toString());
 
 		// send request
@@ -462,13 +460,13 @@ std::string FritzBoxPlugin::httpGet(std::string url) {
 		std::istream &is = session.receiveResponse(res);
 
 		if (res.getStatus() != 200) {
-			if (this->opdid->logVerbosity < AbstractOPDID::VERBOSE)
+			if (this->opdid->logVerbosity < AbstractOPDID::DEBUG)
 				this->opdid->log(this->nodeID + ": HTTP GET: " + uri.toString());
 			this->opdid->log(this->nodeID + ": The server returned an error: " + this->opdid->to_string(res.getStatus()) + " " + res.getReason());
 
 			return "";
 		} else
-		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 			this->opdid->log(this->nodeID + ": HTTP Response: " + this->opdid->to_string(res.getStatus()) + " " + res.getReason());
 
 		std::stringstream ss;
@@ -544,7 +542,7 @@ std::string FritzBoxPlugin::getSessionID(std::string host, std::string user, std
 }
 
 void FritzBoxPlugin::login(void) {
-	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+	if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		this->opdid->log(this->nodeID + ": Attempting to login to FritzBox " + this->host + " with user " + this->user);
 
 	this->sid = this->getSessionID(this->host, this->user, this->password);
@@ -554,7 +552,7 @@ void FritzBoxPlugin::login(void) {
 		return;
 	}
 
-	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+	if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		this->opdid->log(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " successful; sid = " + this->sid);
 
 	// query ports (post notifications to query)
@@ -586,7 +584,7 @@ void FritzBoxPlugin::logout(void) {
 	if (this->sid == INVALID_SID)
 		return;
 
-	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+	if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		this->opdid->log(this->nodeID + ": Logout from FritzBox " + this->host);
 
 	this->httpGet("/login_sid.lua?logout=true&sid=" + this->sid);
@@ -801,7 +799,7 @@ void FritzBoxPlugin::masterDisconnected() {
 
 void FritzBoxPlugin::run(void) {
 
-	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+	if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		this->opdid->log(this->nodeID + ": FritzBoxPlugin worker thread started");
 
 	while (!this->opdid->shutdownRequested) {
@@ -828,7 +826,7 @@ void FritzBoxPlugin::run(void) {
 		}
 	}
 
-	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+	if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		this->opdid->log(this->nodeID + ": FritzBoxPlugin worker thread terminated");
 }
 

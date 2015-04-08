@@ -21,6 +21,12 @@
 
 #include "opdi_platformtypes.h"
 
+// buffer sizes for numeric to string conversions
+#define BUFSIZE_8BIT	5
+#define BUFSIZE_16BIT	7
+#define BUFSIZE_32BIT	11
+#define BUFSIZE_64BIT	23
+
 // Common functions of the OPDI protocol.
 
 // for splitting messages into parts

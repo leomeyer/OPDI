@@ -50,8 +50,9 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;POCO_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\libraries\POCO\Foundation\include;..\..\..\libraries\POCO\Util\include;..\..\..\common;..\..\..\platforms\win32;..\..\..\platforms;..\..\..\common\cppwrapper;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;POCO_STATIC;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\libraries\exprtk;..\..\..\libraries\POCO\Foundation\include;..\..\..\libraries\POCO\Util\include;..\..\..\common;..\..\..\platforms\win32;..\..\..\platforms;..\..\..\common\cppwrapper;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -92,6 +93,7 @@
     <ClInclude Include="..\..\..\common\opdi_rijndael.h" />
     <ClInclude Include="..\..\..\common\opdi_slave_protocol.h" />
     <ClInclude Include="..\..\..\common\opdi_strings.h" />
+    <ClInclude Include="..\..\..\platforms\opdi_platformfuncs.h" />
     <ClInclude Include="..\..\..\platforms\win32\opdi_platformtypes.h" />
     <ClInclude Include="AbstractOPDID.h" />
     <ClInclude Include="OPDID_Ports.h" />

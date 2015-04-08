@@ -251,9 +251,6 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
                         	mProgress.setVisibility(View.GONE);
                         	
                             dispatchBlocked = false;
-                            
-                            // refresh the UI
-                            portListAdapter.notifyDataSetChanged();
                         }
                     });				
                 }

@@ -65,7 +65,8 @@ public:
 		QUIET,
 		NORMAL,
 		VERBOSE,
-		DEBUG
+		DEBUG,
+		EXTREME
 	};
 
 	int logVerbosity;
@@ -153,6 +154,10 @@ public:
 	virtual void setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	virtual void setupSelectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
+#ifdef OPDI_USE_EXPRTK
+	virtual void setupExpressionPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+#endif	// def OPDI_USE_EXPRTK
 
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);

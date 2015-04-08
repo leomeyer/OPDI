@@ -88,7 +88,7 @@ static uint8_t send_device_caps(channel_t channel) {
 
 #ifndef OPDI_NO_DIGITAL_PORTS
 static uint8_t send_digital_port_info(channel_t channel, opdi_Port *port) {
-	char flagStr[11];
+	char flagStr[BUFSIZE_32BIT];
 
 	opdi_int32_to_str(port->flags, flagStr);
 
@@ -106,7 +106,7 @@ static uint8_t send_digital_port_info(channel_t channel, opdi_Port *port) {
 
 #ifndef OPDI_NO_ANALOG_PORTS
 static uint8_t send_analog_port_info(channel_t channel, opdi_Port *port) {
-	char flagStr[11];
+	char flagStr[BUFSIZE_32BIT];
 
 	opdi_int32_to_str(port->flags, flagStr);
 
@@ -126,8 +126,8 @@ static uint8_t send_analog_port_info(channel_t channel, opdi_Port *port) {
 static uint8_t send_select_port_info(channel_t channel, opdi_Port *port) {
 	char **labels;
 	uint16_t positions = 0;
-	char buf[7];
-	char flagStr[11];
+	char buf[BUFSIZE_16BIT];
+	char flagStr[BUFSIZE_32BIT];
 
 	// port info is an array of char*
 	labels = (char**)port->info.ptr;
@@ -154,16 +154,16 @@ static uint8_t send_select_port_info(channel_t channel, opdi_Port *port) {
 
 #ifndef OPDI_NO_DIAL_PORTS
 static uint8_t send_dial_port_info(channel_t channel, opdi_Port *port) {
-	char minbuf[11];
-	char maxbuf[11];
-	char stepbuf[11];
-	char flagStr[11];
+	char minbuf[BUFSIZE_64BIT];
+	char maxbuf[BUFSIZE_64BIT];
+	char stepbuf[BUFSIZE_64BIT];
+	char flagStr[BUFSIZE_32BIT];
 
 	opdi_DialPortInfo *dpi = (opdi_DialPortInfo *)port->info.ptr;
 	// convert values to strings
-	opdi_int32_to_str(dpi->min, (char *)&minbuf);
-	opdi_int32_to_str(dpi->max, (char *)&maxbuf);
-	opdi_int32_to_str(dpi->step, (char *)&stepbuf);
+	opdi_int64_to_str(dpi->min, (char *)&minbuf);
+	opdi_int64_to_str(dpi->max, (char *)&maxbuf);
+	opdi_int64_to_str(dpi->step, (char *)&stepbuf);
 	opdi_int32_to_str(port->flags, flagStr);
 
 	// join payload
@@ -182,7 +182,7 @@ static uint8_t send_dial_port_info(channel_t channel, opdi_Port *port) {
 
 #if (OPDI_STREAMING_PORTS > 0)
 static uint8_t send_streaming_port_info(channel_t channel, opdi_Port *port) {
-	char buf[7];
+	char buf[BUFSIZE_16BIT];
 
 	opdi_StreamingPortInfo *spi = (opdi_StreamingPortInfo *)port->info.ptr;
 	// convert flags to str
@@ -238,7 +238,7 @@ static uint8_t get_analog_port_state(opdi_Port *port) {
 	char res[] = " ";
 	char ref[] = " ";
 	int32_t value = 0;
-	char valStr[11];
+	char valStr[BUFSIZE_32BIT];
 
 	if (strcmp(port->type, OPDI_PORTTYPE_ANALOG)) {
 		return OPDI_WRONG_PORT_TYPE;
@@ -422,7 +422,7 @@ static uint8_t send_select_port_label(channel_t channel, opdi_Port *port, const 
 static uint8_t get_select_port_state(opdi_Port *port) {
 	uint8_t result;
 	uint16_t pos;
-	char position[11];
+	char position[BUFSIZE_32BIT];
 
 	if (strcmp(port->type, OPDI_PORTTYPE_SELECT)) {
 		return OPDI_WRONG_PORT_TYPE;
@@ -494,8 +494,8 @@ static uint8_t set_select_port_position(channel_t channel, opdi_Port *port, cons
 #ifndef OPDI_NO_DIAL_PORTS
 static uint8_t get_dial_port_state(opdi_Port *port) {
 	uint8_t result;
-	int32_t pos;
-	char position[11];
+	int64_t pos;
+	char position[BUFSIZE_32BIT];
 
 	if (strcmp(port->type, OPDI_PORTTYPE_DIAL)) {
 		return OPDI_WRONG_PORT_TYPE;
@@ -505,7 +505,7 @@ static uint8_t get_dial_port_state(opdi_Port *port) {
 	if (result != OPDI_STATUS_OK)
 		return result;
 
-	opdi_int32_to_str(pos, position);
+	opdi_int64_to_str(pos, position);
 
 	// join payload
 	opdi_msg_parts[0] = OPDI_dialPortState;
@@ -530,15 +530,15 @@ static uint8_t send_dial_port_state(channel_t channel, opdi_Port *port) {
 
 static uint8_t set_dial_port_position(channel_t channel, opdi_Port *port, const char *position) {
 	uint8_t result;
-	int32_t pos;
+	int64_t pos;
 	opdi_DialPortInfo *dpi;
-	uint16_t i;
+	int64_t i;
 
 	if (strcmp(port->type, OPDI_PORTTYPE_DIAL)) {
 		return OPDI_WRONG_PORT_TYPE;
 	}
 
-	result = opdi_str_to_int32(position, &pos);
+	result = opdi_str_to_int64(position, &pos);
 	if (result != OPDI_STATUS_OK)
 		return result;
 
@@ -700,7 +700,7 @@ static uint8_t send_extended_port_info(channel_t channel, opdi_Port *port) {
 }
 
 static uint8_t send_group_info(channel_t channel, opdi_PortGroup *group) {
-	char buf[11];
+	char buf[BUFSIZE_32BIT];
 
 	// convert flags
 	opdi_int32_to_str(group->flags, buf);
@@ -1215,7 +1215,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	uint8_t result;
 	uint8_t partCount;
 	int32_t flags;
-	char buf[11];
+	char buf[BUFSIZE_32BIT];
 	opdi_ProtocolHandler protocol_handler = &basic_protocol_handler;
 	
 #ifndef OPDI_NO_ENCRYPTION
