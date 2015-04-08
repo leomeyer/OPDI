@@ -50,6 +50,9 @@ POCOLIBPATH = ../../../libraries/POCO/lib/Linux/x86_64
 # POCO libraries
 POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
 
+# ExprTk expression library path
+EXPRTK = ../../../libraries/ExprTk
+
 # Additional libraries
 LIBS = -lpthread -ldl -lrt
 
@@ -58,7 +61,7 @@ CC = g++
 
 # List any extra directories to look for include files here.
 # Each directory must be seperated by a space.
-EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(MPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) .
+EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(MPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(EXPRTK) .
 
 # Place -I options here
 CINCS =

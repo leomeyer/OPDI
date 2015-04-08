@@ -77,6 +77,22 @@ uint8_t opdi_str_to_int32(const char *str, int32_t *result) {
 	return OPDI_STATUS_OK;
 }
 
+uint8_t opdi_str_to_int64(const char *str, int64_t *result) {
+	char *p;
+	long res;
+
+	// clear error
+	errno = 0;
+
+	res = strtol(str, &p, 10);
+
+	if (errno != 0 || *p != 0 || p == str)
+	  return OPDI_ERROR_CONVERSION;
+
+	*result = res;
+	return OPDI_STATUS_OK;
+}
+
 uint8_t opdi_uint8_to_str(uint8_t value, char* msgBuf) {
 	snprintf(msgBuf, 3, "%u", value);
 	return strlen(msgBuf);
@@ -89,6 +105,11 @@ uint8_t opdi_uint16_to_str(uint16_t value, char* msgBuf) {
 
 uint8_t opdi_int32_to_str(int32_t value, char* msgBuf) {
 	snprintf(msgBuf, 11, "%d", value);
+	return strlen(msgBuf);
+}
+
+uint8_t opdi_int64_to_str(int64_t value, char* msgBuf) {
+	snprintf(msgBuf, 23, "%ld", value);
 	return strlen(msgBuf);
 }
 

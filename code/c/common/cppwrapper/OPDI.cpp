@@ -161,7 +161,11 @@ OPDI_Port *OPDI::findPortByID(const char *portID, bool caseInsensitive) {
 	while (p != NULL) {
 		opdi_Port *oPort = (opdi_Port *)p->data;
 		if (caseInsensitive) {
+#ifdef linux
+			if (strcasecmp(oPort->id, portID) == 0)
+#else
 			if (strcmpi(oPort->id, portID) == 0)
+#endif
 				return p;
 		} else {
 			if (strcmp(oPort->id, portID) == 0)
