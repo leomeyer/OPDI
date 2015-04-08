@@ -109,7 +109,7 @@ uint8_t opdi_int32_to_str(int32_t value, char* msgBuf) {
 }
 
 uint8_t opdi_int64_to_str(int64_t value, char* msgBuf) {
-	snprintf(msgBuf, 23, "%ld", value);
+	snprintf(msgBuf, 23, "%lld", value);
 	return strlen(msgBuf);
 }
 
