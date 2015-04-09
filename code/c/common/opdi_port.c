@@ -28,8 +28,10 @@ static uint8_t portCount = 0;
 static opdi_Port *portHead = NULL;
 static opdi_Port *portTail = NULL;
 
+#ifdef OPDI_EXTENDED_PROTOCOL
 static opdi_PortGroup *portGroupHead = NULL;
 static opdi_PortGroup *portGroupTail = NULL;
+#endif
 
 static char port_info_message[OPDI_MAX_PORT_INFO_MESSAGE];
 
