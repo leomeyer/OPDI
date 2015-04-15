@@ -45,7 +45,7 @@ CONIOINCPATH = ../../../libraries/conio
 POCOINCPATH = ../../../libraries/POCO/Util/include ../../../libraries/POCO/Foundation/include ../../../libraries/POCO/Net/include
 
 # POCO library path
-POCOLIBPATH = ../../../libraries/POCO/lib/Linux/x86_64
+POCOLIBPATH = ../../../libraries/POCO/lib/Linux/ARM
 
 # POCO libraries
 POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation -lPocoXML -lPocoJSON
@@ -57,7 +57,7 @@ EXPRTK = ../../../libraries/ExprTk
 LIBS = -lpthread -ldl -lrt
 
 # The compiler to be used.
-CC = g++
+CC = arm-linux-gnueabihf-g++
 
 # List any extra directories to look for include files here.
 # Each directory must be seperated by a space.
@@ -71,7 +71,7 @@ CDEFINES = -Dlinux
 
 # Compiler flags.
 CFLAGS = -Wall $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
-CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -static-libstdc++
+CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11
 
 # Debug flags
 CFLAGS += -ggdb -O0 -fbuiltin

@@ -23,11 +23,17 @@
 #include <errno.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include <time.h>
 
 #include "opdi_constants.h"
 #include "opdi_platformfuncs.h"
+
+// special provision for Raspberry Pi
+#ifndef PRId64
+#define PRId64 "lld"
+#endif
 
 uint8_t opdi_str_to_uint8(const char *str, uint8_t *result) {
 	char *p;
@@ -109,7 +115,7 @@ uint8_t opdi_int32_to_str(int32_t value, char* msgBuf) {
 }
 
 uint8_t opdi_int64_to_str(int64_t value, char* msgBuf) {
-	snprintf(msgBuf, 23, "%lld", value);
+	snprintf(msgBuf, 23, "%" PRId64, value);
 	return strlen(msgBuf);
 }
 
@@ -147,7 +153,7 @@ uint8_t opdi_string_cmp(const char *s1, const char *s2) {
 }
 
 uint64_t opdi_get_time_ms(void) {
-    timespec ts;
+    struct timespec ts;
     uint64_t theTick = 0U;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     theTick = ts.tv_nsec / 1000000;
