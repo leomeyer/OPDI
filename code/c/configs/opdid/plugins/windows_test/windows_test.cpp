@@ -70,8 +70,9 @@ void WindowsTestOPDIDPlugin::masterDisconnected() {
 extern "C" __declspec(dllexport) IOPDIDPlugin* __cdecl GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
 
 	// check whether the version is supported
-	if ((majorVersion > 0) || (minorVersion > 1))
-		throw Poco::Exception("This version of the WindowsTestOPDIPlugin supports only OPDID versions up to 0.1");
+	if ((majorVersion > OPDID_MAJOR_VERSION) || (minorVersion > OPDID_MINOR_VERSION))
+		throw Poco::Exception("This plugin supports only OPDID versions up to "
+			OPDI_QUOTE(OPDID_MAJOR_VERSION) "." OPDI_QUOTE(OPDID_MINOR_VERSION));
 
 	// return a new instance of this plugin
 	return new WindowsTestOPDIDPlugin();

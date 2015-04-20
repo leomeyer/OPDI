@@ -25,7 +25,10 @@
 // Supported protocols are: basic protocol, extended protocol.
 // For the extended protocol, define OPDI_EXTENDED_PROTOCOL in your configspecs.h.
 // By default, only the basic protocol is supported.
-    
+
+// disable string function deprecation warnings
+#define _CRT_SECURE_NO_WARNINGS	1
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -959,8 +962,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 #endif
 	else {
 		// unknown message received
-		// ignore for now
-		return OPDI_STATUS_OK;
+		return OPDI_MESSAGE_UNKNOWN;
 	}
 	
 #ifdef OPDI_HAS_MESSAGE_HANDLED
@@ -1078,6 +1080,11 @@ static uint8_t handle_message_result(opdi_Message *m, uint8_t result) {
 		// special case: port error
 		if (result == OPDI_PORT_ERROR) {
 			send_port_error(m->channel, opdi_get_port_message(), NULL);
+			result = OPDI_STATUS_OK;
+		} else
+		// special case: message unknown
+		if (result == OPDI_MESSAGE_UNKNOWN) {
+			opdi_debug_msg("Unknown message", OPDI_DIR_DEBUG);
 			result = OPDI_STATUS_OK;
 		} else
 		// intentional disconnects are not an error

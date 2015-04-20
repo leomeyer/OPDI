@@ -18,6 +18,9 @@
 
 // Windows specific functions
 
+// disable conversion function deprecation warnings
+#define _CRT_SECURE_NO_WARNINGS	1
+
 #include <stdlib.h>
 #include <windows.h>
 

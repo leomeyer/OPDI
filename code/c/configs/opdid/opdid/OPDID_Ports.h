@@ -1,8 +1,12 @@
 #pragma once
 
+// need to guard against security check warnings
+#define _SCL_SECURE_NO_WARNINGS	1
+
 #include <sstream>
 #include <list>
 
+// expression evaluation library
 #include <exprtk.hpp>
 
 #include "Poco/Util/AbstractConfiguration.h"
