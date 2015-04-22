@@ -587,7 +587,7 @@ double OPDI_AnalogPort::getRelativeValue(void) {
 }
 
 void OPDI_AnalogPort::setRelativeValue(double value) {
-	this->setValue(value * ((1 << this->resolution) - 1));
+	this->setValue(static_cast<int32_t>(value * ((1 << this->resolution) - 1)));
 }
 
 

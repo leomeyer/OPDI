@@ -12,7 +12,7 @@
 class AbstractOPDID;
 
 #define OPDID_MAJOR_VERSION		0
-#define OPDID_MINOR_VERSION		1
+#define OPDID_MINOR_VERSION		2
 #define OPDID_PATCH_VERSION		0
 
 // protocol callback function for the OPDI slave implementation

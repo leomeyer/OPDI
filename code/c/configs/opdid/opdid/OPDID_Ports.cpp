@@ -400,7 +400,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 	// period port specified?
 	if (this->periodPort != NULL) {
 		// query period port for the current relative value
-		period = (double)this->period * this->periodPort->getRelativeValue();
+		period = static_cast<int32_t>((double)this->period * this->periodPort->getRelativeValue());
 	}
 
 	// duty cycle port specified?
@@ -741,8 +741,7 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 						((OPDI_SelectPort *)(*it))->setPosition((uint16_t)value);
 					} else
 						throw PortError("");
-				} catch (Poco::Exception &pe) {
-
+				} catch (Poco::Exception) {
 				}
 
 				it++;

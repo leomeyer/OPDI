@@ -56,6 +56,7 @@
 #define OPDI_PORT_ERROR					30
 #define OPDI_SHUTDOWN					31
 #define OPDI_GROUP_UNKNOWN				32
+#define OPDI_MESSAGE_UNKNOWN			33
 
 // encodings
 #define OPDI_ENCODING_ASCII			"ASCII"

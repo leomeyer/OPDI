@@ -63,6 +63,6 @@ In System Specific Libraries, remove the following defines:
 Save and return to POCO root:
 > cd ../..
 3. Configure POCO to use the new build configuration:
-> ./configure --config=RaspberryPI --no-samples --no-tests --omit=CppUnit,CppUnit/WinTestRunner,Crypto,NetSSL_OpenSSL,Data,Data/SQLite,Data/ODBCData/MySQL,MongoDB,PageCompiler,PageCompiler/File2Page
+> ./configure --config=RaspberryPi --no-samples --no-tests --omit=CppUnit,CppUnit/WinTestRunner,Crypto,NetSSL_OpenSSL,Data,Data/SQLite,Data/ODBCData/MySQL,MongoDB,PageCompiler,PageCompiler/File2Page
 4. Build:
 > make -s
