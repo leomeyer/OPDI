@@ -448,7 +448,7 @@ protected:
 public:
 	GertboardPWM(AbstractOPDID *opdid, const int pin, const char *ID, bool inverse);
 	virtual ~GertboardPWM(void);
-	virtual void setPosition(int32_t position) override;
+	virtual void setPosition(int64_t position) override;
 };
 
 GertboardPWM::GertboardPWM(AbstractOPDID *opdid, const int pin, const char *ID, bool inverse) : OPDI_DialPort(ID) {
@@ -461,7 +461,7 @@ GertboardPWM::GertboardPWM(AbstractOPDID *opdid, const int pin, const char *ID, 
 	// use 10 bit PWM
 	this->maxValue = 1024;
 	this->step = 1;
-	
+
 	// initialize PWM
 	INP_GPIO(this->pin);  SET_GPIO_ALT(this->pin, 5);
 	setup_pwm();
@@ -471,14 +471,14 @@ GertboardPWM::GertboardPWM(AbstractOPDID *opdid, const int pin, const char *ID, 
 GertboardPWM::~GertboardPWM(void) {
 	// stop PWM when the port is freed
 //	this->opdid->log("Freeing GertboardPWM port; stopping PWM");
-	
+
 	pwm_off();
 }
 
-void GertboardPWM::setPosition(int32_t position) {
+void GertboardPWM::setPosition(int64_t position) {
 	// calculate nearest position according to step
 	OPDI_DialPort::setPosition(position);
-	
+
 	// set PWM value; inverse polarity if specified
 	force_pwm0(this->position, PWM0_ENABLE | (this->inverse ? PWM0_REVPOLAR : 0));
 }
