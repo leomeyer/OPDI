@@ -30,6 +30,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -192,7 +193,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
                     // will block until there is work to do.
                     final PortAction op = queue.take();
                     
- //                   Log.d(AndroPDI.MASTER_NAME, "Processing action: " + op.getName());
+                    Log.d(AndroPDI.MASTER_NAME, "Processing action: " + op.getName());
 
                     // show the progress bar
                     mHandler.post(new Runnable() {
@@ -424,7 +425,6 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
     	// reset device name color
 		tvName.setTextColor(COLOR_DEFAULT);
     	tvInfo.setText(device.getDisplayAddress());
-    	portListAdapter.notifyDataSetChanged();
    	}
 	
 	protected void stopProcessor() {

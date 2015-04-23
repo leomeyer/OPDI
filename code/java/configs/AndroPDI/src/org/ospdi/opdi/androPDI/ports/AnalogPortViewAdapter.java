@@ -62,18 +62,23 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
     AnalogPort.Resolution resolution;
 
 	boolean ignoreNextValueSet;
-	private View cachedView;
 
 	protected AnalogPortViewAdapter(ShowDevicePorts showDevicePorts) {
 		this.showDevicePorts = showDevicePorts;
 	}
 
-	public View getView() {
-		if (cachedView != null)
-			return cachedView;
-
-		LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		cachedView = vi.inflate(R.layout.analog_port_row, null);
+	public View getView(View convertView) {
+		View cachedView;
+		if (convertView == null) {
+			LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			// get layout property from UnitFormat definition
+			String layoutName = aPort.getUnitFormat().getProperty("layout", "analog_port_row");
+			// get layout identifier
+			int layoutID = context.getResources().getIdentifier(layoutName, "layout", context.getPackageName());
+			// inflate the identified layout
+			cachedView = vi.inflate(layoutID, null);
+		} else
+			cachedView = convertView;
 		
         tvToptext = (TextView) cachedView.findViewById(R.id.toptext);
         tvError = (TextView) cachedView.findViewById(R.id.tvError);
@@ -141,6 +146,12 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 			@Override
 			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 				queryState();
+				showDevicePorts.mHandler.post(new Runnable() {
+					@Override
+					public void run() {
+						updateState();
+					}
+				});
 			}
 		});
 		

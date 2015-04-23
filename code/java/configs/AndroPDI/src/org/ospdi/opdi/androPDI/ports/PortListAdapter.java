@@ -6,6 +6,7 @@ import org.ospdi.opdi.ports.AnalogPort;
 import org.ospdi.opdi.ports.DialPort;
 import org.ospdi.opdi.ports.DigitalPort;
 import org.ospdi.opdi.ports.Port;
+import org.ospdi.opdi.ports.Port.PortType;
 import org.ospdi.opdi.ports.SelectPort;
 import org.ospdi.opdi.ports.StreamingPort;
 import org.ospdi.opdi.androPDI.R;
@@ -37,6 +38,26 @@ class PortListAdapter extends ArrayAdapter<Port> {
         this.items = items;
     }
     
+    // ListView optimization support
+    // Note: Dealing with proper view types (i. e. one view type per port type) yields strange problems.
+    // Dial ports won't update their labels on converted views even though the updateState method should run.
+    // This method disables the ListView optimization and uses one view per port. However, this should
+    // not be a problem because we're not dealing with hundreds or thousands of ports, anyway.
+    
+    @Override
+    public int getViewTypeCount() {
+        // return PortType.values().length;
+    	return items.size();
+    }
+    
+    @Override
+    public int getItemViewType(int position) {
+        // return items.get(position).getType().ordinal();
+        return position;
+    }
+
+    // end of ListView optimization support
+    
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
     	
@@ -52,7 +73,7 @@ class PortListAdapter extends ArrayAdapter<Port> {
 	    		// re-use existing view adapter for performance
 	    		adapter = (IPortViewAdapter)port.getViewAdapter();
 	    		// assume it is already configured
-	    		return adapter.getView();
+	    		return adapter.getView(convertView);
 	    	} else {
 	    		
 	    		// to display the port correctly, set its default unit
@@ -85,7 +106,7 @@ class PortListAdapter extends ArrayAdapter<Port> {
 	            
 	            // get the adapter view
 	            if (result == null) {
-	                result = adapter.getView();
+	                result = adapter.getView(convertView);
 	            }
             }	            
             else {

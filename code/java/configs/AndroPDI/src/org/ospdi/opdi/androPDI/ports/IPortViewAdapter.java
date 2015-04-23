@@ -15,10 +15,11 @@ import android.view.ContextMenu.ContextMenuInfo;
 interface IPortViewAdapter {
 
 	/** Returns the view associated with the port.
+	 * @param convertView 
 	 * 
 	 * @return
 	 */
-	View getView();
+	View getView(View convertView);
 
 	/** Called to configure the port view.
 	 * 

@@ -52,26 +52,24 @@ class DialPortViewAdapter implements IPortViewAdapter {
 	long maxValue;
 	long step;
     boolean stateError;
-
-	private View cachedView;
     
 	protected DialPortViewAdapter(ShowDevicePorts showDevicePorts) {
 		super();
 		this.showDevicePorts = showDevicePorts;
 	}
 
-	public View getView() {
-		if (cachedView != null)
-			return cachedView;
-		
-		LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		
-		// get layout property from UnitFormat definition
-		String layoutName = dPort.getUnitFormat().getProperty("layout", "dial_port_row");
-		// get layout identifier
-		int layoutID = context.getResources().getIdentifier(layoutName, "layout", context.getPackageName());
-		// inflate the identified layout
-		cachedView = vi.inflate(layoutID, null);
+	public View getView(View convertView) {
+		View cachedView;
+		if (convertView == null) {
+			LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			// get layout property from UnitFormat definition
+			String layoutName = dPort.getUnitFormat().getProperty("layout", "dial_port_row");
+			// get layout identifier
+			int layoutID = context.getResources().getIdentifier(layoutName, "layout", context.getPackageName());
+			// inflate the identified layout
+			cachedView = vi.inflate(layoutID, null);
+		} else
+			cachedView = convertView;
 				
         tvToptext = (TextView) cachedView.findViewById(R.id.toptext);
         tvBottomtext = (TextView) cachedView.findViewById(R.id.bottomtext);
@@ -88,6 +86,12 @@ class DialPortViewAdapter implements IPortViewAdapter {
 			@Override
 			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 				queryState();
+				showDevicePorts.mHandler.post(new Runnable() {
+					@Override
+					public void run() {
+						updateState();
+					}
+				});
 			}
 		});
 

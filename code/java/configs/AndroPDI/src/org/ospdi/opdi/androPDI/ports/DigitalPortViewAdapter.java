@@ -48,24 +48,25 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 	boolean stateError;
 	DigitalPort.PortLine line;
 	DigitalPort.PortMode mode;
-	private View cachedView;
 
 	protected DigitalPortViewAdapter(ShowDevicePorts showDevicePorts) {
 		super();
 		this.showDevicePorts = showDevicePorts;
 	}
 
-	public View getView() {
-		if (cachedView != null)
-			return cachedView;
-		
-		LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		// get layout property from UnitFormat definition
-		String layoutName = dPort.getUnitFormat().getProperty("layout", "digital_port_row");
-		// get layout identifier
-		int layoutID = context.getResources().getIdentifier(layoutName, "layout", context.getPackageName());
-		// inflate the identified layout
-		cachedView = vi.inflate(layoutID, null);
+	public View getView(View convertView) {
+		View cachedView;
+		if (convertView == null) {
+			
+			LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			// get layout property from UnitFormat definition
+			String layoutName = dPort.getUnitFormat().getProperty("layout", "digital_port_row");
+			// get layout identifier
+			int layoutID = context.getResources().getIdentifier(layoutName, "layout", context.getPackageName());
+			// inflate the identified layout
+			cachedView = vi.inflate(layoutID, null);
+		} else
+			cachedView = convertView;
 		
         tvToptext = (TextView) cachedView.findViewById(R.id.toptext);
         tvBottomtext = (TextView) cachedView.findViewById(R.id.bottomtext);
@@ -80,6 +81,12 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 			@Override
 			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
 				queryState();
+				showDevicePorts.mHandler.post(new Runnable() {
+					@Override
+					public void run() {
+						updateState();
+					}
+				});
 			}
 		});
         
@@ -194,41 +201,44 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 	        	switch(line) {
 	        	case LOW: 
 	        		stateIcon = context.getResources().getDrawable(R.drawable.switch_off);
-	        		ivStateIcon.setOnClickListener(new View.OnClickListener() {							
-						@Override
-						public void onClick(View v) {
-							DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
-								@Override
-								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
-									// set line
-									dPort.setLine(DigitalPort.PortLine.HIGH);
-									line = dPort.getLine();
-								}							
-							});
-						}
-					});
+	        		if (ivStateIcon != null)
+		        		ivStateIcon.setOnClickListener(new View.OnClickListener() {							
+							@Override
+							public void onClick(View v) {
+								DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
+									@Override
+									void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+										// set line
+										dPort.setLine(DigitalPort.PortLine.HIGH);
+										line = dPort.getLine();
+									}							
+								});
+							}
+						});
 	        		break;
 	        	case HIGH: 
 	        		stateIcon = context.getResources().getDrawable(R.drawable.switch_on);
-	        		ivStateIcon.setOnClickListener(new View.OnClickListener() {							
-						@Override
-						public void onClick(View v) {
-							DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
-								@Override
-								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
-									// set line
-									dPort.setLine(DigitalPort.PortLine.LOW);
-									line = dPort.getLine();
-								}						
-							});
-						}
-					});
+	        		if (ivStateIcon != null)
+		        		ivStateIcon.setOnClickListener(new View.OnClickListener() {							
+							@Override
+							public void onClick(View v) {
+								DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
+									@Override
+									void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+										// set line
+										dPort.setLine(DigitalPort.PortLine.LOW);
+										line = dPort.getLine();
+									}						
+								});
+							}
+						});
 	        		break;
 	        	}
 			} else {
 				// an input mode is active
 				// disable click listener
-				ivStateIcon.setOnClickListener(null);				
+				if (ivStateIcon != null)
+					ivStateIcon.setOnClickListener(null);				
 	        	switch(line) {
 	        	case LOW: 
 	        		stateIcon = context.getResources().getDrawable(R.drawable.led_red);
@@ -242,16 +252,18 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 	        	}
 			}
 
-			ivStateIcon.setImageDrawable(stateIcon);
+			if (ivStateIcon != null)
+				ivStateIcon.setImageDrawable(stateIcon);
 		}
     			
 		// context menu when clicking
-		ivPortIcon.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				handleClick();
-			}
-		});
+		if (ivPortIcon != null)
+			ivPortIcon.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					handleClick();
+				}
+			});
 	}
 		
 		
