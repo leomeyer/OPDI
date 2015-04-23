@@ -799,7 +799,7 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 /** Can be used to send debug messages to a monitor.
  *
  */
-uint8_t opdi_debug_msg(const uint8_t *message, uint8_t direction) {
+uint8_t opdi_debug_msg(const char *message, uint8_t direction) {
 	if (Opdi->logVerbosity < AbstractOPDID::DEBUG)
 		return OPDI_STATUS_OK;
 	std::string dirChar = "-";
@@ -814,7 +814,7 @@ uint8_t opdi_debug_msg(const uint8_t *message, uint8_t direction) {
 	else
 	if (direction == OPDI_DIR_OUTGOING_ENCR)
 		dirChar = "{";
-	Opdi->log(dirChar + (const char *)message);
+	Opdi->log(dirChar + message);
 	return OPDI_STATUS_OK;
 }
 

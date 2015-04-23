@@ -55,7 +55,7 @@ extern uint16_t opdi_device_flags;
 *   only OPDI_STATUS_OK and do nothing else.
 *   See OPDI_DIR_* constants in opdi_constants.h for valid values for direction.
 */
-extern uint8_t opdi_debug_msg(const uint8_t *str, uint8_t direction);
+extern uint8_t opdi_debug_msg(const char *str, uint8_t direction);
 
 // encryption may be disabled by setting this define
 #ifndef OPDI_NO_ENCRYPTION
