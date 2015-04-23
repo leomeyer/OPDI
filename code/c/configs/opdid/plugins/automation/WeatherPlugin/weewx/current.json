@@ -12,7 +12,7 @@
   "weewxVersion":"$station.version",
   "stats": {
     "current": {
-      "inTemp":"$current.inTemp"
+      "inTemp":"$current.inTemp",
       "inHumidity":"$current.inHumidity",
       "outTemp":"$current.outTemp",
       "outHumidity":"$current.outHumidity",
@@ -33,15 +33,15 @@
       "extraTemp3":"$current.extraTemp3",
       "extraHumid3":"$current.extraHumid3",
       "extraTemp4":"$current.extraTemp4",
-      "extraHumid4":"$current.extraHumid4",
+      "extraHumid4":"$current.extraHumid4"
       #if $day.UV.has_data
-      "UV":"$current.UV",
+      ,"UV":"$current.UV"
       #end if
       #if $day.ET.has_data and $day.ET.sum.raw > 0.0
-      "ET":"$current.ET",
+      ,"ET":"$current.ET"
       #end if
       #if $day.radiation.has_data
-      "solarRadiation":"$current.radiation",
+      ,"solarRadiation":"$current.radiation"
       #end if
     }
   }
