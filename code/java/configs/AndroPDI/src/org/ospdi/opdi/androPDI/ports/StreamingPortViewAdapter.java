@@ -43,20 +43,25 @@ class StreamingPortViewAdapter implements IPortViewAdapter, IStreamingPortListen
 	// view state values
 	protected boolean stateError;
 	protected int position = -1;
-
-	protected View cachedView;
 	
 	protected StreamingPortViewAdapter(ShowDevicePorts showDevicePorts) {
 		super();
 		this.showDevicePorts = showDevicePorts;
 	}
 
-	public View getView() {
-		if (cachedView != null)
-			return cachedView;
-		
-		LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		cachedView = vi.inflate(R.layout.default_port_row, null);
+	public View getView(View convertView) {
+		View cachedView;
+		if (convertView == null) {
+			
+			LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			// get layout property from UnitFormat definition
+			String layoutName = sPort.getUnitFormat().getProperty("layout", "default_port_row");
+			// get layout identifier
+			int layoutID = context.getResources().getIdentifier(layoutName, "layout", context.getPackageName());
+			// inflate the identified layout
+			cachedView = vi.inflate(layoutID, null);
+		} else
+			cachedView = convertView;
 		
         tvToptext = (TextView) cachedView.findViewById(R.id.toptext);
         tvBottomtext = (TextView) cachedView.findViewById(R.id.bottomtext);
