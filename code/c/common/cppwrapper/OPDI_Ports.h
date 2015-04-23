@@ -184,6 +184,11 @@ public:
 	/** This method should be called just before the OPDI system is ready to start.
 	* It gives the port the chance to do necessary initializations. */
 	virtual void prepare(void);
+
+	/** This method returns true if the port is in an error state. This will likely be the case
+	*   when the getState() method of the port throws an exception.
+	*/
+	virtual bool hasError(void) = 0;
 };
 
 template <class T> inline std::string OPDI_Port::to_string(const T& t) {
@@ -284,6 +289,8 @@ public:
 
 	// function that fills in the current port state
 	virtual void getState(uint8_t *mode, uint8_t *line);
+
+	virtual bool hasError(void) override;
 };
 
 /** Defines an analog port.
@@ -330,6 +337,8 @@ public:
 
 	// sets the value from a factor between 0 and 1
 	virtual void setRelativeValue(double value);
+
+	virtual bool hasError(void) override;
 };
 
 /** Defines a select port.
@@ -371,6 +380,8 @@ public:
 	virtual void getState(uint16_t *position);
 
 	virtual uint16_t getMaxPosition(void);
+
+	virtual bool hasError(void) override;
 };
 
 /** Defines a dial port.
@@ -406,4 +417,6 @@ public:
 
 	// function that fills in the current port state
 	virtual void getState(int64_t *position);
+
+	virtual bool hasError(void) override;
 };

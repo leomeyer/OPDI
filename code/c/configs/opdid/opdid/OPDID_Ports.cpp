@@ -141,6 +141,8 @@ OPDID_LogicPort::~OPDID_LogicPort() {
 }
 
 void OPDID_LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
+	this->opdid->configurePort(config, this, 0);
+
 	std::string function = config->getString("Function", "OR");
 
 	try {
@@ -323,6 +325,8 @@ OPDID_PulsePort::~OPDID_PulsePort() {
 }
 
 void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
+	this->opdid->configurePort(config, this, 0);
+
 	this->negate = config->getBool("Negate", false);
 
 	std::string portLine = config->getString("Line", "");
@@ -483,7 +487,6 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 OPDID_SelectorPort::OPDID_SelectorPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 
 	this->opdid = opdid;
-	this->negate = false;
 
 	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	// set the line to an invalid state
@@ -494,7 +497,7 @@ OPDID_SelectorPort::~OPDID_SelectorPort() {
 }
 
 void OPDID_SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
-	this->negate = config->getBool("Negate", false);
+	this->opdid->configurePort(config, this, 0);
 
 	this->selectPortStr = config->getString("SelectPort", "");
 	if (this->selectPortStr == "")
@@ -577,11 +580,11 @@ OPDID_ExpressionPort::~OPDID_ExpressionPort() {
 }
 
 void OPDID_ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) {
-	this->opdid->configureDigitalPort(config, this);
+	this->opdid->configurePort(config, this, 0);
 
 	this->expressionStr = config->getString("Expression", "");
 	if (this->expressionStr == "")
-		throw Poco::DataException("You have to specify the Expression");
+		throw Poco::DataException("You have to specify an Expression");
 
 	this->outputPortStr = config->getString("OutputPorts", "");
 	if (this->outputPortStr == "")
@@ -697,7 +700,6 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 	OPDI_DigitalPort::doWork(canSend);
 
 	if (this->line == 1) {
-
 		// prepareVariables will return false in case of errors
 		if (this->prepareVariables()) {
 
@@ -729,7 +731,8 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 						((OPDI_SelectPort *)(*it))->setPosition((uint16_t)value);
 					} else
 						throw PortError("");
-				} catch (Poco::Exception) {
+				} catch (Poco::Exception &e) {
+					this->opdid->log(std::string(this->getID()) + ": Error setting output port value of port " + (*it)->getID() + ": " + e.message());
 				}
 
 				it++;
@@ -764,7 +767,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 
 	this->outputPortStr = this->opdid->getConfigString(config, "OutputPorts", "", true);
 
-	// enumerate schedules of the timer.Schedules node
+	// enumerate schedules of the <timer>.Schedules node
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log(std::string("Enumerating Timer schedules: ") + this->getID() + ".Schedules");
 
@@ -798,7 +801,8 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	}
 
 	if (orderedItems.size() == 0) {
-		this->opdid->log(std::string("Warning: No schedules configured in node ") + this->getID() + ".Schedules; is this intended?");
+		if (this->opdid->logVerbosity >= AbstractOPDID::NORMAL)
+			this->opdid->log(std::string("Warning: No schedules configured in node ") + this->getID() + ".Schedules; is this intended?");
 	}
 
 	// go through items, create schedules in specified order
@@ -976,8 +980,9 @@ void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Po
 		// add with the specified activation time
 		this->queue.enqueueNotification(notification, timestamp);
 	} else {
-		this->opdid->log(std::string(this->getID()) + ": Warning: Scheduled time for node " + 
-			notification->schedule.nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, "%Y-%m-%d %H:%M:%S"));
+		if (this->opdid->logVerbosity >= AbstractOPDID::NORMAL)
+			this->opdid->log(std::string(this->getID()) + ": Warning: Scheduled time for node " + 
+				notification->schedule.nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, "%Y-%m-%d %H:%M:%S"));
 /*
 		this->opdid->log(std::string(this->getID()) + ": Timestamp is: " + Poco::DateTimeFormatter::format(timestamp, "%Y-%m-%d %H:%M:%S"));
 		this->opdid->log(std::string(this->getID()) + ": Now is      : " + Poco::DateTimeFormatter::format(now, "%Y-%m-%d %H:%M:%S"));
@@ -1089,4 +1094,73 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 			}
 		}
 	}
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Error Detector Port
+///////////////////////////////////////////////////////////////////////////////
+
+OPDID_ErrorDetectorPort::OPDID_ErrorDetectorPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_INPUT, 0) {
+	this->opdid = opdid;
+
+	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
+
+	// make sure to trigger state change at first doWork
+	this->line = -1;
+}
+
+OPDID_ErrorDetectorPort::~OPDID_ErrorDetectorPort() {
+}
+
+void OPDID_ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration *config) {
+	this->opdid->configureDigitalPort(config, this);
+
+	this->inputPortStr = this->opdid->getConfigString(config, "InputPorts", "", true);
+	this->negate = config->getBool("Negate", false);
+}
+
+void OPDID_ErrorDetectorPort::setDirCaps(const char *dirCaps) {
+	throw PortError(std::string(this->getID()) + ": The direction capabilities of an ErrorDetectorPort cannot be changed");
+}
+
+void OPDID_ErrorDetectorPort::setMode(uint8_t mode) {
+	throw PortError(std::string(this->getID()) + ": The mode of an ErrorDetectorPort cannot be changed");
+}
+
+void OPDID_ErrorDetectorPort::prepare() {
+	OPDI_DigitalPort::prepare();
+
+	// find ports; throws errors if something required is missing
+	this->findPorts(this->getID(), "InputPorts", this->inputPortStr, this->inputPorts);
+}
+
+uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
+	OPDI_DigitalPort::doWork(canSend);
+
+	int8_t newState = 0;
+
+	// if any port has an error, set the line state to 1
+	PortList::iterator it = this->inputPorts.begin();
+	while (it != this->inputPorts.end()) {
+		if ((*it)->hasError()) {
+			if (this->opdid->logVerbosity >= AbstractOPDID::EXTREME)
+				this->opdid->log(std::string(this->getID()) + ": Detected error on port: " + (*it)->getID());
+			newState = 1;
+			break;
+		}
+		it++;
+	}
+
+	if (negate)
+		newState = (newState == 0 ? 1 : 0);
+
+	// change?
+	if (this->line != newState) {
+		if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
+			this->opdid->log(std::string(this->getID()) + ": Changing line state to: " + (newState == 1 ? "High" : "Low"));
+		this->line = newState;
+		this->doSelfRefresh();
+	}
+
+	return OPDI_STATUS_OK;
 }

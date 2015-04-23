@@ -41,6 +41,8 @@ protected:
 	int minorVersion;
 	int patchVersion;
 
+	bool allowHiddenPorts;
+
 	Poco::Util::AbstractConfiguration *configuration;
 
 	std::string masterName;
@@ -160,6 +162,8 @@ public:
 #endif	// def OPDI_USE_EXPRTK
 
 	virtual void setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
+	virtual void setupErrorDetectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);
