@@ -99,7 +99,7 @@ public abstract class AbstractProtocol {
 					if (parts[0].equals(DISAGREEMENT))
 					{
 						if (parts.length > 1)
-							throw new PortAccessDeniedException(Strings.join(1, SEPARATOR, (Object[])parts));
+							throw new PortAccessDeniedException(Strings.join(1, Strings.NO_SEPARATOR, (Object[])parts));
 						else
 							throw new PortAccessDeniedException();
 					}
@@ -107,7 +107,7 @@ public abstract class AbstractProtocol {
 					if (parts[0].equals(ERROR))
 					{
 						if (parts.length > 1)
-							throw new PortErrorException(Strings.join(1, SEPARATOR, (Object[])parts));
+							throw new PortErrorException(Strings.join(1, Strings.NO_SEPARATOR, (Object[])parts));
 						else
 							throw new PortErrorException();
 					}

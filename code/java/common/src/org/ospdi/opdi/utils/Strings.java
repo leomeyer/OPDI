@@ -1,15 +1,14 @@
 package org.ospdi.opdi.utils;
 
 import java.util.ArrayList;
-import java.util.Dictionary;
 import java.util.HashMap;
 
 import org.ospdi.opdi.protocol.ProtocolException;
 
-import com.sun.org.apache.xalan.internal.xsltc.runtime.Hashtable;
-
 
 public class Strings {
+	
+	public final static char NO_SEPARATOR = '\0';
 
 	private static String removeLeadingBlank(StringBuilder sb) {
 		if (sb.length() > 0)
@@ -36,7 +35,7 @@ public class Strings {
 				// preview of next character
 				if (i < str.length() - 1) nextCh = str.charAt(i + 1);
 				// two subsequent separator characters?
-				if (ch == c && ch == nextCh) {
+				if ((ch == c) && (ch == nextCh)) {
 					sb.append(ch);
 					// jump over the next one
 					i++;
@@ -90,6 +89,7 @@ public class Strings {
 	/** Joins the strings separated by the character c, skipping the first skip objects.
 	 * If the character c appears in one of the strings it is replaced by twice c in order to
 	 * allow splitting of the string using the split() method.
+	 * If the separator character is '\0' (constant NO_SEPARATOR), no separator will be appended.
 	 * The strings may be of any type. This method uses the toString() method. If an object is null
 	 * it will be represented in the output by an empty part.
 	 * @param c
@@ -114,10 +114,11 @@ public class Strings {
 				// all characters
 				sb.append(ch);
 			}
-			// append separator
-			sb.append(c);
+			if (c != NO_SEPARATOR)
+				// append separator
+				sb.append(c);
 		}
-		return (sb.length() == 0 ? "" : sb.substring(0, sb.length() - 1));	// remove last separator 
+		return ((sb.length() == 0) || (c == NO_SEPARATOR) ? sb.toString() : sb.substring(0, sb.length() - 1));	// remove last separator 
 	}
 	
 	/** Parses a parameter as integer and throws exceptions if error conditions are met.

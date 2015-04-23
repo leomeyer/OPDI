@@ -169,14 +169,20 @@
     <string name="humidity_percent">humidity_percent_in_percent=0</string>
     <string name="humidity_percent_in_percent" formatted="false">layout=dial_port_row_noslider;icon=humidity_percent;label=Humidity (%%);formatString=%.0f %%;</string>
     
-    <string name="pressure_mbar">pressure_in_mbar=0</string>
-    <string name="pressure_in_mbar">layout=dial_port_row_noslider;icon=barometer;label=Pressure (mbar);formatString=%.0f mbar</string>
+    <string name="pressure_mbar">pressure_mbar_in_mbar=0</string>
+    <string name="pressure_mbar_in_mbar">layout=dial_port_row_noslider;icon=barometer;label=Pressure (mbar);formatString=%.0f mbar</string>
 
+    <string name="pressure_microbar">pressure_microbar_in_mbar=0</string>
+    <string name="pressure_microbar_in_mbar">layout=dial_port_row_noslider;icon=barometer;label=Pressure (mbar);formatString=%.1f mbar;denominator=1000</string>
+    
     <string name="windspeed_cmPerSecond">windspeed_in_mPerSecond=0</string>
-    <string name="windspeed_in_mPerSecond">layout=dial_port_row_noslider;icon=windspeed;label=Wind (m/s);formatString=%.0f m/s;denominator=100</string>
+    <string name="windspeed_in_mPerSecond">layout=dial_port_row_noslider;icon=windspeed;label=Wind (m/s);formatString=%.1f m/s;denominator=100</string>
     
     <string name="rainrate_mmPerHour">rainrate_in_mmPerHour=0</string>
     <string name="rainrate_in_mmPerHour">layout=dial_port_row_noslider;icon=rainfall;label=Rain Rate (mm/h);formatString=%.0f mm/h</string>
+    
+    <string name="rainrate_micromPerHour">rainrate_micromPerHour_in_mmPerHour=0</string>
+    <string name="rainrate_micromPerHour_in_mmPerHour">layout=dial_port_row_noslider;icon=rainfall;label=Rain Rate (mm/h);formatString=%.1f mm/h;denominator=1000</string>
     
     
 </resources>
