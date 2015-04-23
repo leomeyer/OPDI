@@ -88,6 +88,11 @@ public:
 	virtual void prepare(void) override;
 
 	virtual void getState(int64_t *position) override;
+
+	// important! Override this method and use isValid directly because
+	// the standard method will continuously query the state, thus rendering the
+	// lastRequestedValidState flag useless and cause perpetual self-refreshes!
+	virtual bool hasError(void) override;
 };
 
 WeatherGaugePort::WeatherGaugePort(AbstractOPDID *opdid, const char *id) : OPDI_DialPort(id) {
@@ -127,6 +132,11 @@ void WeatherGaugePort::prepare(void) {
 void WeatherGaugePort::invalidate(void) {
 	Poco::Mutex::ScopedLock lock(this->mutex);
 	this->isValid = false;
+}
+
+bool WeatherGaugePort::hasError(void) {
+	Poco::Mutex::ScopedLock lock(this->mutex);
+	return !this->isValid;
 }
 
 void WeatherGaugePort::extract(std::string rawValue) {
