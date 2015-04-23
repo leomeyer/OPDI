@@ -1126,7 +1126,7 @@ static uint8_t basic_protocol_handler(void) {
 
 			// debug message?
 			if (!strcmp(opdi_msg_parts[0], OPDI_Debug)) {
-				result = opdi_debug_msg((uint8_t *)opdi_msg_parts[1], OPDI_DIR_DEBUG);
+				result = opdi_debug_msg(opdi_msg_parts[1], OPDI_DIR_DEBUG);
 				if (result != OPDI_STATUS_OK)
 					return result;
 			}
@@ -1187,7 +1187,7 @@ static uint8_t extended_protocol_handler(void) {
 
 			// debug message?
 			if (!strcmp(opdi_msg_parts[0], OPDI_Debug))
-				opdi_debug_msg((uint8_t *)opdi_msg_parts[1], OPDI_DIR_DEBUG);
+				opdi_debug_msg(opdi_msg_parts[1], OPDI_DIR_DEBUG);
 		} else {
 			// message other than control message received
 			// let the protocol handle the message
