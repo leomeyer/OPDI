@@ -311,7 +311,7 @@ protected:
 		TOGGLE
 	};
 
-	typedef struct Schedule {
+	struct Schedule {
 		std::string nodeName;
 		ScheduleType type;
 		Action action;

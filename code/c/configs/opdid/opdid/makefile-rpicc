@@ -1,5 +1,5 @@
 # Target file name (without extension).
-TARGET = LinuxOPDID
+TARGET = RaspOPDID
 
 # OPDI platform specifier
 PLATFORM = linux
@@ -14,7 +14,7 @@ PPATHBASE = ../../../platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List C source files of the configuration here.
-SRC = $(TARGET).cpp
+SRC = LinuxOPDID.cpp
 
 # platform specific files
 SRC += $(PPATH)/opdi_platformfuncs.c
