@@ -164,7 +164,6 @@ public:
 */
 class OPDID_SelectorPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
-	bool negate;
 	std::string selectPortStr;
 	OPDI_SelectPort *selectPort;
 	uint16_t position;
@@ -372,6 +371,38 @@ public:
 	virtual void setMode(uint8_t mode) override;
 
 	virtual void setLine(uint8_t line) override;
+
+	virtual void prepare() override;
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Error Detector Port
+///////////////////////////////////////////////////////////////////////////////
+
+/** An ErrorDetectorPort is a DigitalPort whose state is determined by one or more 
+*   specified ports. If any of these ports will have an error, i. e. their hasError()
+*   method returns true, the state of this port will be High and Low otherwise.
+*   The logic level can be negated.
+*/
+class OPDID_ErrorDetectorPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+protected:
+	bool negate;
+	std::string inputPortStr;
+	PortList inputPorts;
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+
+public:
+	OPDID_ErrorDetectorPort(AbstractOPDID *opdid, const char *id);
+
+	virtual ~OPDID_ErrorDetectorPort();
+
+	virtual void configure(Poco::Util::AbstractConfiguration *config);
+
+	virtual void setDirCaps(const char *dirCaps) override;
+
+	virtual void setMode(uint8_t mode) override;
 
 	virtual void prepare() override;
 };

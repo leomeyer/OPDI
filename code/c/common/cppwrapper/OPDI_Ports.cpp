@@ -478,6 +478,17 @@ void OPDI_DigitalPort::getState(uint8_t *mode, uint8_t *line) {
 	*line = this->line;
 }
 
+bool OPDI_DigitalPort::hasError(void) {
+	uint8_t mode;
+	uint8_t line;
+	try {
+		this->getState(&mode, &line);
+		return false;
+	} catch (...) {
+		return true;
+	}
+}
+
 #endif		// NO_DIGITAL_PORTS
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -590,6 +601,18 @@ void OPDI_AnalogPort::setRelativeValue(double value) {
 	this->setValue(static_cast<int32_t>(value * ((1 << this->resolution) - 1)));
 }
 
+bool OPDI_AnalogPort::hasError(void) {
+	uint8_t mode;
+	uint8_t resolution;
+	uint8_t reference;
+	int32_t value;
+	try {
+		this->getState(&mode, &resolution, &reference, &value);
+		return false;
+	} catch (...) {
+		return true;
+	}
+}
 
 #endif		// NO_ANALOG_PORTS
 
@@ -674,6 +697,16 @@ uint16_t OPDI_SelectPort::getMaxPosition(void) {
 	return this->itemCount - 1;
 }
 
+bool OPDI_SelectPort::hasError(void) {
+	uint16_t position;
+	try {
+		this->getState(&position);
+		return false;
+	} catch (...) {
+		return true;
+	}
+}
+
 #endif // OPDI_NO_SELECT_PORTS
 
 #ifndef OPDI_NO_DIAL_PORTS
@@ -732,5 +765,14 @@ void OPDI_DialPort::getState(int64_t *position) {
 	*position = this->position;
 }
 
+bool OPDI_DialPort::hasError(void) {
+	int64_t position;
+	try {
+		this->getState(&position);
+		return false;
+	} catch (...) {
+		return true;
+	}
+}
 
 #endif // OPDI_NO_DIAL_PORTS

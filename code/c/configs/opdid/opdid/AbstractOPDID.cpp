@@ -300,6 +300,8 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 		this->logVerbosity = NORMAL;
 	}
 
+	this->allowHiddenPorts = general->getBool("AllowHidden", true);
+
 	// initialize OPDI slave
 	this->setup(slaveName.c_str(), idleTimeout);
 }
@@ -341,8 +343,10 @@ void AbstractOPDID::setupGroup(Poco::Util::AbstractConfiguration *groupConfig, s
 }
 
 void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags) {
-	// ports can be hidden
-	port->setHidden(portConfig->getBool("Hidden", false));
+	// ports can be hidden if allowed
+	if (this->allowHiddenPorts)
+		port->setHidden(portConfig->getBool("Hidden", false));
+
 	// ports can be readonly
 	port->setReadonly(portConfig->getBool("Readonly", false));
 
@@ -581,7 +585,6 @@ void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration *portConfig
 		this->log("Setting up LogicPort: " + port);
 
 	OPDID_LogicPort *dlPort = new OPDID_LogicPort(this, port.c_str());
-	this->configurePort(portConfig, dlPort, 0);
 	dlPort->configure(portConfig);
 
 	this->addPort(dlPort);
@@ -592,7 +595,6 @@ void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig
 		this->log("Setting up PulsePort: " + port);
 
 	OPDID_PulsePort *pulsePort = new OPDID_PulsePort(this, port.c_str());
-	this->configurePort(portConfig, pulsePort, 0);
 	pulsePort->configure(portConfig);
 
 	this->addPort(pulsePort);
@@ -603,7 +605,6 @@ void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portCon
 		this->log("Setting up SelectorPort: " + port);
 
 	OPDID_SelectorPort *selectorPort = new OPDID_SelectorPort(this, port.c_str());
-	this->configurePort(portConfig, selectorPort, 0);
 	selectorPort->configure(portConfig);
 
 	this->addPort(selectorPort);
@@ -615,7 +616,6 @@ void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration *portC
 		this->log("Setting up Expression: " + port);
 
 	OPDID_ExpressionPort *expressionPort = new OPDID_ExpressionPort(this, port.c_str());
-	this->configurePort(portConfig, expressionPort, 0);
 	expressionPort->configure(portConfig);
 
 	this->addPort(expressionPort);
@@ -627,10 +627,19 @@ void AbstractOPDID::setupTimerPort(Poco::Util::AbstractConfiguration *portConfig
 		this->log("Setting up Timer: " + port);
 
 	OPDID_TimerPort *timerPort = new OPDID_TimerPort(this, port.c_str());
-	this->configurePort(portConfig, timerPort, 0);
 	timerPort->configure(portConfig);
 
 	this->addPort(timerPort);
+}
+
+void AbstractOPDID::setupErrorDetectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Setting up ErrorDetector: " + port);
+
+	OPDID_ErrorDetectorPort *edPort = new OPDID_ErrorDetectorPort(this, port.c_str());
+	edPort->configure(portConfig);
+
+	this->addPort(edPort);
 }
 
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
@@ -688,6 +697,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else
 		if (nodeType == "Timer") {
 			this->setupTimerPort(nodeConfig, node);
+		} else
+		if (nodeType == "ErrorDetector") {
+			this->setupErrorDetectorPort(nodeConfig, node);
 		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}
@@ -759,7 +771,7 @@ void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
 	int tzd;
 
 	if (!Poco::DateTimeParser::tryParse("%b %e %Y %H:%M:%s", compiled.str(), buildTime, tzd)) {
-		if (this->logVerbosity != AbstractOPDID::QUIET)
+		if (this->logVerbosity >= AbstractOPDID::NORMAL)
 			this->log("Warning: Could not parse build date and time to check possible ABI violation of driver " + driver + ": " + __DATE__ + " " + __TIME__);
 	} else {
 		// check whether the plugin driver file is more recent
@@ -767,7 +779,7 @@ void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
 		// convert build time to UTC
 		buildTime.makeUTC(Poco::Timezone::tzd());
 		// assume both files have been built in the same time zone (getLastModified also returns UTC)
-		if ((driverFile.getLastModified() < buildTime.timestamp()) && (this->logVerbosity != AbstractOPDID::QUIET))
+		if ((driverFile.getLastModified() < buildTime.timestamp()) && (this->logVerbosity >= AbstractOPDID::NORMAL))
 			this->log("Warning: Plugin module " + driver + " is older than the main binary; possible ABI conflict! In case of strange errors please recompile the plugin!");
 	}
 }

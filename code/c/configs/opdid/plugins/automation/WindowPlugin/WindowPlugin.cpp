@@ -558,7 +558,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 
 			// sensor still closed? (error condition)
 			if (this->isSensorClosed()) {
-				if (opdid->logVerbosity > AbstractOPDID::QUIET)
+				if (opdid->logVerbosity >= AbstractOPDID::NORMAL)
 					opdid->log(std::string(this->id) + ": Warning: Closing sensor signal still present after opening");
 				// enable delay specified?
 				if (this->enableDelay > 0) {
@@ -613,7 +613,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 
 			// without detecting sensor? error condition
 			if (this->sensorPort != NULL) {
-				if (opdid->logVerbosity > AbstractOPDID::QUIET)
+				if (opdid->logVerbosity >= AbstractOPDID::NORMAL)
 					opdid->log(std::string(this->id) + ": Warning: Closing sensor signal not detected while closing");
 
 				// enable delay specified?

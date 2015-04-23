@@ -424,6 +424,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
     	// reset device name color
 		tvName.setTextColor(COLOR_DEFAULT);
     	tvInfo.setText(device.getDisplayAddress());
+    	portListAdapter.notifyDataSetChanged();
    	}
 	
 	protected void stopProcessor() {

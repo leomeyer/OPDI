@@ -726,7 +726,8 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 	}
 
 	if (orderedItems.size() == 0) {
-		this->opdid->log("Warning: No ports configured in node " + node + ".Nodes; is this intended?");
+		if (this->opdid->logVerbosity >= AbstractOPDID::NORMAL)
+			this->opdid->log("Warning: No ports configured in node " + node + ".Nodes; is this intended?");
 	}
 
 	// go through items, create ports in specified order
