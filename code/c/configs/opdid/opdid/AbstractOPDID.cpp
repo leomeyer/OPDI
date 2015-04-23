@@ -612,7 +612,7 @@ void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portCon
 #ifdef OPDI_USE_EXPRTK
 void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
 	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up ExpressionPort: " + port);
+		this->log("Setting up Expression: " + port);
 
 	OPDID_ExpressionPort *expressionPort = new OPDID_ExpressionPort(this, port.c_str());
 	this->configurePort(portConfig, expressionPort, 0);
@@ -621,6 +621,17 @@ void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration *portC
 	this->addPort(expressionPort);
 }
 #endif	// def OPDI_USE_EXPRTK
+
+void AbstractOPDID::setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Setting up Timer: " + port);
+
+	OPDID_TimerPort *timerPort = new OPDID_TimerPort(this, port.c_str());
+	this->configurePort(portConfig, timerPort, 0);
+	timerPort->configure(portConfig);
+
+	this->addPort(timerPort);
+}
 
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
 	if (this->logVerbosity >= VERBOSE)
@@ -671,9 +682,12 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 			this->setupSelectorPort(nodeConfig, node);
 #ifdef OPDI_USE_EXPRTK
 		} else
-		if (nodeType == "ExpressionPort") {
+		if (nodeType == "Expression") {
 			this->setupExpressionPort(nodeConfig, node);
 #endif	// def OPDI_USE_EXPRTK
+		} else
+		if (nodeType == "Timer") {
+			this->setupTimerPort(nodeConfig, node);
 		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}

@@ -10,6 +10,7 @@
 #include <exprtk.hpp>
 
 #include "Poco/Util/AbstractConfiguration.h"
+#include "Poco/TimedNotificationQueue.h"
 
 #include "opdi_constants.h"
 
@@ -92,13 +93,13 @@ public:
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
 
-	virtual void setDirCaps(const char *dirCaps);
+	virtual void setDirCaps(const char *dirCaps) override;
 
-	virtual void setMode(uint8_t mode);
+	virtual void setMode(uint8_t mode) override;
 
-	virtual void setLine(uint8_t line);
+	virtual void setLine(uint8_t line) override;
 
-	virtual void prepare();
+	virtual void prepare() override;
 };
 
 
@@ -146,11 +147,11 @@ public:
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
 
-	virtual void setDirCaps(const char *dirCaps);
+	virtual void setDirCaps(const char *dirCaps) override;
 
-	virtual void setMode(uint8_t mode);
+	virtual void setMode(uint8_t mode) override;
 
-	virtual void prepare();
+	virtual void prepare() override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -194,7 +195,7 @@ public:
 *   depending on the result of a calculation expression.
 *   The expression is evaluated in each doWork iteration if the ExpressionPort is enabled,
 *   i. e. its digital state is High (default). 
-*   The expression can refer to port IDs (input variables). Although port IDs are case-
+*   The expression can refer to port IDs (input variables). Although these port IDs are case-
 *   insensitive (a restriction of the underlying library), it is recommended to use the correct case.
 *   The rules for the different port types are:
 *    - A digital port is evaluated as 1 or 0 (High or Low).
@@ -251,3 +252,126 @@ public:
 };
 
 #endif // def OPDI_USE_EXPRTK
+
+///////////////////////////////////////////////////////////////////////////////
+// Timer Port
+///////////////////////////////////////////////////////////////////////////////
+
+/** A TimerPort is a DigitalPort whose state is determined by one or more 
+*   timing schedules. A TimerPort is output only.
+*   In its doWork method the TimerPort checks whether a timestamp defined
+*   by a schedule has been reached. If a schedule is due the line
+*   of the output port(s) is set according to the schedule specification.
+*   The TimerPort supports the following scheduling types:
+*    - Once: Executes only at the specified time.
+*    - Interval: Executes with the specifed interval.
+*    - Periodic: Executes at matching points in time specified by a pattern.
+*    - Random: Executes randomly.
+*   In schedules of type Interval, Periodic and Random you can specify how often the schedule
+*   should trigger. When the maximum number of occurrences has been reached the schedule
+*   will become inactive.
+*   The TimerPort will act on the output ports only if it is enabled (line = High).
+*   When setting a TimerPort to Low, all future events (including deactivations) will be
+*   ignored.
+*   When setting the TimerPort to High after it has been Low, all schedules start to run again.
+*   Each schedule can act on the output in three ways: SetHigh, SetLow and Toggle.
+*   If the action is SetHigh all output ports will be set to High when the schedule triggers.
+*   If the schedule specifies a deactivation delay the output ports will be set to Low when
+*   the deactivation time has passed.
+*   Correspondingly, if the action is SetLow all output ports will be set to Low when the schedule triggers.
+*   If the schedule specifies a deactivation delay the output ports will be set to High when
+*   the deactivation time has passed.
+*   If the action is Toggle, the port state is queried and inverted. The same happens after the optional
+*   deactivation time.
+*   If the deactivation time specified is 0 (default) no deactivation event will take place.
+*   To specify points in time or intervals you can use the following configuration properties:
+*    - Year
+*    - Month
+*    - Day
+*    - Weekday (only Periodic)
+*    - Hour
+*    - Minute
+*    - Second
+*   
+*/
+class OPDID_TimerPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+protected:
+
+	enum ScheduleType {
+		ONCE,
+		INTERVAL,
+		PERIODIC,
+		RANDOM,
+		_DEACTIVATE
+	};
+
+	enum Action {
+		SET_HIGH,
+		SET_LOW,
+		TOGGLE
+	};
+
+	typedef struct Schedule {
+		std::string nodeName;
+		ScheduleType type;
+		Action action;
+		union data {
+			struct time {		// for time-based schedules
+				int16_t year;
+				int16_t month;
+				int16_t day;
+				int16_t weekday;
+				int16_t hour;
+				int16_t minute;
+				int16_t second;
+			} time;
+			struct random {		// for random-based schedules
+				int jitter;
+
+			} random;
+		} data;
+		int occurrences;		// occurrence counter
+		int maxOccurrences;		// maximum number of occurrences that this schedule is active
+		long delayMs;			// deactivation time in milliseconds
+	};
+
+	class ScheduleNotification : public Poco::Notification {
+	public:
+		typedef Poco::AutoPtr<ScheduleNotification> Ptr;
+		Poco::Timestamp timestamp;
+		Schedule schedule;
+
+		inline ScheduleNotification(Schedule schedule) {
+			this->schedule = schedule;
+		};
+	};
+
+	typedef std::vector<Schedule> ScheduleList;
+	ScheduleList schedules;
+
+	std::string outputPortStr;
+	DigitalPortList outputPorts;
+
+	Poco::TimedNotificationQueue queue;
+
+	Poco::Timestamp calculateNextOccurrence(Schedule *schedule);
+
+	void addNotification(ScheduleNotification::Ptr notification, Poco::Timestamp timestamp);
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+
+public:
+	OPDID_TimerPort(AbstractOPDID *opdid, const char *id);
+
+	virtual ~OPDID_TimerPort();
+
+	virtual void configure(Poco::Util::AbstractConfiguration *config);
+
+	virtual void setDirCaps(const char *dirCaps) override;
+
+	virtual void setMode(uint8_t mode) override;
+
+	virtual void setLine(uint8_t line) override;
+
+	virtual void prepare() override;
+};

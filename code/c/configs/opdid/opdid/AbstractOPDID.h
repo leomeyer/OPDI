@@ -159,6 +159,8 @@ public:
 	virtual void setupExpressionPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 #endif	// def OPDI_USE_EXPRTK
 
+	virtual void setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);
 

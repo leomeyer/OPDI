@@ -1,4 +1,8 @@
 
+#include "Poco/Tuple.h"
+#include "Poco/Timezone.h"
+#include "Poco/DateTimeFormatter.h"
+
 #include "opdi_port.h"
 #include "opdi_platformfuncs.h"
 
@@ -377,8 +381,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 	// default: pulse is enabled if the line is High
 	bool enabled = (this->line == 1);
 
-	if (this->enablePorts.size() > 0) {
-		// count how many enable ports are High
+	if (!enabled  && (this->enablePorts.size() > 0)) {
 		int highCount = 0;
 		DigitalPortList::iterator it = this->enablePorts.begin();
 		while (it != this->enablePorts.end()) {
@@ -387,12 +390,14 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->getState(&mode, &line);
 			} catch (Poco::Exception &e) {
-				this->opdid->log(std::string("Querying port ") + (*it)->getID() + ": " + e.message());
+				this->opdid->log(std::string(this->getID()) + ": Error querying port " + (*it)->getID() + ": " + e.message());
 			}
 			highCount += line;
 			it++;
+			if (highCount > 0)
+				break;
 		}
-		// pulse is enabled if there is at least one EnabledPort with High
+		// pulse is enabled if there is at least one EnablePort with High
 		enabled |= highCount > 0;
 	}
 
@@ -450,18 +455,9 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 		// regular output ports
 		while (it != this->outputPorts.end()) {
 			try {
-				uint8_t mode;
-				uint8_t line;
-				// get current output port state
-				(*it)->getState(&mode, &line);
-				// changed?
-				if (line != newState) {
-					if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
-						opdid->log(std::string(this->id) + ": Changing line of port " + (*it)->getID() + " to " + (newState == 0 ? "Low" : "High"));
-					(*it)->setLine(newState);
-				}
+				(*it)->setLine(newState);
 			} catch (Poco::Exception &e) {
-				this->opdid->log(std::string("Changing port ") + (*it)->getID() + ": " + e.message());
+				this->opdid->log(std::string(this->getID()) + ": Error setting output port state: " + (*it)->getID() + ": " + e.message());
 			}
 			it++;
 		}
@@ -469,18 +465,9 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 		it = this->inverseOutputPorts.begin();
 		while (it != this->inverseOutputPorts.end()) {
 			try {
-				uint8_t mode;
-				uint8_t line;
-				// get current output port state
-				(*it)->getState(&mode, &line);
-				// changed?
-				if (line == newState) {
-					if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
-						opdid->log(std::string(this->id) + ": Changing line of inverse port " + (*it)->getID() + " to " + (newState == 0 ? "High" : "Low"));
-					(*it)->setLine((newState == 0 ? 1 : 0));
-				}
+				(*it)->setLine((newState == 0 ? 1 : 0));
 			} catch (Poco::Exception &e) {
-				this->opdid->log(std::string("Changing port ") + (*it)->getID() + ": " + e.message());
+				this->opdid->log(std::string(this->getID()) + ": Error setting inverse output port state: " + (*it)->getID() + ": " + e.message());
 			}
 			it++;
 		}
@@ -590,6 +577,7 @@ OPDID_ExpressionPort::~OPDID_ExpressionPort() {
 }
 
 void OPDID_ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) {
+	this->opdid->configureDigitalPort(config, this);
 
 	this->expressionStr = config->getString("Expression", "");
 	if (this->expressionStr == "")
@@ -753,3 +741,352 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 }
 
 #endif	// def OPDI_USE_EXPRTK
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Timer Port
+///////////////////////////////////////////////////////////////////////////////
+
+OPDID_TimerPort::OPDID_TimerPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+	this->opdid = opdid;
+
+	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+
+	// default: enabled
+	this->line = 1;
+}
+
+OPDID_TimerPort::~OPDID_TimerPort() {
+}
+
+void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
+	this->opdid->configureDigitalPort(config, this);
+
+	this->outputPortStr = this->opdid->getConfigString(config, "OutputPorts", "", true);
+
+	// enumerate schedules of the timer.Schedules node
+	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		this->opdid->log(std::string("Enumerating Timer schedules: ") + this->getID() + ".Schedules");
+
+	Poco::Util::AbstractConfiguration *nodes = config->createView("Schedules");
+
+	// get ordered list of schedules
+	Poco::Util::AbstractConfiguration::Keys scheduleKeys;
+	nodes->keys("", scheduleKeys);
+
+	typedef Poco::Tuple<int, std::string> Item;
+	typedef std::vector<Item> ItemList;
+	ItemList orderedItems;
+
+	// create ordered list of schedule keys (by priority)
+	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = scheduleKeys.begin(); it != scheduleKeys.end(); ++it) {
+
+		int itemNumber = nodes->getInt(*it, 0);
+		// check whether the item is active
+		if (itemNumber < 0)
+			continue;
+
+		// insert at the correct position to create a sorted list of items
+		ItemList::iterator nli = orderedItems.begin();
+		while (nli != orderedItems.end()) {
+			if (nli->get<0>() > itemNumber)
+				break;
+			nli++;
+		}
+		Item item(itemNumber, *it);
+		orderedItems.insert(nli, item);
+	}
+
+	if (orderedItems.size() == 0) {
+		this->opdid->log(std::string("Warning: No schedules configured in node ") + this->getID() + ".Schedules; is this intended?");
+	}
+
+	// go through items, create schedules in specified order
+	ItemList::const_iterator nli = orderedItems.begin();
+	while (nli != orderedItems.end()) {
+
+		std::string nodeName = nli->get<1>();
+
+		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			this->opdid->log("Setting up timer schedule for node: " + nodeName);
+
+		// get schedule section from the configuration
+		Poco::Util::AbstractConfiguration *scheduleConfig = this->opdid->getConfiguration()->createView(nodeName);
+
+		Schedule schedule;
+		schedule.nodeName = nodeName;
+		schedule.data.time.year = scheduleConfig->getInt("Year", -1);
+		schedule.data.time.month = scheduleConfig->getInt("Month", -1);
+		schedule.data.time.day = scheduleConfig->getInt("Day", -1);
+		schedule.data.time.weekday = scheduleConfig->getInt("Weekday", -1);
+		schedule.data.time.hour = scheduleConfig->getInt("Hour", -1);
+		schedule.data.time.minute = scheduleConfig->getInt("Minute", -1);
+		schedule.data.time.second = scheduleConfig->getInt("Second", -1);
+
+		if ((schedule.data.time.day > -1) && (schedule.data.time.weekday > -1))
+			throw Poco::DataException(nodeName + ": Please specify either Day or Weekday but not both");
+
+		schedule.maxOccurrences = scheduleConfig->getInt("MaxOccurrences", -1);
+		schedule.delayMs = scheduleConfig->getInt("Delay", 0);		// default: no deactivation
+		schedule.action = SET_HIGH;									// default action
+
+		std::string action = this->opdid->getConfigString(scheduleConfig, "Action", "", false);
+		if (action == "SetHigh") {
+			schedule.action = SET_HIGH;
+		} else
+		if (action == "SetLow") {
+			schedule.action = SET_LOW;
+		} else
+		if (action == "Toggle") {
+			schedule.action = TOGGLE;
+		} else
+			if (action != "")
+				throw Poco::DataException(nodeName + ": Unknown schedule action; expected: 'SetHigh', 'SetLow' or 'Toggle': " + action);
+
+		// get schedule type (required)
+		std::string scheduleType = this->opdid->getConfigString(scheduleConfig, "Type", "", true);
+
+		if (scheduleType == "Once") {
+			schedule.type = ONCE;
+			if ((schedule.data.time.year < 0) || (schedule.data.time.month < 0)
+				|| (schedule.data.time.day < 0)
+				|| (schedule.data.time.hour < 0) || (schedule.data.time.minute < 0)
+				|| (schedule.data.time.second < 0))
+				throw Poco::DataException(nodeName + ": You have to specify all time components for schedule type Once");
+
+			if (schedule.data.time.weekday > -1)
+				throw Poco::DataException(nodeName + ": You cannot use the Weekday setting with schedule type Once");
+		} else
+		if (scheduleType == "Interval") {
+			schedule.type = INTERVAL;
+			if (schedule.data.time.year > -1)
+				throw Poco::DataException(nodeName + ": You cannot use the Year setting with schedule type Interval");
+			if (schedule.data.time.month > -1)
+				throw Poco::DataException(nodeName + ": You cannot use the Month setting with schedule type Interval");
+			if (schedule.data.time.weekday > -1)
+				throw Poco::DataException(nodeName + ": You cannot use the Weekday setting with schedule type Interval");
+
+			if ((schedule.data.time.day < 0)
+				&& (schedule.data.time.hour < 0) && (schedule.data.time.minute < 0)
+				&& (schedule.data.time.second < 0))
+				throw Poco::DataException(nodeName + ": You have to specify at least one of Day, Hour, Minute or Second for schedule type Interval");
+		} else
+/*
+if (scheduleType == "Periodic") {
+			schedule.type = PERIODIC;
+			if (schedule.data.time.year > -1)
+				throw Poco::DataException(nodeName + ": You cannot use the Year setting with schedule type Periodic");
+			if ((schedule.data.time.month < 0)
+				&& (schedule.data.time.day < 0) && (schedule.data.time.weekday < 0)
+				&& (schedule.data.time.hour < 0) && (schedule.data.time.minute < 0)
+				&& (schedule.data.time.second < 0))
+				this->opdid->log(nodeName + ": Warning: No time component specified for schedule type Periodic; this schedule will execute every second");
+
+		} else
+		if (scheduleType == "Random") {
+			schedule.type = RANDOM;
+
+		} else
+*/
+			throw Poco::DataException(nodeName + ": Schedule type is not supported: " + scheduleType);
+
+		this->schedules.push_back(schedule);
+
+		nli++;
+	}
+}
+
+void OPDID_TimerPort::setDirCaps(const char *dirCaps) {
+	throw PortError(std::string(this->getID()) + ": The direction capabilities of a TimerPort cannot be changed");
+}
+
+void OPDID_TimerPort::setMode(uint8_t mode) {
+	throw PortError(std::string(this->getID()) + ": The mode of a TimerPort cannot be changed");
+}
+
+void OPDID_TimerPort::prepare() {
+	OPDI_DigitalPort::prepare();
+
+	// find ports; throws errors if something required is missing
+	this->findDigitalPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
+
+	if (this->line == 1) {
+		// calculate all schedules
+		for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
+			Schedule schedule = (*it);
+			// calculate 
+			Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&schedule);
+			this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
+		}
+	}
+}
+
+Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
+
+	if (schedule->type == ONCE) {
+		// validate
+		if ((schedule->data.time.month < 1) || (schedule->data.time.month > 12))
+			throw Poco::DataException(std::string(this->getID()) + ": Invalid Month specification in schedule " + schedule->nodeName);
+		if ((schedule->data.time.day < 1) || (schedule->data.time.day > Poco::DateTime::daysOfMonth(schedule->data.time.year, schedule->data.time.month)))
+			throw Poco::DataException(std::string(this->getID()) + ": Invalid Day specification in schedule " + schedule->nodeName);
+		if (schedule->data.time.hour > 23)
+			throw Poco::DataException(std::string(this->getID()) + ": Invalid Hour specification in schedule " + schedule->nodeName);
+		if (schedule->data.time.minute > 59)
+			throw Poco::DataException(std::string(this->getID()) + ": Invalid Minute specification in schedule " + schedule->nodeName);
+		if (schedule->data.time.second > 59)
+			throw Poco::DataException(std::string(this->getID()) + ": Invalid Second specification in schedule " + schedule->nodeName);
+		// create timestamp via datetime
+		Poco::DateTime result = Poco::DateTime(schedule->data.time.year, schedule->data.time.month, schedule->data.time.day, 
+			schedule->data.time.hour, schedule->data.time.minute, schedule->data.time.second);
+		// ONCE values are specified in local time; convert to UTC
+		result.makeUTC(Poco::Timezone::tzd());
+		return result.timestamp();
+	} else
+	if (schedule->type == INTERVAL) {
+		Poco::Timestamp result;	// now
+		// add interval values (ignore year and month because those are not well defined in seconds)
+		if (schedule->data.time.second > 0)
+			result += schedule->data.time.second * result.resolution();
+		if (schedule->data.time.minute > 0)
+			result += schedule->data.time.minute * 60 * result.resolution();
+		if (schedule->data.time.hour > 0)
+			result += schedule->data.time.hour * 60 * 60 * result.resolution();
+		if (schedule->data.time.day > 0)
+			result += schedule->data.time.day * 24 * 60 * 60 * result.resolution();
+		return result;
+	} else
+	if (schedule->type == PERIODIC) {
+	} else
+	if (schedule->type == RANDOM) {
+		// determine next point in type randomly
+	} else
+		// return default value (now; must not be enqueued)
+		return Poco::Timestamp();
+}
+
+void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Poco::Timestamp timestamp) {
+	Poco::Timestamp now;
+
+	// for debug output: convert UTC timestamp to local time
+	Poco::LocalDateTime ldt(timestamp);
+	if (timestamp > now) {
+		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			this->opdid->log(std::string(this->getID()) + ": Next scheduled time for node " + 
+				notification->schedule.nodeName + " is: " + Poco::DateTimeFormatter::format(ldt, "%Y-%m-%d %H:%M:%S"));
+		// add with the specified activation time
+		this->queue.enqueueNotification(notification, timestamp);
+	} else {
+		this->opdid->log(std::string(this->getID()) + ": Warning: Scheduled time for node " + 
+			notification->schedule.nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, "%Y-%m-%d %H:%M:%S"));
+/*
+		this->opdid->log(std::string(this->getID()) + ": Timestamp is: " + Poco::DateTimeFormatter::format(timestamp, "%Y-%m-%d %H:%M:%S"));
+		this->opdid->log(std::string(this->getID()) + ": Now is      : " + Poco::DateTimeFormatter::format(now, "%Y-%m-%d %H:%M:%S"));
+*/
+	}
+}
+
+uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
+	OPDI_DigitalPort::doWork(canSend);
+
+	// timer not active?
+	if (this->line != 1)
+		return OPDI_STATUS_OK;
+
+	// get next object from the priority queue
+	Poco::Notification::Ptr notification = this->queue.dequeueNotification();
+	// notification will only be a valid object if a schedule is due
+	if (notification) {
+		try {
+			ScheduleNotification::Ptr workNf = notification.cast<ScheduleNotification>();
+
+			if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+				this->opdid->log(std::string(this->getID()) + ": Timer reached scheduled time for node: " + workNf->schedule.nodeName);
+
+			workNf->schedule.occurrences++;
+
+			// calculate next occurrence depending on type; maximum ocurrences must not have been reached
+			if ((workNf->schedule.type != ONCE) && (workNf->schedule.type != _DEACTIVATE) 
+				&& ((workNf->schedule.maxOccurrences < 0) || (workNf->schedule.occurrences < workNf->schedule.maxOccurrences))) {
+
+				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&workNf->schedule);
+				if (nextOccurrence > Poco::Timestamp()) {
+					// add with the specified occurrence time
+					this->addNotification(workNf, nextOccurrence);
+				}
+			}
+
+			// need to deactivate?
+			if ((workNf->schedule.type != _DEACTIVATE) && (workNf->schedule.delayMs > 0)) {
+				// enqueue the notification for the deactivation
+				Schedule deacSchedule = workNf->schedule;
+				deacSchedule.type = _DEACTIVATE;
+				ScheduleNotification *notification = new ScheduleNotification(deacSchedule);
+				Poco::Timestamp deacTime;
+				deacTime += workNf->schedule.delayMs * Poco::Timestamp::resolution() / 1000;
+				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					this->opdid->log(std::string(this->getID()) + ": Scheduled deactivation time for node " + deacSchedule.nodeName + " is: UTC " + Poco::DateTimeFormatter::format(deacTime, "%Y-%m-%d %H:%M:%S"));
+				// add with the specified deactivation time
+				this->addNotification(notification, deacTime);
+			}
+
+			// set the output ports' state
+			int8_t outputLine = -1;	// assume: toggle
+			if (workNf->schedule.action == SET_HIGH)
+				outputLine = (workNf->schedule.type == _DEACTIVATE ? 0 : 1);
+			if (workNf->schedule.action == SET_LOW)
+				outputLine = (workNf->schedule.type == _DEACTIVATE ? 1 : 0);
+
+			DigitalPortList::iterator it = this->outputPorts.begin();
+			while (it != this->outputPorts.end()) {
+				try {
+					// toggle?
+					if (outputLine < 0) {
+						// get current output port state
+						uint8_t mode;
+						uint8_t line;
+						(*it)->getState(&mode, &line);
+						// set new state
+						outputLine = (line == 1 ? 0 : 1);
+					}
+
+					// set output line
+					(*it)->setLine(outputLine);
+				} catch (Poco::Exception &e) {
+					this->opdid->log(std::string(this->getID()) + ": Error setting output port state: " + (*it)->getID() + ": " + e.message());
+				}
+				it++;
+			}
+		} catch (Poco::Exception &e) {
+			this->opdid->log(std::string(this->getID()) + ": Error processing timer schedule: " + e.message());
+		}
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+void OPDID_TimerPort::setLine(uint8_t line) {
+	bool wasLow = (this->line == 0);
+
+	OPDI_DigitalPort::setLine(line);
+
+	// set to Low?
+	if (this->line == 0) {
+		if (!wasLow) {
+			// clear all schedules
+			this->queue.clear();
+		}
+	}
+	
+	// set to High?
+	if (this->line == 1) {
+		if (wasLow) {
+			// recalculate all schedules
+			for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
+				Schedule schedule = (*it);
+				// calculate 
+				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&schedule);
+				this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
+			}
+		}
+	}
+}
