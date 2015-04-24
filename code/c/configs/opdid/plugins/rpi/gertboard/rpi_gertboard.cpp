@@ -81,7 +81,7 @@ public:
 
 DigitalGertboardPort::DigitalGertboardPort(AbstractOPDID *opdid, const char *ID, int pin) : OPDI_DigitalPort(ID, 
 	(std::string("Digital Gertboard Port ") + to_string(pin)).c_str(), // default label - can be changed by configuration
-	OPDI_PORTDIRCAP_INPUT,	// default: input
+	OPDI_PORTDIRCAP_BIDI,	// default: input
 	0) {
 	this->opdid = opdid;
 	this->pin = pin;
@@ -258,7 +258,7 @@ public:
 
 AnalogGertboardInput::AnalogGertboardInput(AbstractOPDID *opdid, const char *id, int input) : OPDI_AnalogPort(id, 
 	(std::string("Analog Gertboard Input ") + to_string(input)).c_str(), // default label - can be changed by configuration
-	OPDI_PORTDIRCAP_OUTPUT, 
+	OPDI_PORTDIRCAP_INPUT, 
 	// possible resolutions - hardware decides which one is actually used; set value in configuration
 	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12) {
 	
