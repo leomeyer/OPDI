@@ -14,7 +14,7 @@ PPATHBASE = ../../../platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List C source files of the configuration here.
-SRC = LinuxOPDID.cpp
+SRC = LinuxOPDID.cpp OPDIDConfigurationFile.cpp
 
 # platform specific files
 SRC += $(PPATH)/opdi_platformfuncs.c
@@ -58,10 +58,10 @@ LIBS = -lpthread -ldl -lrt
 
 # The compiler to be used.
 # Example compiler: Raspberry Tools (Github)
-# CC = arm-linux-gnueabihf-g++
+CC = arm-linux-gnueabihf-g++
 
 # Example compiler: crosstools-ng
-CC = arm-unknown-linux-gnueabihf-g++
+# CC = arm-unknown-linux-gnueabihf-g++
 
 # List any extra directories to look for include files here.
 # Each directory must be seperated by a space.
