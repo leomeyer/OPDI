@@ -5,7 +5,7 @@
 
 #include "Poco/Mutex.h"
 #include "Poco/Util/AbstractConfiguration.h"
-#include "Poco/Util/IniFileConfiguration.h"
+#include "OPDIDConfigurationFile.h"
 
 #include "OPDI.h"
 
@@ -20,7 +20,8 @@ extern void protocol_callback(uint8_t state);
 
 /** The abstract plugin interface. */
 struct IOPDIDPlugin {
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string nodeName, Poco::Util::AbstractConfiguration *nodeConfig) = 0;
+	// config is the parent configuration. Implementations should use createView to get the node configuration.
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string nodeName, Poco::Util::AbstractConfiguration *config) = 0;
 };
 
 /** The listener interface for plugin registrations. */
@@ -43,6 +44,8 @@ protected:
 
 	bool allowHiddenPorts;
 
+	// environment variables for config file substitution (keys prefixed with $)
+	std::map<std::string, std::string> environment;
 	Poco::Util::AbstractConfiguration *configuration;
 
 	std::string masterName;
@@ -58,7 +61,7 @@ protected:
 	typedef std::map<std::string, std::string> LockedResources;
 	LockedResources lockedResources;
 
-	virtual void readConfiguration(std::string fileName);
+	virtual Poco::Util::AbstractConfiguration *readConfiguration(std::string fileName, std::map<std::string, std::string> parameters);
 
 public:
 
@@ -114,7 +117,7 @@ public:
 	virtual Poco::Util::AbstractConfiguration *getConfiguration(void);
 
 	/** Starts processing the supplied arguments. */
-	virtual int startup(std::vector<std::string>);
+	virtual int startup(std::vector<std::string> args, std::map<std::string, std::string> environment);
 	
 	/** Attempts to lock the resource with the specified ID. The resource can be anything, a pin number, a file name or whatever.
 	 *  When the same resource is attempted to be locked twice this method throws an exception.
@@ -127,6 +130,8 @@ public:
 	virtual void configureGroup(Poco::Util::AbstractConfiguration *groupConfig, OPDI_PortGroup *group, int defaultFlags);
 
 	virtual void setupGroup(Poco::Util::AbstractConfiguration *groupConfig, std::string group);
+
+	virtual void setupInclude(Poco::Util::AbstractConfiguration *groupConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string node);
 
 	/** Reads common properties from the configuration and configures the port. */
 	virtual void configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags);
@@ -142,9 +147,9 @@ public:
 	virtual void setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	/** Reads special properties from the configuration and configures the select port. */
-	virtual void configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_SelectPort *port);
+	virtual void configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, OPDI_SelectPort *port);
 
-	virtual void setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+	virtual void setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port);
 
 	/** Reads special properties from the configuration and configures the dial port. */
 	virtual void configureDialPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DialPort *port);

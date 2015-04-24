@@ -30,14 +30,16 @@ protected:
 	AbstractOPDID *opdid;
 
 public:
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) override;
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) override;
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
 };
 
-void WindowsTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) {
+void WindowsTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
+
+	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
 
 	// get port type
 	std::string portType = nodeConfig->getString("Type", "");

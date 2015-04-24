@@ -9,6 +9,7 @@
 #include "Poco/DateTimeFormatter.h"
 #include "Poco/DateTimeParser.h"
 #include "Poco/File.h"
+#include "Poco/Path.h"
 #include "Poco/Mutex.h"
 
 #include "opdi_constants.h"
@@ -20,6 +21,7 @@
 #define DEFAULT_IDLETIMEOUT_MS	180000
 #define DEFAULT_TCP_PORT		13110
 
+#define OPDID_CONFIG_FILE_SETTING	"__OPDID_CONFIG_FILE_PATH"
 
 // slave protocoll callback
 void protocol_callback(uint8_t state) {
@@ -160,10 +162,14 @@ std::string AbstractOPDID::getOPDIResult(uint8_t code) {
 	return it->second;
 }
 
-void AbstractOPDID::readConfiguration(const std::string filename) {
-	// will throw exceptions if something goes wrong
-	// expect ini file; TODO: support other file formats
-	configuration = new Poco::Util::IniFileConfiguration(filename);
+Poco::Util::AbstractConfiguration *AbstractOPDID::readConfiguration(const std::string filename, std::map<std::string, std::string> parameters) {
+	// will throw an exception if something goes wrong
+	Poco::Util::AbstractConfiguration *result = new OPDIDConfigurationFile(filename, parameters);
+	// remember config file location
+	Poco::Path filePath(filename);
+	result->setString(OPDID_CONFIG_FILE_SETTING, filePath.absolute().toString());
+
+	return result;
 }
 
 std::string AbstractOPDID::getConfigString(Poco::Util::AbstractConfiguration *config, const std::string &key, const std::string &defaultValue, const bool isRequired) {
@@ -194,7 +200,9 @@ void AbstractOPDID::log(std::string text) {
 	this->println(this->getTimestampStr() + text);
 }
 
-int AbstractOPDID::startup(std::vector<std::string> args) {
+int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
+
+	this->environment = environment;
 
 	// evaluate arguments
 	for (unsigned int i = 0; i < args.size(); i++) {
@@ -224,7 +232,8 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 			if (args.size() == i) {
 				throw Poco::SyntaxException("Expected configuration file name after argument -c");
 			} else {
-				this->readConfiguration(args.at(i));
+				// load configuration, substituting environment parameters
+				this->configuration = this->readConfiguration(args.at(i), environment);
 			}
 		}
 	}
@@ -240,6 +249,9 @@ int AbstractOPDID::startup(std::vector<std::string> args) {
 	this->setGeneralConfiguration(general);
 
 	this->setupRoot(this->configuration);
+
+	if (this->logVerbosity >= AbstractOPDID::VERBOSE)
+		this->log("Node setup complete, preparing ports");
 
 	this->preparePorts();
 
@@ -340,6 +352,66 @@ void AbstractOPDID::setupGroup(Poco::Util::AbstractConfiguration *groupConfig, s
 	this->configureGroup(groupConfig, portGroup, 0);
 
 	this->addPortGroup(portGroup);
+}
+
+void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig, std::string node) {
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Setting up include: " + node);
+
+	// filename must be present
+	std::string filename = this->getConfigString(config, "Filename", "", true);
+
+	// determine path type; default: relative to parent config file
+	std::string relativeTo = this->getConfigString(config, "RelativeTo", "Config", false);
+
+	if (relativeTo == "Application") {
+		// nothing to do
+	} else
+	if (relativeTo == "Config") {
+		// determine application-relative path depending on location of previous config file
+		std::string configFilePath = config->getString(OPDID_CONFIG_FILE_SETTING, "");
+		if (configFilePath == "")
+			throw Poco::DataException("Programming error: Configuration file path not specified in config settings");
+
+		Poco::Path filePath(configFilePath);
+		Poco::Path absPath(filePath.absolute());
+		Poco::Path parentPath = absPath.parent();
+		// append or replace new config file path to path of previous config file
+		Poco::Path finalPath = parentPath.resolve(filename);
+		filename = finalPath.toString();
+	} else
+		throw Poco::DataException("Unknown RelativeTo property specified; expected 'Application' or 'Config'", relativeTo);
+
+	// read parameters and build a map, based on the environment parameters
+	std::map<std::string, std::string> parameters = this->environment;
+
+	// the include node requires a section "<node>.Parameters"
+	if (this->logVerbosity >= VERBOSE)
+		this->log(node + ": Evaluating include parameters section: " + node + ".Parameters");
+
+	Poco::Util::AbstractConfiguration *paramConfig = parentConfig->createView(node + ".Parameters");
+
+	// get list of parameters
+	Poco::Util::AbstractConfiguration::Keys paramKeys;
+	paramConfig->keys("", paramKeys);
+
+	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = paramKeys.begin(); it != paramKeys.end(); ++it) {
+		std::string param = paramConfig->getString(*it, "");
+		// store in the map
+		parameters[*it] = param;
+	}
+
+	// warn if no parameters
+	if ((parameters.size() == 0) && (this->logVerbosity >= NORMAL))
+		this->log(node + ": No parameters for include in section " + node + ".Parameters found, is this intended?");
+
+	if (this->logVerbosity >= VERBOSE)
+		this->log(node + ": Loading include file: " + filename);
+
+	Poco::Util::AbstractConfiguration *includeConfig = this->readConfiguration(filename, parameters);
+
+	// setup the root node of the included configuration
+	this->setupRoot(includeConfig);
 }
 
 void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags) {
@@ -485,11 +557,11 @@ void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *p
 	this->addPort(anaPort);
 }
 
-void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_SelectPort *port) {
+void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, OPDI_SelectPort *port) {
 	this->configurePort(portConfig, port, 0);
 
 	// the select port requires a prefix or section "<portID>.Items"
-	Poco::Util::AbstractConfiguration *portItems = this->configuration->createView(std::string(port->getID()) + ".Items");
+	Poco::Util::AbstractConfiguration *portItems = parentConfig->createView(std::string(port->getID()) + ".Items");
 
 	// get ordered list of items
 	Poco::Util::AbstractConfiguration::Keys itemKeys;
@@ -538,12 +610,12 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 	port->setPosition(position);
 }
 
-void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port) {
 	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up emulated select port: " + port);
 
 	OPDI_SelectPort *selPort = new OPDI_SelectPort(port.c_str());
-	this->configureSelectPort(portConfig, selPort);
+	this->configureSelectPort(portConfig, parentConfig, selPort);
 
 	this->addPort(selPort);
 }
@@ -647,7 +719,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		this->log("Setting up node: " + node);
 
 	// create node section view
-	Poco::Util::AbstractConfiguration *nodeConfig = this->configuration->createView(node);
+	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
 
 	// get node information
 	std::string nodeDriver = this->getConfigString(nodeConfig, "Driver", "", false);
@@ -668,6 +740,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		if (nodeType == "Group") {
 			this->setupGroup(nodeConfig, node);
 		} else 
+		if (nodeType == "Include") {
+			this->setupInclude(nodeConfig, config, node);
+		} else 
 		// standard driver (internal ports)
 		if (nodeType == "DigitalPort") {
 			this->setupEmulatedDigitalPort(nodeConfig, node);
@@ -676,7 +751,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 			this->setupEmulatedAnalogPort(nodeConfig, node);
 		} else
 		if (nodeType == "SelectPort") {
-			this->setupEmulatedSelectPort(nodeConfig, node);
+			this->setupEmulatedSelectPort(nodeConfig, config, node);
 		} else
 		if (nodeType == "DialPort") {
 			this->setupEmulatedDialPort(nodeConfig, node);
@@ -707,7 +782,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 
 void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 	// enumerate section "Root"
-	Poco::Util::AbstractConfiguration *nodes = this->configuration->createView("Root");
+	Poco::Util::AbstractConfiguration *nodes = config->createView("Root");
 	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up root nodes");
 
@@ -736,6 +811,15 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 		orderedNodes.insert(nli, node);
 	}
 
+	// warn if no nodes found
+	if ((orderedNodes.size() == 0) && (this->logVerbosity >= NORMAL)) {
+		// get file name
+		std::string filename = config->getString(OPDID_CONFIG_FILE_SETTING, "");
+		if (filename == "")
+			filename = "<unknown configuration file>";
+		this->log(filename + ": No nodes in section Root found, is this intended?");
+	}
+
 	// go through ordered list, setup nodes by name
 	NodeList::const_iterator nli = orderedNodes.begin();
 	while (nli != orderedNodes.end()) {
@@ -749,7 +833,7 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {
 
 	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up connection");
+		this->log(std::string("Setting up connection for slave: ") + opdi_config_name);
 	std::string connectionType = this->getConfigString(config, "Type", "", true);
 
 	if (connectionType == "TCP") {

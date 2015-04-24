@@ -673,11 +673,13 @@ void FritzBoxPlugin::getSwitchPower(FritzPort *port) {
 }
 
 
-void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) {
+void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
 	this->nodeID = node;
 	this->sid = INVALID_SID;			// default; means not connected
 	this->timeoutSeconds = 2;			// short timeout (assume local network)
+
+	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
 
 	// test case for response calculation (see documentation: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AVM_Technical_Note_-_Session_ID.pdf)
 	// abstractOPDID->log("Test Response: " + this->getResponse("1234567z", "äbc"));
@@ -696,7 +698,7 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log("Enumerating FritzBox nodes: " + node + ".Nodes");
 
-	Poco::Util::AbstractConfiguration *nodes = nodeConfig->createView("Nodes");
+	Poco::Util::AbstractConfiguration *nodes = config->createView("Nodes");
 
 	// get ordered list of ports
 	Poco::Util::AbstractConfiguration::Keys portKeys;

@@ -275,14 +275,16 @@ public:
 
 	virtual void run(void);
 
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) override;
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) override;
 };
 
 
-void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) {
+void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
 	this->nodeID = node;
 	this->timeoutSeconds = 10;
+
+	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
 
 	this->url = abstractOPDID->getConfigString(nodeConfig, "Url", "", true);
 	this->provider = abstractOPDID->getConfigString(nodeConfig, "Provider", "", true);
@@ -308,7 +310,7 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, 
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log("Enumerating Weather nodes: " + node + ".Nodes");
 
-	Poco::Util::AbstractConfiguration *nodes = nodeConfig->createView("Nodes");
+	Poco::Util::AbstractConfiguration *nodes = config->createView("Nodes");
 
 	// get ordered list of ports
 	Poco::Util::AbstractConfiguration::Keys portKeys;

@@ -741,14 +741,16 @@ protected:
 	AbstractOPDID *opdid;
 
 public:
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) override;
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) override;
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
 };
 
-void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) {
+void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
+
+	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
 
 	// get port type
 	std::string portType = nodeConfig->getString("Type", "");
@@ -756,7 +758,7 @@ void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, P
 	if (portType == "SelectPort") {
 		// create window port
 		WindowPort *port = new WindowPort(abstractOPDID, node.c_str());
-		abstractOPDID->configureSelectPort(nodeConfig, port);
+		abstractOPDID->configureSelectPort(nodeConfig, config, port);
 
 		// read additional configuration parameters
 		port->sensor = abstractOPDID->getConfigString(nodeConfig, "Sensor", "", false);

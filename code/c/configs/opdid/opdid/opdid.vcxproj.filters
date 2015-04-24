@@ -43,6 +43,9 @@
     <None Include="win_opdid.ini">
       <Filter>Ressourcendateien</Filter>
     </None>
+    <None Include="test_include.ini">
+      <Filter>Ressourcendateien</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -102,6 +105,9 @@
     <ClInclude Include="..\..\..\platforms\opdi_platformfuncs.h">
       <Filter>Headerdateien\platforms</Filter>
     </ClInclude>
+    <ClInclude Include="OPDIDConfigurationFile.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -141,6 +147,9 @@
       <Filter>Quelldateien\platforms\win32</Filter>
     </ClCompile>
     <ClCompile Include="OPDID_Ports.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="OPDIDConfigurationFile.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
