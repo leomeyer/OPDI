@@ -4,7 +4,6 @@
 
 class LinuxOPDID : public AbstractOPDID
 {
-
 public:
 	LinuxOPDID(void);
 
@@ -13,6 +12,10 @@ public:
 	virtual void print(const char *text);
 
 	virtual void println(const char *text);
+
+	virtual void printe(const char *text);
+
+	virtual void printlne(const char *text);
 
 	int HandleTCPConnection(int csock);
 

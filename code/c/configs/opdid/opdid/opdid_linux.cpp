@@ -1,6 +1,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <iostream>
@@ -21,7 +22,7 @@ void signal_handler(int s){
 		Opdi->shutdown();
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[], char *envp[])
 {
 	Opdi = new LinuxOPDID();
 
@@ -41,9 +42,29 @@ int main(int argc, char *argv[])
 		args.push_back(argv[i]);
 	}
 
+	// create a map of environment parameters (important: uppercase, prefix $)
+	std::map<std::string, std::string> environment;
+	size_t counter = 0;
+	char *env = envp[counter];
+	while (env) {
+		std::string envStr(env);
+		char *envVar = strtok(&envStr[0], "=");
+		if (envVar != NULL) {
+			char *envValue = strtok(NULL, "");
+			if (envValue != NULL) {
+				std::string envKey(envVar);
+				// convert key to uppercase
+				std::transform(envKey.begin(), envKey.end(), envKey.begin(), toupper);
+				environment[std::string("$") + envKey] = std::string(envValue);
+			}
+		}
+		counter++;
+		env = envp[counter];
+	}
+
 	try
 	{
-		return Opdi->startup(args);
+		return Opdi->startup(args, environment);
 	}
 	catch (Poco::Exception& e) {
 		Opdi->log(e.displayText());

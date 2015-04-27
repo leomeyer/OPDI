@@ -212,7 +212,7 @@ public:
 *    - A dial port's value is set by casting the value to a 64-bit signed integer.
 *    - A select port's position is set by casting the value to a 16-bit unsigned int.
 */
-#ifdef OPDI_USE_EXPRTK
+#ifdef OPDID_USE_EXPRTK
 
 class OPDID_ExpressionPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
@@ -250,7 +250,7 @@ public:
 	virtual void prepare() override;
 };
 
-#endif // def OPDI_USE_EXPRTK
+#endif // def OPDID_USE_EXPRTK
 
 ///////////////////////////////////////////////////////////////////////////////
 // Timer Port

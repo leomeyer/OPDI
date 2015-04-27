@@ -14,7 +14,7 @@ PPATHBASE = ../../../platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List C source files of the configuration here.
-SRC = $(TARGET).cpp
+SRC = LinuxOPDID.cpp OPDIDConfigurationFile.cpp
 
 # platform specific files
 SRC += $(PPATH)/opdi_platformfuncs.c
@@ -67,7 +67,7 @@ EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(MPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH)
 CINCS =
 
 # Defines
-CDEFINES = -Dlinux
+CDEFINES = -Dlinux -DPOCO_STATIC
 
 # Compiler flags.
 CFLAGS = -Wall $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
