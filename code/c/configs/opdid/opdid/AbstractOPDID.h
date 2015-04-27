@@ -7,6 +7,7 @@
 #include "Poco/Util/AbstractConfiguration.h"
 #include "OPDIDConfigurationFile.h"
 
+#include "opdi_configspecs.h"
 #include "OPDI.h"
 
 class AbstractOPDID;
@@ -108,17 +109,26 @@ public:
 	/** Outputs the specified text to an implementation-dependent output with an appended line break. */
 	virtual void println(std::string text);
 
+	/** Outputs the specified error text to an implementation-dependent error output with an appended line break. */
+	virtual void printlne(const char *text) = 0;
+
+	/** Outputs the specified error text to an implementation-dependent error output with an appended line break. */
+	virtual void printlne(std::string text);
+
 	/** Converts a given object to a string. */
 	template <class T> inline std::string to_string(const T& t);
 
 	/** Writes a log message with a timestamp. */
 	virtual void log(std::string text);
 
+	/** Writes an error message with a timestamp. */
+	virtual void logError(std::string text);
+
 	virtual Poco::Util::AbstractConfiguration *getConfiguration(void);
 
 	/** Starts processing the supplied arguments. */
 	virtual int startup(std::vector<std::string> args, std::map<std::string, std::string> environment);
-	
+
 	/** Attempts to lock the resource with the specified ID. The resource can be anything, a pin number, a file name or whatever.
 	 *  When the same resource is attempted to be locked twice this method throws an exception.
 	 *  Use this mechanism to avoid resource conflicts. */
@@ -162,9 +172,9 @@ public:
 
 	virtual void setupSelectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
-#ifdef OPDI_USE_EXPRTK
+#ifdef OPDID_USE_EXPRTK
 	virtual void setupExpressionPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
-#endif	// def OPDI_USE_EXPRTK
+#endif	// def OPDID_USE_EXPRTK
 
 	virtual void setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
@@ -189,7 +199,6 @@ public:
 	virtual IOPDIDPlugin *getPlugin(std::string driver) = 0;
 
 	virtual uint8_t waiting(uint8_t canSend) override;
-
 };
 
 
