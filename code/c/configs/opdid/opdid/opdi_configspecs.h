@@ -96,9 +96,9 @@ extern "C" {
 
 #define OPDI_MAX_PORT_INFO_MESSAGE	256
 
-// To use the ExpressionPort define this flag. The ../../../libraries/ExprTk folder must contain the
+// To be able to use the ExpressionPort define this macro. The ../../../libraries/ExprTk folder must contain the
 // file exprtk.hpp.
-#define OPDI_USE_EXPRTK				1
+#define OPDID_USE_EXPRTK			1
 
 #ifdef __cplusplus
 }

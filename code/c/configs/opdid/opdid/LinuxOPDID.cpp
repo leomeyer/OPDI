@@ -14,6 +14,7 @@
 #include <sys/time.h>
 #include <sys/param.h>
 #include <dlfcn.h>
+#include <syslog.h>
 
 #include "opdi_platformfuncs.h"
 #include "opdi_configspecs.h"
@@ -165,8 +166,18 @@ void LinuxOPDID::print(const char *text) {
 
 void LinuxOPDID::println(const char *text) {
 	// text is treated as UTF8.
-	std::cout << text << std::endl;
+	std::cout << text << std::endl;	
+}	
+
+void LinuxOPDID::printe(const char *text) {
+	// text is treated as UTF8.
+	std::cerr << text;
 }
+
+void LinuxOPDID::printlne(const char *text) {
+	// text is treated as UTF8.
+	std::cerr << text << std::endl;	
+}	
 
 /** This method handles an incoming TCP connection. It blocks until the connection is closed.
 */

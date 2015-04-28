@@ -565,7 +565,7 @@ uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
 // Expression Port
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifdef OPDI_USE_EXPRTK
+#ifdef OPDID_USE_EXPRTK
 
 OPDID_ExpressionPort::OPDID_ExpressionPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdid = opdid;
@@ -743,7 +743,7 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-#endif	// def OPDI_USE_EXPRTK
+#endif	// def OPDID_USE_EXPRTK
 
 
 ///////////////////////////////////////////////////////////////////////////////
