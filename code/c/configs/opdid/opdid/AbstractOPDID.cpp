@@ -748,7 +748,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		IOPDIDPlugin *plugin = this->getPlugin(nodeDriver);
 
 		// init the plugin
-		plugin->setupPlugin(this, node, nodeConfig);
+		plugin->setupPlugin(this, node, config);
 	} else {
 		std::string nodeType = this->getConfigString(nodeConfig, "Type", "", true);
 

@@ -14,6 +14,11 @@ class WindowPort : public OPDI_SelectPort {
 friend class WindowPlugin;
 protected:
 
+#define POSITION_OFF	0
+#define POSITION_CLOSED	1
+#define POSITION_OPEN	2
+#define POSITION_AUTO	3
+
 	enum WindowState {
 		UNKNOWN,
 		UNKNOWN_WAITING,
@@ -136,10 +141,24 @@ void WindowPort::setPosition(uint16_t position) {
 		OPDI_SelectPort::setPosition(position);
 		this->positionNewlySet = true;
 
-		if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
-			opdid->log(std::string(this->id) + ": Selected position " + to_string(position) + 
-				(position == 0 ? " (CLOSED)" : (position == 1 ? " (OPEN)" : " (AUTOMATIC)")) +
-				"; current state is: " + this->getStateText(this->currentState) + this->getMotorStateText());
+		if (opdid->logVerbosity >= AbstractOPDID::DEBUG) {
+			std::string info = std::string(this->id) + ": Selected position " + to_string(position) + " ";
+			switch (position) {
+			case POSITION_OFF:
+				info += "(OFF)";
+				break;
+			case POSITION_CLOSED:
+				info += "(CLOSED)";
+				break;
+			case POSITION_OPEN:
+				info += "(OPEN)";
+				break;
+			default:
+				info += "(AUTOMATIC)";
+				break;
+			}
+			opdid->log(info + "; current state is: " + this->getStateText(this->currentState) + this->getMotorStateText());
+		}
 	}
 }
 
@@ -371,15 +390,16 @@ void WindowPort::setCurrentState(int state) {
 
 			this->statusPort->setPosition(selPortPos);
 		}
-
+/*
 		// if the window has been closed or opened, reflect it in the UI
 		// except if the position is set to automatic
-		if (this->position < 2) {
+		if (this->position < POSITION_AUTO) {
 			if (state == CLOSED)
-				this->setPosition(0);
+				this->setPosition(POSITION_CLOSED);
 			else if (state == OPEN)
-				this->setPosition(1);
+				this->setPosition(POSITION_OPEN);
 		}
+*/
 	}
 }
 
@@ -422,8 +442,12 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 
 	// state machine for current window state
 
-	// unknown state (first call or transition not yet implemented)? initialize
+	// unknown state (first call or off or transition not yet implemented)? initialize
 	if (this->currentState == UNKNOWN) {
+		// disable the motor
+		this->setMotorOff();
+		this->disableMotor();
+		
 		// do we know that we're closed?
 		if (this->isSensorClosed()) {
 			if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
@@ -433,15 +457,11 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			// we don't know
 			this->setCurrentState(UNKNOWN_WAITING);
 
-		// disable the motor
-		this->setMotorOff();
-		this->disableMotor();
-		
-		// set target state according to initial position
-		if (this->position == 1) {
+		// set target state according to selected position (== mode)
+		if (this->position == POSITION_OPEN) {
 			this->setTargetState(OPEN);
 		} else
-		if (this->position == 0) {
+		if (this->position == POSITION_CLOSED) {
 			this->setTargetState(CLOSED);
 		}
 	} else
@@ -677,7 +697,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		int target = UNKNOWN;
 		// if the window has detected an error, do not automatically open or close
 		// if the position is set to automatic, evaluate auto ports
-		if ((this->currentState != ERR) && (this->position > 1)) {
+		if ((this->currentState != ERR) && (this->position >= POSITION_AUTO)) {
 			// if one of the AutoClose ports is High, the window should be closed (takes precedence)
 			pi = this->autoClosePorts.begin();
 			while (pi != this->autoClosePorts.end()) {
@@ -711,10 +731,14 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		} else
 		// check for position changes only - not if the previous setting is still active
 		// this helps to recover from an error state - the user must manually change the position
-		if (this->positionNewlySet && (this->position == 1)) {
+		if (this->positionNewlySet && (this->position == POSITION_OFF)) {
+			// setting the window "UNKNOWN" disables the motor and re-initializes
+			this->setCurrentState(UNKNOWN);
+		} else
+		if (this->positionNewlySet && (this->position == POSITION_OPEN)) {
 			target = OPEN;
 		} else
-		if (this->positionNewlySet && (this->position == 0)) {
+		if (this->positionNewlySet && (this->position == POSITION_CLOSED)) {
 			target = CLOSED;
 		}
 		this->positionNewlySet = false;

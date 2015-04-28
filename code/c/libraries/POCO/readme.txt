@@ -49,6 +49,7 @@ Reload LD cache:
 If you want to cross-compile for the Raspberry Pi, follow these steps:
 
 1. Install a cross-compiler toolchain on your compile system and make sure that it works. For example: https://github.com/raspberrypi/tools
+Note: Currently it is not recommended to use the popular crosstools-ng for this because of problems downloading library dependencies (eglibc.org SVN server is unreliable).
 2. Create a build configuration for POCO:
 > cd build/config
 > cp ARM-Linux RaspberryPi
