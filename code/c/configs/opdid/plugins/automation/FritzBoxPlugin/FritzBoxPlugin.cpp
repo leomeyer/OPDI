@@ -698,7 +698,7 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log("Enumerating FritzBox nodes: " + node + ".Nodes");
 
-	Poco::Util::AbstractConfiguration *nodes = config->createView("Nodes");
+	Poco::Util::AbstractConfiguration *nodes = config->createView(node + ".Nodes");
 
 	// get ordered list of ports
 	Poco::Util::AbstractConfiguration::Keys portKeys;
