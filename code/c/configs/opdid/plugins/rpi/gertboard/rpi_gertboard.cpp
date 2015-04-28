@@ -698,9 +698,11 @@ int GertboardPlugin::mapAndLockPin(int pinNumber, std::string forNode) {
 	return internalPin;
 }
 
-void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) {
+void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
 	this->nodeID = node;
+	
+	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
 	
 	// prepare Gertboard IO (requires root permissions)
 	setup_io();
@@ -760,7 +762,7 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log("Enumerating Gertboard nodes: " + node + ".Nodes");
 
-	Poco::Util::AbstractConfiguration *nodes = nodeConfig->createView("Nodes");
+	Poco::Util::AbstractConfiguration *nodes = config->createView(node + ".Nodes");
 
 	// get ordered list of ports
 	Poco::Util::AbstractConfiguration::Keys portKeys;
