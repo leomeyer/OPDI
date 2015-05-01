@@ -75,9 +75,12 @@ Create the skin directory and copy the files:
 
 Edit /etc/weewx/weewx.conf:
 
-Under [StdReport], add:
+Below [[StdReport]], add:
     [[JSON]]
         skin = JSON
+		
+To avoid unnecessary generation of the standard reports, disable their generation
+by uncommenting all lines including and belonging to [[StdReport]].
     
 Restart weewx:
 > sudo service weewx restart

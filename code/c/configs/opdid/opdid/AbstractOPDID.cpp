@@ -189,6 +189,10 @@ void AbstractOPDID::println(std::string text) {
 	this->println(text.c_str());
 }
 
+void AbstractOPDID::printlne(std::string text) {
+	this->printlne(text.c_str());
+}
+
 void AbstractOPDID::log(std::string text) {
 
 	// important: log must be thread-safe.
@@ -198,6 +202,17 @@ void AbstractOPDID::log(std::string text) {
 	// an exception. The calling thread should deal with this exception.
 	Poco::Mutex::ScopedLock(this->mutex);
 	this->println(this->getTimestampStr() + text);
+}
+
+void AbstractOPDID::logError(std::string text) {
+
+	// important: log must be thread-safe.
+	// encapsulate in a mutex
+
+	// Try to lock the mutex. If this does not work in time, it will throw
+	// an exception. The calling thread should deal with this exception.
+	Poco::Mutex::ScopedLock(this->mutex);
+	this->printlne(this->getTimestampStr() + text);
 }
 
 int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
@@ -682,7 +697,7 @@ void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portCon
 	this->addPort(selectorPort);
 }
 
-#ifdef OPDI_USE_EXPRTK
+#ifdef OPDID_USE_EXPRTK
 void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
 	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up Expression: " + port);
@@ -692,7 +707,7 @@ void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration *portC
 
 	this->addPort(expressionPort);
 }
-#endif	// def OPDI_USE_EXPRTK
+#endif	// def OPDID_USE_EXPRTK
 
 void AbstractOPDID::setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
 	if (this->logVerbosity >= VERBOSE)
@@ -733,7 +748,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		IOPDIDPlugin *plugin = this->getPlugin(nodeDriver);
 
 		// init the plugin
-		plugin->setupPlugin(this, node, nodeConfig);
+		plugin->setupPlugin(this, node, config);
 	} else {
 		std::string nodeType = this->getConfigString(nodeConfig, "Type", "", true);
 
@@ -764,11 +779,13 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else
 		if (nodeType == "SelectorPort") {
 			this->setupSelectorPort(nodeConfig, node);
-#ifdef OPDI_USE_EXPRTK
+#ifdef OPDID_USE_EXPRTK
 		} else
-		if (nodeType == "Expression") {
+		if (nodeType == "ExpressionPort") {
 			this->setupExpressionPort(nodeConfig, node);
-#endif	// def OPDI_USE_EXPRTK
+#else
+#warning Expression library not included, cannot use the ExpressionPort node type
+#endif	// def OPDID_USE_EXPRTK
 		} else
 		if (nodeType == "Timer") {
 			this->setupTimerPort(nodeConfig, node);

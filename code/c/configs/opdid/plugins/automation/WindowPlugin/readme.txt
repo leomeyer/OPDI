@@ -1,12 +1,14 @@
 Window automation plugin for OPDID
 
-This plugin provides the functionality to operate motor-controlled windows.
-A window can be either fully closed or fully open. Intermediate states are not supported.
-The plugin provides a SelectPort that has at least two items for the closed and open state.
+This plugin provides the functionality to operate motor-controlled windows (or shutters etc.).
+A window is normally either fully closed or fully open. However, it can be stopped at any time.
+The plugin provides a SelectPort that requires at least three items for the Off, Closed and Open mode.
 You must provide the usual [<SelectPort-ID>.Items] section for the labels of the states. The first
-of these items corresponds with the closed state of the window. The second item corresponds with
-the open state of the window. All other items disable the manual control of the window and switch
-it to automatic control.
+of these items corresponds with the "Off" mode of the window. The second item corresponds with
+the "Closed" mode of the window. The third item corresponds with the "Open" mode of the window. 
+All further items disable the manual control of the window and switch it to automatic control mode.
+You can choose the labels of these items freely; however, if you do not provide all items you
+won't be able to select the functions associated with the missing items.
 
 The window supports an optional sensor to detect the closed position. You can specify a DigitalPort
 node for the plugin to treat as a sensor input.
@@ -20,7 +22,8 @@ MotorA | MotorB | Motor action
      0 |      1 | Turn in "close" direction
    (1) |    (1) | Not used
 
-You can specify that the line levels should be inverted by setting MotorActive to 0.
+You can specify that the line levels should be inverted by setting MotorActive to 0. This effectively
+inverts the truth table.
 
 Optionally, there is a third line called Enable which can be activated before the motor action
 should take place. This is useful e. g. if there is a separate power supply for the motor which should not
@@ -40,19 +43,20 @@ Use the MotorDelay setting to specify this time in milliseconds. This value must
 The select port gives the user the choice about the window state. In the automatic control setting,
 the window state is controlled by the settings AutoOpen and AutoClose. You can specify any number of
 DigitalPort IDs in these settings. If any of these ports has a line state of High this will trigger opening 
-or closing the window respectively. The AutoClose setting takes precedence.
-AutoOpen and AutoClose will only work in the automatic mode. In manual Closed and Open modes changes of
+or closing of the window respectively. The AutoClose setting takes precedence.
+AutoOpen and AutoClose will only work in the automatic mode. In manual Off, Closed and Open modes changes of
 these lines have no effect.
 
-Additionally you can specify one or more DigitalPorts that force the window to the closed state 
+You can optionally specify one or more DigitalPorts that force the window to the closed state 
 if at least one port has a line state of High. This mechanism can be used to close the window (e. g. in 
-case there is rain etc). This mechanism also works when the mode has been set to "manual open". In this case,
-if a forced close happens the position of the select port will be set to Closed.
+case there is rain etc). This mechanism also works when the mode has been set to Off or Open. In this case,
+if a forced close happens the position of the select port will be set to Closed to disable any automatic mode.
 As long as one of the ForceClose ports is High, the window cannot be opened any more.
-There is currently no way to force a window to the open state.
+There is no way to force a window to the open state. However, for home automation purposes, you could
+reset the window mode to Automatic periodically using a TimerPort and a SelectorPort.
 
 The window can detect some errors that may arise due to hardware failures or misconfigurations.
-An error occurs if 
+An error is assumed if 
 a) the window is opened and after the specified opening time the sensor still reads "Closed",
 b) the window is closed and after the specified closing time the sensor does not read "Closed".
 
@@ -63,10 +67,11 @@ The error can be due to
 - misconfiguration (wrong sensor or motor ports specified)
 - etc.
 
-The error will be shown on the master. In case of error there is no meaningful positional setting of the
-select port any more. Also, automatic control, including the ForceClose mechanism, will be disabled.
-The window will remain in the error state until the slave restarts or the select port position is changed
-to Closed or Open. This serves as a protection in case of some serious problem. 
+In case of an error there is no meaningful positional setting of the select port any more. 
+Also, automatic control, including the ForceClose mechanism, will be disabled.
+The window will remain in the error state until the OPDID slave restarts or the select port position is changed
+to Off, Closed or Open. This serves as a protection in case of some serious problem.
+The mode cannot be set to Automatic once the window is in the error state.
 
 If the position is manually opened or closed after an error the window will try to put itself into the specified
 position. If this works the mode can again be set to automatic. Otherwise the window will return to the error state.
@@ -80,8 +85,8 @@ Type = SelectPort
 Label = Window1
 ; Hide the port if you want automatic control only.
 Hidden = false
-; Set initial position; 0: closed; 1: open; 2: automatic control
-Position = 2
+; Set initial position (== mode); 0: off; 1: closed; 2: open; 3: automatic control
+Position = 1
 
 ; Specifies the DigitalPort input sensor.
 Sensor = Window1ClosedSwitch
@@ -131,6 +136,7 @@ AutoClose =
 ForceClose = RainSensor
 
 [Window1.Items]
+Window 1 off = 0
 Window 1 closed = 1
 Window 1 open = 2
 Window 1 automatic = 3
