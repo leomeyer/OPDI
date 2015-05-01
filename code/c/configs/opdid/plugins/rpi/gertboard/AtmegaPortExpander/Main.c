@@ -35,6 +35,10 @@
 // A value of 255 (all bits set) is the test code that returns the SIGNALCODE code.
 // Any error case returns the SIGNALCODE code.
 
+// The serial port expander must be activated before use by sending it a "magic" string.
+// Otherwise other software could send random instructions causing undefined behaviour.
+// After use the port expander should be deactivated by sending it a value of 128 (reserve bit set).
+
 #define RESERVED 7
 #define OUTPUT	6
 #define PULLUP	5
@@ -42,6 +46,9 @@
 #define PORTMASK 0x0f
 
 #define SIGNALCODE 	0xff
+
+#define MAGIC	"OPDIDGBPEINIT"
+#define DEACTIVATE	128
 
 struct bits {
   uint8_t b0:1;
@@ -74,6 +81,9 @@ struct bits {
 #define VP14(reg) BIT(C,2,reg)
 #define VP15(reg) BIT(C,3,reg)
 
+// Unavailable ports:
+// B6, B7: Used for crystal
+// D0, D1: UART for Raspberry Pi communication
 
 /*************************************************************************
 // main program
@@ -86,6 +96,8 @@ int main(void)
 	uint8_t linestate;
 	uint8_t portnumber;
 	uint8_t in;
+	uint8_t magic_received = 0;
+	uint8_t magic_pos = 0;
 	
 	CLKPR = (1<<7);   // enable prescaler register
 	CLKPR = 0;        // prescale by 1	
@@ -102,8 +114,39 @@ int main(void)
 	{	
 		data = getByte();
 
+		// before acting on IO ports, make sure that we're connected to the right software
+		// otherwise any software on the Raspberry might send random serial communication
+		// which could trigger output ports (not what we want)
+		if (!magic_received) {
+			if (data == MAGIC[magic_pos]) {
+				magic_pos++;
+				if (magic_pos == sizeof(MAGIC)) {
+					magic_received = 1;
+					
+					// respond with signal code to indicate success
+					putByte(SIGNALCODE);
+				}
+			} else {
+				magic_pos = 0;
+			}
+			continue;
+		}
+
+		// if the expander is initialized, respond to the signal code
 		// test byte?
-		if (data == 0xff) {
+		if (data == SIGNALCODE) {
+			putByte(SIGNALCODE);
+
+			continue;
+		}
+				
+		// deactivation code received?
+		if (data == DEACTIVATE) {
+			// initialize to require magic first
+			magic_received = 0;
+			magic_pos = 0;
+
+			// respond with signal code to indicate success
 			putByte(SIGNALCODE);
 
 			continue;
