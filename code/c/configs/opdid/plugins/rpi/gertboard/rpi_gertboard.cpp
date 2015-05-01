@@ -49,7 +49,8 @@ protected:
 	uint32_t serialTimeoutMs;
 	// At bootup, pins 8 and 10 are already set to UART0_TXD, UART0_RXD (ie the alt0 function) respectively
 	int uart0_filestream;
-
+	bool expanderInitialized;
+	
 	// translates external pin IDs to an internal pin; throws an exception if the pin cannot
 	// be mapped or the resource is already used
 	int mapAndLockPin(int pinNumber, std::string forNode);
@@ -514,6 +515,10 @@ void GertboardPWM::setPosition(int64_t position) {
 #define LINESTATE 4
 #define PORTMASK 0x0f
 
+#define SIGNALCODE	0xff
+#define MAGIC		"OPDIDGBPEINIT"
+#define DEACTIVATE	128
+
 class DigitalExpansionPort : public OPDI_DigitalPort {
 friend class GertboardPlugin;
 protected:
@@ -701,8 +706,13 @@ int GertboardPlugin::mapAndLockPin(int pinNumber, std::string forNode) {
 void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
 	this->nodeID = node;
-	
+	this->expanderInitialized = false;
+
 	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
+	
+	// try to lock the whole Gertboard as a resource
+	// to avoid trouble repeatedly initializing IO
+	this->opdid->lockResource(std::string("Gertboard"), node);
 	
 	// prepare Gertboard IO (requires root permissions)
 	setup_io();
@@ -751,7 +761,7 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 		// if other ports try to use these ports it will fail
 		this->mapAndLockPin(14, node + " SerialDevice Port Expansion");
 		this->mapAndLockPin(15, node + " SerialDevice Port Expansion");
-
+		
 		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 			this->opdid->log(node + ": SerialDevice " + this->serialDevice + " setup successfully with a timeout of " + this->opdid->to_string(this->serialTimeoutMs) + " ms");
 	}
@@ -804,7 +814,7 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 			this->opdid->log("Setting up Gertboard port(s) for node: " + nodeName);
 			
 		// get port section from the configuration
-		Poco::Util::AbstractConfiguration *portConfig = abstractOPDID->getConfiguration()->createView(nodeName);
+		Poco::Util::AbstractConfiguration *portConfig = config->createView(nodeName);
 	
 		// get port type (required)
 		std::string portType = abstractOPDID->getConfigString(portConfig, "Type", "", true);
@@ -916,6 +926,34 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 			// serial device must be configured first
 			if (this->serialDevice == "")
 				throw Poco::DataException("To use the port expansion, please set the SerialDevice parameter in the Gertboard node");
+				
+			// the expansion port must be activated by sending it a "magic" string
+			// do this only once
+			if (!this->expanderInitialized) {
+				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					this->opdid->log(node + ": Initializing Atmega Port Expander");
+					
+				// check whether it's already initialized
+				// for example if OPDID has crashed and is being restarted
+				this->sendExpansionPortCode(SIGNALCODE);
+				try {
+					if (this->receiveExpansionPortCode() == SIGNALCODE)
+						if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+							this->opdid->log(node + ": Port Expander is already initialized");
+					this->expanderInitialized = true;		
+				} catch (...) {}
+
+				if (!this->expanderInitialized) {
+					for (size_t i = 0; i < sizeof(MAGIC); i++) {
+						this->sendExpansionPortCode(MAGIC[i]);
+					}
+					// try to receive the confirmation code
+					if (this->receiveExpansionPortCode() != SIGNALCODE) {
+						throw Poco::DataException("Port expander did not respond to initialization");
+					}
+					this->expanderInitialized = true;
+				}
+			}
 		
 			// read pin number
 			int pinNumber = portConfig->getInt("Pin", -1);

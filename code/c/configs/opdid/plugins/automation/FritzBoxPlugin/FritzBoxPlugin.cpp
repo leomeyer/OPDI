@@ -742,7 +742,7 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 			this->opdid->log("Setting up FritzBox port(s) for node: " + nodeName);
 
 		// get port section from the configuration
-		Poco::Util::AbstractConfiguration *portConfig = abstractOPDID->getConfiguration()->createView(nodeName);
+		Poco::Util::AbstractConfiguration *portConfig = config->createView(nodeName);
 
 		// get port type (required)
 		std::string portType = abstractOPDID->getConfigString(portConfig, "Type", "", true);

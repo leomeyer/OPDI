@@ -27,6 +27,8 @@
 #include "Poco/DOM/AutoPtr.h"
 #include "Poco/SAX/InputSource.h"
 #include "Poco/NumberParser.h"
+#include "Poco/DateTimeParser.h"
+#include "Poco/Timezone.h"
 #include "Poco/RegularExpression.h"
 #include "Poco/JSON/Parser.h"
 
@@ -166,7 +168,7 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 		if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 			this->opdid->log(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Matching regex against weather data: " + rawValue);
 		if (regex.extract(rawValue, value, 0) == 0) {
-			if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 				this->opdid->log(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Matching regex returned no result; weather data: " + rawValue);
 		}
 	}
@@ -174,7 +176,7 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 		Poco::RegularExpression regex(this->regexReplace, 0, true);
 		if (regex.subst(value, this->replaceBy, Poco::RegularExpression::RE_GLOBAL) == 0) {
 			if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
-				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+				if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 					this->opdid->log(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Replacement regex did not match in value: " + value);
 		}
 	}
@@ -187,7 +189,7 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	try {
 		result = Poco::NumberParser::parseFloat(value);
 	} catch (Poco::Exception e) {
-		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 			this->opdid->log(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Unable to parse weather data: " + value);
 		return OPDI_STATUS_OK;
 	}
@@ -200,12 +202,12 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	// correct value; a standard dial port will throw exceptions
 	// but exceptions must be avoided in this threaded code because they will cause strange messages on Linux
 	if (newPos < this->minValue) {
-		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 			this->opdid->log(std::string(this->getID()) + ": Warning: Value too low (" + to_string(newPos) + " < " + to_string(this->minValue) + "), correcting");
 		newPos = this->minValue;
 	}
 	if (newPos > this->maxValue) {
-		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 			this->opdid->log(std::string(this->getID()) + ": Warning: Value too high (" + to_string(newPos) + " > " + to_string(this->maxValue) + "), correcting");
 		newPos = this->maxValue;
 	}
@@ -251,11 +253,12 @@ protected:
 	std::string url;
 	int timeoutSeconds;
 
-	// weather data provider; at the moment only "weewx" is supported
+	// weather data provider identification
 	std::string provider;
 
 	std::string xpath;
-
+	int64_t dataValiditySeconds;
+	
 	int refreshTimeMs;
 
 	std::string sid;
@@ -273,16 +276,18 @@ public:
 
 	virtual void refreshData(void);
 
+	// weather data collection thread method
 	virtual void run(void);
 
 	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) override;
 };
 
-
 void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
 	this->nodeID = node;
 	this->timeoutSeconds = 10;
+	this->refreshTimeMs = 30 * 1000;	// default: 30 seconds
+	this->dataValiditySeconds = 120;	// default: two minutes (JSON skin time resolution does not include seconds, allow extra time)
 
 	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
 
@@ -302,9 +307,13 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, 
 
 	// store main node's group (will become the default of ports)
 	std::string group = nodeConfig->getString("Group", "");
-	this->refreshTimeMs = nodeConfig->getInt("RefreshTime", 10000);
-	if (this->refreshTimeMs < 0)
-		throw Poco::DataException(node + "Please specify a non-negative RefreshTime in milliseconds");
+	this->refreshTimeMs = nodeConfig->getInt("RefreshTime", this->refreshTimeMs);
+	if (this->refreshTimeMs <= 0)
+		throw Poco::DataException(node + "Please specify a non-negative meaningful RefreshTime in milliseconds");
+
+	this->dataValiditySeconds = nodeConfig->getInt("DataValidity", this->dataValiditySeconds);
+	if (this->dataValiditySeconds <= 0)
+		throw Poco::DataException(node + "Please specify a non-negative meaningful DataValidity in seconds");
 
 	// enumerate keys of the plugin's nodes (in specified order)
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
@@ -354,7 +363,7 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, 
 			this->opdid->log("Setting up Weather port(s) for node: " + nodeName);
 
 		// get port section from the configuration
-		Poco::Util::AbstractConfiguration *portConfig = abstractOPDID->getConfiguration()->createView(nodeName);
+		Poco::Util::AbstractConfiguration *portConfig = config->createView(nodeName);
 
 		// get port type (required)
 		std::string portType = abstractOPDID->getConfigString(portConfig, "Type", "", true);
@@ -375,6 +384,7 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, 
 
 	this->opdid->addConnectionListener(this);
 
+	// initialize and start thread
 	this->workThread.setName(node + " work thread");
 	this->workThread.start(*this);
 
@@ -503,24 +513,41 @@ void WeatherPlugin::refreshData(void) {
 
 			// validate object
 			if (loJsonObject.isNull()) {
-				this->opdid->log(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider);
+				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					this->opdid->log(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider);
 				return;
 			}
 			std::string time = GetJSONStringValue(loJsonObject, "time");
 			if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 				this->opdid->log(this->nodeID + ": Found weather data; time: " + time);
 
-			// TODO: data too old?
-
+			// parse time
+			int tzd = 0;
+			// parse JSON date; assume MM-DD-YYYY format (possibly locale dependent?)
+			Poco::DateTime jsonLocalTime = Poco::DateTimeParser::parse("%m/%d/%Y %h:%M:%S %A", time, tzd);
+			Poco::DateTime jsonTime = jsonLocalTime;
+			// convert to UTC for comparison
+			jsonTime.makeUTC(Poco::Timezone::tzd());
+			// check whether the data is considered valid (or too old); data validity in microseconds
+			Poco::DateTime now;
+//			this->opdid->log(this->nodeID + ": TimeDiff is: " + opdid->to_string((now - jsonTime).totalSeconds()));
+			if (now - jsonTime > this->dataValiditySeconds * 1000 * 1000) {
+				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					this->opdid->log(this->nodeID + ": Error: Weewx JSON weather data is too old; timestamp is: "
+						+ Poco::DateTimeFormatter::format(jsonLocalTime, "%m/%d/%Y %h:%M:%S %A"));
+				return;
+			}
 			// get stats/current object
 			Poco::JSON::Object::Ptr stats = GetJSONObject(loJsonObject, "stats");
 			if (stats.isNull()) {
-				this->opdid->log(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider + "; expected element 'stats' not found");
+				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					this->opdid->log(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider + "; expected element 'stats' not found");
 				return;
 			}
 			Poco::JSON::Object::Ptr current = GetJSONObject(stats, "current");
 			if (current.isNull()) {
-				this->opdid->log(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider + "; expected element 'current' not found");
+				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					this->opdid->log(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider + "; expected element 'current' not found");
 				return;
 			}
 
@@ -546,13 +573,17 @@ void WeatherPlugin::refreshData(void) {
 		}
 
 	} catch (Poco::FileNotFoundException &fnfe) {
-		this->opdid->log(this->nodeID + ": The file was not found: " + fnfe.message());
+		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			this->opdid->log(this->nodeID + ": The file was not found: " + fnfe.message());
 	} catch (Poco::Net::NetException &ne) {
-		this->opdid->log(this->nodeID + ": Network problem: " + ne.className() + ": " + ne.message());
+		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			this->opdid->log(this->nodeID + ": Network problem: " + ne.className() + ": " + ne.message());
 	} catch (Poco::UnknownURISchemeException &uuse) {
-		this->opdid->log(this->nodeID + ": Unknown URI scheme: " + uuse.message());
+		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			this->opdid->log(this->nodeID + ": Unknown URI scheme: " + uuse.message());
 	} catch (Poco::Exception &e) {
-		this->opdid->log(this->nodeID + ": " + e.className() + ": " + e.message());
+		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			this->opdid->log(this->nodeID + ": " + e.className() + ": " + e.message());
 	}
 }
 
