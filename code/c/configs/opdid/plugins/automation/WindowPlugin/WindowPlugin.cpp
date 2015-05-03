@@ -141,8 +141,8 @@ void WindowPort::setPosition(uint16_t position) {
 		OPDI_SelectPort::setPosition(position);
 		this->positionNewlySet = true;
 
-		if (opdid->logVerbosity >= AbstractOPDID::DEBUG) {
-			std::string info = std::string(this->id) + ": Selected position " + to_string(position) + " ";
+		if (opdid->logVerbosity >= AbstractOPDID::VERBOSE) {
+			std::string info = std::string(this->id) + ": Setting position to " + to_string(position) + " ";
 			switch (position) {
 			case POSITION_OFF:
 				info += "(OFF)";
@@ -220,11 +220,14 @@ void WindowPort::prepare() {
 	OPDI_Port::prepare();
 
 	// find ports; throws errors if something required is missing
-	this->sensorPort = this->findDigitalPort("Sensor", this->sensor, false);
+	if (this->sensor != "")
+		this->sensorPort = this->findDigitalPort("Sensor", this->sensor, true);
 	this->motorAPort = this->findDigitalPort("MotorA", this->motorA, true);
 	this->motorBPort = this->findDigitalPort("MotorB", this->motorB, true);
-	this->enablePort = this->findDigitalPort("Enable", this->enable, false);
-	this->statusPort = this->findSelectPort("StatusPort", this->statusPortStr, false);
+	if (this->enable != "")
+		this->enablePort = this->findDigitalPort("Enable", this->enable, true);
+	if (this->statusPortStr != "")
+		this->statusPort = this->findSelectPort("StatusPort", this->statusPortStr, true);
 
 	this->findDigitalPorts("AutoOpen", this->autoOpen, this->autoOpenPorts);
 	this->findDigitalPorts("AutoClose", this->autoClose, this->autoClosePorts);

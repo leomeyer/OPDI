@@ -949,8 +949,10 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 					}
 					// try to receive the confirmation code
 					if (this->receiveExpansionPortCode() != SIGNALCODE) {
-						throw Poco::DataException("Port expander did not respond to initialization");
+						throw Poco::DataException("Port Expander did not respond to initialization");
 					}
+					if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+						this->opdid->log(node + ": Port Expander initialization sequence successfully completed");
 					this->expanderInitialized = true;
 				}
 			}
@@ -959,7 +961,7 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 			int pinNumber = portConfig->getInt("Pin", -1);
 			// check whether the pin is valid; determine internal pin
 			if ((pinNumber < 0) || (pinNumber > 15))
-				throw Poco::DataException("A 'Pin' greater or equal than 0 and lower than 16 must be specified for a Gertboard Digital Expansion port");
+				throw Poco::DataException("A 'Pin' number between 0 and 15 must be specified for a Gertboard Digital Expansion port");
 
 			// try to lock the pin as a resource
 			this->opdid->lockResource(std::string("Gertboard Expansion Port ") + this->opdid->to_string(pinNumber), nodeName);
