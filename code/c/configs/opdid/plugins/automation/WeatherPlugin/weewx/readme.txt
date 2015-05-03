@@ -6,6 +6,7 @@ See the Weewx documentation for installation and setup instructions.
 
 Recommendation for weewx.conf settings
 --------------------------------------
+The standard configuration file is located at /etc/weewx/weewx.conf.
 
 1. For use with a TFA Sinus weather station:
 [Station]
@@ -81,8 +82,62 @@ Below [[StdReport]], add:
 		
 To avoid unnecessary generation of the standard reports, disable their generation
 by uncommenting all lines including and belonging to [[StdReport]].
+As this takes quite a bit of resources it is probably a wise thing to do.
     
 Restart weewx:
 > sudo service weewx restart
 
-Check /var/log/syslog for weewx messages.
+Check /var/log/syslog for weewx messages. You should see the following (similar) lines:
+May  2 15:53:34 raspberrypi weewx[17062]: engine: Starting up weewx version 3.1.0
+May  2 15:53:34 raspberrypi weewx[17062]: engine: Starting main packet loop.
+
+If the JSON output file has been generated, the syslog will show something like:
+May  2 15:55:16 raspberrypi weewx[17062]: manager: added record 2015-05-02 15:55:00 BST (1430578500) to database '/var/lib/weewx/weewx.sdb'
+May  2 15:55:16 raspberrypi weewx[17062]: manager: added record 2015-05-02 15:55:00 BST (1430578500) to daily summary in '/var/lib/weewx/weewx.sdb'
+May  2 15:55:21 raspberrypi weewx[17062]: cheetahgenerator: Generated 1 files for report JSON in 1.66 seconds
+
+Check the generated JSON output:
+> cat /var/www/weewx/current.JSON
+Output should be something like:
+{
+  "title":"Current Values",
+  "location":"rpi",
+  "time":"02/05/15 15:55:00",
+  "lat":"47&deg; 39.68' N",
+  "lon":"008&deg; 53.32' E",
+  "alt":"450",
+  "hardware":"TE923",
+  "uptime":"0, 0, 1",
+  "serverUptime":"0, 1, 51",
+  "weewxVersion":"3.1.0",
+  "stats": {
+    "current": {
+      "inTemp":"18.2",
+      "inHumidity":"58",
+      "outTemp":"   N/A",
+      "outHumidity":"   N/A",
+      "dewpoint":"   N/A",
+      "heatIndex":"   N/A",
+      "barometer":"1015.2",
+      "windSpeed":"1",
+      "windchill":"18.5",
+      "windDir":"234",
+      "windDirText":"SW",
+      "windGust":"3",
+      "windGustDir":"225",
+      "rainRate":"0.0",
+      "extraTemp1":"18.3",
+      "extraHumid1":"68",
+      "extraTemp2":"   N/A",
+      "extraHumid2":"   N/A",
+      "extraTemp3":"   N/A",
+      "extraHumid3":"?'extraHumid3'?",
+      "extraTemp4":"?'extraTemp4'?",
+      "extraHumid4":"?'extraHumid4'?"
+    }
+  }
+}
+
+Check that sensor values are present. If a sensor is N/A, it will show as invalid in the OPDID master.
+
+
