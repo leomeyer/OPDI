@@ -1213,7 +1213,7 @@ void OPDID_SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *con
 	std::string serialPortName = this->opdid->getConfigString(config, "SerialPort", "", true);
 	int baudRate = config->getInt("BaudRate", 9600);
 	std::string protocol = config->getString("Protocol", "8N1");
-	int timeout = config->getInt("Timeout", 100);
+	// int timeout = config->getInt("Timeout", 100);
 
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log(std::string(this->getID()) + ": Opening serial port " + serialPortName + " with " + this->opdid->to_string(baudRate) + " baud and protocol " + protocol);

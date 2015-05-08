@@ -54,7 +54,7 @@ namespace ctb {
 	   if( res == 0 ) {
 
 		  // no error, glob was successful
-		  for( int i = 0; i < globbuf.gl_pathc; i++ ) {
+		  for( size_t i = 0; i < globbuf.gl_pathc; i++ ) {
 
 			 if( checkInUse ) {
 			 
@@ -80,7 +80,7 @@ namespace ctb {
 	   if( res == 0 ) {
 
 		  // no error, glob was successful
-		  for( int i = 0; i < globbuf.gl_pathc; i++ ) {
+		  for( size_t i = 0; i < globbuf.gl_pathc; i++ ) {
 
 			 if( checkInUse ) {
 			 
