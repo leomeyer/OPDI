@@ -1218,6 +1218,9 @@ void OPDID_SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *con
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log(std::string(this->getID()) + ": Opening serial port " + serialPortName + " with " + this->opdid->to_string(baudRate) + " baud and protocol " + protocol);
 
+	// try to lock the port name as a resource
+	this->opdid->lockResource(serialPortName, this->getID());
+
 	if (this->serialPort->Open(serialPortName.c_str(), baudRate, 
 							protocol.c_str(), 
 							ctb::SerialPort::NoFlowControl) >= 0) {
