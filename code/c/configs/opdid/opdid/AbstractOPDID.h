@@ -166,6 +166,11 @@ public:
 
 	virtual void setupEmulatedDialPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
+	/** Reads special properties from the configuration and configures the streaming port. */
+	virtual void configureStreamingPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_StreamingPort *port);
+
+	virtual void setupSerialStreamingPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
 	virtual void setupLogicPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	virtual void setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, std::string port);

@@ -22,13 +22,17 @@ public:
 
 	virtual void print(const char *text);
 
-	virtual void println(const char *text);
+	virtual void println(const char *text) override;
+
+	virtual void printe(const char *text);
+
+	virtual void printlne(const char *text) override;
 
 	int HandleTCPConnection(int *csock);
 
-	int setupTCP(std::string interfaces, int port);
+	int setupTCP(std::string interfaces, int port) override;
 
-	IOPDIDPlugin *getPlugin(std::string driver);
+	IOPDIDPlugin *getPlugin(std::string driver) override;
 };
 
 

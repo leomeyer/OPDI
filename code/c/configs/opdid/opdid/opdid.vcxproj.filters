@@ -37,6 +37,18 @@
     <Filter Include="Quelldateien\platforms\win32">
       <UniqueIdentifier>{f13281fd-89fe-4b95-afbc-51d6d5114f61}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Headerdateien\libraries">
+      <UniqueIdentifier>{ac02a4db-59c4-4fdd-b3ea-040caa4676c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\libraries\libctb">
+      <UniqueIdentifier>{1a04e190-2edc-483c-bc1d-5e6c8cba8b5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\libraries">
+      <UniqueIdentifier>{beece497-7f96-47e1-a2eb-4aca03b19691}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\libraries\libctb">
+      <UniqueIdentifier>{fc51c054-eb17-44b7-be46-90d5c9e425ec}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -108,6 +120,48 @@
     <ClInclude Include="OPDIDConfigurationFile.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\ctb.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\fifo.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\getopt.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\gpib.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\iobase.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\kbhit.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\portscan.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\serport.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\serportx.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\timer.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\getopt.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\gpib-32.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\serport.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\timer.h">
+      <Filter>Headerdateien\libraries\libctb</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -151,6 +205,30 @@
     </ClCompile>
     <ClCompile Include="OPDIDConfigurationFile.cpp">
       <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\libraries\libctb\src\fifo.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\libraries\libctb\src\iobase.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\libraries\libctb\src\kbhit.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\libraries\libctb\src\portscan.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\libraries\libctb\src\serportx.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\libraries\libctb\src\win32\getopt.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\libraries\libctb\src\win32\serport.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\libraries\libctb\src\win32\timer.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

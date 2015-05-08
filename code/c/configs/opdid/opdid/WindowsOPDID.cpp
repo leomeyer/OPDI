@@ -193,6 +193,16 @@ void WindowsOPDID::println(const char *text) {
 	std::wcout << utf8_decode(std::string(text)) << std::endl;
 }
 
+void WindowsOPDID::printe(const char *text) {
+	// text is treated as UTF8. Convert to wide character
+	std::wcerr << utf8_decode(std::string(text));
+}
+
+void WindowsOPDID::printlne(const char *text) {
+	// text is treated as UTF8. Convert to wide character
+	std::wcerr << utf8_decode(std::string(text)) << std::endl;
+}
+
 /** This method handles an incoming TCP connection. It blocks until the connection is closed.
 */
 int WindowsOPDID::HandleTCPConnection(int *csock) {

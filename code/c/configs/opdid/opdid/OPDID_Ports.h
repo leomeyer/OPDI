@@ -9,6 +9,9 @@
 // expression evaluation library
 #include <exprtk.hpp>
 
+// serial port library
+#include "ctb-0.16/ctb.h"
+
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/TimedNotificationQueue.h"
 
@@ -405,4 +408,45 @@ public:
 	virtual void setMode(uint8_t mode) override;
 
 	virtual void prepare() override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Serial Streaming Port
+///////////////////////////////////////////////////////////////////////////////
+
+/** Defines a serial streaming port that supports streaming from and to a serial port device.
+ */
+class OPDID_SerialStreamingPort : public OPDI_StreamingPort, protected OPDID_PortFunctions {
+
+friend class OPDI;
+
+protected:
+
+	// a serial streaming port may pass the bytes through or return them in the doWork method (loopback)
+	enum Mode {
+		PASS_THROUGH,
+		LOOPBACK
+	};
+
+	Mode mode;
+
+	ctb::IOBase* device;
+	ctb::SerialPort* serialPort;
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+
+public:
+	OPDID_SerialStreamingPort(AbstractOPDID *opdid, const char *id);
+
+	virtual ~OPDID_SerialStreamingPort();
+
+	virtual void configure(Poco::Util::AbstractConfiguration *config);
+
+	virtual int write(char *bytes, size_t length) override;
+
+	virtual int available(size_t count) override;
+
+	virtual int read(char *result) override;
+
+	virtual bool hasError(void) override;
 };
