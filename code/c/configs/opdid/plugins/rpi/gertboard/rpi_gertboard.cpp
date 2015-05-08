@@ -50,7 +50,7 @@ protected:
 	// At bootup, pins 8 and 10 are already set to UART0_TXD, UART0_RXD (ie the alt0 function) respectively
 	int uart0_filestream;
 	bool expanderInitialized;
-	
+
 	// translates external pin IDs to an internal pin; throws an exception if the pin cannot
 	// be mapped or the resource is already used
 	int mapAndLockPin(int pinNumber, std::string forNode);
@@ -118,11 +118,11 @@ void DigitalGertboardPort::setMode(uint8_t mode) {
 		throw PortError("Digital Gertboard Port does not support pulldown mode");
 
 	OPDI_DigitalPort::setMode(mode);
-	
+
 	if (this->mode == OPDI_DIGITAL_MODE_INPUT_FLOATING) {
 		// configure as floating input
 		INP_GPIO(this->pin);
-		
+
 		GPIO_PULL = 0;
 		short_wait();
 		GPIO_PULLCLK0 = (1 < this->pin);
@@ -133,7 +133,7 @@ void DigitalGertboardPort::setMode(uint8_t mode) {
 	if (this->mode == OPDI_DIGITAL_MODE_INPUT_PULLUP) {
 		// configure as input with pullup
 		INP_GPIO(this->pin);
-		
+
 		GPIO_PULL = 2;
 		short_wait();
 		GPIO_PULLCLK0 = (1 < this->pin);
@@ -149,7 +149,7 @@ void DigitalGertboardPort::setMode(uint8_t mode) {
 
 void DigitalGertboardPort::getState(uint8_t *mode, uint8_t *line) {
 	*mode = this->mode;
-	
+
 	// read line
 	unsigned int b = GPIO_IN0;
 	// bit set?
@@ -181,7 +181,7 @@ AnalogGertboardOutput::AnalogGertboardOutput(AbstractOPDID *opdid, const char *i
 	OPDI_PORTDIRCAP_OUTPUT, 
 	// possible resolutions - hardware decides which one is actually used; set value in configuration
 	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12) {
-	
+
 	this->opdid = opdid;
 	this->mode = 1;
 	this->resolution = 8;	// most Gertboards apparently use an 8 bit DAC; but this can be changed in the configuration
@@ -192,7 +192,7 @@ AnalogGertboardOutput::AnalogGertboardOutput(AbstractOPDID *opdid, const char *i
 	if ((output < 0) || (output > 1))
 		throw Poco::DataException("Invalid analog output channel number (expected 0 or 1): " + to_string(output));
 	this->output = output;
-	
+
 	// setup analog output port
 	INP_GPIO(7);  SET_GPIO_ALT(7,0);
 	INP_GPIO(9);  SET_GPIO_ALT(9,0);
@@ -201,7 +201,7 @@ AnalogGertboardOutput::AnalogGertboardOutput(AbstractOPDID *opdid, const char *i
 
 	// Setup SPI bus
 	setup_spi();
-	
+
 	write_dac(this->output, this->value);
 }
 
@@ -224,7 +224,7 @@ void AnalogGertboardOutput::setReference(uint8_t reference) {
 
 void AnalogGertboardOutput::setValue(int32_t value) {
 	OPDI_AnalogPort::setValue(value);
-	
+
 	write_dac(this->output, this->value);
 }
 
@@ -262,7 +262,7 @@ AnalogGertboardInput::AnalogGertboardInput(AbstractOPDID *opdid, const char *id,
 	OPDI_PORTDIRCAP_INPUT, 
 	// possible resolutions - hardware decides which one is actually used; set value in configuration
 	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12) {
-	
+
 	this->opdid = opdid;
 	this->mode = 0;
 	this->resolution = 8;	// most Gertboards apparently use an 8 bit DAC; but this can be changed in the configuration
@@ -273,7 +273,7 @@ AnalogGertboardInput::AnalogGertboardInput(AbstractOPDID *opdid, const char *id,
 	if ((input < 0) || (input > 1))
 		throw Poco::DataException("Invalid analog input channel number (expected 0 or 1): " + to_string(input));
 	this->input = input;
-	
+
 	// setup analog input port
 	INP_GPIO(8);  SET_GPIO_ALT(8,0);
 	INP_GPIO(9);  SET_GPIO_ALT(9,0);
@@ -331,7 +331,7 @@ protected:
 	uint64_t queryInterval;
 	uint64_t lastRefreshTime;
 	uint64_t refreshInterval;
-	
+
 	virtual uint8_t doWork(uint8_t canSend) override;
 	virtual uint8_t queryState(void);
 public:
@@ -594,7 +594,7 @@ void DigitalExpansionPort::setLine(uint8_t line) {
 		}
 	} else
 		throw PortError("Unknown driver type: " + to_string(driverType));
-	
+
 	this->gbPlugin->sendExpansionPortCode(code);
 	uint8_t returnCode = this->gbPlugin->receiveExpansionPortCode();
 	if ((returnCode & PORTMASK) != (code & PORTMASK))
@@ -654,7 +654,7 @@ void DigitalExpansionPort::setMode(uint8_t mode) {
 
 void DigitalExpansionPort::getState(uint8_t *mode, uint8_t *line) {
 	*mode = this->mode;
-	
+
 	if (this->mode == OPDI_DIGITAL_MODE_OUTPUT) {
 		// return remembered state
 		*line = this->line;
@@ -668,10 +668,10 @@ void DigitalExpansionPort::getState(uint8_t *mode, uint8_t *line) {
 
 		this->gbPlugin->sendExpansionPortCode(code);
 		uint8_t returnCode = this->gbPlugin->receiveExpansionPortCode();
-		
+
 		if ((returnCode & ~(1 << LINESTATE)) != code)
 			throw PortError("Expansion port communication failure");
-			
+
 		if ((returnCode & (1 << LINESTATE)) == (1 << LINESTATE))
 			*line = 1;
 		else
@@ -696,10 +696,10 @@ int GertboardPlugin::mapAndLockPin(int pinNumber, std::string forNode) {
 	}
 	if (internalPin < 0)
 		throw Poco::DataException(std::string("The pin is not supported: ") + this->opdid->to_string(pinNumber));
-		
+
 	// try to lock the pin as a resource
 	this->opdid->lockResource(std::string("Gertboard Pin ") + this->opdid->to_string(internalPin), forNode);
-	
+
 	return internalPin;
 }
 
@@ -709,11 +709,11 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 	this->expanderInitialized = false;
 
 	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
-	
+
 	// try to lock the whole Gertboard as a resource
 	// to avoid trouble repeatedly initializing IO
 	this->opdid->lockResource(std::string("Gertboard"), node);
-	
+
 	// prepare Gertboard IO (requires root permissions)
 	setup_io();
 
@@ -730,24 +730,27 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 
 	// store main node's group (will become the default of ports)
 	std::string group = nodeConfig->getString("Group", "");
-	
+
 	// to use the expansion ports we need to have a serial device name
 	// if this is not configured we can't use the serial port expansion
 	this->serialDevice = nodeConfig->getString("SerialDevice", "");
-	
+
 	// if serial device specified, open and configure it
 	if (this->serialDevice != "") {
-	
+
+		// try to lock the serial device as a resource
+		this->opdid->lockResource(this->serialDevice, node);
+
 		int timeout = nodeConfig->getInt("SerialTimeout", 100);
 		if (timeout < 0)
 			throw Poco::DataException("SerialTimeout may not be negative: " + this->opdid->to_string(timeout));
-		
+
 		this->serialTimeoutMs = timeout;
-	
+
 		this->uart0_filestream = open(this->serialDevice.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);		// open in non blocking read/write mode
 		if (this->uart0_filestream == -1)
 			throw Poco::Exception("Unable to open serial device " + this->serialDevice);
-	
+
 		struct termios options;
 		tcgetattr(uart0_filestream, &options);
 		options.c_cflag = B19200 | CS8 | CLOCAL | CREAD;		// set baud rate
@@ -756,12 +759,12 @@ void GertboardPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node
 		options.c_lflag = 0;
 		tcflush(uart0_filestream, TCIFLUSH);
 		tcsetattr(uart0_filestream, TCSANOW, &options);
-	
+
 		// the serial device, if present, uses pins 14 and 15, so these need to be locked
 		// if other ports try to use these ports it will fail
 		this->mapAndLockPin(14, node + " SerialDevice Port Expansion");
 		this->mapAndLockPin(15, node + " SerialDevice Port Expansion");
-		
+
 		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 			this->opdid->log(node + ": SerialDevice " + this->serialDevice + " setup successfully with a timeout of " + this->opdid->to_string(this->serialTimeoutMs) + " ms");
 	}
