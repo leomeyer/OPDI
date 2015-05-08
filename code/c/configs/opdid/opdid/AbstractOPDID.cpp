@@ -201,7 +201,7 @@ void AbstractOPDID::log(std::string text) {
 	// Try to lock the mutex. If this does not work in time, it will throw
 	// an exception. The calling thread should deal with this exception.
 	Poco::Mutex::ScopedLock(this->mutex);
-	this->println(this->getTimestampStr() + text);
+	this->println(this->getTimestampStr() + (this->shutdownRequested ? " <AFTER SHUTDOWN> " : "") + text);
 }
 
 void AbstractOPDID::logError(std::string text) {
