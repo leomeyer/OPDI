@@ -76,7 +76,7 @@ namespace ctb {
 
     int IOBase::ReadUntilEOS(char*& readbuf,
 						 size_t* readedBytes,
-						 char* eosString,
+						 const char* eosString,
 						 long timeout_in_ms,
 						 char quota)
     {
@@ -87,7 +87,7 @@ namespace ctb {
 	   int quoted = 0;
 	   char* buf = new char[bufsize];
 	   char* des = buf;
-	   char* eos = eosString;
+	   const char* eos = eosString;
 	   char ch;
 
 	   Timer t(timeout_in_ms,&timeout,NULL);

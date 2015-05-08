@@ -209,7 +209,7 @@ namespace ctb {
 	   */
 	   virtual int ReadUntilEOS(char*& readbuf,
 						   size_t* readedBytes,
-						   char* eosString = "\n",
+						   const char* eosString = "\n",
 						   long timeout_in_ms = 1000L,
 						   char quota = 0);
 
