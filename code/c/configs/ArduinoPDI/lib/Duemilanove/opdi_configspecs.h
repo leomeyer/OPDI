@@ -40,7 +40,7 @@
 #define OPDI_MAX_MESSAGE_PARTS	12
 
 // maximum length of master's name this device will accept
-#define OPDI_MASTER_NAME_LENGTH	32
+#define OPDI_MASTER_NAME_LENGTH	1
 
 // maximum possible ports on this device
 #define OPDI_MAX_DEVICE_PORTS	8
@@ -55,7 +55,7 @@
 #define OPDI_NO_SELECT_PORTS
 
 // define to conserve RAM and ROM
-#define OPDI_NO_DIAL_PORTS
+// #define OPDI_NO_DIAL_PORTS
 
 // maximum number of streaming ports
 // set to 0 to conserve both RAM and ROM
@@ -78,5 +78,7 @@
 #define MAX_ENCODINGNAMELENGTH	10
 
 #define OPDI_MAX_PORT_INFO_MESSAGE	0
+
+#define OPDI_EXTENDED_PROTOCOL	1
 
 #endif		// __OPDI_CONFIGSPECS_H

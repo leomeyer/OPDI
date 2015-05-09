@@ -7,11 +7,11 @@
 class ArduinOPDI : public OPDI {
 
 public:
-	virtual uint8_t setup(const char *slaveName, int idleTimeout);
+	virtual uint8_t setup(const char *slaveName, uint32_t idleTimeout);
 
 	virtual ~ArduinOPDI();
 
-	virtual uint32_t getTimeMs();
+	virtual uint32_t getTimeMs() override;
 };
 
 #ifndef OPDI_NO_DIGITAL_PORTS

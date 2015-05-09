@@ -71,7 +71,7 @@ public:
 	// Initialize a digital port. Specify one of the OPDI_PORTDIR_CAPS* values for dircaps.
 	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
 	// Note: OPDI_DIGITAL_PORT_HAS_PULLDN is not supported.
-	OPDI_DigitalPort(const char *id, const char *name, const char * dircaps, const uint8_t flags);
+	OPDI_DigitalPort(const char *id, const char *name, const char * dircaps, const int32_t flags);
 	virtual ~OPDI_DigitalPort();
 
 	// pure virtual methods that need to be implemented by subclasses
@@ -103,7 +103,7 @@ class OPDI_AnalogPort : public OPDI_Port {
 public:
 	// Initialize an analog port. Specify one of the OPDI_PORTDIR_CAPS* values for dircaps.
 	// Specify one or more of the OPDI_ANALOG_PORT_* values for flags, or'ed together, to specify possible settings.
-	OPDI_AnalogPort(const char *id, const char *name, const char * dircaps, const uint8_t flags);
+	OPDI_AnalogPort(const char *id, const char *name, const char * dircaps, const int32_t flags);
 	virtual ~OPDI_AnalogPort();
 
 	// pure virtual methods that need to be implemented by subclasses
@@ -130,9 +130,58 @@ public:
 	virtual uint8_t getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) = 0;
 };
 
-
 #endif // OPDI_NO_ANALOG_PORTS
 
+
+#ifndef OPDI_NO_SELECT_PORTS
+/** Defines a select port.
+ *
+ */
+class OPDI_SelectPort : public OPDI_Port {
+
+public:
+	OPDI_SelectPort(const char *id);
+
+	// Initialize a select port. The direction of a select port is output only.
+	// You have to specify a list of items that are the labels of the different select positions. The last element must be NULL.
+	// The items are copied into the privately managed data structure of this class.
+	OPDI_SelectPort(const char *id, const char *label, const char **items);
+
+	virtual ~OPDI_SelectPort();
+
+	// function that handles position setting; position may be in the range of 0..(items.length - 1)
+	virtual uint8_t setPosition(uint16_t position) = 0;
+
+	// function that fills in the current port state
+	virtual uint8_t getState(uint16_t *position) = 0;
+};
+
+#endif // OPDI_NO_SELECT_PORTS
+
+#ifndef OPDI_NO_DIAL_PORTS
+/** Defines a dial port.
+ *
+ */
+class OPDI_DialPort : public OPDI_Port {
+protected:
+	opdi_DialPortInfo portInfo;
+
+public:
+	OPDI_DialPort(const char *id);
+
+	// Initialize a dial port. The direction of a dial port is output only.
+	// You have to specify boundary values and a step size.
+	OPDI_DialPort(const char *id, const char *label, const int64_t minValue, const int64_t maxValue, const uint64_t step, const int32_t flags);
+	virtual ~OPDI_DialPort();
+
+	// function that handles position setting; position may be in the range of minValue..maxValue
+	virtual uint8_t setPosition(int64_t position) = 0;
+
+	// function that fills in the current port state
+	virtual uint8_t getState(int64_t *position) = 0;
+};
+
+#endif	// OPDI_NO_DIAL_PORTS
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Main class for OPDI functionality

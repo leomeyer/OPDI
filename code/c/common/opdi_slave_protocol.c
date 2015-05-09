@@ -964,13 +964,6 @@ static uint8_t basic_protocol_message(channel_t channel) {
 		// unknown message received
 		return OPDI_MESSAGE_UNKNOWN;
 	}
-	
-#ifdef OPDI_HAS_MESSAGE_HANDLED
-	// notify the device that a message has been handled
-	return opdi_message_handled(channel, opdi_msg_parts);
-#else
-	return OPDI_STATUS_OK;
-#endif
 }
 
 #ifdef OPDI_EXTENDED_PROTOCOL
@@ -1027,13 +1020,6 @@ static uint8_t extended_protocol_message(channel_t channel) {
 	else
 		// for all other messages, fall back to the basic protocol
 		return basic_protocol_message(channel);
-		
-#ifdef OPDI_HAS_MESSAGE_HANDLED
-	// notify the device that a message has been handled
-	return opdi_message_handled(channel, opdi_msg_parts);
-#else
-	return OPDI_STATUS_OK;
-#endif
 }
 #endif
 
@@ -1130,18 +1116,6 @@ static uint8_t basic_protocol_handler(void) {
 				if (result != OPDI_STATUS_OK)
 					return result;
 			}
-			
-#ifdef OPDI_HAS_MESSAGE_HANDLED
-			// notify the device that a message has been handled
-			result = opdi_message_handled(0, opdi_msg_parts);
-			if (result != OPDI_STATUS_OK) {
-				// intentional disconnects are not an error
-				if (result != OPDI_DISCONNECTED)
-					// an error occurred during message handling; send error to device and exit
-					return send_error(result, NULL, NULL);
-				return result;
-			}
-#endif
 		} else {
 			// clear port info message
 			opdi_set_port_message("");
@@ -1153,6 +1127,18 @@ static uint8_t basic_protocol_handler(void) {
 			if (result != OPDI_STATUS_OK)
 				return result;
 		}
+
+#ifdef OPDI_HAS_MESSAGE_HANDLED
+		// notify the device that a message has been handled
+		result = opdi_message_handled(0, opdi_msg_parts);
+		if (result != OPDI_STATUS_OK) {
+			// intentional disconnects are not an error
+			if (result != OPDI_DISCONNECTED)
+				// an error occurred during message handling; send error to device and exit
+				return send_error(result, NULL, NULL);
+			return result;
+		}
+#endif
 	}	// while
 }
 
@@ -1189,6 +1175,9 @@ static uint8_t extended_protocol_handler(void) {
 			if (!strcmp(opdi_msg_parts[0], OPDI_Debug))
 				opdi_debug_msg(opdi_msg_parts[1], OPDI_DIR_DEBUG);
 		} else {
+			// clear port info message
+			opdi_set_port_message("");
+
 			// message other than control message received
 			// let the protocol handle the message
 			result = extended_protocol_message(m.channel);
@@ -1196,6 +1185,18 @@ static uint8_t extended_protocol_handler(void) {
 			if (result != OPDI_STATUS_OK)
 				return result;
 		}
+			
+#ifdef OPDI_HAS_MESSAGE_HANDLED
+		// notify the device that a message has been handled
+		result = opdi_message_handled(0, opdi_msg_parts);
+		if (result != OPDI_STATUS_OK) {
+			// intentional disconnects are not an error
+			if (result != OPDI_DISCONNECTED)
+				// an error occurred during message handling; send error to device and exit
+				return send_error(result, NULL, NULL);
+			return result;
+		}
+#endif
 	}	// while
 }
 #endif
