@@ -420,3 +420,44 @@ public:
 
 	virtual bool hasError(void) override;
 };
+
+
+/** Defines a streaming port.
+ * A streaming port represents a serial data connection on the device. It can send and receive bytes.
+ * Examples are RS232 or I2C ports.
+ * If a master is connected it can bind to a streaming port. Binding means that received bytes are
+ * transferred to the master and bytes received from the master are sent to the connection.
+ * The streaming port can thus act as an internal connection data source and sink, as well as a
+ * transparent connection which directly connects the master and the connection partner.
+ * Data sources can be read-only or write-only. Data may be also transformed before it is transmitted
+ * to the master. How exactly this is done depends on the concrete implementation.
+ */
+class OPDI_StreamingPort : public OPDI_Port {
+
+friend class OPDI;
+
+protected:
+	/** A streaming port does not support self refreshing. */
+	virtual void doSelfRefresh(void) override;
+
+public:
+	// Initialize a streaming port. A streaming port is always bidirectional.
+	OPDI_StreamingPort(const char *id);
+
+	virtual ~OPDI_StreamingPort();
+
+	// Writes the specified bytes to the data sink. Returns the number of bytes written.
+	// If the returned value is less than 0 it is considered an (implementation specific) error.
+	virtual int write(char *bytes, size_t length) = 0;
+
+	// Checks how many bytes are available from the data source. If count is > 0
+	// it is used as a value to request the number of bytes if the underlying system
+	// supports this type of request. Otherwise it has no meaning.
+	// If no bytes are available the result is 0. If the returned
+	// value is less than 0 it is considered an (implementation specific) error.
+	virtual int available(size_t count) = 0;
+
+	// Reads one byte from the data source and places it in result. If the returned
+	// value is less than 1 it is considered an (implementation specific) error.
+	virtual int read(char *result) = 0;
+};

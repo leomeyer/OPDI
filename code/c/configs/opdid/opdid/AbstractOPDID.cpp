@@ -201,7 +201,7 @@ void AbstractOPDID::log(std::string text) {
 	// Try to lock the mutex. If this does not work in time, it will throw
 	// an exception. The calling thread should deal with this exception.
 	Poco::Mutex::ScopedLock(this->mutex);
-	this->println(this->getTimestampStr() + text);
+	this->println(this->getTimestampStr() + (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text);
 }
 
 void AbstractOPDID::logError(std::string text) {
@@ -674,6 +674,20 @@ void AbstractOPDID::setupEmulatedDialPort(Poco::Util::AbstractConfiguration *por
 	this->addPort(dialPort);
 }
 
+void AbstractOPDID::configureStreamingPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_StreamingPort *port) {
+	this->configurePort(portConfig, port, 0);
+}
+
+void AbstractOPDID::setupSerialStreamingPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Setting up serial streaming port: " + port);
+
+	OPDID_SerialStreamingPort *ssPort = new OPDID_SerialStreamingPort(this, port.c_str());
+	ssPort->configure(portConfig);
+
+	this->addPort(ssPort);
+}
+
 void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
 	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up LogicPort: " + port);
@@ -777,6 +791,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else
 		if (nodeType == "DialPort") {
 			this->setupEmulatedDialPort(nodeConfig, node);
+		} else
+		if (nodeType == "SerialStreamingPort") {
+			this->setupSerialStreamingPort(nodeConfig, node);
 		} else
 		if (nodeType == "LogicPort") {
 			this->setupLogicPort(nodeConfig, node);

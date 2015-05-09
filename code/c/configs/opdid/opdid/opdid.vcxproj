@@ -51,7 +51,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;POCO_STATIC;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\libraries\exprtk;..\..\..\libraries\POCO\Foundation\include;..\..\..\libraries\POCO\Util\include;..\..\..\common;..\..\..\platforms\win32;..\..\..\platforms;..\..\..\common\cppwrapper;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libraries\libctb\include;..\..\..\libraries\exprtk;..\..\..\libraries\POCO\Foundation\include;..\..\..\libraries\POCO\Util\include;..\..\..\common;..\..\..\platforms\win32;..\..\..\platforms;..\..\..\common\cppwrapper;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -97,6 +97,20 @@
     <ClInclude Include="..\..\..\common\opdi_rijndael.h" />
     <ClInclude Include="..\..\..\common\opdi_slave_protocol.h" />
     <ClInclude Include="..\..\..\common\opdi_strings.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\ctb.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\fifo.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\getopt.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\gpib.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\iobase.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\kbhit.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\portscan.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\serport.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\serportx.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\timer.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\getopt.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\gpib-32.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\serport.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\timer.h" />
     <ClInclude Include="..\..\..\platforms\opdi_platformfuncs.h" />
     <ClInclude Include="..\..\..\platforms\win32\opdi_platformtypes.h" />
     <ClInclude Include="AbstractOPDID.h" />
@@ -115,6 +129,14 @@
     <ClCompile Include="..\..\..\common\opdi_protocol.c" />
     <ClCompile Include="..\..\..\common\opdi_slave_protocol.c" />
     <ClCompile Include="..\..\..\common\opdi_strings.c" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\fifo.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\iobase.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\kbhit.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\portscan.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\serportx.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\win32\getopt.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\win32\serport.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\win32\timer.cpp" />
     <ClCompile Include="..\..\..\platforms\win32\opdi_platformfuncs.c" />
     <ClCompile Include="AbstractOPDID.cpp" />
     <ClCompile Include="OPDIDConfigurationFile.cpp" />

@@ -53,6 +53,12 @@ POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation -lPocoXML -lPocoJSON
 # ExprTk expression library path
 EXPRTK = ../../../libraries/ExprTk
 
+# libctb expression library
+LIBCTB = ../../../libraries/libctb
+LIBCTBINC = $(LIBCTB)/include
+SRC += $(LIBCTB)/src/fifo.cpp $(LIBCTB)/src/getopt.cpp $(LIBCTB)/src/iobase.cpp $(LIBCTB)/src/kbhit.cpp $(LIBCTB)/src/linux/serport.cpp
+SRC += $(LIBCTB)/src/linux/timer.cpp $(LIBCTB)/src/portscan.cpp $(LIBCTB)/src/serportx.cpp
+
 # Additional libraries
 LIBS = -lpthread -ldl -lrt
 
@@ -65,7 +71,7 @@ CC = arm-linux-gnueabihf-g++
 
 # List any extra directories to look for include files here.
 # Each directory must be seperated by a space.
-EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(MPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(EXPRTK) .
+EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(MPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(EXPRTK) $(LIBCTBINC) .
 
 # Place -I options here
 CINCS =

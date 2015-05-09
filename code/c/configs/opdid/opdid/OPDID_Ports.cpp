@@ -3,6 +3,8 @@
 #include "Poco/Timezone.h"
 #include "Poco/DateTimeFormatter.h"
 
+#include "ctb-0.16/ctb.h"
+
 #include "opdi_port.h"
 #include "opdi_platformfuncs.h"
 
@@ -959,11 +961,13 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 			result += schedule->data.time.day * 24 * 60 * 60 * result.resolution();
 		return result;
 	} else
+/*
 	if (schedule->type == PERIODIC) {
 	} else
 	if (schedule->type == RANDOM) {
 		// determine next point in type randomly
 	} else
+*/
 		// return default value (now; must not be enqueued)
 		return Poco::Timestamp();
 }
@@ -1163,4 +1167,118 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 	}
 
 	return OPDI_STATUS_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Serial Streaming Port
+///////////////////////////////////////////////////////////////////////////////
+
+OPDID_SerialStreamingPort::OPDID_SerialStreamingPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id) {
+	this->opdid = opdid;
+	this->mode = PASS_THROUGH;
+	this->device = NULL;
+	this->serialPort = new ctb::SerialPort();
+}
+
+OPDID_SerialStreamingPort::~OPDID_SerialStreamingPort() {
+}
+
+uint8_t OPDID_SerialStreamingPort::doWork(uint8_t canSend)  {
+	OPDI_StreamingPort::doWork(canSend);
+
+	if (this->device == NULL)
+		return OPDI_STATUS_OK;
+
+	if (this->mode == LOOPBACK) {
+		// byte available?
+		if (this->available(0) > 0) {
+			char result;
+			if (this->read(&result) > 0) {
+				if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
+					this->opdid->log(std::string(this->getID()) + ": Looping back received serial data byte: " + this->opdid->to_string((int)result));
+
+				// echo
+				this->write(&result, 1);
+			}
+		}
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+
+void OPDID_SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *config) {
+	this->opdid->configureStreamingPort(config, this);
+
+	std::string serialPortName = this->opdid->getConfigString(config, "SerialPort", "", true);
+	int baudRate = config->getInt("BaudRate", 9600);
+	std::string protocol = config->getString("Protocol", "8N1");
+	// int timeout = config->getInt("Timeout", 100);
+
+	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		this->opdid->log(std::string(this->getID()) + ": Opening serial port " + serialPortName + " with " + this->opdid->to_string(baudRate) + " baud and protocol " + protocol);
+
+	// try to lock the port name as a resource
+	this->opdid->lockResource(serialPortName, this->getID());
+
+	if (this->serialPort->Open(serialPortName.c_str(), baudRate, 
+							protocol.c_str(), 
+							ctb::SerialPort::NoFlowControl) >= 0) {
+		this->device = this->serialPort;
+	} else {
+		throw Poco::ApplicationException(std::string(this->getID()) + ": Unable to open serial port: " + serialPortName);
+	}
+
+	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+		this->opdid->log(std::string(this->getID()) + ": Serial port " + serialPortName + " opened successfully");
+
+	std::string modeStr = config->getString("Mode", "");
+	if (modeStr == "Loopback") {
+		this->mode = LOOPBACK;
+	} else
+	if (modeStr == "Passthrough") {
+		this->mode = PASS_THROUGH;
+	} else
+		if (modeStr != "")
+			throw Poco::DataException(std::string(this->getID()) + ": Invalid mode specifier; expected 'Passthrough' or 'Loopback': " + modeStr);
+}
+
+int OPDID_SerialStreamingPort::write(char *bytes, size_t length) {
+	return this->device->Write(bytes, length);
+}
+
+int OPDID_SerialStreamingPort::available(size_t count) {
+	// count has no meaning in this implementation
+
+	char buf;
+	int code = this->device->Read(&buf, 1);
+	// error?
+	if (code < 0)
+		return code;
+	// byte read?
+	if (code > 0) {
+		this->device->PutBack(buf);
+		return 1;
+	}
+	// nothing available
+	return 0;
+}
+
+int OPDID_SerialStreamingPort::read(char *result) {
+	char buf;
+	int code = this->device->Read(&buf, 1);
+	// error?
+	if (code < 0)
+		return code;
+	// byte read?
+	if (code > 0) {
+		*result = buf;
+		return 1;
+	}
+	// nothing available
+	return 0;
+}
+
+bool OPDID_SerialStreamingPort::hasError(void) {
+	return false;
 }

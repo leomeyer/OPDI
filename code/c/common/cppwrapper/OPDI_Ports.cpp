@@ -776,3 +776,17 @@ bool OPDI_DialPort::hasError(void) {
 }
 
 #endif // OPDI_NO_DIAL_PORTS
+
+///////////////////////////////////////////////////////////////////////////////
+// Streaming Port
+///////////////////////////////////////////////////////////////////////////////
+
+void OPDI_StreamingPort::doSelfRefresh(void) {}
+
+OPDI_StreamingPort::OPDI_StreamingPort(const char *id) : 
+	OPDI_Port(id, OPDI_PORTTYPE_STREAMING) {
+}
+
+OPDI_StreamingPort::~OPDI_StreamingPort() {
+}
+
