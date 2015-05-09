@@ -18,10 +18,12 @@
 		    <exclude name="opdi_rijndael.h"/>
 			<include name="*.c"/>
 		</fileset>
+		<!-- 
 		<fileset dir="../../common/cppwrapper">
 			<include name="*.h"/>
 			<include name="*.cpp"/>
 		</fileset>
+		-->
 		<fileset dir="../../platforms">
 			<include name="*.h"/>
 		</fileset>
@@ -33,6 +35,8 @@
 			<include name="ArduinOPDI.h"/>
 			<include name="memory.h"/>
 			<include name="ArduinOPDI.cpp"/>
+			<include name="OPDI.h"/>
+			<include name="OPDI.cpp"/>
 		</fileset>
 		<fileset dir="lib/${target}">
 			<include name="*.h"/>

@@ -72,7 +72,7 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 /** Can be used to send debug messages to a monitor.
  *
  */
-uint8_t opdi_debug_msg(const uint8_t *message, uint8_t direction) {
+uint8_t opdi_debug_msg(const char *message, uint8_t direction) {
 	return OPDI_STATUS_OK;
 }
 

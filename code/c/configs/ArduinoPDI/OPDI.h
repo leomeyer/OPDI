@@ -21,7 +21,7 @@
  */
 
 #include <opdi_config.h>
-#include <opdi_ports.h>
+#include <opdi_port.h>
 
 /** Base class for OPDI port wrappers.
  *
