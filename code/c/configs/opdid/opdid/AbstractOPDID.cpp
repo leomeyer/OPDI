@@ -421,12 +421,19 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration *config, Poco
 		this->log(node + ": No parameters for include in section " + node + ".Parameters found, is this intended?");
 
 	if (this->logVerbosity >= VERBOSE)
-		this->log(node + ": Loading include file: " + filename);
+		this->log(node + ": Processing include file: " + filename);
 
 	Poco::Util::AbstractConfiguration *includeConfig = this->readConfiguration(filename, parameters);
 
 	// setup the root node of the included configuration
 	this->setupRoot(includeConfig);
+
+	if (this->logVerbosity >= VERBOSE) {
+		this->log(node + ": Include file " + filename + " processed successfully.");
+		std::string configFilePath = parentConfig->getString(OPDID_CONFIG_FILE_SETTING, "");
+		if (configFilePath != "")
+			this->log("Continuing with parent configuration file: " + configFilePath);
+	}
 }
 
 void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags) {
