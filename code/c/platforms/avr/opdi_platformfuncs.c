@@ -108,9 +108,61 @@ uint8_t opdi_int32_to_str(int32_t value, char* msgBuf) {
 	return strlen(msgBuf);
 }
 
-uint8_t opdi_int64_to_str(int64_t value, char* msgBuf) {
-	ltoa(value, msgBuf, 10);
-	return strlen(msgBuf);
+uint8_t opdi_int64_to_str(int64_t n, char* pStr) {
+	// code copied from: http://www.hlevkin.com/C_progr/long64.c
+  int i = 0;
+  int m;
+  int len;
+  char c;
+  char s = '+';
+
+ // if(n == LONG_LONG_MIN) // _I64_MIN  for Windows Microsoft compiler
+  if(n == -9223372036854775808)
+  {
+    strcpy(pStr,"-9223372036854775808");
+    return strlen(pStr);
+  }
+
+  if( n < 0 )
+  {
+    s = '-';
+    n = - n;
+    pStr[0]='-';
+    i++;
+  }
+
+  do
+  {
+    m = n % (long long)10;
+    pStr[i] = '0'+ m;
+    n = n / (long long)10;
+    i++;
+  }
+  while(n != 0);
+
+  if(s == '+')
+  {
+    len = i;
+  }
+  else /* s=='-' */
+  {
+    len = i-1;
+    pStr++;
+  }
+
+  for(i=0; i<len/2; i++)
+  {
+    c = pStr[i];
+    pStr[i]       = pStr[len-1-i];
+    pStr[len-1-i] = c;
+  }
+  pStr[len] = 0;
+
+  if(s == '-')
+  {
+    pStr--;
+  }
+  return strlen(pStr);
 }
 
 uint8_t opdi_bytes_to_string(uint8_t bytes[], uint16_t offset, uint16_t length, char *dest, uint16_t dest_length) {
