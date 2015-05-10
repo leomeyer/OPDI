@@ -432,7 +432,7 @@ uint8_t OPDI::waiting(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-uint8_t isConnected() {
+uint8_t OPDI::isConnected() {
 	return opdi_slave_connected();
 }
 

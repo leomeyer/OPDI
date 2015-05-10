@@ -27,7 +27,7 @@
 
 // Defines the maximum message length this slave can receive.
 // Consumes this amount of bytes in data and the same amount on the stack.
-#define OPDI_MESSAGE_BUFFER_SIZE		48
+#define OPDI_MESSAGE_BUFFER_SIZE		60
 
 // Defines the maximum message string length this slave can receive.
 // Consumes this amount of bytes times sizeof(char) in data and the same amount on the stack.
@@ -37,18 +37,19 @@
 #define OPDI_MESSAGE_PAYLOAD_LENGTH	(OPDI_MESSAGE_BUFFER_SIZE - 9)
 
 // maximum permitted message parts
-#define OPDI_MAX_MESSAGE_PARTS	12
+#define OPDI_MAX_MESSAGE_PARTS	10
 
 // maximum length of master's name this device will accept
 #define OPDI_MASTER_NAME_LENGTH	1
 
 // maximum possible ports on this device
-#define OPDI_MAX_DEVICE_PORTS	8
+#define OPDI_MAX_DEVICE_PORTS	6
 
 // define to conserve RAM and ROM
 //#define OPDI_NO_DIGITAL_PORTS
 
 // define to conserve RAM and ROM
+// Arduino compiler may crash or loop endlessly if this defined, so better keep them
 //#define OPDI_NO_ANALOG_PORTS
 
 // define to conserve RAM and ROM
@@ -73,9 +74,9 @@
 
 // keep these numbers as low as possible to conserve memory
 #define MAX_PORTIDLENGTH		5
-#define MAX_PORTNAMELENGTH		20
+#define MAX_PORTNAMELENGTH		16
 #define MAX_SLAVENAMELENGTH		16
-#define MAX_ENCODINGNAMELENGTH	10
+#define MAX_ENCODINGNAMELENGTH	6
 
 #define OPDI_MAX_PORT_INFO_MESSAGE	0
 
