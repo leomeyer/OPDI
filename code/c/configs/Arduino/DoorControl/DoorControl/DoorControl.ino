@@ -19,6 +19,8 @@
 
 /** DoorControl for Arduino
  * - Keypad
+ * - RTC
+ * - RFID access
  * - OPDI slave implementation
  */
 
@@ -30,13 +32,32 @@
 
 #include <opdi_constants.h>
 
-#include "ArduinOPDI.h"
-#include <Keypad.h>
 #include <EEPROM.h>
+#include <SPI.h>
+#include <Wire.h>
+
+#include <MFRC522.h>    // from: https://github.com/miguelbalboa/rfid
+#include <Keypad.h>    // from: http://playground.arduino.cc/code/keypad
+#include <DS1307RTC.h>  // from: http://www.pjrc.com/teensy/td_libs_DS1307RTC.html
+#include <Time.h>      // from: http://www.pjrc.com/teensy/td_libs_Time.html
+
+#include "ArduinOPDI.h"
+
+#define STATUS_LED    6
+#define ACCESS_LED    7
+
+#define RST_PIN         9
+#define SS_PIN          10
+
+MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
+
+MFRC522::MIFARE_Key mifareKey;
 
 // keyboard input state
 uint32_t enteredValue = 0;
 int64_t codeValue = 0;    // is read from the EEPROM at startup and modified by the dial port
+
+uint32_t timeRefreshCounter;
 
 // Special port definitions
 
@@ -51,7 +72,7 @@ protected:
 public:
 OPDI_EEPROMDialPort(const char *id, const char *label, const int address, const int64_t maxValue, char *extendedInfo) : 
     OPDI_DialPort(id, label, 0, maxValue, 1, 0) {
-   // this->port.extendedInfo = extendedInfo;     
+   this->port.extendedInfo = extendedInfo;     
 }
 
 virtual ~OPDI_EEPROMDialPort() {}
@@ -102,6 +123,47 @@ virtual uint8_t getState(int64_t *position) {
 
 };
 
+
+// DS1307 dial port: a connection to a DS1307 RTC module
+// Gets/sets the current time as an UNIX timestamp (64 bit value, seconds since 1970-01-01)
+class OPDI_DS1307DialPort : public OPDI_DialPort {
+  
+public:
+OPDI_DS1307DialPort(const char *id, const char *label, char *extendedInfo) : 
+    OPDI_DialPort(id, label, 0, 0x7FFFFFFFFFFFFFFF, 1, 0) {
+   this->port.extendedInfo = extendedInfo;     
+}
+
+virtual ~OPDI_DS1307DialPort() {}
+
+virtual uint8_t setPosition(int64_t position) {
+  tmElements_t tm;
+
+  // convert value (in Unix epoch seconds) to timestamp
+  breakTime(position, tm);
+  
+  if (!RTC.write(tm)) {
+    return OPDI_PORT_ERROR;
+  }
+  
+  return OPDI_STATUS_OK;
+}
+
+virtual uint8_t getState(int64_t *position) {
+  tmElements_t tm;
+
+  if (!RTC.read(tm)) {
+    return OPDI_PORT_ERROR;
+  }
+  // convert time to Unix epoch seconds
+  *position = makeTime(tm);
+  
+  return OPDI_STATUS_OK;
+}
+
+};
+
+
 // The ArduinOPDI class defines all the Arduino specific stuff like serial ports communication.
 ArduinOPDI ArduinOpdi = ArduinOPDI();
 // define global OPDI instance
@@ -112,6 +174,9 @@ OPDI* Opdi = &ArduinOpdi;
 
 OPDI_EEPROMDialPort eeprom1 = OPDI_EEPROMDialPort("EDP1", "Code", 0, 99999, "unit=keypadCode");
 
+OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("RTC", "Current time", "unit=keypadCode");
+
+// Keypad definitions
 const byte ROWS = 4; //four rows
 const byte COLS = 4; //four columns
 char keys[ROWS][COLS] = {
@@ -120,8 +185,8 @@ char keys[ROWS][COLS] = {
   {'1','2','3','D'},
   {'0','.','-','R'}
 };
-byte rowPins[ROWS] = {5, 4, 3, 2}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {8, 9, 10, 11}; //connect to the column pinouts of the keypad
+byte rowPins[ROWS] = {A3, A2, A1, A0}; //connect to the row pinouts of the keypad
+byte colPins[COLS] = {2, 3, 4, 5}; //connect to the column pinouts of the keypad
 
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 
@@ -129,29 +194,50 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 
 uint8_t checkerror(uint8_t result) {
 	if (result != OPDI_STATUS_OK) {
-		digitalWrite(13, LOW);    // set the LED off
+		digitalWrite(STATUS_LED, LOW);    // set the LED off
 		delay(500);
 
 		// flash error code on LED
 		for (uint8_t i = 0; i < result; i++) {
-			digitalWrite(13, HIGH);   // set the LED on
+			digitalWrite(STATUS_LED, HIGH);   // set the LED on
 			delay(200);              // wait
-			digitalWrite(13, LOW);    // set the LED off
+			digitalWrite(STATUS_LED, LOW);    // set the LED off
 			delay(200);              // wait
 		}
-		digitalWrite(13, LOW);    // set the LED off
+		digitalWrite(STATUS_LED, LOW);    // set the LED off
 		return 0;
 	}
 	return 1;
 }
 
 uint8_t setupDevice() {
+
+  timeRefreshCounter = millis();
+  
+  tmElements_t tm;
+  
 	// initialize the digital pin as an output.
-	// Pin 13 has an LED connected on most Arduino boards
-	pinMode(13, OUTPUT);
+	// Pin STATUS_LED has an LED connected on most Arduino boards
+	pinMode(STATUS_LED, OUTPUT);
+
+        if (RTC.read(tm)) {
+			digitalWrite(STATUS_LED, HIGH);   // set the LED on
+			delay(200);              // wait
+			digitalWrite(STATUS_LED, LOW);    // set the LED off
+			delay(200);              // wait
+        }
 
 	// start serial port at 9600 baud
 	Serial.begin(9600);
+
+        SPI.begin();        // Init SPI bus
+        mfrc522.PCD_Init(); // Init MFRC522 card
+    
+        // Prepare the key (used both as key A and as key B)
+        // using FFFFFFFFFFFFh which is the default at chip delivery from the factory
+        for (byte i = 0; i < 6; i++) {
+            mifareKey.keyByte[i] = 0xFF;
+        }
 
 	// initialize the OPDI system
 	uint8_t result = ArduinOpdi.setup("DoorControl", 60000);  // one minute timeout
@@ -160,6 +246,7 @@ uint8_t setupDevice() {
 
 	// add the ports provided by this configuration
         Opdi->addPort(&eeprom1);
+        Opdi->addPort(&rtcPort);
         
         // read keypad code value from EEPROM
         eeprom1.getState(&codeValue);
@@ -188,12 +275,23 @@ int main(void)
 * Any value that is not OPDI_STATUS_OK will terminate an existing connection.
 */
 uint8_t doWork() {
+  
+  /*
+  // time to refresh the RTC port on a connected master?
+  if (millis() - timeRefreshCounter > 3000) {
+    if (Opdi->isConnected()) {
+      rtcPort.refresh();
+    }  
+    timeRefreshCounter = millis();
+  }
+  */
+  
         char key = keypad.getKey();
 
         if (key != NO_KEY) {
-			digitalWrite(13, HIGH);   // set the LED on
+			digitalWrite(STATUS_LED, HIGH);   // set the LED on
 			delay(200);              // wait
-			digitalWrite(13, LOW);    // set the LED off
+			digitalWrite(STATUS_LED, LOW);    // set the LED off
 			delay(200);              // wait
             if (key >= '0' && key <= '9') {
               // next key entered; multiply previous value
@@ -206,14 +304,63 @@ uint8_t doWork() {
             
             if ((codeValue > 0) && (enteredValue == codeValue)) {
               for (int i = 0; i < 10; i++) {
-			digitalWrite(13, HIGH);   // set the LED on
+			digitalWrite(STATUS_LED, HIGH);   // set the LED on
 			delay(100);              // wait
-			digitalWrite(13, LOW);    // set the LED off
+			digitalWrite(STATUS_LED, LOW);    // set the LED off
 			delay(100);              // wait
               }
               enteredValue = 0;  
             }
         }
+
+    // RFID       
+            // Look for new cards
+    if ( ! mfrc522.PICC_IsNewCardPresent())
+        return OPDI_STATUS_OK;
+
+    // Select one of the cards
+    if ( ! mfrc522.PICC_ReadCardSerial())
+        return OPDI_STATUS_OK;
+
+    // Show some details of the PICC (that is: the tag/card)
+//    Serial.print(F("Card UID:"));
+//    dump_byte_array(mfrc522.uid.uidByte, mfrc522.uid.size);
+//    Serial.println();
+//    Serial.print(F("PICC type: "));
+    byte piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
+//    Serial.println(mfrc522.PICC_GetTypeName(piccType));
+
+    // Check for compatibility
+    if (    piccType != MFRC522::PICC_TYPE_MIFARE_MINI
+        &&  piccType != MFRC522::PICC_TYPE_MIFARE_1K
+        &&  piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
+//        Serial.println(F("This sample only works with MIFARE Classic cards."));
+        return OPDI_STATUS_OK;
+    }
+
+    // In this sample we use the second sector,
+    // that is: sector #1, covering block #4 up to and including block #7
+    byte sector         = 1;
+    byte blockAddr      = 4;
+    byte dataBlock[]    = {
+        0x01, 0x02, 0x03, 0x04, //  1,  2,   3,  4,
+        0x05, 0x06, 0x07, 0x08, //  5,  6,   7,  8,
+        0x08, 0x09, 0xff, 0x0b, //  9, 10, 255, 12,
+        0x0c, 0x0d, 0x0e, 0x0f  // 13, 14,  15, 16
+    };
+    byte trailerBlock   = 7;
+    byte status;
+    byte buffer[18];
+    byte size = sizeof(buffer);
+
+    // Authenticate using key A
+//    Serial.println(F("Authenticating using key A..."));
+    status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &mifareKey, &(mfrc522.uid));
+    if (status != MFRC522::STATUS_OK) {
+//        Serial.print(F("PCD_Authenticate() failed: "));
+//        Serial.println(mfrc522.GetStatusCodeName(status));
+        return OPDI_STATUS_OK;
+   }
         
 	return OPDI_STATUS_OK;
 }
@@ -227,7 +374,7 @@ void loop() {
 	if (Serial.available() > 0) {
 
 		// indicate connected status
-		digitalWrite(13, HIGH);   // set the LED on
+		digitalWrite(STATUS_LED, HIGH);   // set the LED on
 
 		// start the OPDI protocol, passing a pointer to the housekeeping function
 		// this call blocks until the slave is disconnected
@@ -235,19 +382,19 @@ void loop() {
 
 		// no regular disconnect?
 		if (result != OPDI_DISCONNECTED) {
-			digitalWrite(13, LOW);    // set the LED off
+			digitalWrite(STATUS_LED, LOW);    // set the LED off
 			delay(500);
 
 			// flash error code on LED
 			for (uint8_t i = 0; i < result; i++) {
-				digitalWrite(13, HIGH);   // set the LED on
+				digitalWrite(STATUS_LED, HIGH);   // set the LED on
 				delay(200);              // wait
-				digitalWrite(13, LOW);    // set the LED off
+				digitalWrite(STATUS_LED, LOW);    // set the LED off
 				delay(200);              // wait
 			}
 		}
 
-		digitalWrite(13, LOW);    // set the LED off
+		digitalWrite(STATUS_LED, LOW);    // set the LED off
 	}
 }
 
