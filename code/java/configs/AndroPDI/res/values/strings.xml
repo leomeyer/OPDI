@@ -184,5 +184,7 @@
     <string name="rainrate_micromPerHour">rainrate_micromPerHour_in_mmPerHour=0</string>
     <string name="rainrate_micromPerHour_in_mmPerHour">layout=dial_port_row_noslider;icon=rainfall;label=Rain Rate (mm/h);formatString=%.1f mm/h;denominator=1000</string>
     
+    <string name="keypadCode">keypadCode_display=0</string>
+    <string name="keypadCode_display">layout=dial_port_row_noslider;icon=keypad;label=Code;formatString=%.0f</string>
     
 </resources>

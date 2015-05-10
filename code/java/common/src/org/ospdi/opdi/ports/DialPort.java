@@ -57,9 +57,9 @@ public class DialPort extends Port {
 
 		setID(parts[ID_PART]);
 		setName(parts[NAME_PART]);
-		setMinimum(Strings.parseLong(parts[MIN_PART], "Minimum", Integer.MIN_VALUE, Integer.MAX_VALUE));
-		setMaximum(Strings.parseLong(parts[MAX_PART], "Maximum", Integer.MIN_VALUE, Integer.MAX_VALUE));
-		setStep(Strings.parseLong(parts[STEP_PART], "Step", Integer.MIN_VALUE, Integer.MAX_VALUE));
+		setMinimum(Strings.parseLong(parts[MIN_PART], "Minimum", Long.MIN_VALUE, Long.MAX_VALUE));
+		setMaximum(Strings.parseLong(parts[MAX_PART], "Maximum", Long.MIN_VALUE, Long.MAX_VALUE));
+		setStep(Strings.parseLong(parts[STEP_PART], "Step", Long.MIN_VALUE, Long.MAX_VALUE));
 		flags = Strings.parseInt(parts[FLAGS_PART], "flags", 0, Integer.MAX_VALUE);
 	}
 	

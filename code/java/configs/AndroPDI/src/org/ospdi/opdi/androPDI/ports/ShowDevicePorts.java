@@ -193,7 +193,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
                     // will block until there is work to do.
                     final PortAction op = queue.take();
                     
-                    Log.d(AndroPDI.MASTER_NAME, "Processing action: " + op.getName());
+                    // Log.d(AndroPDI.MASTER_NAME, "Processing action: " + op.getName());
 
                     // show the progress bar
                     mHandler.post(new Runnable() {
