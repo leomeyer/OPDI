@@ -174,7 +174,7 @@ OPDI* Opdi = &ArduinOpdi;
 
 OPDI_EEPROMDialPort eeprom1 = OPDI_EEPROMDialPort("EDP1", "Code", 0, 99999, "unit=keypadCode");
 
-OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("RTC", "Current time", "unit=keypadCode");
+OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("RTC", "Current time", "unit=unixTime");
 
 // Keypad definitions
 const byte ROWS = 4; //four rows
