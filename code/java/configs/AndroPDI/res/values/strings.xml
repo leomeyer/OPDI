@@ -185,6 +185,9 @@
     <string name="rainrate_micromPerHour_in_mmPerHour">layout=dial_port_row_noslider;icon=rainfall;label=Rain Rate (mm/h);formatString=%.1f mm/h;denominator=1000</string>
     
     <string name="keypadCode">keypadCode_display=0</string>
-    <string name="keypadCode_display">layout=dial_port_row_noslider;icon=keypad;label=Code;formatString=%.0f</string>
+    <string name="keypadCode_display">layout=dial_port_row_noslider;icon=keypad;formatString=%.0f</string>
+    
+    <string name="unixTime">clocktime_unixseconds=0</string>
+    <string name="clocktime_unixseconds">layout=dial_port_row_noslider;conversion=unixSeconds;icon=clock;formatString=yyyy-MM-dd\\nHH:mm:ss</string>
     
 </resources>
