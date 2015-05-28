@@ -51,9 +51,10 @@ protected:
 * the following operations:
 * - OR (default): The line is High if at least one of its inputs is High
 * - AND: The line is High if all of its inputs are High
-* - XOR: The line is High if exactly one of its inputs is High
+* - XOR: The line is High if an odd number of its inputs is High
 * - ATLEAST (n): The line is High if at least n inputs are High
 * - ATMOST (n): The line is High if at most n inputs are High
+* - EXACT (n): The line is High if exactly n inputs are High
 * Additionally you can specify whether the output should be negated.
 * The LogicPort requires at least one digital port as input. The output
 * can optionally be distributed to an arbitrary number of digital ports.
@@ -74,7 +75,8 @@ protected:
 		AND,
 		XOR,
 		ATLEAST,
-		ATMOST
+		ATMOST,
+		EXACT
 	};
 
 	LogicFunction function;

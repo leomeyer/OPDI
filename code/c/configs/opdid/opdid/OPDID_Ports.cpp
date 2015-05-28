@@ -166,11 +166,17 @@ void OPDID_LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
 				if (!function.compare(0, prefix.size(), prefix)) {
 					this->function = ATMOST;
 					this->funcN = atoi(function.substr(prefix.size() + 1).c_str());
+				} else {
+					std::string prefix("EXACT");
+					if (!function.compare(0, prefix.size(), prefix)) {
+						this->function = EXACT;
+						this->funcN = atoi(function.substr(prefix.size() + 1).c_str());
+					}
 				}
 			}
 		}
 	} catch (...) {
-		throw Poco::DataException(std::string("Syntax error for LogicPort ") + this->getID() + ", Function setting: Expected OR, AND, XOR, ATLEAST <n> or ATMOST <n>");
+		throw Poco::DataException(std::string("Syntax error for LogicPort ") + this->getID() + ", Function setting: Expected OR, AND, XOR, ATLEAST <n>, ATMOST <n> or EXACT <n>");
 	}
 
 	if (this->function == UNKNOWN)
@@ -179,6 +185,8 @@ void OPDID_LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
 		throw Poco::DataException("Expected positive integer for function ATLEAST of LogicPort: " + function);
 	if ((this->function == ATMOST) && (this->funcN <= 0))
 		throw Poco::DataException("Expected positive integer for function ATMOST of LogicPort: " + function);
+	if ((this->function == EXACT) && (this->funcN <= 0))
+		throw Poco::DataException("Expected positive integer for function EXACT of LogicPort: " + function);
 
 	this->negate = config->getBool("Negate", false);
 
@@ -244,13 +252,17 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 	case AND: if (highCount == this->inputPorts.size()) 
 				  newLine = (this->negate ? 0 : 1);
 		break;
-	case XOR: if (highCount == 1) 
+	// XOR is implemented as modulo; meaning an odd number of inputs must be high
+	case XOR: if (highCount % 2 == 1) 
 				newLine = (this->negate ? 0 : 1);
 		break;
 	case ATLEAST: if (highCount >= this->funcN) 
 					  newLine = (this->negate ? 0 : 1);
 		break;
 	case ATMOST: if (highCount <= this->funcN) 
+					 newLine = (this->negate ? 0 : 1);
+		break;
+	case EXACT: if (highCount == this->funcN) 
 					 newLine = (this->negate ? 0 : 1);
 		break;
 	}
