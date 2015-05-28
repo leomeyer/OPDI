@@ -34,9 +34,9 @@ extern "C" {
 typedef void (*opdi_ProtocolCallback)(uint8_t protocol_state);
 
 /** Defines a protocol handler that has been identified by a protocol identifier.
-*   This function typically runs a message processing loop.
+*   This function processes messages
 */
-typedef uint8_t (*opdi_ProtocolHandler)(void);
+typedef uint8_t (*opdi_ProtocolHandler)(channel_t channel);
 
 /** Callback function to determine a protocol handler.
 *   If this is NULL, supports only the basic protocol.

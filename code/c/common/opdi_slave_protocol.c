@@ -729,7 +729,6 @@ static uint8_t send_extended_group_info(channel_t channel, opdi_PortGroup *group
 
 	return send_parts(channel);
 }
-
 #endif		// OPDI_EXTENDED_PROTOCOL
 
 /** Implements the basic protocol message handler.
@@ -967,7 +966,6 @@ static uint8_t basic_protocol_message(channel_t channel) {
 }
 
 #ifdef OPDI_EXTENDED_PROTOCOL
-
 /** Implements the extended protocol message handler.
 */
 static uint8_t extended_protocol_message(channel_t channel) {
@@ -981,8 +979,7 @@ static uint8_t extended_protocol_message(channel_t channel) {
 		if (result != OPDI_STATUS_OK)
 			return result;
 	} 
-	else
-	if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedPortInfo)) {
+	else if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedPortInfo)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -993,8 +990,7 @@ static uint8_t extended_protocol_message(channel_t channel) {
 		if (result != OPDI_STATUS_OK)
 			return result;
 	} 
-	else
-	if (!strcmp(opdi_msg_parts[0], OPDI_getGroupInfo)) {
+	else if (!strcmp(opdi_msg_parts[0], OPDI_getGroupInfo)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find group
@@ -1005,8 +1001,7 @@ static uint8_t extended_protocol_message(channel_t channel) {
 		if (result != OPDI_STATUS_OK)
 			return result;
 	} 
-	else
-	if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedGroupInfo)) {
+	else if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedGroupInfo)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find group
@@ -1081,9 +1076,9 @@ static uint8_t handle_message_result(opdi_Message *m, uint8_t result) {
 	return result;
 }
 
-/** The protocol handler for the basic protocol.
+/** The protocol message loop.
 */
-static uint8_t basic_protocol_handler(void) {
+static uint8_t message_loop(opdi_ProtocolHandler protocolHandler) {
 	opdi_Message m;
 	uint8_t result;
 
@@ -1122,7 +1117,7 @@ static uint8_t basic_protocol_handler(void) {
 
 			// message other than control message received
 			// let the protocol handle the message
-			result = basic_protocol_message(m.channel);
+			result = protocolHandler(m.channel);
 			result = handle_message_result(&m, result);
 			if (result != OPDI_STATUS_OK)
 				return result;
@@ -1141,65 +1136,6 @@ static uint8_t basic_protocol_handler(void) {
 #endif
 	}	// while
 }
-
-#ifdef OPDI_EXTENDED_PROTOCOL
-/** The protocol handler for the extended protocol.
-*/
-static uint8_t extended_protocol_handler(void) {
-	opdi_Message m;
-	uint8_t result;
-
-	// enter processing loop
-	while (1) {
-		// because this call is blocking, it will automatically
-		// result in an error if no ping message is coming in any more
-		result = opdi_get_message(&m, OPDI_CAN_SEND);
-		if (result != OPDI_STATUS_OK)
-			return result;
-
-		result = strings_split(m.payload, OPDI_PARTS_SEPARATOR, opdi_msg_parts, OPDI_MAX_MESSAGE_PARTS, 1, NULL);
-		if (result != OPDI_STATUS_OK)
-			return result;
-
-		// message on control channel?
-		if (m.channel == 0) {
-			// disconnect message?
-			if (!strcmp(opdi_msg_parts[0], OPDI_Disconnect))
-				return OPDI_DISCONNECTED;
-
-			// error message?
-			if (!strcmp(opdi_msg_parts[0], OPDI_Error))
-				return OPDI_DEVICE_ERROR;
-
-			// debug message?
-			if (!strcmp(opdi_msg_parts[0], OPDI_Debug))
-				opdi_debug_msg(opdi_msg_parts[1], OPDI_DIR_DEBUG);
-		} else {
-			// clear port info message
-			opdi_set_port_message("");
-
-			// message other than control message received
-			// let the protocol handle the message
-			result = extended_protocol_message(m.channel);
-			result = handle_message_result(&m, result);
-			if (result != OPDI_STATUS_OK)
-				return result;
-		}
-			
-#ifdef OPDI_HAS_MESSAGE_HANDLED
-		// notify the device that a message has been handled
-		result = opdi_message_handled(0, opdi_msg_parts);
-		if (result != OPDI_STATUS_OK) {
-			// intentional disconnects are not an error
-			if (result != OPDI_DISCONNECTED)
-				// an error occurred during message handling; send error to device and exit
-				return send_error(result, NULL, NULL);
-			return result;
-		}
-#endif
-	}	// while
-}
-#endif
 
 /** Prepares the OPDI protocol implementation for a new connection.
 *   Most importantly, this will disable encryption as it is not used at the beginning
@@ -1224,7 +1160,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	uint8_t partCount;
 	int32_t flags;
 	char buf[BUFSIZE_32BIT];
-	opdi_ProtocolHandler protocol_handler = &basic_protocol_handler;
+	opdi_ProtocolHandler protocol_handler = &basic_protocol_message;
 	
 #ifndef OPDI_NO_ENCRYPTION
 	const char *encryptions[MAX_ENCRYPTIONS];
@@ -1404,7 +1340,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 #ifdef OPDI_EXTENDED_PROTOCOL
 	// check extended protocol implementation
 	if (strcmp(opdi_msg_parts[0], OPDI_Extended_protocol_magic) == 0) {
-		protocol_handler = &extended_protocol_handler;
+		protocol_handler = &extended_protocol_message;
 	}
 #endif
 	else
@@ -1417,7 +1353,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 		// protocol not registered
 		if (protocol_handler == NULL)
 			// fallback to basic
-			protocol_handler = &basic_protocol_handler;
+			protocol_handler = &basic_protocol_message;
 	}
 
 	// copy master's name
@@ -1497,7 +1433,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 		protocol_callback(OPDI_PROTOCOL_CONNECTED);
 
 	// start the protocol
-	result = protocol_handler();
+	result = message_loop(protocol_handler);
 
 	if (protocol_callback != NULL)
 		protocol_callback(OPDI_PROTOCOL_DISCONNECTED);
