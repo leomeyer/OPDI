@@ -814,7 +814,7 @@ void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, P
 		port->openingTime = nodeConfig->getInt("OpeningTime", 0);
 		if (port->openingTime <= 0)
 			throw Poco::DataException("OpeningTime must be specified and greater than 0: " + abstractOPDID->to_string(port->openingTime));
-		port->closingTime = nodeConfig->getInt("OpeningTime", port->openingTime);
+		port->closingTime = nodeConfig->getInt("ClosingTime", port->openingTime);
 		if (port->closingTime <= 0)
 			throw Poco::DataException("ClosingTime must be greater than 0: " + abstractOPDID->to_string(port->closingTime));
 		port->autoOpen = abstractOPDID->getConfigString(nodeConfig, "AutoOpen", "", false);
