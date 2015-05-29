@@ -17,33 +17,33 @@ The window supports two different control modes for the actuators: H-bridge Mode
 H-bridge mode is used e. g. for to-wire DC motors that need their polarity reversed in order to change
 direction:
 
-                 Vcc |--------------------------|
-                     |                          |
-                     p                          p
-          .--------n                              n--------.
-          |          P                          P          |
-          |          |       (DC motor)         |          |
-          |          *--------*--(M)--*---------*          |
-          |          |        |       |         |          |
-          |          N        |       |         N          |
-          |   .----p          |---||--|           p----.   |
-          |   |      n           0.47uF         n      |   |
-          |   |      |                          |      |   |
-          |   |      |                          |      |   |
-          |   |  Gnd |--------------------------|      |   |
-          |   |                                        |   |
-          |   |                                        |   |
-          |   '------------------.   .-----------------'   |
-          '-------------------.  |   |  .------------------'
-                              |  |   |  |
-                          .---o--o---o--o---.
-                          |  Control logic  |
-                          |                 |
-                          |    e. g. L298   |
-                          '----|-------|----'
-                               |       |
-                               |       |
-                     Motor A   o       o   Motor B
+                  Vcc |--------------------------|
+                      |                          |
+                    | o                          o |
+           .------|=|                              |=|------.
+           |        | o                          o |        |
+           |          |       (DC motor)         |          |
+           |          *--------*--(M)--*---------*          |
+           |          |        |       |         |          |
+           |        | o        |       |         o |        |
+           |   .--|=|          |---||--|           |=|--.   |
+           |   |    | o           0.47uF         o |    |   |
+           |   |      |                          |      |   |
+           |   |      |                          |      |   |
+           |   |  Gnd |--------------------------|      |   |
+           |   |                                        |   |
+           |   |                                        |   |
+           |   '------------------.   .-----------------'   |
+           '-------------------.  |   |  .------------------'
+                               |  |   |  |
+                           .---o--o---o--o---.
+                           |  Control logic  |
+                           |                 |
+                           |    e. g. L298   |
+                           '----|-------|----'
+                                |       |
+                                |       |
+                      Motor A   o       o   Motor B
 
 Serial relay mode is used e. g. for three- or four-wire AC motors that use two phases against
 a common ground for the directions. To avoid applying current to both phases at the same time the circuit
