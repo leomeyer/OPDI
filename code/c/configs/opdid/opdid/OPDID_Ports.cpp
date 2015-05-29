@@ -367,7 +367,7 @@ void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 	if (this->period <= 0)
 		throw Poco::DataException("Specify a positive integer value for the Period setting of a PulsePort: " + this->to_string(this->period));
 	this->periodPortStr = config->getString("PeriodPort", "");
-	
+
 	// duty cycle is specified in percent
 	this->dutyCycle = config->getDouble("DutyCycle", 50) / 100.0;
 	this->dutyCyclePortStr = config->getString("DutyCyclePort", "");
@@ -463,9 +463,9 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 		if (opdid->logVerbosity >= AbstractOPDID::DEBUG) {
 			opdid->log(std::string(this->id) + ": Changing pulse to " + (newState == 1 ? "High" : "Low") + " (dTime: " + to_string(opdi_get_time_ms() - this->lastStateChangeTime) + " ms)");
 		}
-	
+
 		this->lastStateChangeTime = opdi_get_time_ms();
-		
+
 		// set the new state
 		this->pulseState = newState;
 
