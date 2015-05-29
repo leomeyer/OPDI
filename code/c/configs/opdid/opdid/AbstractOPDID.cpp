@@ -218,6 +218,7 @@ void AbstractOPDID::logError(std::string text) {
 int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
 
 	this->environment = environment;
+	this->shutdownRequested = false;
 
 	// evaluate arguments
 	for (unsigned int i = 0; i < args.size(); i++) {

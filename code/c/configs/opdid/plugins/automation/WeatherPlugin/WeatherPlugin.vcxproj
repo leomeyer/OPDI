@@ -71,7 +71,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;WINDOW_EXPORTS;POCO_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../../../../common;../../../../../platforms;../../../../../platforms/win32;../../../../../libraries/POCO/Foundation/include;../../../../../libraries/POCO/Util/include;../../../../../libraries/POCO/Net/include;../../../../../libraries/POCO/XML/include;../../../../../common/cppwrapper;../../../opdid;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../../../common;../../../../../platforms;../../../../../platforms/win32;../../../../../libraries/POCO/Foundation/include;../../../../../libraries/POCO/Util/include;../../../../../libraries/POCO/Net/include;../../../../../libraries/POCO/JSON/include;../../../../../libraries/POCO/XML/include;../../../../../common/cppwrapper;../../../opdid;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

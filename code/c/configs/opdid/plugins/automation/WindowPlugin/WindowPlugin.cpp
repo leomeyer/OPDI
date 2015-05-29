@@ -19,6 +19,11 @@ protected:
 #define POSITION_OPEN	2
 #define POSITION_AUTO	3
 
+	enum WindowMode {
+		H_BRIDGE,
+		SERIAL_RELAY
+	};
+
 	enum WindowState {
 		UNKNOWN,
 		UNKNOWN_WAITING,
@@ -28,9 +33,18 @@ protected:
 		WAITING_BEFORE_DISABLE_OPEN,
 		WAITING_BEFORE_DISABLE_CLOSED,
 		WAITING_BEFORE_DISABLE_ERROR,
+		WAITING_BEFORE_ENABLE_OPENING,
+		WAITING_BEFORE_ENABLE_CLOSING,
+		WAITING_AFTER_DISABLE,
 		CLOSING,
 		OPENING,
 		ERR
+	};
+
+	enum ResetTo {
+		RESET_NONE,
+		RESET_TO_CLOSED,
+		RESET_TO_OPEN
 	};
 
 	AbstractOPDID *opdid;
@@ -40,6 +54,7 @@ protected:
 	uint8_t sensorClosed;
 	std::string motorA;
 	std::string motorB;
+	std::string direction;
 	uint8_t motorActive;
 	uint64_t motorDelay;
 	std::string enable;
@@ -49,15 +64,18 @@ protected:
 	uint64_t closingTime;
 	std::string autoOpen;
 	std::string autoClose;
+	std::string forceOpen;
 	std::string forceClose;
 	std::string statusPortStr;
 	std::string errorPortStr;
 	std::string resetPortStr;
+	ResetTo resetTo;
 
 	// processed configuration
 	OPDI_DigitalPort *sensorPort;
 	OPDI_DigitalPort *motorAPort;
 	OPDI_DigitalPort *motorBPort;
+	OPDI_DigitalPort *directionPort;
 	OPDI_DigitalPort *enablePort;
 	OPDI_SelectPort *statusPort;
 
@@ -65,13 +83,15 @@ protected:
 
 	DigitalPortList autoOpenPorts;
 	DigitalPortList autoClosePorts;
+	DigitalPortList forceOpenPorts;
 	DigitalPortList forceClosePorts;
 	DigitalPortList errorPorts;
 	DigitalPortList resetPorts;
 
+	WindowMode mode;
 	// state
-	int targetState;
-	int currentState;
+	WindowState targetState;
+	WindowState currentState;
 	uint64_t delayTimer;
 	uint64_t openTimer;
 	// set to true when the position has been just changed by the master
@@ -107,11 +127,16 @@ protected:
 
 	std::string getMotorStateText(void);
 
-	std::string getStateText(int state);
+	std::string getStateText(WindowState state);
 
-	void setCurrentState(int state);
+	void setCurrentState(WindowState state);
 
-	void setTargetState(int state);
+	void setTargetState(WindowState state);
+
+	void checkOpenHBridge(void);
+
+	void checkCloseHBridge(void);
+
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
@@ -134,7 +159,9 @@ WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(i
 	this->refreshMode = REFRESH_NOT_SET;
 	this->sensorPort = NULL;
 	this->enablePort = NULL;
+	this->directionPort = NULL;
 	this->statusPort = NULL;
+	this->resetTo = RESET_NONE;
 }
 
 void WindowPort::setPosition(uint16_t position) {
@@ -224,23 +251,31 @@ void WindowPort::prepare() {
 	// find ports; throws errors if something required is missing
 	if (this->sensor != "")
 		this->sensorPort = this->findDigitalPort("Sensor", this->sensor, true);
-	this->motorAPort = this->findDigitalPort("MotorA", this->motorA, true);
-	this->motorBPort = this->findDigitalPort("MotorB", this->motorB, true);
-	if (this->enable != "")
+	if (this->mode == H_BRIDGE) {
+		this->motorAPort = this->findDigitalPort("MotorA", this->motorA, true);
+		this->motorBPort = this->findDigitalPort("MotorB", this->motorB, true);
+		if (this->enable != "")
+			this->enablePort = this->findDigitalPort("Enable", this->enable, true);
+		// no enable port? assume always enabled
+		if (this->enablePort == NULL)
+			this->isMotorEnabled = true;
+
+	} else if (this->mode == SERIAL_RELAY) {
+		this->directionPort = this->findDigitalPort("Direction", this->direction, true);
 		this->enablePort = this->findDigitalPort("Enable", this->enable, true);
+	} else
+		throw Poco::DataException(std::string(this->getID()) + ": Unknown window mode; only H-Bridge and SerialRelay are supported");
+
 	if (this->statusPortStr != "")
 		this->statusPort = this->findSelectPort("StatusPort", this->statusPortStr, true);
 
 	this->findDigitalPorts("AutoOpen", this->autoOpen, this->autoOpenPorts);
 	this->findDigitalPorts("AutoClose", this->autoClose, this->autoClosePorts);
+	this->findDigitalPorts("ForceOpen", this->forceOpen, this->forceOpenPorts);
 	this->findDigitalPorts("ForceClose", this->forceClose, this->forceClosePorts);
 	this->findDigitalPorts("ErrorPorts", this->errorPortStr, this->errorPorts);
 	this->findDigitalPorts("ResetPorts", this->resetPortStr, this->resetPorts);
 	
-	// no enable port? assume always enabled
-	if (this->enablePort == NULL)
-		this->isMotorEnabled = true;
-
 	// a window port normally refreshes itself automatically unless specified otherwise
 	if (this->refreshMode == REFRESH_NOT_SET)
 		this->refreshMode = REFRESH_AUTO;
@@ -292,35 +327,51 @@ void WindowPort::disableMotor(void) {
 void WindowPort::setMotorOpening(void) {
 	if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		opdid->log(std::string(this->id) + ": Setting motor to 'opening'");
-	this->setPortLine(this->motorAPort, (this->motorActive == 1 ? 1 : 0));
-	this->setPortLine(this->motorBPort, (this->motorActive == 1 ? 0 : 1));
+	if (this->mode == H_BRIDGE) {
+		this->setPortLine(this->motorAPort, (this->motorActive == 1 ? 1 : 0));
+		this->setPortLine(this->motorBPort, (this->motorActive == 1 ? 0 : 1));
+	} else if (this->mode == SERIAL_RELAY) {
+		this->setPortLine(this->directionPort, (this->motorActive == 1 ? 1 : 0));
+	}
 	this->isMotorOn = true;
 }
 
 void WindowPort::setMotorClosing(void) {
 	if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		opdid->log(std::string(this->id) + ": Setting motor to 'closing'");
-	this->setPortLine(this->motorAPort, (this->motorActive == 1 ? 0 : 1));
-	this->setPortLine(this->motorBPort, (this->motorActive == 1 ? 1 : 0));
+	if (this->mode == H_BRIDGE) {
+		this->setPortLine(this->motorAPort, (this->motorActive == 1 ? 0 : 1));
+		this->setPortLine(this->motorBPort, (this->motorActive == 1 ? 1 : 0));
+	} else if (this->mode == SERIAL_RELAY) {
+		this->setPortLine(this->directionPort, (this->motorActive == 1 ? 0 : 1));
+	}
 	this->isMotorOn = true;
 }
 
 void WindowPort::setMotorOff(void) {
 	if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		opdid->log(std::string(this->id) + ": Stopping motor");
-	this->setPortLine(this->motorAPort, (this->motorActive == 1 ? 0 : 1));
-	this->setPortLine(this->motorBPort, (this->motorActive == 1 ? 0 : 1));
+	if (this->mode == H_BRIDGE) {
+		this->setPortLine(this->motorAPort, (this->motorActive == 1 ? 0 : 1));
+		this->setPortLine(this->motorBPort, (this->motorActive == 1 ? 0 : 1));
+	} else if (this->mode == SERIAL_RELAY)
+		throw Poco::ApplicationException(std::string(this->getID()) + ": Cannot set motor off in Serial Relay Mode");
 	this->isMotorOn = false;
 }
 
 std::string WindowPort::getMotorStateText(void) {
-	if (this->isMotorOn)
-		return " (Motor is on)";
-	else
-		return std::string(" (Motor is off and ") + (this->isMotorEnabled ? "enabled" : "disabled") + ")";
+	if (this->mode == H_BRIDGE) {
+		if (this->isMotorOn)
+			return " (Motor is on)";
+		else
+			return std::string(" (Motor is off and ") + (this->isMotorEnabled ? "enabled" : "disabled") + ")";
+	} else if (this->mode == SERIAL_RELAY) {
+		return std::string(" (Motor is ") + (this->isMotorEnabled ? "enabled" : "disabled") + ")";
+	} else
+		return std::string(" (Mode is unknown)");
 }
 
-std::string WindowPort::getStateText(int state) {
+std::string WindowPort::getStateText(WindowState state) {
 	switch (state) {
 		case UNKNOWN:                        return std::string("UNKNOWN");
 		case UNKNOWN_WAITING:				 return std::string("UNKNOWN_WAITING");
@@ -330,6 +381,9 @@ std::string WindowPort::getStateText(int state) {
 		case WAITING_BEFORE_DISABLE_OPEN:	 return std::string("WAITING_BEFORE_DISABLE_OPEN");
 		case WAITING_BEFORE_DISABLE_CLOSED:	 return std::string("WAITING_BEFORE_DISABLE_CLOSED");
 		case WAITING_BEFORE_DISABLE_ERROR:	 return std::string("WAITING_BEFORE_DISABLE_ERROR");
+		case WAITING_BEFORE_ENABLE_OPENING:	 return std::string("WAITING_BEFORE_ENABLE_OPENING");
+		case WAITING_BEFORE_ENABLE_CLOSING:	 return std::string("WAITING_BEFORE_ENABLE_CLOSING");
+		case WAITING_AFTER_DISABLE:			 return std::string("WAITING_AFTER_DISABLE");
 		case CLOSING:						 return std::string("CLOSING");
 		case OPENING:						 return std::string("OPENING");
 		case ERR:							 return std::string("ERR");
@@ -337,7 +391,7 @@ std::string WindowPort::getStateText(int state) {
 	return std::string("unknown state ") + to_string(state);
 }
 
-void WindowPort::setCurrentState(int state) {
+void WindowPort::setCurrentState(WindowState state) {
 	if (this->currentState != state) {
 		if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 			opdid->log(std::string(this->id) + ": Changing current state to: " + this->getStateText(state) + this->getMotorStateText());
@@ -395,20 +449,10 @@ void WindowPort::setCurrentState(int state) {
 
 			this->statusPort->setPosition(selPortPos);
 		}
-/*
-		// if the window has been closed or opened, reflect it in the UI
-		// except if the position is set to automatic
-		if (this->position < POSITION_AUTO) {
-			if (state == CLOSED)
-				this->setPosition(POSITION_CLOSED);
-			else if (state == OPEN)
-				this->setPosition(POSITION_OPEN);
-		}
-*/
 	}
 }
 
-void WindowPort::setTargetState(int state) {
+void WindowPort::setTargetState(WindowState state) {
 	if (this->targetState != state) {
 		if (opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 			opdid->log(std::string(this->id) + ": Changing target state to: " + this->getStateText(state));
@@ -416,249 +460,411 @@ void WindowPort::setTargetState(int state) {
 	}
 }
 
+void WindowPort::checkOpenHBridge(void) {
+	if (this->targetState == OPEN) {					
+		if (this->enableDelay > 0) {					
+			this->delayTimer = opdi_get_time_ms();		
+			this->enableMotor();						
+			this->setCurrentState(WAITING_AFTER_ENABLE);
+		} else {										
+			this->openTimer = opdi_get_time_ms();		
+			this->setMotorOpening();					
+			this->setCurrentState(OPENING);				
+		}												
+	}
+}
+
+void WindowPort::checkCloseHBridge(void) {
+	if (this->targetState == CLOSED) {					
+		if (this->enableDelay > 0) {					
+			this->delayTimer = opdi_get_time_ms();		
+			this->enableMotor();						
+			this->setCurrentState(WAITING_AFTER_ENABLE);
+		} else {										
+			this->openTimer = opdi_get_time_ms();		
+			this->setMotorClosing();					
+			this->setCurrentState(CLOSING);				
+		}												
+	}
+}
+
 uint8_t WindowPort::doWork(uint8_t canSend)  {
 	OPDI_SelectPort::doWork(canSend);
 
-#define CHECK_OPEN															\
-	if (this->targetState == OPEN) {										\
-		if (this->enableDelay > 0) {										\
-			this->delayTimer = opdi_get_time_ms();							\
-			this->enableMotor();											\
-			this->setCurrentState(WAITING_AFTER_ENABLE);					\
-		} else {															\
-			this->openTimer = opdi_get_time_ms();							\
-			this->setMotorOpening();										\
-			this->setCurrentState(OPENING);									\
-		}																	\
-	}
+	// state machine implementations
 
-#define CHECK_CLOSE															\
-	if (this->targetState == CLOSED) {										\
-		if (this->enableDelay > 0) {										\
-			this->delayTimer = opdi_get_time_ms();							\
-			this->enableMotor();											\
-			this->setCurrentState(WAITING_AFTER_ENABLE);					\
-		} else {															\
-			this->openTimer = opdi_get_time_ms();							\
-			this->setMotorClosing();										\
-			this->setCurrentState(CLOSING);									\
-		}																	\
-	}
+	if (this->mode == H_BRIDGE) {
+		// state machine for H-Bridge mode
 
-	// state machine for current window state
-
-	// unknown state (first call or off or transition not yet implemented)? initialize
-	if (this->currentState == UNKNOWN) {
-		// disable the motor
-		this->setMotorOff();
-		this->disableMotor();
+		// unknown state (first call or off or transition not yet implemented)? initialize
+		if (this->currentState == UNKNOWN) {
+			// disable the motor
+			this->setMotorOff();
+			this->disableMotor();
 		
-		// do we know that we're closed?
-		if (this->isSensorClosed()) {
-			if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
-				opdid->log(std::string(this->id) + ": Closing sensor signal detected");
-			this->setCurrentState(CLOSED);
-		} else
-			// we don't know
-			this->setCurrentState(UNKNOWN_WAITING);
-
-		// set target state according to selected position (== mode)
-		if (this->position == POSITION_OPEN) {
-			this->setTargetState(OPEN);
-		} else
-		if (this->position == POSITION_CLOSED) {
-			this->setTargetState(CLOSED);
-		}
-	} else
-	// unknown; waiting for command
-	if ((this->currentState == UNKNOWN_WAITING)) {
-		if (this->isSensorClosed()) {
-			if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
-				opdid->log(std::string(this->id) + ": Closing sensor signal detected");
-			this->setCurrentState(CLOSED);
-		} else {
-			// do not change current state
-
-			// opening required?
-			CHECK_OPEN
-
-			// closing required?
-			CHECK_CLOSE
-		}
-	} else
-	// open?
-	if (this->currentState == OPEN) {
-		// closing required?
-		CHECK_CLOSE
-	} else
-	// closed?
-	if (this->currentState == CLOSED) {
-		// opening required?
-		CHECK_OPEN
-	} else
-	// waiting after enable?
-	if (this->currentState == WAITING_AFTER_ENABLE) {
-		// waiting time up?
-		if (opdi_get_time_ms() - this->delayTimer > this->enableDelay) {
-			// enable delay is up
-			
-			// target may have changed; check again
-			if (this->targetState == OPEN) {
-				// start opening immediately
-				this->openTimer = opdi_get_time_ms();
-				this->setMotorOpening();
-				this->setCurrentState(OPENING);
+			// do we know that we're closed?
+			if (this->isSensorClosed()) {
+				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
+					opdid->log(std::string(this->id) + ": Closing sensor signal detected");
+				this->setCurrentState(CLOSED);
 			} else
+				// we don't know
+				this->setCurrentState(UNKNOWN_WAITING);
+
+			// set target state according to selected position (== mode)
+			if (this->position == POSITION_OPEN) {
+				this->setTargetState(OPEN);
+			} else
+			if (this->position == POSITION_CLOSED) {
+				this->setTargetState(CLOSED);
+			}
+		} else
+		// unknown; waiting for command
+		if ((this->currentState == UNKNOWN_WAITING)) {
+			if (this->isSensorClosed()) {
+				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
+					opdid->log(std::string(this->id) + ": Closing sensor signal detected");
+				this->setCurrentState(CLOSED);
+			} else {
+				// do not change current state
+
+				// opening required?
+				this->checkOpenHBridge();
+
+				// closing required?
+				this->checkCloseHBridge();
+			}
+		} else
+		// open?
+		if (this->currentState == OPEN) {
+			// closing required?
+			this->checkCloseHBridge();
+		} else
+		// closed?
+		if (this->currentState == CLOSED) {
+			// opening required?
+			this->checkOpenHBridge();
+		} else
+		// waiting after enable?
+		if (this->currentState == WAITING_AFTER_ENABLE) {
+			// waiting time up?
+			if (opdi_get_time_ms() - this->delayTimer > this->enableDelay) {
+				// enable delay is up
+			
+				// target may have changed; check again
+				if (this->targetState == OPEN) {
+					// start opening immediately
+					this->openTimer = opdi_get_time_ms();
+					this->setMotorOpening();
+					this->setCurrentState(OPENING);
+				} else
+				if (this->targetState == CLOSED) {
+					// start closing immediately
+					this->openTimer = opdi_get_time_ms();
+					this->setMotorClosing();
+					this->setCurrentState(CLOSING);
+				} else {
+					// target state is unknown; wait
+					this->setCurrentState(UNKNOWN_WAITING);
+				}
+			}
+		} else
+		// waiting before disable after opening?
+		if (this->currentState == WAITING_BEFORE_DISABLE_OPEN) {
 			if (this->targetState == CLOSED) {
-				// start closing immediately
-				this->openTimer = opdi_get_time_ms();
+				// need to close
+				this->openTimer = opdi_get_time_ms();	// reset timer; TODO set to delta value?
 				this->setMotorClosing();
 				this->setCurrentState(CLOSING);
-			} else {
-				// target state is unknown; wait
-				this->setCurrentState(UNKNOWN_WAITING);
-			}
-		}
-	} else
-	// waiting before disable after opening?
-	if (this->currentState == WAITING_BEFORE_DISABLE_OPEN) {
-		if (this->targetState == CLOSED) {
-			// need to close
-			this->openTimer = opdi_get_time_ms();	// reset timer; TODO set to delta value?
-			this->setMotorClosing();
-			this->setCurrentState(CLOSING);
-		} else
-		// waiting time up?
-		if (opdi_get_time_ms() - this->delayTimer > this->enableDelay) {
-			// disable
-			this->disableMotor();
-			
-			this->setCurrentState(OPEN);
-		}
-	} else
-	// waiting before disable after closing?
-	if (this->currentState == WAITING_BEFORE_DISABLE_CLOSED) {
-		if (this->targetState == OPEN) {
-			// need to open
-			this->openTimer = opdi_get_time_ms();	// reset timer; TODO set to delta value?
-			this->setMotorOpening();
-			this->setCurrentState(OPENING);
-		} else {
-			// motor delay time up?
-			if (this->isMotorOn && (opdi_get_time_ms() - this->delayTimer > this->motorDelay)) {
-				// stop motor immediately
-				this->setMotorOff();
-			}
+			} else
 			// waiting time up?
 			if (opdi_get_time_ms() - this->delayTimer > this->enableDelay) {
 				// disable
 				this->disableMotor();
 			
-				this->setCurrentState(CLOSED);
+				this->setCurrentState(OPEN);
 			}
-		}
-	} else
-	// waiting before disable after error while closing?
-	if (this->currentState == WAITING_BEFORE_DISABLE_ERROR) {
-		// waiting time up?
-		if (opdi_get_time_ms() - this->delayTimer > this->enableDelay) {
-			// disable
-			this->disableMotor();
+		} else
+		// waiting before disable after closing?
+		if (this->currentState == WAITING_BEFORE_DISABLE_CLOSED) {
+			if (this->targetState == OPEN) {
+				// need to open
+				this->openTimer = opdi_get_time_ms();	// reset timer; TODO set to delta value?
+				this->setMotorOpening();
+				this->setCurrentState(OPENING);
+			} else {
+				// motor delay time up?
+				if (this->isMotorOn && (opdi_get_time_ms() - this->delayTimer > this->motorDelay)) {
+					// stop motor immediately
+					this->setMotorOff();
+				}
+				// waiting time up?
+				if (opdi_get_time_ms() - this->delayTimer > this->enableDelay) {
+					// disable
+					this->disableMotor();
 			
-			this->setCurrentState(ERR);
-		}
-	} else
-	// opening?
-	if (this->currentState == OPENING) {
-		if (this->targetState == CLOSED) {
-			// need to close
-			this->openTimer = opdi_get_time_ms();	// reset timer; TODO set to delta value?
-			this->setMotorClosing();
-			this->setCurrentState(CLOSING);
+					this->setCurrentState(CLOSED);
+				}
+			}
 		} else
-		// opening time up?
-		if (opdi_get_time_ms() - this->openTimer > this->openingTime) {
-			// stop motor
-			this->setMotorOff();
+		// waiting before disable after error while closing?
+		if (this->currentState == WAITING_BEFORE_DISABLE_ERROR) {
+			// waiting time up?
+			if (opdi_get_time_ms() - this->delayTimer > this->enableDelay) {
+				// disable
+				this->disableMotor();
+			
+				this->setCurrentState(ERR);
+			}
+		} else
+		// opening?
+		if (this->currentState == OPENING) {
+			if (this->targetState == CLOSED) {
+				// need to close
+				this->openTimer = opdi_get_time_ms();	// reset timer; TODO set to delta value?
+				this->setMotorClosing();
+				this->setCurrentState(CLOSING);
+			} else
+			// opening time up?
+			if (opdi_get_time_ms() - this->openTimer > this->openingTime) {
+				// stop motor
+				this->setMotorOff();
 
-			// sensor still closed? (error condition)
+				// sensor still closed? (error condition)
+				if (this->isSensorClosed()) {
+					if (opdid->logVerbosity >= AbstractOPDID::NORMAL)
+						opdid->log(std::string(this->id) + ": Warning: Closing sensor signal still present after opening");
+					// enable delay specified?
+					if (this->enableDelay > 0) {
+						// need to disable first
+						this->delayTimer = opdi_get_time_ms();
+						this->setCurrentState(WAITING_BEFORE_DISABLE_ERROR);
+					} else {
+						// set error directly
+						this->setCurrentState(ERR);
+					}
+				} else {
+					// enable delay specified?
+					if (this->enableDelay > 0) {
+						// need to disable first
+						this->delayTimer = opdi_get_time_ms();
+						this->setCurrentState(WAITING_BEFORE_DISABLE_OPEN);
+					} else {
+						// assume that the window is open now
+						this->setCurrentState(OPEN);
+					}
+				}
+			}
+		} else
+		// closing?
+		if (this->currentState == CLOSING) {
+			if (this->targetState == OPEN) {
+				// need to open
+				this->openTimer = opdi_get_time_ms();	// reset timer; TODO set to delta value?
+				this->setMotorOpening();
+				this->setCurrentState(OPENING);
+			} else
+			// sensor close detected?
 			if (this->isSensorClosed()) {
-				if (opdid->logVerbosity >= AbstractOPDID::NORMAL)
-					opdid->log(std::string(this->id) + ": Warning: Closing sensor signal still present after opening");
-				// enable delay specified?
-				if (this->enableDelay > 0) {
-					// need to disable first
-					this->delayTimer = opdi_get_time_ms();
-					this->setCurrentState(WAITING_BEFORE_DISABLE_ERROR);
-				} else {
-					// set error directly
-					this->setCurrentState(ERR);
-				}
-			} else {
-				// enable delay specified?
-				if (this->enableDelay > 0) {
-					// need to disable first
-					this->delayTimer = opdi_get_time_ms();
-					this->setCurrentState(WAITING_BEFORE_DISABLE_OPEN);
-				} else {
-					// assume that the window is open now
-					this->setCurrentState(OPEN);
-				}
-			}
-		}
-	} else
-	// closing?
-	if (this->currentState == CLOSING) {
-		if (this->targetState == OPEN) {
-			// need to open
-			this->openTimer = opdi_get_time_ms();	// reset timer; TODO set to delta value?
-			this->setMotorOpening();
-			this->setCurrentState(OPENING);
-		} else
-		// sensor close detected?
-		if (this->isSensorClosed()) {
-			if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
-				opdid->log(std::string(this->id) + ": Closing sensor signal detected");
+				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
+					opdid->log(std::string(this->id) + ": Closing sensor signal detected");
 
-			// enable delay specified?
-			if (this->enableDelay > 0) {
-				// need to disable first
-				this->delayTimer = opdi_get_time_ms();
-				this->setCurrentState(WAITING_BEFORE_DISABLE_CLOSED);
-			} else {
-				// the window is closed now
-				this->setCurrentState(CLOSED);
-			}
-		} else
-		// closing time up?
-		if (opdi_get_time_ms() - this->openTimer > this->closingTime) {
-
-			// stop motor immediately
-			this->setMotorOff();
-
-			// without detecting sensor? error condition
-			if (this->sensorPort != NULL) {
-				if (opdid->logVerbosity >= AbstractOPDID::NORMAL)
-					opdid->log(std::string(this->id) + ": Warning: Closing sensor signal not detected while closing");
-
-				// enable delay specified?
-				if (this->enableDelay > 0) {
-					// need to disable first
-					this->delayTimer = opdi_get_time_ms();
-					this->setCurrentState(WAITING_BEFORE_DISABLE_ERROR);
-				} else {
-					// go to error condition directly
-					this->setCurrentState(ERR);
-				}
-			} else {
-				// sensor not present - assume closed
 				// enable delay specified?
 				if (this->enableDelay > 0) {
 					// need to disable first
 					this->delayTimer = opdi_get_time_ms();
 					this->setCurrentState(WAITING_BEFORE_DISABLE_CLOSED);
 				} else {
-					// go to closed condition directly
+					// the window is closed now
+					this->setCurrentState(CLOSED);
+				}
+			} else
+			// closing time up?
+			if (opdi_get_time_ms() - this->openTimer > this->closingTime) {
+
+				// stop motor immediately
+				this->setMotorOff();
+
+				// without detecting sensor? error condition
+				if (this->sensorPort != NULL) {
+					if (opdid->logVerbosity >= AbstractOPDID::NORMAL)
+						opdid->log(std::string(this->id) + ": Warning: Closing sensor signal not detected while closing");
+
+					// enable delay specified?
+					if (this->enableDelay > 0) {
+						// need to disable first
+						this->delayTimer = opdi_get_time_ms();
+						this->setCurrentState(WAITING_BEFORE_DISABLE_ERROR);
+					} else {
+						// go to error condition directly
+						this->setCurrentState(ERR);
+					}
+				} else {
+					// sensor not present - assume closed
+					// enable delay specified?
+					if (this->enableDelay > 0) {
+						// need to disable first
+						this->delayTimer = opdi_get_time_ms();
+						this->setCurrentState(WAITING_BEFORE_DISABLE_CLOSED);
+					} else {
+						// go to closed condition directly
+						this->setCurrentState(CLOSED);
+					}
+				}
+			}
+		}
+	}	// end of H-Bridge Mode state machine
+
+	else if (this->mode == SERIAL_RELAY) {
+		// state machine for serial relay mode
+
+		// unknown state (first call or off or transition not yet implemented)? initialize
+		if (this->currentState == UNKNOWN) {
+			// disable the motor
+			this->delayTimer = opdi_get_time_ms();
+			this->disableMotor();
+			this->setCurrentState(WAITING_AFTER_DISABLE);
+
+			// set target state according to selected position
+			if (this->position == POSITION_OPEN) {
+				this->setTargetState(OPEN);
+			} else
+			if (this->position == POSITION_CLOSED) {
+				this->setTargetState(CLOSED);
+			}
+		} else
+		// waiting after disable?
+		if (this->currentState == WAITING_AFTER_DISABLE) {
+			// waiting time up?
+			if (opdi_get_time_ms() - this->delayTimer > this->enableDelay) {
+				// disable delay is up
+			
+				// target state is unknown; wait
+				this->setCurrentState(UNKNOWN_WAITING);
+			}
+		} else
+		// unknown; waiting for command
+		if ((this->currentState == UNKNOWN_WAITING)) {
+			// do not change current state
+
+			// opening required?
+			if (this->targetState == OPEN) {
+				this->delayTimer = opdi_get_time_ms();
+				this->setCurrentState(WAITING_BEFORE_ENABLE_OPENING);
+			}
+
+			// closing required?
+			if (this->targetState == CLOSED) {
+				this->delayTimer = opdi_get_time_ms();
+				this->setCurrentState(WAITING_BEFORE_ENABLE_CLOSING);
+			}
+		} else
+		// open?
+		if (this->currentState == OPEN) {
+			// closing required?
+			if (this->targetState == CLOSED) {
+				// disable the motor
+				this->delayTimer = opdi_get_time_ms();
+				this->disableMotor();
+				this->setCurrentState(WAITING_BEFORE_ENABLE_CLOSING);
+			}
+		} else
+		// closed?
+		if (this->currentState == CLOSED) {
+			// opening required?
+			if (this->targetState == OPEN) {
+				// disable the motor
+				this->delayTimer = opdi_get_time_ms();
+				this->disableMotor();
+				this->setCurrentState(WAITING_BEFORE_ENABLE_OPENING);
+			}
+		} else
+		// waiting before enable before opening?
+		if (this->currentState == WAITING_BEFORE_ENABLE_OPENING) {
+			if (this->targetState == CLOSED) {
+				// need to close
+				this->delayTimer = opdi_get_time_ms();
+				this->setCurrentState(WAITING_BEFORE_ENABLE_CLOSING);
+			} else
+			// waiting time up?
+			if (opdi_get_time_ms() - this->delayTimer > this->enableDelay) {
+				this->openTimer = opdi_get_time_ms();
+				// set direction
+				this->setMotorOpening();
+				this->enableMotor();
+			
+				this->setCurrentState(OPENING);
+			}
+		} else
+		// waiting before enable before closing?
+		if (this->currentState == WAITING_BEFORE_ENABLE_CLOSING) {
+			if (this->targetState == OPEN) {
+				// need to open
+				this->delayTimer = opdi_get_time_ms();
+				this->setCurrentState(WAITING_BEFORE_ENABLE_OPENING);
+			} else
+			// waiting time up?
+			if (opdi_get_time_ms() - this->delayTimer > this->enableDelay) {
+				this->openTimer = opdi_get_time_ms();
+				// set direction
+				this->setMotorClosing();
+				this->enableMotor();
+			
+				this->setCurrentState(CLOSING);
+			}
+		} else
+		// opening?
+		if (this->currentState == OPENING) {
+			if (this->targetState == CLOSED) {
+				// need to close
+				this->delayTimer = opdi_get_time_ms();
+				this->disableMotor();
+				this->setCurrentState(WAITING_BEFORE_ENABLE_CLOSING);
+			} else
+			// opening time up?
+			if (opdi_get_time_ms() - this->openTimer > this->openingTime) {
+				// stop motor
+				this->disableMotor();
+				// sensor still closed? (error condition)
+				if (this->isSensorClosed()) {
+					if (opdid->logVerbosity >= AbstractOPDID::NORMAL)
+						opdid->log(std::string(this->id) + ": Warning: Closing sensor signal still present after opening");
+					this->setCurrentState(ERR);
+				} else
+					// assume that the window is open now
+					this->setCurrentState(OPEN);
+			}
+		} else
+		// closing?
+		if (this->currentState == CLOSING) {
+			if (this->targetState == OPEN) {
+				// need to open
+				this->delayTimer = opdi_get_time_ms();
+				this->disableMotor();
+				this->setCurrentState(WAITING_BEFORE_ENABLE_OPENING);
+			} else
+			// sensor close detected?
+			if (this->isSensorClosed()) {
+				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
+					opdid->log(std::string(this->id) + ": Closing sensor signal detected");
+				// stop motor immediately
+				this->disableMotor();
+				this->setCurrentState(CLOSED);
+			}
+			else
+			// closing time up?
+			if (opdi_get_time_ms() - this->openTimer > this->closingTime) {
+				// stop motor immediately
+				this->disableMotor();
+
+				// without detecting sensor? error condition
+				if (this->sensorPort != NULL) {
+					if (opdid->logVerbosity >= AbstractOPDID::NORMAL)
+						opdid->log(std::string(this->id) + ": Warning: Closing sensor signal not detected while closing");
+
+					this->setCurrentState(ERR);
+				} else {
+					// sensor not present - assume closed
 					this->setCurrentState(CLOSED);
 				}
 			}
@@ -666,10 +872,22 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 	}
 
 	DigitalPortList::const_iterator pi;
+	bool forceOpen = false;
 	bool forceClose = false;
 
-	// if the window has detected an error, do not automatically close
+	// if the window has detected an error, do not automatically open or close
 	if (this->currentState != ERR) {
+		// if one of the ForceOpen ports is High, the window must be opened
+		pi = this->forceOpenPorts.begin();
+		while (pi != this->forceOpenPorts.end()) {
+			if (this->getPortLine(*pi) == 1) {
+				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
+					opdid->log(std::string(this->id) + ": ForceOpen detected from port: " + (*pi)->getID());
+				forceOpen = true;
+				break;
+			}
+			pi++;
+		}
 		// if one of the ForceClose ports is High, the window must be closed
 		pi = this->forceClosePorts.begin();
 		while (pi != this->forceClosePorts.end()) {
@@ -682,24 +900,29 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			pi++;
 		}
 	} else {
-		// if one of the Reset ports is High, the window should be closed
+		// if one of the Reset ports is High, the window should be reset to the defined state
 		pi = this->resetPorts.begin();
 		while (pi != this->resetPorts.end()) {
 			if (this->getPortLine(*pi) == 1) {
 				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 					opdid->log(std::string(this->id) + ": Reset detected from port: " + (*pi)->getID());
 				this->setCurrentState(UNKNOWN);
-				forceClose = true;
+				if (this->resetTo == RESET_TO_CLOSED)
+					forceClose = true;
+				else if (this->resetTo == RESET_TO_OPEN)
+					forceOpen = true;
 				break;
 			}
 			pi++;
 		}
 	}
 
-	if (forceClose) {
+	if (forceOpen) {
+		this->setTargetState(OPEN);
+	} else if (forceClose) {
 		this->setTargetState(CLOSED);
 	} else {
-		int target = UNKNOWN;
+		WindowState target = UNKNOWN;
 		// if the window has detected an error, do not automatically open or close
 		// if the position is set to automatic, evaluate auto ports
 		if ((this->currentState != ERR) && (this->position >= POSITION_AUTO)) {
@@ -789,25 +1012,43 @@ void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, P
 		WindowPort *port = new WindowPort(abstractOPDID, node.c_str());
 		abstractOPDID->configureSelectPort(nodeConfig, config, port);
 
+		port->enableDelay = nodeConfig->getInt("EnableDelay", 0);
+		if (port->enableDelay < 0)
+			throw Poco::DataException("EnableDelay may not be negative: " + abstractOPDID->to_string(port->enableDelay));
+
+		// read control mode
+		std::string controlMode = abstractOPDID->getConfigString(nodeConfig, "ControlMode", "", true);
+		if (controlMode == "H-Bridge") {
+			if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+				this->opdid->log("Configuring WindowPlugin port " + node + " in H-Bridge Mode");
+			port->mode = WindowPort::H_BRIDGE;
+			// motorA and motorB are required
+			port->motorA = abstractOPDID->getConfigString(nodeConfig, "MotorA", "", true);
+			port->motorB = abstractOPDID->getConfigString(nodeConfig, "MotorB", "", true);
+			port->motorDelay = nodeConfig->getInt("MotorDelay", 0);
+			if (port->motorDelay < 0)
+				throw Poco::DataException("MotorDelay may not be negative: " + abstractOPDID->to_string(port->motorDelay));
+			port->enable = nodeConfig->getString("Enable", "");
+			if (port->enableDelay < port->motorDelay)
+				throw Poco::DataException("If using MotorDelay, EnableDelay must be greater or equal: " + abstractOPDID->to_string(port->enableDelay));
+		} else if (controlMode == "SerialRelay") {
+			if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+				this->opdid->log("Configuring WindowPlugin port " + node + " in Serial Relay Mode");
+			port->mode = WindowPort::SERIAL_RELAY;
+			// direction and enable ports are required
+			port->direction = abstractOPDID->getConfigString(nodeConfig, "Direction", "", true);
+			port->enable = abstractOPDID->getConfigString(nodeConfig, "Enable", "", true);
+		} else
+			throw Poco::DataException("ControlMode setting not supported; expected 'H-Bridge' or 'SerialRelay'", controlMode);
+
 		// read additional configuration parameters
 		port->sensor = abstractOPDID->getConfigString(nodeConfig, "Sensor", "", false);
 		port->sensorClosed = (uint8_t)nodeConfig->getInt("SensorClosed", 1);
 		if (port->sensorClosed > 1)
 			throw Poco::DataException("SensorClosed must be either 0 or 1: " + abstractOPDID->to_string(port->sensorClosed));
-		port->motorA = abstractOPDID->getConfigString(nodeConfig, "MotorA", "", true);
-		port->motorB = abstractOPDID->getConfigString(nodeConfig, "MotorB", "", true);
 		port->motorActive = (uint8_t)nodeConfig->getInt("MotorActive", 1);
 		if (port->motorActive > 1)
 			throw Poco::DataException("MotorActive must be either 0 or 1: " + abstractOPDID->to_string(port->motorActive));
-		port->motorDelay = nodeConfig->getInt("MotorDelay", 0);
-		if (port->motorDelay < 0)
-			throw Poco::DataException("MotorDelay may not be negative: " + abstractOPDID->to_string(port->motorDelay));
-		port->enable = nodeConfig->getString("Enable", "");
-		port->enableDelay = nodeConfig->getInt("EnableDelay", 0);
-		if (port->enableDelay < 0)
-			throw Poco::DataException("EnableDelay may not be negative: " + abstractOPDID->to_string(port->enableDelay));
-		if (port->enableDelay < port->motorDelay)
-			throw Poco::DataException("If using MotorDelay, EnableDelay must be greater or equal: " + abstractOPDID->to_string(port->enableDelay));
 		port->enableActive = (uint8_t)nodeConfig->getInt("EnableActive", 1);
 		if (port->enableActive > 1)
 			throw Poco::DataException("EnableActive must be either 0 or 1: " + abstractOPDID->to_string(port->enableActive));
@@ -819,11 +1060,20 @@ void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, P
 			throw Poco::DataException("ClosingTime must be greater than 0: " + abstractOPDID->to_string(port->closingTime));
 		port->autoOpen = abstractOPDID->getConfigString(nodeConfig, "AutoOpen", "", false);
 		port->autoClose = abstractOPDID->getConfigString(nodeConfig, "AutoClose", "", false);
+		port->forceOpen = abstractOPDID->getConfigString(nodeConfig, "ForceOpen", "", false);
 		port->forceClose = abstractOPDID->getConfigString(nodeConfig, "ForceClose", "", false);
+		if ((port->forceOpen != "") && (port->forceClose != ""))
+			throw Poco::DataException("You cannot use ForceOpen and ForceClose at the same time");
 		port->statusPortStr = abstractOPDID->getConfigString(nodeConfig, "StatusPort", "", false);
 		port->errorPortStr = abstractOPDID->getConfigString(nodeConfig, "ErrorPorts", "", false);
 		port->resetPortStr = abstractOPDID->getConfigString(nodeConfig, "ResetPorts", "", false);
-
+		std::string resetTo = abstractOPDID->getConfigString(nodeConfig, "ResetTo", "Closed", false);
+		if (resetTo == "Closed") {
+			port->resetTo = WindowPort::RESET_TO_CLOSED;
+		} else if (resetTo == "Open") {
+			port->resetTo = WindowPort::RESET_TO_OPEN;
+		} else
+			throw Poco::DataException("Invalid value for the ResetTo setting; expected 'Closed' or 'Open'", resetTo);
 		abstractOPDID->addPort(port);
 	} else
 		throw Poco::DataException("Node type 'SelectPort' expected", portType);
