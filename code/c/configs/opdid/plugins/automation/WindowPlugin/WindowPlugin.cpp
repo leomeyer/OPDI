@@ -321,6 +321,11 @@ void WindowPort::disableMotor(void) {
 	if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		opdid->log(std::string(this->id) + ": Disabling motor");
 	this->setPortLine(this->enablePort, (this->enableActive == 1 ? 0 : 1));
+	// relay mode?
+	if (this->mode == SERIAL_RELAY) {
+		// disable direction (setting the relay to the OFF position in order not to waste energy)
+		this->setPortLine(this->directionPort, (this->motorActive == 1 ? 0 : 1));
+	}	
 	this->isMotorEnabled = false;
 }
 
@@ -1067,13 +1072,13 @@ void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, P
 		port->statusPortStr = abstractOPDID->getConfigString(nodeConfig, "StatusPort", "", false);
 		port->errorPortStr = abstractOPDID->getConfigString(nodeConfig, "ErrorPorts", "", false);
 		port->resetPortStr = abstractOPDID->getConfigString(nodeConfig, "ResetPorts", "", false);
-		std::string resetTo = abstractOPDID->getConfigString(nodeConfig, "ResetTo", "Closed", false);
+		std::string resetTo = abstractOPDID->getConfigString(nodeConfig, "ResetTo", "Off", false);
 		if (resetTo == "Closed") {
 			port->resetTo = WindowPort::RESET_TO_CLOSED;
 		} else if (resetTo == "Open") {
 			port->resetTo = WindowPort::RESET_TO_OPEN;
-		} else
-			throw Poco::DataException("Invalid value for the ResetTo setting; expected 'Closed' or 'Open'", resetTo);
+		} else if (resetTo != "Off")
+			throw Poco::DataException("Invalid value for the ResetTo setting; expected 'Off', 'Closed' or 'Open'", resetTo);
 		abstractOPDID->addPort(port);
 	} else
 		throw Poco::DataException("Node type 'SelectPort' expected", portType);
