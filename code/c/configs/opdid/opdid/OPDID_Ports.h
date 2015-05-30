@@ -61,9 +61,9 @@ protected:
 * Processing occurs in the OPDI waiting event loop, i. e. about once a ms.
 * All input ports' state is queried. If the logic function results in a change
 * of this port's state the new state is set on the output ports. This means that
-* there is no unnecessesary continuous state propagation.
+* there is no unnecessary continuous state propagation.
 * If the port is not hidden it will perform a self-refresh when the state changes.
-* Non-hidden output ports whose change is changed will be refreshed.
+* Non-hidden output ports whose state is changed will be refreshed.
 * You can also specify inverted output ports who will be updated with the negated
 * state of this port.
 */
