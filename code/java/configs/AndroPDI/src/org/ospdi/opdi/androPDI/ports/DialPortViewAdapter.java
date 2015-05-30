@@ -180,7 +180,7 @@ class DialPortViewAdapter implements IPortViewAdapter {
 			// default icon
 			Drawable drawable = context.getResources().getDrawable(R.drawable.dial_port);
 			String iconName = dPort.getUnitFormat().getProperty("icon", "");
-			if (iconName != "") {
+			if (!iconName.equals("")) {
 				// get icon identifier
 				int iconID = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
 				if (iconID == 0)
@@ -190,7 +190,6 @@ class DialPortViewAdapter implements IPortViewAdapter {
 			}
 			
 			ivPortIcon.setImageDrawable(drawable);
-
 			
 			// context menu when clicking
 			ivPortIcon.setOnClickListener(new View.OnClickListener() {

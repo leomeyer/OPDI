@@ -151,6 +151,17 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 		} else {
 			// set the proper icon
 			Drawable portIcon = context.getResources().getDrawable(R.drawable.select_port);
+			String iconName = sPort.getUnitFormat().getProperty("icon", 
+					sPort.getExtendedProperty("icon", "select_port"));
+			
+			if (!iconName.equals("")) {
+				// get icon identifier
+				int iconID = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
+				if (iconID == 0)
+					throw new IllegalArgumentException("Drawable resource not found: " + iconName);							
+					
+				portIcon = context.getResources().getDrawable(iconID);
+			}
 			ivPortIcon.setImageDrawable(portIcon);
 			try {
 				tvBottomtext.setText(sPort.getLabelAt(position));
