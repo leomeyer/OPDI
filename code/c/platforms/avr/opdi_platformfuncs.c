@@ -25,6 +25,154 @@
 #include "opdi_constants.h"
 #include "opdi_platformfuncs.h"
 
+// strtoll implementation:
+/*-
+ * Copyright (c) 1992, 1993
+ *      The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+/* Minimum and maximum values a `signed int64_t int' can hold.  */
+#ifndef LLONG_MAX
+#   define LLONG_MAX    9223372036854775807LL
+#endif
+
+#ifndef LLONG_MIN
+#   define LLONG_MIN    (-LLONG_MAX - 1LL)
+#endif
+/* Maximum value an `uint64_t' can hold.  (Minimum is 0.)  */
+#ifndef ULLONG_MAX
+#   define ULLONG_MAX   18446744073709551615ULL
+#endif
+
+/*
+ * Convert a string to a int64_t integer.
+ *
+ * Assumes that the upper and lower case
+ * alphabets and digits are each contiguous.
+ */
+int64_t strtoll (const char*, char **, int);
+
+int64_t
+strtoll(const char * nptr, char ** endptr, int base)
+{
+	static uint8_t errno;
+        const char *s;
+        uint64_t acc;
+        char c;
+        uint64_t cutoff;
+        int neg, any, cutlim;
+
+        /*
+         * Skip white space and pick up leading +/- sign if any.
+         * If base is 0, allow 0x for hex and 0 for octal, else
+         * assume decimal; if base is already 16, allow 0x.
+         */
+        s = nptr;
+        do {
+                c = *s++;
+        } while (isspace((unsigned char)c));
+        if (c == '-') {
+                neg = 1;
+                c = *s++;
+        } else {
+                neg = 0;
+                if (c == '+')
+                        c = *s++;
+        }
+        if ((base == 0 || base == 16) &&
+            c == '0' && (*s == 'x' || *s == 'X') &&
+            ((s[1] >= '0' && s[1] <= '9') ||
+            (s[1] >= 'A' && s[1] <= 'F') ||
+            (s[1] >= 'a' && s[1] <= 'f'))) {
+                c = s[1];
+                s += 2;
+                base = 16;
+        }
+        if (base == 0)
+                base = c == '0' ? 8 : 10;
+        acc = any = 0;
+        if (base < 2 || base > 36)
+                goto noconv;
+
+        /*
+         * Compute the cutoff value between legal numbers and illegal
+         * numbers.  That is the largest legal value, divided by the
+         * base.  An input number that is greater than this value, if
+         * followed by a legal input character, is too big.  One that
+         * is equal to this value may be valid or not; the limit
+         * between valid and invalid numbers is then based on the last
+         * digit.  For instance, if the range for quads is
+         * [-9223372036854775808..9223372036854775807] and the input base
+         * is 10, cutoff will be set to 922337203685477580 and cutlim to
+         * either 7 (neg==0) or 8 (neg==1), meaning that if we have
+         * accumulated a value > 922337203685477580, or equal but the
+         * next digit is > 7 (or 8), the number is too big, and we will
+         * return a range error.
+         *
+         * Set 'any' if any `digits' consumed; make it negative to indicate
+         * overflow.
+         */
+        cutoff = neg ? (uint64_t)-(LLONG_MIN + LLONG_MAX) + LLONG_MAX
+            : LLONG_MAX;
+        cutlim = cutoff % base;
+        cutoff /= base;
+        for ( ; ; c = *s++) {
+                if (c >= '0' && c <= '9')
+                        c -= '0';
+                else if (c >= 'A' && c <= 'Z')
+                        c -= 'A' - 10;
+                else if (c >= 'a' && c <= 'z')
+                        c -= 'a' - 10;
+                else
+                        break;
+                if (c >= base)
+                        break;
+                if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
+                        any = -1;
+                else {
+                        any = 1;
+                        acc *= base;
+                        acc += c;
+                }
+        }
+        if (any < 0) {
+                acc = neg ? LLONG_MIN : LLONG_MAX;
+                errno = -1;
+        } else if (!any) {
+noconv:
+                errno = -2;
+        } else if (neg)
+                acc = -acc;
+        if (endptr != NULL)
+                *endptr = (char *)(any ? s - 1 : nptr);
+        return (acc);
+}
+// end of strtoll implementation
+
 uint8_t opdi_str_to_uint8(const char *str, uint8_t *result) {
 	static uint8_t errno;
 	char *p;
@@ -62,7 +210,7 @@ uint8_t opdi_str_to_uint16(const char *str, uint16_t *result) {
 uint8_t opdi_str_to_int32(const char *str, int32_t *result) {
 	static uint8_t errno;
 	char *p;
-	long res;
+	int32_t res;
 
 	// clear error
 	errno = 0;
@@ -79,12 +227,12 @@ uint8_t opdi_str_to_int32(const char *str, int32_t *result) {
 uint8_t opdi_str_to_int64(const char *str, int64_t *result) {
 	static uint8_t  errno;
 	char *p;
-	long res;
+	int64_t res;
 
 	// clear error
 	errno = 0;
 
-	res = strtol(str, &p, 10);
+	res = strtoll(str, &p, 10);
 
 	if (errno != 0 || *p != 0 || p == str)
 	  return OPDI_ERROR_CONVERSION;
@@ -133,9 +281,9 @@ uint8_t opdi_int64_to_str(int64_t n, char* pStr) {
 
   do
   {
-    m = n % (long long)10;
+    m = n % (int64_t)10;
     pStr[i] = '0'+ m;
-    n = n / (long long)10;
+    n = n / (int64_t)10;
     i++;
   }
   while(n != 0);
