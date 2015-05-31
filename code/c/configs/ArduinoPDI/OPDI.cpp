@@ -265,7 +265,7 @@ void OPDI_Port::setName(const char *name) {
 }
 
 uint8_t OPDI_Port::refresh() {
-	OPDI_Port **ports = new OPDI_Port*[2];
+	OPDI_Port *ports[2];
 	ports[0] = this;
 	ports[1] = NULL;
 
@@ -446,13 +446,13 @@ uint8_t OPDI::reconfigure() {
 
 uint8_t OPDI::refresh(OPDI_Port **ports) {
 	// target array of internal ports to refresh
-	opdi_Port **iPorts = new opdi_Port*[OPDI_MAX_MESSAGE_PARTS + 1];
+	opdi_Port *iPorts[OPDI_MAX_MESSAGE_PARTS + 1];
 	OPDI_Port *port = ports[0];
 	uint8_t i = 0;
 	while (port != NULL) {
-		iPorts[i] = &port->port;
-		port = port->next;
-		if (++i > OPDI_MAX_MESSAGE_PARTS)
+		iPorts[i++] = &port->port;
+		port = ports[i];
+		if (i > OPDI_MAX_MESSAGE_PARTS)
 			return OPDI_ERROR_PARTS_OVERFLOW;
 	}
 	iPorts[i] = NULL;
