@@ -317,9 +317,9 @@ class DialPortViewAdapter implements IPortViewAdapter {
 								dl.dismiss();
 								
 								// parse value
-								final int val;
+								final long val;
 								try {
-									val = Integer.parseInt(value.getText().toString());
+									val = Long.parseLong(value.getText().toString());
 								} catch (Exception e) {
 									// no number entered
 									return;
