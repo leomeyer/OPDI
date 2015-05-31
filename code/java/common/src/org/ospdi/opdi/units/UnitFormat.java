@@ -3,6 +3,7 @@ package org.ospdi.opdi.units;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.ospdi.opdi.utils.Strings;
 
@@ -58,21 +59,41 @@ public class UnitFormat {
 		return new SimpleDateFormat(formatString).format(date);
 	}
 	
+	protected String formatUnixSecondsLocal(long value) {
+		Date date = new Date(value * 1000);
+		// treat unix seconds as local time value
+		SimpleDateFormat sdf = new SimpleDateFormat(formatString);
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+		return sdf.format(date);
+	}
+	
 	public String format(int value) {
 		if ("unixSeconds".equals(conversion)) {
 			return formatUnixSeconds(value);
 		}
+		if ("unixSecondsLocal".equals(conversion)) {
+			return formatUnixSecondsLocal(value);
+		}
 		// calculate value; format the result
-		double val = value * numerator / (double)denominator;
-		return String.format(formatString, val);
+		if ((numerator != 1) || (denominator != 1)) {
+			double val = value * numerator / (double)denominator;
+			return String.format(formatString, val);
+		} else
+			return String.valueOf(value);
 	}
 	
 	public String format(long value) {
 		if ("unixSeconds".equals(conversion)) {
 			return formatUnixSeconds(value);
 		}
+		if ("unixSecondsLocal".equals(conversion)) {
+			return formatUnixSecondsLocal(value);
+		}
 		// calculate value; format the result
-		double val = value * numerator / (double)denominator;
-		return String.format(formatString, val);
+		if ((numerator != 1) || (denominator != 1)) {
+			double val = value * numerator / (double)denominator;
+			return String.format(formatString, val);
+		} else
+			return String.valueOf(value);
 	}
 }

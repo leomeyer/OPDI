@@ -103,7 +103,7 @@ public class DialPort extends Port {
 		posUnknown = true;
 	}
 
-	public void setPortPosition(IBasicProtocol protocol, int position) {
+	public void setPortPosition(IBasicProtocol protocol, long position) {
 		if (protocol != getProtocol())
 			throw new IllegalAccessError("Setting the port state is only allowed from its protocol implementation");
 		this.position = position;
@@ -117,7 +117,7 @@ public class DialPort extends Port {
 		return position;
 	}
 		
-	public void setPosition(int pos) throws ProtocolException, TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException {
+	public void setPosition(long pos) throws ProtocolException, TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException {
 		// limit value range
 		long val = pos;
 		if (val < minimum) val = minimum;

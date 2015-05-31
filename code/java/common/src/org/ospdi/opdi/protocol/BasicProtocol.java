@@ -499,7 +499,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		if (!parts[ID].equals(port.getID()))
 			throw new ProtocolException("wrong port ID");
 
-		port.setPortPosition(this, Strings.parseInt(parts[POS], "position", Integer.MIN_VALUE, Integer.MAX_VALUE));
+		port.setPortPosition(this, Strings.parseLong(parts[POS], "position", Long.MIN_VALUE, Long.MAX_VALUE));
 	}
 
 	@Override
