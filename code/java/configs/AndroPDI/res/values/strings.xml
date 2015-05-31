@@ -188,6 +188,6 @@
     <string name="keypadCode_display">layout=dial_port_row_noslider;icon=keypad;formatString=%.0f</string>
     
     <string name="unixTime">clocktime_unixseconds=0</string>
-    <string name="clocktime_unixseconds">layout=dial_port_row_noslider;conversion=unixSeconds;icon=clock;formatString=yyyy-MM-dd\\nHH:mm:ss</string>
+    <string name="clocktime_unixseconds">layout=dial_port_row_noslider;conversion=unixSecondsLocal;icon=clock;formatString=yyyy-MM-dd\\nHH:mm:ss</string>
     
 </resources>

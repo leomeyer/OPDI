@@ -36,13 +36,19 @@
             android:text="@string/text_querying" />
 
     </LinearLayout>
-    <LinearLayout android:id="@+id/linearLayout2" android:orientation="vertical" android:layout_height="match_parent" android:layout_width="wrap_content" android:paddingLeft="5dip">
+
+    <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="5dip" >
 
         <TextView
             android:id="@+id/dial_current_value"
             style="@style/StandardFont"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_gravity="right|center_vertical"
             android:gravity="right|center_vertical"
             android:text="@string/text_querying"
