@@ -6,6 +6,7 @@ Leo Meyer, May 2015
 - Change your root password:
 > passwd
 - Resize your SD card to the maximum. Do this before you update the system:
+> apt-get update
 > apt-get install raspi-config
 > raspi-config
 Select option 1: "Expand Filesystem". When the dialog comes back, select "<OK>", "<Finish>" and finally "<Yes>" to reboot.
