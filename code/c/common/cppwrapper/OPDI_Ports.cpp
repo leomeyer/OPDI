@@ -251,11 +251,11 @@ uint8_t OPDI_Port::refresh() {
 	if (this->isHidden())
 		return OPDI_STATUS_OK;
 
-	OPDI_Port **ports = new OPDI_Port*[2];
+	OPDI_Port *ports[2];
 	ports[0] = this;
 	ports[1] = NULL;
 
-	return opdi->refresh(ports);
+	return this->opdi->refresh(ports);
 }
 
 void OPDI_Port::prepare() {
