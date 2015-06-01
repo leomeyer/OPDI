@@ -68,16 +68,16 @@ uint8_t opdi_encryption_buffer_2[OPDI_ENCRYPTION_BLOCKSIZE];
 
 /// Ports
 
-static struct opdi_Port digPort = { "DP1", "Digital Port" };
-static struct opdi_Port anaPort = { "AP1", "Analog Port" };
-static struct opdi_Port selectPort = { "SL1", "Port selection" };
-static struct opdi_Port dialPort = { "DL1", "Audio Volume" };
+static struct opdi_Port digPort = { "DP1", "Digital Port", OPDI_PORTTYPE_DIGITAL };
+static struct opdi_Port anaPort = { "AP1", "Analog Port",OPDI_PORTTYPE_ANALOG };
+static struct opdi_Port selectPort = { "SL1", "Port selection", OPDI_PORTTYPE_SELECT };
+static struct opdi_Port dialPort = { "DL1", "Audio Volume", OPDI_PORTTYPE_DIAL };
 static struct opdi_DialPortInfo dialPortInfo = { 0, 100, 5 };
-static struct opdi_Port testPort = { "TEST1", "Test cases" };
-static struct opdi_Port streamPort1 = { "SP1", "Temp/Pressure" };
+static struct opdi_Port testPort = { "TEST1", "Test cases", OPDI_PORTTYPE_SELECT };
+static struct opdi_Port streamPort1 = { "SP1", "Temp/Pressure", NULL };
 static struct opdi_StreamingPortInfo sp1Info = { "BMP085", OPDI_STREAMING_PORT_NORMAL };
-static struct opdi_Port streamPort2 = { "SP2", "Clock" };
-static struct opdi_StreamingPortInfo sp2Info = { "TEXT", OPDI_STREAMING_PORT_AUTOBIND };
+static struct opdi_Port streamPort2 = { "SP2", "Clock", OPDI_PORTTYPE_STREAMING };
+static struct opdi_StreamingPortInfo sp2Info = { "TEXT", NULL };
 static struct opdi_Port digPort2 = { "DP2", "Access Denying Port" };
 static struct opdi_Port digPort3 = { "DP3", "Test Error Port" };
 static struct opdi_Port digPort4 = { "DP4", "Test Query Error" };
@@ -340,7 +340,7 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 }
 
 
-uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
+uint8_t opdi_get_dial_port_state(opdi_Port *port, int64_t *position) {
 	if (!strcmp(port->id, dialPort.id)) {
 		*position = dialvalue;
 	} else
@@ -350,7 +350,7 @@ uint8_t opdi_get_dial_port_state(opdi_Port *port, int32_t *position) {
 	return OPDI_STATUS_OK;
 }
 
-uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
+uint8_t opdi_set_dial_port_position(opdi_Port *port, int64_t position) {
 	if (!strcmp(port->id, dialPort.id)) {
 		dialvalue = position;
 	} else
@@ -360,7 +360,7 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int32_t position) {
 	return OPDI_STATUS_OK;
 }
 
-uint8_t opdi_debug_msg(const uint8_t *str, uint8_t direction) {
+uint8_t opdi_debug_msg(const char *str, uint8_t direction) {
 	if (direction == OPDI_DIR_INCOMING)
 		printf(">");
 	else
