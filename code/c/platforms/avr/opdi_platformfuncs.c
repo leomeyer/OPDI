@@ -265,7 +265,7 @@ uint8_t opdi_int64_to_str(int64_t n, char* pStr) {
   char s = '+';
 
  // if(n == LONG_LONG_MIN) // _I64_MIN  for Windows Microsoft compiler
-  if(n == -9223372036854775808)
+  if(n < -9223372036854775807)
   {
     strcpy(pStr,"-9223372036854775808");
     return strlen(pStr);
