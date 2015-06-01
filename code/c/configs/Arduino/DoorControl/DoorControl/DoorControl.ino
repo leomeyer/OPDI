@@ -54,7 +54,7 @@
 #define OPDI_MASTER_NAME_LENGTH	1
 
 // maximum possible ports on this device
-#define OPDI_MAX_DEVICE_PORTS	7
+#define OPDI_MAX_DEVICE_PORTS	8
 
 // define to conserve RAM and ROM
 //#define OPDI_NO_DIGITAL_PORTS
@@ -276,9 +276,9 @@ OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("T", "Time", "unit=unixTime");
 OPDI_DigitalPortDoor doorPort = OPDI_DigitalPortDoor("D", "Door");
 OPDI_EEPROMDialPort tag1Port = OPDI_EEPROMDialPort("1", "Tag1", 10, 0, 999999999999, "");
 OPDI_EEPROMDialPort tag2Port = OPDI_EEPROMDialPort("2", "Tag2", 20, 0, 999999999999, "");
-OPDI_EEPROMDialPort tag3Port = OPDI_EEPROMDialPort("3", "Tag 3", 30, 0, 999999999999, "");
+OPDI_EEPROMDialPort tag3Port = OPDI_EEPROMDialPort("3", "Tag3", 30, 0, 999999999999, "");
 OPDI_EEPROMDialPort lastTagPort = OPDI_EEPROMDialPort("L", "LTag", 40, 0, 999999999999, "");
-OPDI_EEPROMDialPort lastAccessPort = OPDI_EEPROMDialPort("A", "LAcc", 5, 0, 999999999999, "unit=unixTime"); // for keypad opening only
+OPDI_EEPROMDialPort lastAccessPort = OPDI_EEPROMDialPort("A", "LAcc", 50, 0, 999999999999, "unit=unixTime"); // store time for keypad opening only
 
 // Keypad definitions
 const byte ROWS = 4; //four rows
@@ -546,6 +546,9 @@ void loop() {
 int main(void)
 {
   init();
+  
+  // let everything stabilize
+  delay(500);
 
   uint8_t setupOK = setupDevice();
 
