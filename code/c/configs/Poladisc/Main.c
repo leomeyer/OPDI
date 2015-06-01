@@ -414,7 +414,7 @@ static uint8_t start(void) {
 	return result;
 }
 
-uint8_t opdi_debug_msg(const uint8_t *msg, uint8_t direction) {
+uint8_t opdi_debug_msg(const char *msg, uint8_t direction) {
 	return OPDI_STATUS_OK;
 }
 
