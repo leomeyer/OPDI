@@ -24,6 +24,77 @@
  * - RFID access
  * - OPDI slave implementation
  */
+ 
+/*
+// Arduino configuration specifications
+
+// set these values in opdi_configspecs.h in the Arduino library folder!
+
+#ifndef __OPDI_CONFIGSPECS_H
+#define __OPDI_CONFIGSPECS_H
+
+#define OPDI_IS_SLAVE	1
+#define OPDI_ENCODING_DEFAULT	OPDI_ENCODING_UTF8
+
+// Defines the maximum message length this slave can receive.
+// Consumes this amount of bytes in data and the same amount on the stack.
+#define OPDI_MESSAGE_BUFFER_SIZE		50
+
+// Defines the maximum message string length this slave can receive.
+// Consumes this amount of bytes times sizeof(char) in data and the same amount on the stack.
+// As the channel identifier and the checksum of a message typically consume a
+// maximum amount of nine bytes, this value may be OPDI_MESSAGE_BUFFER_SIZE - 9
+// on systems with only single-byte character sets.
+#define OPDI_MESSAGE_PAYLOAD_LENGTH	(OPDI_MESSAGE_BUFFER_SIZE - 9)
+
+// maximum permitted message parts
+#define OPDI_MAX_MESSAGE_PARTS	10
+
+// maximum length of master's name this device will accept
+#define OPDI_MASTER_NAME_LENGTH	1
+
+// maximum possible ports on this device
+#define OPDI_MAX_DEVICE_PORTS	7
+
+// define to conserve RAM and ROM
+//#define OPDI_NO_DIGITAL_PORTS
+
+// define to conserve RAM and ROM
+// Arduino compiler may crash or loop endlessly if this defined, so better keep them
+//#define OPDI_NO_ANALOG_PORTS
+
+// define to conserve RAM and ROM
+#define OPDI_NO_SELECT_PORTS
+
+// define to conserve RAM and ROM
+// #define OPDI_NO_DIAL_PORTS
+
+// maximum number of streaming ports
+// set to 0 to conserve both RAM and ROM
+#define OPDI_STREAMING_PORTS		0
+
+// Define to conserve memory
+#define OPDI_NO_ENCRYPTION
+
+// Define to conserve memory
+#define OPDI_NO_AUTHENTICATION
+
+#define OPDI_HAS_MESSAGE_HANDLED
+
+// Defines for the OPDI implementation on Arduino
+
+// keep these numbers as low as possible to conserve memory
+#define MAX_PORTIDLENGTH		2
+#define MAX_PORTNAMELENGTH		5
+#define MAX_SLAVENAMELENGTH		12
+#define MAX_ENCODINGNAMELENGTH	7
+
+#define OPDI_MAX_PORT_INFO_MESSAGE	0
+
+#define OPDI_EXTENDED_PROTOCOL	1
+
+#endif		// __OPDI_CONFIGSPECS_H
+*/ 
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
@@ -200,18 +271,14 @@ ArduinOPDI ArduinOpdi = ArduinOPDI();
 OPDI* Opdi = &ArduinOpdi;
 
 // Port definitions
-
-OPDI_EEPROMDialPort codePort = OPDI_EEPROMDialPort("EDP1", "Code", 0, 0, 99999, "unit=keypadCode");
-
-OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("RTC", "Current time", "unit=unixTime");
-
-OPDI_DigitalPortDoor doorPort = OPDI_DigitalPortDoor("DOOR", "Door");
-
-OPDI_EEPROMDialPort tag1Port = OPDI_EEPROMDialPort("TAG1", "Tag 1", 10, 0, 999999999999, "");
-//OPDI_EEPROMDialPort tag2Port = OPDI_EEPROMDialPort("TAG2", "Tag 2", 2, 0, 2 << 32, "unit=keypadCode");
-//OPDI_EEPROMDialPort tag3Port = OPDI_EEPROMDialPort("TAG3", "Tag 3", 3, 0, 2 << 32, "unit=keypadCode");
-OPDI_EEPROMDialPort lastTagPort = OPDI_EEPROMDialPort("LTAG", "Last Tag", 20, 0, 999999999999, "");
-//OPDI_EEPROMDialPort lastAccessPort = OPDI_EEPROMDialPort("LAC", "Last Access", 4, 0, 2 << 32, "unit=unixTime");
+OPDI_EEPROMDialPort codePort = OPDI_EEPROMDialPort("C", "Code", 0, 0, 99999, "unit=keypadCode");
+OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("T", "Time", "unit=unixTime");
+OPDI_DigitalPortDoor doorPort = OPDI_DigitalPortDoor("D", "Door");
+OPDI_EEPROMDialPort tag1Port = OPDI_EEPROMDialPort("1", "Tag1", 10, 0, 999999999999, "");
+OPDI_EEPROMDialPort tag2Port = OPDI_EEPROMDialPort("2", "Tag2", 20, 0, 999999999999, "");
+OPDI_EEPROMDialPort tag3Port = OPDI_EEPROMDialPort("3", "Tag 3", 30, 0, 999999999999, "");
+OPDI_EEPROMDialPort lastTagPort = OPDI_EEPROMDialPort("L", "LTag", 40, 0, 999999999999, "");
+OPDI_EEPROMDialPort lastAccessPort = OPDI_EEPROMDialPort("A", "LAcc", 5, 0, 999999999999, "unit=unixTime"); // for keypad opening only
 
 // Keypad definitions
 const byte ROWS = 4; //four rows
@@ -230,9 +297,22 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 // time data structure
 tmElements_t tm;
 
-const char *monthName[12] = {
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+// month name constants for compile timestamp parsing
+const char str_jan[] PROGMEM = "Jan";
+const char str_feb[] PROGMEM = "Feb";
+const char str_mar[] PROGMEM = "Mar";
+const char str_apr[] PROGMEM = "Apr";
+const char str_may[] PROGMEM = "May";
+const char str_jun[] PROGMEM = "Jun";
+const char str_jul[] PROGMEM = "Jul";
+const char str_aug[] PROGMEM = "Aug";
+const char str_sep[] PROGMEM = "Sep";
+const char str_oct[] PROGMEM = "Oct";
+const char str_nov[] PROGMEM = "Nov";
+const char str_dec[] PROGMEM = "Dec";
+const char* const monthName[12] PROGMEM = {
+  str_jan, str_feb, str_mar, str_apr, str_may, str_jun,
+  str_jul, str_aug, str_sep, str_oct, str_nov, str_dec
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Routines
@@ -269,12 +349,14 @@ bool getTime(const char *str) {
 
 bool getDate(const char *str) {
   char Month[12];
+  char monthBuf[4];
   int Day, Year;
   uint8_t monthIndex;
 
   if (sscanf(str, "%s %d %d", Month, &Day, &Year) != 3) return false;
   for (monthIndex = 0; monthIndex < 12; monthIndex++) {
-    if (strcmp(Month, monthName[monthIndex]) == 0) break;
+    strcpy_P(monthBuf, (char*)pgm_read_word(&(monthName[monthIndex])));
+    if (strcmp(Month, monthBuf) == 0) break;
   }
   if (monthIndex >= 12) return false;
   tm.Day = Day;
@@ -317,10 +399,10 @@ uint8_t setupDevice() {
   Opdi->addPort(&codePort);
   Opdi->addPort(&doorPort);
   Opdi->addPort(&tag1Port);
-  //Opdi->addPort(&tag2Port);
-  //Opdi->addPort(&tag3Port);
+  Opdi->addPort(&tag2Port);
+  Opdi->addPort(&tag3Port);
   Opdi->addPort(&lastTagPort);
-//  Opdi->addPort(&lastAccessPort);
+  Opdi->addPort(&lastAccessPort);
 
   // start serial port at 9600 baud
   Serial.begin(9600);
@@ -342,13 +424,6 @@ void openDoor() {
   */
   
   doorPort.setLine(1);
-/*
-  if (RTC.read(tm)) {
-     int64_t accessTime = makeTime(tm);
-     // store last time in EEPROM
-     lastAccessPort.setPosition(accessTime);
-  }  
-*/
 }
 
 /* This function can be called to perform regular housekeeping.
@@ -390,7 +465,13 @@ uint8_t doWork() {
     if ((codeValue > 0) && (enteredValue == codeValue)) {
       // success
       openDoor();
-      enteredValue = 0;  
+      enteredValue = 0;
+      // store last access time if possible
+      if (RTC.read(tm)) {
+         int64_t accessTime = makeTime(tm);
+         // store last time in EEPROM
+         lastAccessPort.setPosition(accessTime);
+      }  
     }
   }
 
@@ -415,7 +496,6 @@ uint8_t doWork() {
     int64_t tagID;
     tag1Port.getState(&tagID);
     success = tagID == uid;
-    /*
     if (!success) {
       tag2Port.getState(&tagID);
       success = tagID == uid;
@@ -424,7 +504,6 @@ uint8_t doWork() {
       tag3Port.getState(&tagID);
       success = tagID == uid;
     }
-    */
     if (success) {
       openDoor();
     }
@@ -434,36 +513,34 @@ uint8_t doWork() {
 }
 
 void loop() {
+  // do housekeeping
+  doWork();
 
-	// do housekeeping
-	doWork();
-
-	// character received on serial port? may be a connection attempt
-	if (Serial.available() > 0) {
-
-		// indicate connected status
-		digitalWrite(STATUS_LED, HIGH);   // set the LED on
-
-		// start the OPDI protocol, passing a pointer to the housekeeping function
-		// this call blocks until the slave is disconnected
-		uint8_t result = Opdi->start(&doWork);
-
-		// no regular disconnect?
-		if (result != OPDI_DISCONNECTED) {
-			digitalWrite(STATUS_LED, LOW);    // set the LED off
-			delay(500);
-
-			// flash error code on LED
-			for (uint8_t i = 0; i < result; i++) {
-				digitalWrite(STATUS_LED, HIGH);   // set the LED on
-				delay(200);              // wait
-				digitalWrite(STATUS_LED, LOW);    // set the LED off
-				delay(200);              // wait
-			}
-		}
-
-		digitalWrite(STATUS_LED, LOW);    // set the LED off
-	}
+  // character received on serial port? may be a connection attempt
+  if (Serial.available() > 0) {
+    // indicate connected status
+    digitalWrite(STATUS_LED, HIGH);   // set the LED on
+    
+    // start the OPDI protocol, passing a pointer to the housekeeping function
+    // this call blocks until the slave is disconnected
+    uint8_t result = Opdi->start(&doWork);
+    
+    // no regular disconnect?
+    if (result != OPDI_DISCONNECTED) {
+      digitalWrite(STATUS_LED, LOW);    // set the LED off
+      delay(500);
+      
+      // flash error code on LED
+      for (uint8_t i = 0; i < result; i++) {
+        digitalWrite(STATUS_LED, HIGH);   // set the LED on
+        delay(200);              // wait
+        digitalWrite(STATUS_LED, LOW);    // set the LED off
+        delay(200);              // wait
+      }
+    }
+    
+    digitalWrite(STATUS_LED, LOW);    // set the LED off
+  }
 }
 
 int main(void)
