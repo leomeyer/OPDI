@@ -77,7 +77,7 @@
 #define OPDI_NO_ENCRYPTION
 
 // Define to conserve memory
-#define OPDI_NO_AUTHENTICATION
+// #define OPDI_NO_AUTHENTICATION
 
 #define OPDI_HAS_MESSAGE_HANDLED
 
@@ -115,7 +115,7 @@
 #include "ArduinOPDI.h"
 
 #define STATUS_LED    6
-#define ACCESS_LED    7
+#define SWITCH        7
 #define RELAY         8
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -270,6 +270,10 @@ ArduinOPDI ArduinOpdi = ArduinOPDI();
 // important: for polymorphism to work, assign own OPDI instance
 OPDI* Opdi = &ArduinOpdi;
 
+// login credentials
+const char* opdi_username = "test";
+const char* opdi_password = "test";
+
 // Port definitions
 OPDI_EEPROMDialPort codePort = OPDI_EEPROMDialPort("C", "Code", 0, 0, 99999, "unit=keypadCode");
 OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("T", "Time", "unit=unixTime");
@@ -292,7 +296,7 @@ char keys[ROWS][COLS] = {
 byte rowPins[ROWS] = {A3, A2, A1, A0}; //connect to the row pinouts of the keypad
 byte colPins[COLS] = {2, 3, 4, 5}; //connect to the column pinouts of the keypad
 
-Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
+Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
 // time data structure
 tmElements_t tm;
@@ -337,6 +341,7 @@ uint8_t checkerror(uint8_t result) {
   return 1;
 }
 
+// date and time parsing from compiler timestamp
 bool getTime(const char *str) {
   int Hour, Min, Sec;
 
@@ -366,9 +371,12 @@ bool getDate(const char *str) {
 }
 
 uint8_t setupDevice() {
-  // initialize the digital pin as an output.
-  // Pin STATUS_LED has an LED connected on most Arduino boards
+  // LED pin as output
   pinMode(STATUS_LED, OUTPUT);
+  
+  // switch as input, pullup on
+  pinMode(SWITCH, INPUT);
+  digitalWrite(SWITCH, HIGH);
 
   // initialize the OPDI system
   uint8_t result = ArduinOpdi.setup("DoorControl", 60000);  // one minute timeout
@@ -413,25 +421,19 @@ uint8_t setupDevice() {
 }
 
 void openDoor() {
-
-  /*
-  for (int i = 0; i < 10; i++) {
-    digitalWrite(STATUS_LED, HIGH);   // set the LED on
-    delay(100);              // wait
-    digitalWrite(STATUS_LED, LOW);    // set the LED off
-    delay(100);              // wait
-  }
-  */
-  
+  digitalWrite(STATUS_LED, HIGH);   // set the LED on
   doorPort.setLine(1);
+  digitalWrite(STATUS_LED, LOW);    // set the LED off
 }
 
-/* This function can be called to perform regular housekeeping.
-* Passing it to the Opdi->start() function ensures that it is called regularly.
-* The function can send OPDI messages to the master or even disconnect a connection.
-* It should always return OPDI_STATUS_OK in case everything is normal.
-* If disconnected it should return OPDI_DISCONNECTED.
-* Any value that is not OPDI_STATUS_OK will terminate an existing connection.
+/* This function performs regular housekeeping.
+* It is used to check whether the door relay should be activated.
+* First it checks the switch. If it is low (pressed), the door is opened.
+* Then it checks the keypad and determines the total entered code.
+* If the code matches the one stored in the EEPROM the door is opened and
+* the last access time is stored in the EEPROM.
+* Next, if an RFID tag is detected its ID is checked against the three
+* tag IDs stored in the EEPROM. If one of them matches the door is opened.
 */
 uint8_t doWork() {
   // time to refresh the RTC port on a connected master?
@@ -442,13 +444,20 @@ uint8_t doWork() {
     timeRefreshCounter = millis();
   }
   
+  // check switch
+  if (digitalRead(SWITCH) == 0) {
+    openDoor();
+    return OPDI_STATUS_OK;
+  }
+  
+  // check keypad
   char key = keypad.getKey();
 
   if (key != NO_KEY) {
     digitalWrite(STATUS_LED, HIGH);   // set the LED on
-    delay(200);              // wait
+    delay(100);              // wait
     digitalWrite(STATUS_LED, LOW);    // set the LED off
-    delay(200);              // wait
+    delay(100);              // wait
     if (key >= '0' && key <= '9') {
       // next key entered; multiply previous value
       enteredValue *= 10;
@@ -472,10 +481,11 @@ uint8_t doWork() {
          // store last time in EEPROM
          lastAccessPort.setPosition(accessTime);
       }  
+      return OPDI_STATUS_OK;
     }
   }
 
-  // RFID       
+  // check RFID tags
   // Look for new cards
   if (!mfrc522.PICC_IsNewCardPresent())
     return OPDI_STATUS_OK;
@@ -533,9 +543,9 @@ void loop() {
       // flash error code on LED
       for (uint8_t i = 0; i < result; i++) {
         digitalWrite(STATUS_LED, HIGH);   // set the LED on
-        delay(200);              // wait
+        delay(100);              // wait
         digitalWrite(STATUS_LED, LOW);    // set the LED off
-        delay(200);              // wait
+        delay(100);              // wait
       }
     }
     
@@ -547,7 +557,7 @@ int main(void)
 {
   init();
   
-  // let everything stabilize
+  // let everything stabilize (needed for RTC?)
   delay(500);
 
   uint8_t setupOK = setupDevice();
