@@ -76,9 +76,6 @@ protected:
 	// OPDI implementation management structure
 	void* data;
 
-	// linked list of ports - pointer to next port
-	OPDI_Port *next;
-
 	// A list of ports that should automatically refresh when the port state changes.
 	// How this state change is handled depends on the port implementation.
 	//std::vector<std::string> autoRefreshPorts;
@@ -129,6 +126,9 @@ public:
 	public:
 		AccessDenied(std::string message): Poco::Exception(message) {};
 	};
+
+	// linked list of ports - pointer to next port
+	OPDI_Port *next;
 
 	/** Pointer for help structures. Not used internally; may be used by the application. */
 	void* tag;

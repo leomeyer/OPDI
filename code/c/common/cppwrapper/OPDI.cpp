@@ -144,6 +144,8 @@ void OPDI::updatePortData(OPDI_Port *port) {
 }
 
 OPDI_Port *OPDI::findPort(opdi_Port *port) {
+	if (port == NULL)
+		return this->first_port;
 	OPDI_Port *p = this->first_port;
 	// go through linked list
 	while (p != NULL) {

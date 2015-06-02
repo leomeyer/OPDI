@@ -4,6 +4,7 @@
 #define _SCL_SECURE_NO_WARNINGS	1
 
 #include <sstream>
+#include <fstream>
 #include <list>
 
 // expression evaluation library
@@ -261,7 +262,7 @@ public:
 // Timer Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A TimerPort is a DigitalPort whose state is determined by one or more 
+/** A TimerPort is a DigitalPort that switches other ports according to one or more 
 *   timing schedules. A TimerPort is output only.
 *   In its doWork method the TimerPort checks whether a timestamp defined
 *   by a schedule has been reached. If a schedule is due the line
@@ -296,7 +297,8 @@ public:
 *    - Hour
 *    - Minute
 *    - Second
-*   
+*
+*   The schedule types Periodic and Random are not yet implemented.
 */
 class OPDID_TimerPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
@@ -443,6 +445,53 @@ public:
 	virtual ~OPDID_SerialStreamingPort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
+
+	virtual int write(char *bytes, size_t length) override;
+
+	virtual int available(size_t count) override;
+
+	virtual int read(char *result) override;
+
+	virtual bool hasError(void) override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Logging Streaming Port
+///////////////////////////////////////////////////////////////////////////////
+
+/** Defines a streaming port that can log port states and optionally write them to a log file.
+ */
+class OPDID_LoggingPort : public OPDI_StreamingPort, protected OPDID_PortFunctions {
+
+friend class OPDI;
+
+protected:
+
+	enum Format {
+		CSV
+	};
+
+	uint64_t logPeriod;
+	Format format;
+	std::string separator;
+	std::string portsToLogStr;
+	PortList portsToLog;
+
+	uint64_t lastEntryTime;
+	std::ofstream outFile;
+
+	std::string getPortStateStr(OPDI_Port* port);
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+
+public:
+	OPDID_LoggingPort(AbstractOPDID *opdid, const char *id);
+
+	virtual ~OPDID_LoggingPort();
+
+	virtual void configure(Poco::Util::AbstractConfiguration *config);
+
+	virtual void prepare() override;
 
 	virtual int write(char *bytes, size_t length) override;
 

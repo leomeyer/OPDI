@@ -86,6 +86,7 @@ public:
 	virtual void updatePortGroupData(OPDI_PortGroup *group);
 
 	/** Internal function.
+	* If port is NULL returns the first port.
 	 */
 	virtual OPDI_Port *findPort(opdi_Port *port);
 

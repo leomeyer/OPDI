@@ -171,6 +171,8 @@ public:
 
 	virtual void setupSerialStreamingPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
+	virtual void setupLoggingPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
 	virtual void setupLogicPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	virtual void setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
