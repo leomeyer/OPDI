@@ -18,6 +18,9 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// CAUTION! This is about the maximum of RAM that can be used without stability problems!
+// Be careful with modifications, especially string constants!
+
 /** DoorControl for Arduino
  * - Keypad
  * - RTC
@@ -48,7 +51,7 @@
 #define OPDI_MESSAGE_PAYLOAD_LENGTH	(OPDI_MESSAGE_BUFFER_SIZE - 9)
 
 // maximum permitted message parts
-#define OPDI_MAX_MESSAGE_PARTS	10
+#define OPDI_MAX_MESSAGE_PARTS	8
 
 // maximum length of master's name this device will accept
 #define OPDI_MASTER_NAME_LENGTH	1
@@ -94,6 +97,7 @@
 #define OPDI_EXTENDED_PROTOCOL	1
 
 #endif		// __OPDI_CONFIGSPECS_H
+
 */ 
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -379,7 +383,7 @@ uint8_t setupDevice() {
   digitalWrite(SWITCH, HIGH);
 
   // initialize the OPDI system
-  uint8_t result = ArduinOpdi.setup("DoorControl", 60000);  // one minute timeout
+  uint8_t result = ArduinOpdi.setup("DoorControl", 60000, OPDI_FLAG_AUTHENTICATION_REQUIRED);  // one minute timeout
   if (checkerror(result) == 0)
     return 0;
 
