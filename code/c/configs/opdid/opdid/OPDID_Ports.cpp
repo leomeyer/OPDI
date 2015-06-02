@@ -278,7 +278,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 	// change detected?
 	if (newLine != this->line) {
 		if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
-			opdid->log(std::string(this->id) + ": Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High");
+			opdid->log(std::string(this->id) + ": Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High)");
 	
 		OPDI_DigitalPort::setLine(newLine);
 
