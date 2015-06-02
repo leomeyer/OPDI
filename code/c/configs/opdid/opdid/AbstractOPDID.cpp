@@ -152,7 +152,7 @@ void AbstractOPDID::showHelp(void) {
 }
 
 std::string AbstractOPDID::getTimestampStr(void) {
-	return "[" + Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y-%m-%d %H:%M:%S.%i") + "] ";
+	return Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y-%m-%d %H:%M:%S.%i");
 }
 
 std::string AbstractOPDID::getOPDIResult(uint8_t code) {
@@ -201,7 +201,7 @@ void AbstractOPDID::log(std::string text) {
 	// Try to lock the mutex. If this does not work in time, it will throw
 	// an exception. The calling thread should deal with this exception.
 	Poco::Mutex::ScopedLock(this->mutex);
-	this->println(this->getTimestampStr() + (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text);
+	this->println("[" + this->getTimestampStr() + "] " + (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text);
 }
 
 void AbstractOPDID::logError(std::string text) {
@@ -212,7 +212,7 @@ void AbstractOPDID::logError(std::string text) {
 	// Try to lock the mutex. If this does not work in time, it will throw
 	// an exception. The calling thread should deal with this exception.
 	Poco::Mutex::ScopedLock(this->mutex);
-	this->printlne(this->getTimestampStr() + text);
+	this->printlne("[" + this->getTimestampStr() + "] " + text);
 }
 
 int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
@@ -689,6 +689,16 @@ void AbstractOPDID::setupSerialStreamingPort(Poco::Util::AbstractConfiguration *
 	this->addPort(ssPort);
 }
 
+void AbstractOPDID::setupLoggingPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Setting up logging port: " + port);
+
+	OPDID_LoggingPort *logPort = new OPDID_LoggingPort(this, port.c_str());
+	logPort->configure(portConfig);
+
+	this->addPort(logPort);
+}
+
 void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
 	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up LogicPort: " + port);
@@ -795,6 +805,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else
 		if (nodeType == "SerialStreamingPort") {
 			this->setupSerialStreamingPort(nodeConfig, node);
+		} else
+		if (nodeType == "LoggingPort") {
+			this->setupLoggingPort(nodeConfig, node);
 		} else
 		if (nodeType == "LogicPort") {
 			this->setupLogicPort(nodeConfig, node);

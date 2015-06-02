@@ -32,6 +32,14 @@ void OPDID_PortFunctions::findPorts(std::string configPort, std::string setting,
 	std::stringstream ss(portIDs);
 	std::string item;
 	while (std::getline(ss, item, ' ')) {
+		if (item == "*") {
+			// add all ports
+			OPDI_Port* port = this->opdid->findPort(NULL);
+			while (port != NULL) {
+				portList.push_back(port);
+				port = port->next;
+			}
+		} else
 		// ignore empty items
 		if (item != "") {
 			OPDI_Port *port = this->findPort(configPort, setting, item, true);
@@ -1292,5 +1300,151 @@ int OPDID_SerialStreamingPort::read(char *result) {
 }
 
 bool OPDID_SerialStreamingPort::hasError(void) {
+	return false;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Logging Streaming Port
+///////////////////////////////////////////////////////////////////////////////
+
+OPDID_LoggingPort::OPDID_LoggingPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id) {
+	this->opdid = opdid;
+	this->logPeriod = 10000;		// default: 10 seconds
+	this->lastEntryTime = 0;
+	this->format = CSV;
+	this->separator = ";";
+}
+
+OPDID_LoggingPort::~OPDID_LoggingPort() {
+}
+
+std::string OPDID_LoggingPort::getPortStateStr(OPDI_Port* port) {
+	try {
+		if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
+			uint8_t line;
+			uint8_t mode;
+			((OPDI_DigitalPort*)port)->getState(&mode, &line);
+			char c[] = " ";
+			c[0] = line + '0';
+			return std::string(c);
+		}
+		if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+			double value = ((OPDI_AnalogPort *)port)->getRelativeValue();
+			return this->opdid->to_string(value);
+		}
+		if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+			uint16_t position;
+			((OPDI_SelectPort *)port)->getState(&position);
+			return this->opdid->to_string(position);
+		}
+		if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+			int64_t position;
+			((OPDI_DialPort *)port)->getState(&position);
+			return this->opdid->to_string(position);
+		}
+		// unknown port type
+		return "";
+	} catch (...) {
+		// in case of error return an empty string
+		return "";
+	}
+}
+
+void OPDID_LoggingPort::prepare() {
+	OPDI_StreamingPort::prepare();
+
+	// find ports; throws errors if something required is missing
+	this->findPorts(this->getID(), "Ports", this->portsToLogStr, this->portsToLog);
+}
+
+uint8_t OPDID_LoggingPort::doWork(uint8_t canSend)  {
+	OPDI_StreamingPort::doWork(canSend);
+
+	// check whether the time for a new entry has been reached
+	uint64_t timeDiff = opdi_get_time_ms() - this->lastEntryTime;
+	if (timeDiff < this->logPeriod)
+		return OPDI_STATUS_OK;
+
+	// first time writing? write a header
+	bool writeHeader = (lastEntryTime == 0);
+
+	this->lastEntryTime = opdi_get_time_ms();
+
+	// build log entry
+	std::string entry;
+
+	if (format == CSV) {
+		if (writeHeader) {
+			entry = "Timestamp" + this->separator;
+			// go through port list, build header
+			PortList::iterator it = this->portsToLog.begin();
+			while (it != this->portsToLog.end()) {
+				entry += (*it)->getID();
+				// separator necessary?
+				if (it != this->portsToLog.end() - 1) 
+					entry += this->separator;
+				it++;
+			}
+			this->outFile << entry << std::endl;
+		}
+		entry = this->opdid->getTimestampStr() + this->separator;
+		// go through port list
+		PortList::iterator it = this->portsToLog.begin();
+		while (it != this->portsToLog.end()) {
+			entry += this->getPortStateStr(*it);
+			// separator necessary?
+			if (it != this->portsToLog.end() - 1) 
+				entry += this->separator;
+			it++;
+		}
+	}
+
+	if (!this->outFile.is_open())
+		return OPDI_STATUS_OK;
+
+	// write to output
+	this->outFile << entry << std::endl;
+
+	return OPDI_STATUS_OK;
+}
+
+
+void OPDID_LoggingPort::configure(Poco::Util::AbstractConfiguration *config) {
+	this->opdid->configureStreamingPort(config, this);
+
+	this->logPeriod = config->getInt("Period", this->logPeriod);
+
+	std::string outFileStr = config->getString("OutputFile", "");
+	if (outFileStr != "") {
+		// try to lock the output file name as a resource
+		this->opdid->lockResource(outFileStr, this->getID());
+
+		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+			this->opdid->log(std::string(this->getID()) + ": Opening output log file " + outFileStr);
+
+		// open the stream in append mode
+		this->outFile.open(outFileStr, std::ios_base::app);
+	}
+
+	this->portsToLogStr = this->opdid->getConfigString(config, "Ports", "", true);
+}
+
+int OPDID_LoggingPort::write(char *bytes, size_t length) {
+	return 0;
+}
+
+int OPDID_LoggingPort::available(size_t count) {
+	// count has no meaning in this implementation
+	// nothing available
+	return 0;
+}
+
+int OPDID_LoggingPort::read(char *result) {
+	// nothing available
+	return 0;
+}
+
+bool OPDID_LoggingPort::hasError(void) {
 	return false;
 }
