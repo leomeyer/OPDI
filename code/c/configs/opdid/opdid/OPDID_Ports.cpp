@@ -1414,6 +1414,11 @@ void OPDID_LoggingPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configureStreamingPort(config, this);
 
 	this->logPeriod = config->getInt("Period", this->logPeriod);
+	this->separator = config->getString("Separator", this->separator);
+
+	std::string formatStr = config->getString("Format", "CSV");
+	if (formatStr != "CSV")
+		throw Poco::DataException(std::string(this->getID()) + ": Other formats than CSV are currently not supported");
 
 	std::string outFileStr = config->getString("OutputFile", "");
 	if (outFileStr != "") {
