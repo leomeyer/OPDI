@@ -32,14 +32,16 @@
 
 #include "OPDI.h"
 
-const char *opdi_encoding = new char[MAX_ENCODINGNAMELENGTH];
+char m_encoding[MAX_ENCODINGNAMELENGTH];
+const char *opdi_encoding = (const char *)&m_encoding;
 uint16_t opdi_device_flags = 0;
 const char *opdi_supported_protocols =
 #ifdef OPDI_EXTENDED_PROTOCOL
 		"EP,"
 #endif
 "BP";
-const char *opdi_config_name = new char[MAX_SLAVENAMELENGTH];
+char m_config_name[MAX_SLAVENAMELENGTH];
+const char *opdi_config_name = (const char *)&m_config_name;
 char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
 
 // digital port functions
@@ -216,6 +218,11 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int64_t position) {
 // general functions
 
 uint8_t opdi_choose_language(const char *languages) {
+	// supports German?
+	if (strcmp("de_DE", languages) == 0) {
+		// TODO
+	}
+
 	return OPDI_STATUS_OK;
 }
 
@@ -331,12 +338,13 @@ OPDI_DialPort::~OPDI_DialPort() {}
 // Main class for OPDI functionality
 //////////////////////////////////////////////////////////////////////////////////////////
 
-uint8_t OPDI::setup(const char *slaveName) {
+uint8_t OPDI::setup(const char *slaveName, int16_t deviceFlags) {
 	// initialize linked list of ports
 	this->first_port = NULL;
 	this->last_port = NULL;
 
 	this->workFunction = NULL;
+	opdi_device_flags = deviceFlags;
 
 	// copy slave name to internal buffer
 	strncpy((char*)opdi_config_name, slaveName, MAX_SLAVENAMELENGTH - 1);

@@ -80,8 +80,8 @@ uint8_t opdi_debug_msg(const char *message, uint8_t direction) {
 // Device specific OPDI implementation
 //////////////////////////////////////////////////////////////////////////////////////////
 
-uint8_t ArduinOPDI::setup(const char *slaveName, uint32_t idleTimeout) {
-	uint8_t result = OPDI::setup(slaveName);
+uint8_t ArduinOPDI::setup(const char *slaveName, uint32_t idleTimeout, int16_t deviceFlags) {
+	uint8_t result = OPDI::setup(slaveName, deviceFlags);
 	if (result != OPDI_STATUS_OK)
 		return result;
 

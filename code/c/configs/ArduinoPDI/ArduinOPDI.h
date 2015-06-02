@@ -7,7 +7,7 @@
 class ArduinOPDI : public OPDI {
 
 public:
-	virtual uint8_t setup(const char *slaveName, uint32_t idleTimeout);
+	virtual uint8_t setup(const char *slaveName, uint32_t idleTimeout, int16_t deviceFlags);
 
 	virtual ~ArduinOPDI();
 

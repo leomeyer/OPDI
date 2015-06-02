@@ -204,7 +204,7 @@ public:
 	/** Prepares the OPDI class for use.
 	 *
 	 */
-	uint8_t setup(const char *slave_name);
+	uint8_t setup(const char *slave_name, int16_t deviceFlags);
 
 	/** Sets the idle timeout. If the master sends no meaningful messages during this time
 	 * the slave sends a disconnect message. If the value is 0 (default), the setting has no effect.
