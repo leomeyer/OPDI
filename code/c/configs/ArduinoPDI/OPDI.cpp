@@ -216,11 +216,6 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int64_t position) {
 // general functions
 
 uint8_t opdi_choose_language(const char *languages) {
-	// supports German?
-	if (strcmp("de_DE", languages) == 0) {
-		// TODO
-	}
-
 	return OPDI_STATUS_OK;
 }
 
