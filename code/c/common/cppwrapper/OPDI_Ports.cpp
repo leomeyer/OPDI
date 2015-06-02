@@ -594,7 +594,13 @@ void OPDI_AnalogPort::getState(uint8_t *mode, uint8_t *resolution, uint8_t *refe
 double OPDI_AnalogPort::getRelativeValue(void) {
 	if (this->resolution == 0)
 		return 0;
-	return this->value * 1.0 / ((1 << this->resolution) - 1);
+	// query current value
+	uint8_t mode;
+	uint8_t resolution;
+	uint8_t reference;
+	int32_t value;
+	this->getState(&mode, &resolution, &reference, &value);
+	return value * 1.0 / ((1 << resolution) - 1);
 }
 
 void OPDI_AnalogPort::setRelativeValue(double value) {
