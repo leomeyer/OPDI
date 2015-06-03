@@ -646,16 +646,16 @@ void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *p
 void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DialPort *port) {
 	this->configurePort(portConfig, port, 0);
 
-	int min = portConfig->getInt("Min", 0);
+	int64_t min = portConfig->getInt64("Min", 0);
 	if (!portConfig->hasProperty("Max"))
 		throw Poco::DataException("Missing dial port setting: Max");
-	int max = portConfig->getInt("Max", 0);
+	int64_t max = portConfig->getInt64("Max", 0);
 	if (min >= max)
 		throw Poco::DataException("Wrong dial port setting: Max must be greater than Min");
-	int step = portConfig->getInt("Step", 1);
+	int64_t step = portConfig->getInt64("Step", 1);
 	if (step > (max - min))
 		throw Poco::DataException("Wrong dial port setting: Step is too large: " + to_string(step));
-	int position = portConfig->getInt("Position", min);
+	int64_t position = portConfig->getInt64("Position", min);
 	if ((position < min) || (position > max))
 		throw Poco::DataException("Wrong dial port setting: Position is out of range: " + to_string(position));
 

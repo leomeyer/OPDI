@@ -471,7 +471,7 @@ protected:
 		CSV
 	};
 
-	uint64_t logPeriod;
+	uint32_t logPeriod;
 	Format format;
 	std::string separator;
 	std::string portsToLogStr;

@@ -25,12 +25,12 @@
 
 #define uint8_t		unsigned char
 #define int8_t		signed char
-#define uint16_t	unsigned short
-#define int16_t		signed short
-#define uint32_t	unsigned int
-#define int32_t		signed int
-#define uint64_t	unsigned long
-#define int64_t		signed long
+#define uint16_t	unsigned __int16
+#define int16_t		signed __int16
+#define uint32_t	unsigned __int32
+#define int32_t		signed __int32
+#define uint64_t	unsigned __int64
+#define int64_t		__int64
 
 // channel number data type bit length
 // It's important to define it this way because the C preprocessor can't compare strings.
