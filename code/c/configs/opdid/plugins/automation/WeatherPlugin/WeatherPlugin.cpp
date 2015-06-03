@@ -195,7 +195,7 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	}
 
 	// scale the result
-	int newPos = (int)(result * this->numerator / this->denominator * 1.0);
+	int64_t newPos = (int64_t)(result * this->numerator / this->denominator * 1.0);
 	if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		this->opdid->log(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Extracted value is: " + to_string(newPos));
 
@@ -311,7 +311,7 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, 
 	if (this->refreshTimeMs <= 0)
 		throw Poco::DataException(node + "Please specify a non-negative meaningful RefreshTime in milliseconds");
 
-	this->dataValiditySeconds = nodeConfig->getInt("DataValidity", this->dataValiditySeconds);
+	this->dataValiditySeconds = nodeConfig->getInt64("DataValidity", this->dataValiditySeconds);
 	if (this->dataValiditySeconds <= 0)
 		throw Poco::DataException(node + "Please specify a non-negative meaningful DataValidity in seconds");
 

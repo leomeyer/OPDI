@@ -661,7 +661,7 @@ bool OPDID_ExpressionPort::prepareVariables(void) {
 				// dial port: absolute value
 				int64_t position;
 				((OPDI_DialPort *)port)->getState(&position);
-				value = position;
+				value = (double)position;
 			} else 
 			if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
 				// select port: current position number
