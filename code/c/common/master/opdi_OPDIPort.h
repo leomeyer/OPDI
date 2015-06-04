@@ -56,7 +56,11 @@ protected:
 	 */
 	OPDIPort(IBasicProtocol& protocol, std::string id, std::string name, PortType type, PortDirCaps dirCaps);
 
-	template <class T> inline std::string to_string(const T& t);
+	template <class T> inline std::string to_string(const T& t) {
+		std::stringstream ss;
+		ss << t;
+		return ss.str();
+	}
 
 public:
 	/** Returns the protocol.
@@ -141,11 +145,5 @@ public:
 	virtual void getPortState() = 0;
 };
 
-
-template <class T> inline std::string OPDIPort::to_string(const T& t) {
-	std::stringstream ss;
-	ss << t;
-	return ss.str();
-}
 
 #endif

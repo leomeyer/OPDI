@@ -66,7 +66,7 @@ protected:
 	};
 
 	// time in ms of the last message send as measured by System.currentTimeMillis()
-	volatile long lastSendTimeMS;
+	volatile uint64_t lastSendTimeMS;
 
 	DeviceStatus status; // = DeviceStatus.DISCONNECTED;
 	std::string statusInfo;
@@ -101,7 +101,7 @@ void sendMessage(OPDIMessage* message) override;
 
 void clearQueues();
 	
-long getLastSendTimeMS() override;
+uint64_t getLastSendTimeMS() override;
 
 DeviceStatus getStatus() override;
 	
