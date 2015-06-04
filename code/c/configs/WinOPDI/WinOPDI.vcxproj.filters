@@ -132,9 +132,6 @@
     <ClInclude Include="..\..\common\opdi_port.h">
       <Filter>Headerdateien\common</Filter>
     </ClInclude>
-    <ClInclude Include="opdi_SelectPort.h">
-      <Filter>Headerdateien\common\master</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WinOPDI.cpp">
@@ -207,9 +204,6 @@
       <Filter>Quelldateien\common\master</Filter>
     </ClCompile>
     <ClCompile Include="..\..\common\master\opdi_OPDIMessage.cpp">
-      <Filter>Quelldateien\common\master</Filter>
-    </ClCompile>
-    <ClCompile Include="opdi_SelectPort.cpp">
       <Filter>Quelldateien\common\master</Filter>
     </ClCompile>
   </ItemGroup>

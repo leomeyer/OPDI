@@ -118,7 +118,6 @@
     <ClInclude Include="..\test\slave.h" />
     <ClInclude Include="..\test\test.h" />
     <ClInclude Include="opdi_configspecs.h" />
-    <ClInclude Include="opdi_SelectPort.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -148,7 +147,6 @@
     <ClCompile Include="..\..\platforms\win32\opdi_platformfuncs.c" />
     <ClCompile Include="..\test\master.cpp" />
     <ClCompile Include="..\test\test.c" />
-    <ClCompile Include="opdi_SelectPort.cpp" />
     <ClCompile Include="WinOPDI.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
