@@ -270,7 +270,7 @@ public:
 	 * 
 	 * @return
 	 */
-	virtual long getLastSendTimeMS() = 0;
+	virtual uint64_t getLastSendTimeMS() = 0;
 
 	/** Returns the device capabilities. */
 	virtual BasicDeviceCapabilities* getCapabilities() = 0;

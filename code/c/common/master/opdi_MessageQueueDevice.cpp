@@ -256,7 +256,7 @@ void MessageQueueDevice::clearQueues() {
 	outQueue.clear();
 }
 	
-long MessageQueueDevice::getLastSendTimeMS()
+uint64_t MessageQueueDevice::getLastSendTimeMS()
 {
 	return lastSendTimeMS;
 }

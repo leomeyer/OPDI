@@ -90,7 +90,7 @@ OPDIMessage* AbstractProtocol::expect(long channel, unsigned int timeout /*, IAb
 
 	Poco::NotificationQueue* queue = device->getInputMessages();
 
-	long startTime = opdi_get_time_ms();
+	uint64_t startTime = opdi_get_time_ms();
 	while (opdi_get_time_ms() - startTime < timeout && 
 			//(abortable == null || !abortable.isAborted()) &&
 			device->isConnected()) {
