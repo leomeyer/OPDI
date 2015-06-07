@@ -191,7 +191,7 @@ virtual uint8_t getState(int64_t *position) {
 class OPDI_DS1307DialPort : public OPDI_DialPort {
 public:
 OPDI_DS1307DialPort(const char *id, const char *label, char *extendedInfo) : 
-    OPDI_DialPort(id, label, 0, 0x7FFFFFFFFFFFFFFF, 1, 0) {
+    OPDI_DialPort(id, label, 0, 999999999999, 1, 0) {
    this->port.extendedInfo = extendedInfo;     
 }
 
