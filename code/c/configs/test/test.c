@@ -95,7 +95,7 @@ static uint16_t selectPos = 0;
 static const char *testLabels[] = {"Normal", "Disconnect", "Crash", "Debug", "Error", NULL};
 static uint16_t testPos = 0;
 
-static int dialvalue = 0;
+static int64_t dialvalue = 0;
 
 static double temperature = 20.0;
 static double pressure = 1000.0;

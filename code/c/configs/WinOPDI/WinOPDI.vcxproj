@@ -101,6 +101,7 @@
     <ClInclude Include="..\..\common\master\opdi_OPDIPort.h" />
     <ClInclude Include="..\..\common\master\opdi_PortFactory.h" />
     <ClInclude Include="..\..\common\master\opdi_ProtocolFactory.h" />
+    <ClInclude Include="..\..\common\master\opdi_SelectPort.h" />
     <ClInclude Include="..\..\common\master\opdi_StringTools.h" />
     <ClInclude Include="..\..\common\master\opdi_TCPIPDevice.h" />
     <ClInclude Include="..\..\common\opdi_constants.h" />
@@ -118,7 +119,6 @@
     <ClInclude Include="..\test\slave.h" />
     <ClInclude Include="..\test\test.h" />
     <ClInclude Include="opdi_configspecs.h" />
-    <ClInclude Include="opdi_SelectPort.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -136,6 +136,7 @@
     </ClCompile>
     <ClCompile Include="..\..\common\master\opdi_PortFactory.cpp" />
     <ClCompile Include="..\..\common\master\opdi_ProtocolFactory.cpp" />
+    <ClCompile Include="..\..\common\master\opdi_SelectPort.cpp" />
     <ClCompile Include="..\..\common\master\opdi_StringTools.cpp" />
     <ClCompile Include="..\..\common\master\opdi_TCPIPDevice.cpp" />
     <ClCompile Include="..\..\common\opdi_aes.cpp" />
@@ -148,7 +149,6 @@
     <ClCompile Include="..\..\platforms\win32\opdi_platformfuncs.c" />
     <ClCompile Include="..\test\master.cpp" />
     <ClCompile Include="..\test\test.c" />
-    <ClCompile Include="opdi_SelectPort.cpp" />
     <ClCompile Include="WinOPDI.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
