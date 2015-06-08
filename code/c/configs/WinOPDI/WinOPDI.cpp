@@ -353,7 +353,7 @@ int listen_tcp(int host_port) {
     int addr_size = sizeof(SOCKADDR);
     
     while (true) {
-        printf("Listening for a connection on port %d\n", host_port);
+        printf("Listening for a TCP connection on port %d\n", host_port);
         csock = (int *)malloc(sizeof(int));
         
         if ((*csock = accept(hsock, (SOCKADDR *)&sadr, &addr_size)) != INVALID_SOCKET) {
@@ -441,8 +441,8 @@ int listen_com(LPCTSTR lpPortName, DWORD dwBaudRate, BYTE bStopBits, BYTE bParit
 	DWORD bytesRead;
 
     while (true) {
-        printf("Listening for a connection on COM port %s\n", lpPortName);
-        
+		printf("Listening for a serial connection on COM port %s\n", lpPortName);
+
 		while (true) {
 			// try to read a byte
 			if (ReadFile(hndPort, &inputData, 1, &bytesRead, NULL) != 0) {
@@ -452,13 +452,15 @@ int listen_com(LPCTSTR lpPortName, DWORD dwBaudRate, BYTE bStopBits, BYTE bParit
 					err = HandleCOMConnection(inputData, hndPort);
 			
 					fprintf(stderr, "Result: %d\n", err);
+
+					break;
 				}
 			}
 			else {
 				err = GetLastError();
 				// timeouts are expected here
 				if (err != ERROR_TIMEOUT) {
-					fprintf(stderr, "Error accepting data on COM port: %d\n", err);
+					fprintf(stderr, "Error receiving data on COM port: %d\n", err);
 					err = OPDI_DEVICE_ERROR;
 					goto FINISH;
 				}
@@ -525,6 +527,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	if (interactive) {
 		code = start_master();
 	} else {
+		opdi_set_timeout(65535);
+
 		// slave
 		if (com_port > 0) {
 			LPCTSTR comPort = (LPCTSTR)malloc(6);

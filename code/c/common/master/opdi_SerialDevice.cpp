@@ -124,6 +124,8 @@ void SerialDevice::tryConnect()
 
 void SerialDevice::close()
 {
+	IODevice::close();
+
 	this->serialPort->Close();
 }
 
