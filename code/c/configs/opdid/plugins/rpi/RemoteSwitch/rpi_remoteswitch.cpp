@@ -6,7 +6,7 @@
 #include "opdi_constants.h"
 #include "opdi_platformfuncs.h"
 
-#include "WiringPi.h"
+#include "wiringPi.h"
 #include "RCSwitch.h"
 
 #include "LinuxOPDID.h"
@@ -22,6 +22,8 @@ protected:
 	std::string nodeID;
 
 	int gpioPin;
+
+	RCSwitch rcSwitch;
 
 public:
 	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig);
@@ -40,19 +42,25 @@ public:
 class RemoteSwitchPort : public OPDI_SelectPort {
 protected:
 	AbstractOPDID *opdid;
-	int code;
+	RCSwitch* rcSwitch;
+
+	std::string systemCode;
+	int unitCode;
+
 public:
-	RemoteSwitchPort(AbstractOPDID *opdid, const char *ID, int code);
+	RemoteSwitchPort(AbstractOPDID *opdid, const char *ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode);
 	virtual ~RemoteSwitchPort(void);
 	virtual void setPosition(uint16_t position) override;
 	virtual void getState(uint16_t *position) override;
 };
 
-RemoteSwitchPort::RemoteSwitchPort(AbstractOPDID *opdid, const char *ID, int code) : OPDI_SelectPort(ID, 
-	(std::string("RemoteSwitchPort@") + to_string(pin)).c_str(), // default label - can be changed by configuration
+RemoteSwitchPort::RemoteSwitchPort(AbstractOPDID *opdid, const char *ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode) : OPDI_SelectPort(ID, 
+	(std::string("RemoteSwitchPort@") + systemCode + "/" + to_string(unitCode)).c_str(), // default label - can be changed by configuration
 	0) {
 	this->opdid = opdid;
-	this->code = code;
+	this->rcSwitch = rcSwitch;
+	this->systemCode = systemCode;
+	this->unitCode = unitCode;
 }
 
 RemoteSwitchPort::~RemoteSwitchPort(void) {
@@ -63,13 +71,13 @@ void RemoteSwitchPort::setPosition(uint16_t position)  {
 	OPDI_SelectPort::setPosition(position);
 
 	if (position == 0) {
-		
+		this->rcSwitch->switchOff((char*)this->systemCode.c_str(), this->unitCode);
 	} else {
-		
+		this->rcSwitch->switchOn((char*)this->systemCode.c_str(), this->unitCode);
 	}
 }
 
-void RemoteSwitchPort::getPosition(uint16_t *position) {
+void RemoteSwitchPort::getState(uint16_t *position) {
 	// the position is always unknown
 	*position = -1;
 }
@@ -90,8 +98,15 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 		throw Poco::DataException("You have to specify a pin for the 433 MHz remote control module data line");
 	// TODO validate pin
 	this->gpioPin = pin;
-	
-	this->opdid->lockResource(std::string("RemoteSwitchPlugin@") + to_string(this-gpioPin), node);
+
+	this->opdid->lockResource(std::string("GPIO@") + this->opdid->to_string(this->gpioPin), node);
+
+	// setup wiringPi
+	if (wiringPiSetup() == -1)
+		throw Poco::ApplicationException("Unable to initialize wiringPi");
+
+	this->rcSwitch.setPulseLength(300);
+	this->rcSwitch.enableTransmit(this->gpioPin);
 
 	// the remote switch plugin node expects a list of node names that determine the ports that this plugin provides
 
@@ -133,41 +148,44 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 	if (orderedItems.size() == 0) {
 		this->opdid->log("Warning: No ports configured in node " + node + ".Nodes; is this intended?");
 	}
-	
+
 	// go through items, create ports in specified order
 	ItemList::const_iterator nli = orderedItems.begin();
 	while (nli != orderedItems.end()) {
-	
+
 		std::string nodeName = nli->get<1>();
-	
+
 		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-			this->opdid->log("Setting up RemoteSwitch port) for node: " + nodeName);
-			
+			this->opdid->log("Setting up RemoteSwitchPlugin port for node: " + nodeName);
+
 		// get port section from the configuration
 		Poco::Util::AbstractConfiguration *portConfig = config->createView(nodeName);
-	
+
 		// get port type (required)
 		std::string portType = abstractOPDID->getConfigString(portConfig, "Type", "", true);
 
 		if (portType == "RemoteSwitch") {
-			// read code
-			int code = portConfig->getInt("Code", -1);
+			// read system code (DIP switch)
+			std::string systemCode = abstractOPDID->getConfigString(portConfig, "SystemCode", "", true);
+			// TODO validate; must be a string of type xxxxx with x = [1, 0]
+			// read unit code
+			int unitCode = portConfig->getInt("UnitCode", -1);
 			// check whether the code is valid
-			if (code < 0)
-				throw Poco::DataException("A 'Code' greater or equal than 0 must be specified for a RemoteSwitch port");
+			if ((unitCode < 1) || (unitCode > 4))
+				throw Poco::DataException("A 'UnitCode' between 1 and 4 must be specified for a RemoteSwitch port");
 
 			// setup the port instance and add it; use internal pin number
-			RemoteSwitchPort *port = new RemoteSwitchPort(abstractOPDID, nodeName.c_str(), code);
+			RemoteSwitchPort *port = new RemoteSwitchPort(abstractOPDID, nodeName.c_str(), &this->rcSwitch, systemCode, unitCode);
 			// set default group: RemoteSwitchPlugin node's group
 			port->setGroup(group);
-			abstractOPDID->configureSelectPort(portConfig, port);
+			abstractOPDID->configureSelectPort(portConfig, config, port);
 			abstractOPDID->addPort(port);
 		} else
 			throw Poco::DataException("This plugin does not support the port type", portType);
 
 		nli++;
 	}
-	
+
 	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->opdid->log("RemoteSwitchPlugin setup completed successfully as node " + node);
 }
