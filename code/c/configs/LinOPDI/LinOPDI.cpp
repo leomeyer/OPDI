@@ -15,9 +15,9 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 // LinOPDI.cpp : Defines the entry point for the console application
-// 
+//
 
 #include <fcntl.h>
 #include <string.h>
@@ -56,8 +56,8 @@ static unsigned long last_activity = 0;
 
 /** For TCP connections, receives a byte from the socket specified in info and places the result in byte.
 *   For serial connections, reads a byte from the file handle specified in info and places the result in byte.
-*   Blocks until data is available or the timeout expires. 
-*   If an error occurs returns an error code != 0. 
+*   Blocks until data is available or the timeout expires.
+*   If an error occurs returns an error code != 0.
 *   If the connection has been gracefully closed, returns STATUS_DISCONNECTED.
 */
 static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t canSend) {
@@ -112,7 +112,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 			int fd = (long)info;
 			char inputData;
 			int bytesRead;
-			
+
 			// first byte of connection remembered?
 			if (first_com_byte != 0) {
 				c = first_com_byte;
@@ -250,11 +250,11 @@ int HandleSerialConnection(char firstByte, int fd) {
 
 	// info value is the serial port handle
 	result = opdi_message_setup(&io_receive, &io_send, (void *)(long)fd);
-	if (result != 0) 
+	if (result != 0)
 		return result;
 
 	result = opdi_get_message(&message, OPDI_CANNOT_SEND);
-	if (result != 0) 
+	if (result != 0)
 		return result;
 
 	last_activity = opdi_get_time_ms();
@@ -363,7 +363,7 @@ int listen_com(char* portName, int baudRate, int stopBits, int parity, int byteS
 	int fd = open(portName, O_RDWR | O_NOCTTY | O_SYNC);
 	if (fd < 0)
 	{
-		printf("error %d opening %s: %s", errno, portName, strerror (errno));
+		printf("error %d opening %s: %s\n", errno, portName, strerror (errno));
 		err = OPDI_DEVICE_ERROR;
 		goto FINISH;
 	}
@@ -371,7 +371,7 @@ int listen_com(char* portName, int baudRate, int stopBits, int parity, int byteS
         memset (&tty, 0, sizeof tty);
         if (tcgetattr(fd, &tty) != 0)
         {
-                printf("error %d from tcgetattr", errno);
+                printf("error %d from tcgetattr\n", errno);
 		err = OPDI_DEVICE_ERROR;
 		goto FINISH;
         }
@@ -410,11 +410,11 @@ int listen_com(char* portName, int baudRate, int stopBits, int parity, int byteS
 
 	if (stopBits == 2) {
         	tty.c_cflag |= CSTOPB;
-	} else 
+	} else
 	if (stopBits == 1) {
         	tty.c_cflag &= ~CSTOPB;
 	}
-	
+
 	if (byteSize == 5) {
 		tty.c_cflag &= ~CSIZE;
 		tty.c_cflag |= CS5;
@@ -436,7 +436,7 @@ int listen_com(char* portName, int baudRate, int stopBits, int parity, int byteS
 
         if (tcsetattr (fd, TCSANOW, &tty) != 0)
         {
-                printf("error %d from tcsetattr", errno);
+                printf("error %d from tcsetattr\n", errno);
 		err = OPDI_DEVICE_ERROR;
 		goto FINISH;
         }
@@ -448,7 +448,7 @@ int listen_com(char* portName, int baudRate, int stopBits, int parity, int byteS
 
 	while (true) {
 		printf("listening for a connection on serial port %s\n", portName);
-        
+
 		while (true) {
 			// try to read a byte
 			if ((bytesRead = read(fd, &inputData, 1)) >= 0) {
@@ -456,8 +456,9 @@ int listen_com(char* portName, int baudRate, int stopBits, int parity, int byteS
 					printf("Connection attempt on serial port\n");
 
 					err = HandleSerialConnection(inputData, fd);
-			
+
 					fprintf(stderr, "Result: %d\n", err);
+					break;
 				}
 			}
 			else {
@@ -488,28 +489,28 @@ int main(int argc, char* argv[])
 	printf("-i starts the interactive master.\n");
 
 	for (int i = 1; i < argc; i++) {
-	if (strcmp(argv[i], "-i") == 0) {
-		interactive = 1;
-	} else
-        if (i < argc - 1) {
-                if (strcmp(argv[i], "-tcp") == 0) {
-					// parse tcp port number
-					tcp_port = atoi(argv[++i]);
-					if ((tcp_port < 1) || (tcp_port > 65535)) {
-						printf("Invalid TCP port number: %d\n", tcp_port);
-						exit(1);
-					}
-                } else if (strcmp(argv[i], "-serial") == 0) {
-			comPort = argv[++i];
-                } else {
-					printf("Unrecognized argument: %s\n", argv[i]);
+		if (strcmp(argv[i], "-i") == 0) {
+			interactive = 1;
+		} else
+        	if (i < argc - 1) {
+	                if (strcmp(argv[i], "-tcp") == 0) {
+				// parse tcp port number
+				tcp_port = atoi(argv[++i]);
+				if ((tcp_port < 1) || (tcp_port > 65535)) {
+					printf("Invalid TCP port number: %d\n", tcp_port);
 					exit(1);
 				}
-            }
-			else {
-				printf("Invalid syntax: missing argument\n");
+        	        } else if (strcmp(argv[i], "-com") == 0) {
+				comPort = argv[++i];
+	                } else {
+				printf("Unrecognized argument: %s\n", argv[i]);
 				exit(1);
 			}
+        	}
+		else {
+			printf("Invalid syntax: missing argument\n");
+			exit(1);
+		}
         }
 
 	// master?
@@ -528,5 +529,3 @@ int main(int argc, char* argv[])
 	printf("Exit code: %d\n", code);
 	exit(code);
 }
-
-

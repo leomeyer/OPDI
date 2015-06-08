@@ -28,7 +28,7 @@ MPATH = $(CPATH)/master
 SRC += $(MPATH)/opdi_AbstractProtocol.cpp $(MPATH)/opdi_BasicDeviceCapabilities.cpp $(MPATH)/opdi_BasicProtocol.cpp
 SRC += $(MPATH)/opdi_DigitalPort.cpp $(MPATH)/opdi_IODevice.cpp $(MPATH)/opdi_main_io.cpp $(MPATH)/opdi_OPDIMessage.cpp
 SRC += $(MPATH)/opdi_MessageQueueDevice.cpp $(MPATH)/opdi_OPDIPort.cpp $(MPATH)/opdi_PortFactory.cpp $(MPATH)/opdi_ProtocolFactory.cpp
-SRC += $(MPATH)/opdi_StringTools.cpp $(MPATH)/opdi_TCPIPDevice.cpp $(MPATH)/opdi_SelectPort.cpp
+SRC += $(MPATH)/opdi_StringTools.cpp $(MPATH)/opdi_TCPIPDevice.cpp $(MPATH)/opdi_SelectPort.cpp $(MPATH)/opdi_SerialDevice.cpp
 
 # conio include path
 CONIOINCPATH = ../../libraries/conio
@@ -37,10 +37,19 @@ CONIOINCPATH = ../../libraries/conio
 POCOINCPATH = ../../libraries/POCO/Util/include ../../libraries/POCO/Foundation/include ../../libraries/POCO/Net/include
 
 # POCO library path
-POCOLIBPATH = ../../libraries/POCO/lib/Linux/x86_64
+# for 32 bit systems
+# POCOLIBPATH = ../../libraries/POCO/lib/Linux/x86_64
+# for 64 bit systems
+POCOLIBPATH = ../../libraries/POCO/lib/Linux/i686
 
 # POCO libraries
 POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
+
+# libctb serial communication library
+LIBCTB = ../../libraries/libctb
+LIBCTBINC = $(LIBCTB)/include
+SRC += $(LIBCTB)/src/fifo.cpp $(LIBCTB)/src/getopt.cpp $(LIBCTB)/src/iobase.cpp $(LIBCTB)/src/kbhit.cpp $(LIBCTB)/src/linux/serport.cpp
+SRC += $(LIBCTB)/src/linux/timer.cpp $(LIBCTB)/src/portscan.cpp $(LIBCTB)/src/serportx.cpp
 
 # Additional libraries
 LIBS = -lpthread
@@ -50,7 +59,7 @@ CC = g++
 
 # List any extra directories to look for include files here.
 # Each directory must be seperated by a space.
-EXTRAINCDIRS = $(CPATH) $(MPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) .
+EXTRAINCDIRS = $(CPATH) $(MPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(LIBCTBINC) .
 
 # Place -I options here
 CINCS =

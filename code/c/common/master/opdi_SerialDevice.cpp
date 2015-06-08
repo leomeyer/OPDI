@@ -6,7 +6,7 @@
 #include "opdi_main_io.h"
 
 /** Implements IDevice for a TCP/IP device.
- * 
+ *
  * @author Leo
  *
  */
@@ -25,7 +25,7 @@ SerialDevice::SerialDevice(std::string id, Poco::URI uri, bool *debug) : IODevic
 	// deserialize information
 	if (uri.getScheme() != "opdi_com")
 		throw Poco::InvalidArgumentException("Can't deserialize; schema is incorrect, expected 'opdi_com'");
-		
+
 	// split user information into name:password
 	// assumption: ':' character does not appear in either part
 	std::vector<std::string> parts;
@@ -35,17 +35,17 @@ SerialDevice::SerialDevice(std::string id, Poco::URI uri, bool *debug) : IODevic
 		setUser(parts[1]);
 	if ((parts.size() > 2) && (parts[2] != ""))
 		setPassword(parts[2]);
-		
+
 	comport = uri.getHost() + (uri.getPath() != "" ? "/" + uri.getPath() : "");
-	
+
 	if (comport == "")
 		throw Poco::InvalidArgumentException("Serial port must be specified");
 
 	// TODO parse parameters, especially for name and PSK
 	// name = uri.getHost();
 }
-	
-bool SerialDevice::prepare() 
+
+bool SerialDevice::prepare()
 {
 	return true;
 }
@@ -91,7 +91,7 @@ void SerialDevice::logDebug(std::string message)
 		output << message << std::endl;
 }
 
-std::string SerialDevice::getSerialAddress() 
+std::string SerialDevice::getSerialAddress()
 {
 	return this->comport;
 }
@@ -101,7 +101,7 @@ std::string SerialDevice::getEncryptionKey()
 	return this->psk;
 }
 
-std::string SerialDevice::getDisplayAddress() 
+std::string SerialDevice::getDisplayAddress()
 {
 	// TCP/IP devices may have only an address, but also a name which is different from the device name
 //	return getAddress() + (name != null && !name.isEmpty() && !name.equals(getDeviceName()) ? " (" + name + ")" : "");
@@ -113,8 +113,8 @@ void SerialDevice::tryConnect()
 	if (*debug)
 		output << "Opening serial port: " << comport << std::endl;
 
-	if (this->serialPort->Open(this->comport.c_str(), baudRate, 
-							protocol.c_str(), 
+	if (this->serialPort->Open(this->comport.c_str(), baudRate,
+							protocol.c_str(),
 							ctb::SerialPort::NoFlowControl) >= 0) {
 		this->device = this->serialPort;
 	} else {
@@ -166,6 +166,8 @@ char SerialDevice::read()
 
 void SerialDevice::write(char buffer[], int length)
 {
+	if (!this->device->IsOpen())
+		throw Poco::ApplicationException("serial device not open, cannot write");
 	this->device->Write(buffer, length);
 }
 

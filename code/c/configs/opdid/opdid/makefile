@@ -53,7 +53,7 @@ POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation -lPocoXML -lPocoJSON
 # ExprTk expression library path
 EXPRTK = ../../../libraries/ExprTk
 
-# libctb expression library
+# libctb serial communication library
 LIBCTB = ../../../libraries/libctb
 LIBCTBINC = $(LIBCTB)/include
 SRC += $(LIBCTB)/src/fifo.cpp $(LIBCTB)/src/getopt.cpp $(LIBCTB)/src/iobase.cpp $(LIBCTB)/src/kbhit.cpp $(LIBCTB)/src/linux/serport.cpp
