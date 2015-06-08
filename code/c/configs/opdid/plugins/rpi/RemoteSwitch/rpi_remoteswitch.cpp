@@ -9,6 +9,8 @@
 #include "wiringPi.h"
 #include "RCSwitch.h"
 
+#include "../rpi.h"
+
 #include "LinuxOPDID.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -99,7 +101,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 	// TODO validate pin
 	this->gpioPin = pin;
 
-	this->opdid->lockResource(std::string("GPIO@") + this->opdid->to_string(this->gpioPin), node);
+	this->opdid->lockResource(RPI_GPIO_PREFIX + this->opdid->to_string(this->gpioPin), node);
 
 	// setup wiringPi
 	if (wiringPiSetup() == -1)
