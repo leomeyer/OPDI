@@ -530,7 +530,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			LPCTSTR comPort = (LPCTSTR)malloc(6);
 			wsprintf((LPTSTR)comPort, _T("COM%d"), com_port);
 
-			code = listen_com(comPort, -1, -1, -1, -1, 1000);
+			code = listen_com(comPort, 115000, ONESTOPBIT, NOPARITY, 8, 1000);
 		}
 		else {
 			code = listen_tcp(tcp_port);

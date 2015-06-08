@@ -72,7 +72,7 @@ std::string TCPIPDevice::getLabel()
 	result << host << ":" << port;
 
 	if (name != "")
-		result << "&name=" << name;
+		result << "?name=" << name;
 
 	return result.str();
 }

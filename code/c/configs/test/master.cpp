@@ -52,6 +52,7 @@
 #include "opdi_AbstractProtocol.h"
 #include "opdi_IDevice.h"
 #include "opdi_TCPIPDevice.h"
+#include "opdi_SerialDevice.h"
 
 using Poco::Net::SocketReactor;
 using Poco::Net::SocketAcceptor;
@@ -196,6 +197,10 @@ IDevice *create_device(const std::string id, const std::string address)
 	if (strcmp(uri.getScheme().c_str(), "opdi_tcp") == 0) {
 
 		return new TCPIPDevice(id, uri, &var_debug);
+	} else
+	if (strcmp(uri.getScheme().c_str(), "opdi_com") == 0) {
+
+		return new SerialDevice(id, uri, &var_debug);
 	} else {
 		throw Poco::UnknownURISchemeException("Address schema not recognized", uri.getScheme(), 0);
 		return NULL;
