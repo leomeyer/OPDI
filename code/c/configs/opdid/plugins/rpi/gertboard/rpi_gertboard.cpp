@@ -15,6 +15,8 @@
 #include "gb_spi.h"
 #include "gb_pwm.h"
 
+#include "../rpi.h"
+
 #include "LinuxOPDID.h"
 
 // mapping to different revisions of RPi
@@ -698,7 +700,7 @@ int GertboardPlugin::mapAndLockPin(int pinNumber, std::string forNode) {
 		throw Poco::DataException(std::string("The pin is not supported: ") + this->opdid->to_string(pinNumber));
 
 	// try to lock the pin as a resource
-	this->opdid->lockResource(std::string("Gertboard Pin ") + this->opdid->to_string(internalPin), forNode);
+	this->opdid->lockResource(RPI_GPIO_PREFIX + this->opdid->to_string(internalPin), forNode);
 
 	return internalPin;
 }
