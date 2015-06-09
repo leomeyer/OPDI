@@ -38,6 +38,9 @@ dpkg-reconfigure openssh-server
 serial port as this might confuse the port expander. To do this, carefully edit /boot/cmdline.txt and remove all references
 to ttyAMA0, so that the line reads:
 dwc_otg.lpm_enable=0 console=tty1 elevator=deadline root=/dev/mmcblk0p2 rootfstype=ext4 rootwait
+
+- Configure the system to minimize SD card usage. Edit /etc/fstab to create ramdisks (see fstab.example).
+
 - Reboot:
 > shutdown -r now
 
@@ -57,6 +60,8 @@ Install Weewx (weather station software):
 It's ok if Weewx exits if you don't have the weather station connected. After connecting it to USB, start Weewx:
 > service weewx start
 - Configure Weewx (see the instructions in the folder automation/WeatherPlugin/weewx).
+
+For more information refer to: http://lancet.mit.edu/mwall/projects/weather/weewx-plug-howto.html
 
 - Create a user for OPDID: 
 > adduser opdid
