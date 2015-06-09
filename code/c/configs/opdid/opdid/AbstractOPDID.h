@@ -5,6 +5,8 @@
 
 #include "Poco/Mutex.h"
 #include "Poco/Util/AbstractConfiguration.h"
+#include "Poco/Logger.h"
+
 #include "OPDIDConfigurationFile.h"
 
 #include "opdi_configspecs.h"
@@ -52,6 +54,7 @@ protected:
 	std::string masterName;
 
 	Poco::Mutex mutex;
+	Poco::Logger* logger;
 
 	typedef std::list<IOPDIDConnectionListener *> ConnectionListenerList;
 	ConnectionListenerList connectionListeners;

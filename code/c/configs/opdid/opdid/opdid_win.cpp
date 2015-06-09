@@ -75,7 +75,7 @@ int _tmain(int argc, _TCHAR* argv[], _TCHAR* envp[])
 		return Opdi->startup(args, environment);
 	}
 	catch (Poco::Exception& e) {
-		Opdi->log(e.displayText());
+		Opdi->logError(e.displayText());
 	}
 
 	// signal error

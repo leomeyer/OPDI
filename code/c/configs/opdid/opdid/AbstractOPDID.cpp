@@ -11,6 +11,7 @@
 #include "Poco/File.h"
 #include "Poco/Path.h"
 #include "Poco/Mutex.h"
+#include "Poco/SimpleFileChannel.h"
 
 #include "opdi_constants.h"
 
@@ -36,6 +37,8 @@ AbstractOPDID::AbstractOPDID(void) {
 
 	this->logVerbosity = UNKNOWN;
 	this->configuration = NULL;
+
+	this->logger = NULL;
 
 	// map result codes
 	opdiCodeTexts[0] = "STATUS_OK";
@@ -201,7 +204,13 @@ void AbstractOPDID::log(std::string text) {
 	// Try to lock the mutex. If this does not work in time, it will throw
 	// an exception. The calling thread should deal with this exception.
 	Poco::Mutex::ScopedLock(this->mutex);
-	this->println("[" + this->getTimestampStr() + "] " + (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text);
+	std::string msg = "[" + this->getTimestampStr() + "] " + (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text;
+
+	if (this->logger != NULL) {
+		this->logger->information(msg);
+	} else {
+		this->println(msg);
+	}
 }
 
 void AbstractOPDID::logError(std::string text) {
@@ -212,7 +221,10 @@ void AbstractOPDID::logError(std::string text) {
 	// Try to lock the mutex. If this does not work in time, it will throw
 	// an exception. The calling thread should deal with this exception.
 	Poco::Mutex::ScopedLock(this->mutex);
-	this->printlne("[" + this->getTimestampStr() + "] " + text);
+
+	std::string msg = "ERROR: " + text;
+	this->log(msg);
+	this->printlne("[" + this->getTimestampStr() + "] " + msg);
 }
 
 int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
@@ -221,28 +233,28 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 	this->shutdownRequested = false;
 
 	// evaluate arguments
-	for (unsigned int i = 0; i < args.size(); i++) {
+	for (unsigned int i = 1; i < args.size(); i++) {
 		if (args.at(i) == "-h" || args.at(i) == "-?") {
 			this->showHelp();
 			return 0;
-		}
+		} else
 		if (args.at(i) == "--version") {
 			this->logVerbosity = VERBOSE;
 			this->sayHello();
 			return 0;
-		}
+		} else
 		if (args.at(i) == "-d") {
 			this->logVerbosity = DEBUG;
-		}
+		} else
 		if (args.at(i) == "-e") {
 			this->logVerbosity = EXTREME;
-		}
+		} else
 		if (args.at(i) == "-v") {
 			this->logVerbosity = VERBOSE;
-		}
+		} else
 		if (args.at(i) == "-q") {
 			this->logVerbosity = QUIET;
-		}
+		} else
 		if (args.at(i) == "-c") {
 			i++;
 			if (args.size() == i) {
@@ -251,7 +263,22 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 				// load configuration, substituting environment parameters
 				this->configuration = this->readConfiguration(args.at(i), environment);
 			}
-		}
+		} else
+		if (args.at(i) == "-l") {
+			i++;
+			if (args.size() == i) {
+				throw Poco::SyntaxException("Expected log file name after argument -l");
+			} else {
+				// initialize logger and channel
+				Poco::AutoPtr<Poco::SimpleFileChannel> pChannel(new Poco::SimpleFileChannel);
+				pChannel->setProperty("path", args.at(i));
+				pChannel->setProperty("rotation", "1 M");
+				Poco::Logger::root().setChannel(pChannel);
+				this->logger = Poco::Logger::has("");
+			}
+		} else {
+			throw Poco::SyntaxException("Invalid argument", args.at(i));
+		} 
 	}
 
 	// no configuration?
