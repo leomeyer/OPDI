@@ -4,6 +4,38 @@ Integrating the WeatherPlugin with Weewx
 After installing Weewx you should check that everything works ok with the standard configuration.
 See the Weewx documentation for installation and setup instructions.
 
+Important: On a Raspberry Pi, to minimize SD card wear, put output and log directories on a ramdisk.
+This example assumes that /var/weewx is the target directory.
+
+To mount this directory as a ramdisk, put the following into /etc/fstab:
+weewx /var/weewx tmpfs size=10M,noexec,nosuid,nodev 0 0
+
+Redirect the weewx log messages to a separate file on a ramdisk. Put the following into /etc/rsyslog.d/weewx.conf
+
+if $programname == 'weewx' then /var/weewx/log/weewx.log
+if $programname == 'weewx' then ~
+
+Restart syslog so that it picks up the changes:
+
+sudo /etc/init.d/rsyslog stop
+sudo /etc/init.d/rsyslog start
+
+Use logrotate to prevent the logfiles from getting too big. Put the following into /etc/logrotate.d/weewx:
+
+/var/weewx/log/weewx.log {
+  weekly
+  missingok
+  rotate 12
+  compress
+  delaycompress
+  notifempty
+  create 644 root adm
+  sharedscripts
+  postrotate
+    /etc/init.d/weewx reload > /dev/null
+  endscript
+}
+
 Recommendation for weewx.conf settings
 --------------------------------------
 The standard configuration file is located at /etc/weewx/weewx.conf.
