@@ -25,8 +25,10 @@ import org.ospdi.opdi.protocol.ProtocolException;
 import org.ospdi.opdi.utils.ResourceFactory;
 import org.ospdi.opdi.androPDI.R;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -76,6 +78,17 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 	protected Thread processorThread;
 	
 	protected boolean dispatchBlocked;
+	
+    BroadcastReceiver screenReceiver = new BroadcastReceiver() {
+    	@Override
+    	public void onReceive(Context context, Intent intent) {
+    		// disconnect when the screen is turned off
+    		if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF))
+    			DeviceManager.getInstance().disconnectAllDevices();
+    		// leave the activity
+    		finish();
+    	}
+    };	
 	
 	class PortGroupSelectAdapter extends ArrayAdapter<PortGroup> {
 
@@ -268,6 +281,10 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
         setContentView(R.layout.show_device_ports);
         this.instance = this;
         
+        // detect when the screen is turned off
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+        registerReceiver(screenReceiver, filter);        
+
         // get the selected device
         String devId = getIntent().getStringExtra(AndroPDI.CURRENT_DEVICE_ID);
         device = DeviceManager.getInstance().findDeviceById(devId);
@@ -378,6 +395,8 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
     	}
     	// unregister listener
     	device.removeConnectionListener(this);
+    	// unregister receiver
+    	unregisterReceiver(screenReceiver);
     }
     
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
