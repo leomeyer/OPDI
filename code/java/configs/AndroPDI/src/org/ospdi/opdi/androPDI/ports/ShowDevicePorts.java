@@ -378,19 +378,21 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
     protected void onDestroy() {
     	super.onDestroy();
     	
-    	if (portList != null) {
-	    	// unbind all streaming ports that may have been autobound
-	    	for (Port port: portList) {
-	    		if (port instanceof StreamingPort) {
-	    			addPortAction(new PortAction(port) {
-	    				@Override
-	    				void perform() throws TimeoutException,
-	    						InterruptedException, DisconnectedException,
-	    						DeviceException, ProtocolException, PortAccessDeniedException {
-	    					((StreamingPort)port).unbind();
-	    				}
-	    			});
-	    		}
+    	if (isFinishing()) {
+	    	if (portList != null) {
+		    	// unbind all streaming ports that may have been autobound
+		    	for (Port port: portList) {
+		    		if (port instanceof StreamingPort) {
+		    			addPortAction(new PortAction(port) {
+		    				@Override
+		    				void perform() throws TimeoutException,
+		    						InterruptedException, DisconnectedException,
+		    						DeviceException, ProtocolException, PortAccessDeniedException {
+		    					((StreamingPort)port).unbind();
+		    				}
+		    			});
+		    		}
+		    	}
 	    	}
     	}
     	// unregister listener

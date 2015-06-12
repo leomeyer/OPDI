@@ -244,7 +244,8 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
 	protected void onDestroy() {
 		super.onDestroy();
 		
-		disconnectAllDevices();
+		if (isFinishing())
+			disconnectAllDevices();
 
 		unregisterReceiver(screenReceiver);
 	}
