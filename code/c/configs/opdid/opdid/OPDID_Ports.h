@@ -34,11 +34,11 @@ protected:
 	virtual void findPorts(std::string configPort, std::string setting, std::string portIDs, PortList &portList);
 
 	virtual OPDI_DigitalPort *findDigitalPort(std::string configPort, std::string setting, std::string portID, bool required);
-	
+
 	virtual void findDigitalPorts(std::string configPort, std::string setting, std::string portIDs, DigitalPortList &portList);
 
 	virtual OPDI_AnalogPort *findAnalogPort(std::string configPort, std::string setting, std::string portID, bool required);
-	
+
 	virtual void findAnalogPorts(std::string configPort, std::string setting, std::string portIDs, AnalogPortList &portList);
 
 	virtual OPDI_SelectPort *findSelectPort(std::string configPort, std::string setting, std::string portID, bool required);
@@ -115,7 +115,7 @@ public:
 
 /** A pulse port generates a digital pulse with a defined period (measured
 * in milliseconds) and a duty cycle in percent. The period and duty cycle
-* can optionally be set by analog ports. The period is in this case 
+* can optionally be set by analog ports. The period is in this case
 * calculated as the percentage of Period. The pulse is active if the line
 * of this port is set to High. If enable digital ports are specified the
 * pulse is also being generated if at least one of the enable ports is High.
@@ -199,7 +199,7 @@ public:
 /** An ExpressionPort is a DigitalPort that sets the value of other ports
 *   depending on the result of a calculation expression.
 *   The expression is evaluated in each doWork iteration if the ExpressionPort is enabled,
-*   i. e. its digital state is High (default). 
+*   i. e. its digital state is High (default).
 *   The expression can refer to port IDs (input variables). Although these port IDs are case-
 *   insensitive (a restriction of the underlying library), it is recommended to use the correct case.
 *   The rules for the different port types are:
@@ -262,7 +262,7 @@ public:
 // Timer Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A TimerPort is a DigitalPort that switches other ports according to one or more 
+/** A TimerPort is a DigitalPort that switches other ports according to one or more
 *   timing schedules. A TimerPort is output only.
 *   In its doWork method the TimerPort checks whether a timestamp defined
 *   by a schedule has been reached. If a schedule is due the line
@@ -373,7 +373,7 @@ protected:
 		ScheduleComponent* secondComponent;
 		// parameters for ASTRONOMICAL
 		AstroEvent astroEvent;
-		int astroOffset;
+		int64_t astroOffset;
 		double astroLon;
 		double astroLat;
 
