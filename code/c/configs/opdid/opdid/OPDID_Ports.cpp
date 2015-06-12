@@ -1,7 +1,9 @@
+#include <bitset>
 
 #include "Poco/Tuple.h"
 #include "Poco/Timezone.h"
 #include "Poco/DateTimeFormatter.h"
+#include "Poco/NumberParser.h"
 
 #include "ctb-0.16/ctb.h"
 
@@ -9,6 +11,8 @@
 #include "opdi_platformfuncs.h"
 
 #include "OPDID_Ports.h"
+
+#include "SunRiseSet.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // PortFunctions
@@ -18,7 +22,7 @@ OPDI_Port *OPDID_PortFunctions::findPort(std::string configPort, std::string set
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
-	if (port == NULL) { 
+	if (port == NULL) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
 		return NULL;
@@ -53,7 +57,7 @@ OPDI_DigitalPort *OPDID_PortFunctions::findDigitalPort(std::string configPort, s
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
-	if (port == NULL) { 
+	if (port == NULL) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
 		return NULL;
@@ -84,7 +88,7 @@ OPDI_AnalogPort *OPDID_PortFunctions::findAnalogPort(std::string configPort, std
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
-	if (port == NULL) { 
+	if (port == NULL) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
 		return NULL;
@@ -115,7 +119,7 @@ OPDI_SelectPort *OPDID_PortFunctions::findSelectPort(std::string configPort, std
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
-	if (port == NULL) { 
+	if (port == NULL) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
 		return NULL;
@@ -254,23 +258,23 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 	switch (this->function) {
 	case UNKNOWN:
 		return OPDI_STATUS_OK;
-	case OR: if (highCount > 0) 
+	case OR: if (highCount > 0)
 				 newLine = (this->negate ? 0 : 1);
 		break;
-	case AND: if (highCount == this->inputPorts.size()) 
+	case AND: if (highCount == this->inputPorts.size())
 				  newLine = (this->negate ? 0 : 1);
 		break;
 	// XOR is implemented as modulo; meaning an odd number of inputs must be high
-	case XOR: if (highCount % 2 == 1) 
+	case XOR: if (highCount % 2 == 1)
 				newLine = (this->negate ? 0 : 1);
 		break;
-	case ATLEAST: if (highCount >= this->funcN) 
+	case ATLEAST: if (highCount >= this->funcN)
 					  newLine = (this->negate ? 0 : 1);
 		break;
-	case ATMOST: if (highCount <= this->funcN) 
+	case ATMOST: if (highCount <= this->funcN)
 					 newLine = (this->negate ? 0 : 1);
 		break;
-	case EXACT: if (highCount == this->funcN) 
+	case EXACT: if (highCount == this->funcN)
 					 newLine = (this->negate ? 0 : 1);
 		break;
 	}
@@ -279,7 +283,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 	if (newLine != this->line) {
 		if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 			opdid->log(std::string(this->id) + ": Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High)");
-	
+
 		OPDI_DigitalPort::setLine(newLine);
 
 		// regular output ports
@@ -440,7 +444,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 		this->dutyCycle = this->dutyCyclePort->getRelativeValue();
 	}
 
-	// determine new line level 
+	// determine new line level
 	uint8_t newState = this->pulseState;
 
 	if (enabled) {
@@ -652,17 +656,17 @@ bool OPDID_ExpressionPort::prepareVariables(void) {
 				uint8_t line;
 				((OPDI_DigitalPort *)port)->getState(&mode, &line);
 				value = line;
-			} else 
+			} else
 			if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
 				// analog port: relative value (0..1)
 				value = ((OPDI_AnalogPort *)port)->getRelativeValue();
-			} else 
+			} else
 			if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
 				// dial port: absolute value
 				int64_t position;
 				((OPDI_DialPort *)port)->getState(&position);
 				value = (double)position;
-			} else 
+			} else
 			if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
 				// select port: current position number
 				uint16_t position;
@@ -772,6 +776,102 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 // Timer Port
 ///////////////////////////////////////////////////////////////////////////////
 
+
+OPDID_TimerPort::ScheduleComponent* OPDID_TimerPort::ScheduleComponent::Parse(Type type, std::string def) {
+	ScheduleComponent* result = new ScheduleComponent();
+	result->type = type;
+
+	std::string compName;
+	switch (type) {
+	case MONTH: result->values.resize(13); compName = "Month"; break;
+	case DAY: result->values.resize(32); compName = "Day"; break;
+	case HOUR: result->values.resize(24); compName = "Hour"; break;
+	case MINUTE: result->values.resize(60); compName = "Minute"; break;
+	case SECOND: result->values.resize(60); compName = "Second"; break;
+	case WEEKDAY:
+		throw Poco::ApplicationException("Weekday is currently not supported");
+	}
+
+	// split definition at blanks
+	std::stringstream ss(def);
+	std::string item;
+	while (std::getline(ss, item, ' ')) {
+		bool val = true;
+		// inversion?
+		if (item[0] == '!') {
+			val = false;
+			item = item.substr(1);
+		}
+		if (item == "*") {
+			// set all values
+			for (size_t i = 0; i < result->values.size(); i++)
+				result->values[i] = val;
+		} else {
+			// parse as integer
+			int number = Poco::NumberParser::parse(item);
+			bool valid = true;
+			switch (type) {
+			case MONTH: valid = (number >= 1) && (number <= 12); break;
+			case DAY: valid = (number >= 1) && (number <= 31); break;
+			case HOUR: valid = (number >= 0) && (number <= 23); break;
+			case MINUTE: valid = (number >= 0) && (number <= 59); break;
+			case SECOND: valid = (number >= 0) && (number <= 59); break;
+			case WEEKDAY:
+				throw Poco::ApplicationException("Weekday is currently not supported");
+			}
+			if (!valid)
+				throw Poco::DataException("The specification '" + item + "' is not valid for the date/time component " + compName);
+			result->values[number] = val;
+		}
+	}
+
+	return result;
+}
+
+bool OPDID_TimerPort::ScheduleComponent::getNextPossibleValue(int* currentValue, bool* rollover, bool* changed, int month, int year) {
+	*rollover = false;
+	*changed = false;
+	// find a match
+	int i = *currentValue;
+	for (; i < (int)this->values.size(); i++) {
+		if (this->values[i]) {
+			// for days, make a special check whether the month has as many days
+			if ((this->type != DAY) || (i < Poco::DateTime::daysOfMonth(year, month))) {
+				*changed = *currentValue != i;
+				*currentValue = i;
+				return true;
+			}
+			// day is out of range; need to rollover
+			break;
+		}
+	}
+	// not found? rollover; return first possible value
+	*rollover = true;
+	return this->getFirstPossibleValue(currentValue, month, year);
+}
+
+bool OPDID_TimerPort::ScheduleComponent::getFirstPossibleValue(int* currentValue, int month, int year) {
+	// find a match
+	int i = 0;
+	switch (type) {
+	case MONTH: i = 1; break;
+	case DAY: i = 1; break;
+	case HOUR: break;
+	case MINUTE: break;
+	case SECOND: break;
+	case WEEKDAY:
+		throw Poco::ApplicationException("Weekday is currently not supported");
+	}
+	for (; i < (int)this->values.size(); i++) {
+		if (this->values[i]) {
+			*currentValue = i;
+			return true;
+		}
+	}
+	// nothing found
+	return false;
+}
+
 OPDID_TimerPort::OPDID_TimerPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdid = opdid;
 
@@ -841,16 +941,6 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 
 		Schedule schedule;
 		schedule.nodeName = nodeName;
-		schedule.data.time.year = scheduleConfig->getInt("Year", -1);
-		schedule.data.time.month = scheduleConfig->getInt("Month", -1);
-		schedule.data.time.day = scheduleConfig->getInt("Day", -1);
-		schedule.data.time.weekday = scheduleConfig->getInt("Weekday", -1);
-		schedule.data.time.hour = scheduleConfig->getInt("Hour", -1);
-		schedule.data.time.minute = scheduleConfig->getInt("Minute", -1);
-		schedule.data.time.second = scheduleConfig->getInt("Second", -1);
-
-		if ((schedule.data.time.day > -1) && (schedule.data.time.weekday > -1))
-			throw Poco::DataException(nodeName + ": Please specify either Day or Weekday but not both");
 
 		schedule.maxOccurrences = scheduleConfig->getInt("MaxOccurrences", -1);
 		schedule.delayMs = scheduleConfig->getInt("Delay", 0);		// default: no deactivation
@@ -874,17 +964,34 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 
 		if (scheduleType == "Once") {
 			schedule.type = ONCE;
+			schedule.data.time.year = scheduleConfig->getInt("Year", -1);
+			schedule.data.time.month = scheduleConfig->getInt("Month", -1);
+			schedule.data.time.day = scheduleConfig->getInt("Day", -1);
+			schedule.data.time.weekday = scheduleConfig->getInt("Weekday", -1);
+			schedule.data.time.hour = scheduleConfig->getInt("Hour", -1);
+			schedule.data.time.minute = scheduleConfig->getInt("Minute", -1);
+			schedule.data.time.second = scheduleConfig->getInt("Second", -1);
+
+			if (schedule.data.time.weekday > -1)
+				throw Poco::DataException(nodeName + ": You cannot use the Weekday setting with schedule type Once");
 			if ((schedule.data.time.year < 0) || (schedule.data.time.month < 0)
 				|| (schedule.data.time.day < 0)
 				|| (schedule.data.time.hour < 0) || (schedule.data.time.minute < 0)
 				|| (schedule.data.time.second < 0))
-				throw Poco::DataException(nodeName + ": You have to specify all time components for schedule type Once");
-
-			if (schedule.data.time.weekday > -1)
-				throw Poco::DataException(nodeName + ": You cannot use the Weekday setting with schedule type Once");
+				throw Poco::DataException(nodeName + ": You have to specify all time components (except Weekday) for schedule type Once");
 		} else
 		if (scheduleType == "Interval") {
 			schedule.type = INTERVAL;
+			schedule.data.time.year = scheduleConfig->getInt("Year", -1);
+			schedule.data.time.month = scheduleConfig->getInt("Month", -1);
+			schedule.data.time.day = scheduleConfig->getInt("Day", -1);
+			schedule.data.time.weekday = scheduleConfig->getInt("Weekday", -1);
+			schedule.data.time.hour = scheduleConfig->getInt("Hour", -1);
+			schedule.data.time.minute = scheduleConfig->getInt("Minute", -1);
+			schedule.data.time.second = scheduleConfig->getInt("Second", -1);
+
+			if ((schedule.data.time.day > -1) && (schedule.data.time.weekday > -1))
+				throw Poco::DataException(nodeName + ": Please specify either Day or Weekday but not both");
 			if (schedule.data.time.year > -1)
 				throw Poco::DataException(nodeName + ": You cannot use the Year setting with schedule type Interval");
 			if (schedule.data.time.month > -1)
@@ -897,23 +1004,39 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 				&& (schedule.data.time.second < 0))
 				throw Poco::DataException(nodeName + ": You have to specify at least one of Day, Hour, Minute or Second for schedule type Interval");
 		} else
-/*
-if (scheduleType == "Periodic") {
+		if (scheduleType == "Periodic") {
 			schedule.type = PERIODIC;
-			if (schedule.data.time.year > -1)
+			if (scheduleConfig->getString("Year", "") != "")
 				throw Poco::DataException(nodeName + ": You cannot use the Year setting with schedule type Periodic");
-			if ((schedule.data.time.month < 0)
-				&& (schedule.data.time.day < 0) && (schedule.data.time.weekday < 0)
-				&& (schedule.data.time.hour < 0) && (schedule.data.time.minute < 0)
-				&& (schedule.data.time.second < 0))
-				this->opdid->log(nodeName + ": Warning: No time component specified for schedule type Periodic; this schedule will execute every second");
-
+			schedule.monthComponent = ScheduleComponent::Parse(ScheduleComponent::MONTH, scheduleConfig->getString("Month", "*"));
+			schedule.dayComponent = ScheduleComponent::Parse(ScheduleComponent::DAY, scheduleConfig->getString("Day", "*"));
+			schedule.hourComponent = ScheduleComponent::Parse(ScheduleComponent::HOUR, scheduleConfig->getString("Hour", "*"));
+			schedule.minuteComponent = ScheduleComponent::Parse(ScheduleComponent::MINUTE, scheduleConfig->getString("Minute", "*"));
+			schedule.secondComponent = ScheduleComponent::Parse(ScheduleComponent::SECOND, scheduleConfig->getString("Second", "*"));
+		} else
+		if (scheduleType == "Astronomical") {
+			schedule.type = ASTRONOMICAL;
+			std::string astroEventStr = this->opdid->getConfigString(scheduleConfig, "AstroEvent", "", true);
+			if (astroEventStr == "Sunrise") {
+				schedule.astroEvent = SUNRISE;
+			} else
+			if (astroEventStr == "Sunset") {
+				schedule.astroEvent = SUNSET;
+			} else
+				throw Poco::DataException(nodeName + ": Parameter AstroEvent must be specified; use either 'Sunrise' or 'Sunset'");
+			schedule.astroOffset = scheduleConfig->getInt("AstroOffset", 0);
+			schedule.astroLon = scheduleConfig->getDouble("Longitude", -999);
+			schedule.astroLat = scheduleConfig->getDouble("Latitude", -999);
+			if ((schedule.astroLon < -180) || (schedule.astroLon > 180))
+				throw Poco::DataException(nodeName + ": Parameter Longitude must be specified and within -180..180");
+			if ((schedule.astroLat < -90) || (schedule.astroLat > 90))
+				throw Poco::DataException(nodeName + ": Parameter Latitude must be specified and within -90..90");
+			if ((schedule.astroLat < -65) || (schedule.astroLat > 65))
+				throw Poco::DataException(nodeName + ": Sorry. Latitudes outside -65..65 are currently not supported (library crash). You may either relocate or try and fix the bug.");
 		} else
 		if (scheduleType == "Random") {
 			schedule.type = RANDOM;
-
 		} else
-*/
 			throw Poco::DataException(nodeName + ": Schedule type is not supported: " + scheduleType);
 
 		this->schedules.push_back(schedule);
@@ -940,15 +1063,34 @@ void OPDID_TimerPort::prepare() {
 		// calculate all schedules
 		for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
 			Schedule schedule = (*it);
-			// calculate 
+/*
+			// test cases
+			if (schedule.type == ASTRONOMICAL) {
+				CSunRiseSet sunRiseSet;
+				Poco::DateTime now;
+				Poco::DateTime today(now.julianDay());
+				for (size_t i = 0; i < 365; i++) {
+					Poco::DateTime result = sunRiseSet.GetSunrise(schedule.astroLat, schedule.astroLon, Poco::DateTime(now.julianDay() + i));
+					this->opdid->println("Sunrise: " + Poco::DateTimeFormatter::format(result, this->opdid->timestampFormat));
+					result = sunRiseSet.GetSunset(schedule.astroLat, schedule.astroLon, Poco::DateTime(now.julianDay() + i));
+					this->opdid->println("Sunset: " + Poco::DateTimeFormatter::format(result, this->opdid->timestampFormat));
+				}
+			}
+*/
+			// calculate
 			Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&schedule);
-			this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
+			if (nextOccurrence > Poco::Timestamp()) {
+				// add with the specified occurrence time
+				this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
+			} else {
+				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					this->opdid->log(std::string(this->getID()) + ": Next scheduled time for " + schedule.nodeName + " could not be determined");
+			}
 		}
 	}
 }
 
 Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
-
 	if (schedule->type == ONCE) {
 		// validate
 		if ((schedule->data.time.month < 1) || (schedule->data.time.month > 12))
@@ -981,13 +1123,121 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 			result += schedule->data.time.day * 24 * 60 * 60 * result.resolution();
 		return result;
 	} else
-/*
 	if (schedule->type == PERIODIC) {
+
+#define correctValues	if (minute > 59) { minute = 0; hour++; if (hour > 23) { hour = 0; day++; if (day > Poco::DateTime::daysOfMonth(year, month)) { day = 1; month++; if (month > 12) { month = 1; year++; }}}}
+
+		Poco::LocalDateTime now;
+		// start from the next second
+		int second = now.second() + 1;
+		int minute = now.minute();
+		int hour = now.hour();
+		int day = now.day();
+		int month = now.month();
+		int year = now.year();
+		correctValues;
+
+		bool rollover = false;
+		bool changed = false;
+		// calculate next possible seconds
+		if (!schedule->secondComponent->getNextPossibleValue(&second, &rollover, &changed, month, year))
+			return Poco::Timestamp();
+		// rolled over into next minute?
+		if (rollover) {
+			minute++;
+			correctValues;
+		}
+		// get next possible minute
+		if (!schedule->minuteComponent->getNextPossibleValue(&minute, &rollover, &changed, month, year))
+			return Poco::Timestamp();
+		// rolled over into next hour?
+		if (rollover) {
+			hour++;
+			correctValues;
+		}
+		// if the minute was changed the second value is now invalid; set it to the first
+		// possible value (because the sub-component range starts again with every new value)
+		if (rollover || changed) {
+			schedule->secondComponent->getFirstPossibleValue(&second, month, year);
+		}
+		// get next possible hour
+		if (!schedule->hourComponent->getNextPossibleValue(&hour, &rollover, &changed, month, year))
+			return Poco::Timestamp();
+		// rolled over into next day?
+		if (rollover) {
+			day++;
+			correctValues;
+		}
+		if (rollover || changed) {
+			schedule->secondComponent->getFirstPossibleValue(&second, month, year);
+			schedule->minuteComponent->getFirstPossibleValue(&minute, month, year);
+		}
+		// get next possible day
+		if (!schedule->dayComponent->getNextPossibleValue(&day, &rollover, &changed, month, year))
+			return Poco::Timestamp();
+		// rolled over into next month?
+		if (rollover) {
+			month++;
+			correctValues;
+		}
+		if (rollover || changed) {
+			schedule->secondComponent->getFirstPossibleValue(&second, month, year);
+			schedule->minuteComponent->getFirstPossibleValue(&minute, month, year);
+			schedule->hourComponent->getFirstPossibleValue(&hour, month, year);
+		}
+		// get next possible month
+		if (!schedule->monthComponent->getNextPossibleValue(&month, &rollover, &changed, month, year))
+			return Poco::Timestamp();
+		// rolled over into next year?
+		if (rollover) {
+			year++;
+			correctValues;
+		}
+		if (rollover || changed) {
+			schedule->secondComponent->getFirstPossibleValue(&second, month, year);
+			schedule->minuteComponent->getFirstPossibleValue(&minute, month, year);
+			schedule->hourComponent->getFirstPossibleValue(&hour, month, year);
+			schedule->dayComponent->getFirstPossibleValue(&day, month, year);
+		}
+		Poco::DateTime result = Poco::DateTime(year, month, day, hour, minute, second);
+		// values are specified in local time; convert to UTC
+		result.makeUTC(Poco::Timezone::tzd());
+		return result.timestamp();
+	} else
+	if (schedule->type == ASTRONOMICAL) {
+		CSunRiseSet sunRiseSet;
+		Poco::DateTime now;
+		Poco::DateTime today(now.julianDay());
+		switch (schedule->astroEvent) {
+		case SUNRISE: {
+			// find today's sunrise
+			Poco::DateTime result = sunRiseSet.GetSunrise(schedule->astroLat, schedule->astroLon, today);
+			// sun already risen?
+			if (result < now)
+				// find tomorrow's sunrise
+				result = sunRiseSet.GetSunrise(schedule->astroLat, schedule->astroLon, Poco::DateTime(now.julianDay() + 1));
+			// values are specified in local time; convert to UTC
+			result.makeUTC(Poco::Timezone::tzd());
+			return result.timestamp() + schedule->astroOffset * 1000000;		// add offset in nanoseconds
+		}
+		case SUNSET: {
+			// find today's sunset
+			Poco::DateTime result = sunRiseSet.GetSunset(schedule->astroLat, schedule->astroLon, today);
+			// sun already set?
+			if (result < now)
+				// find tomorrow's sunset
+				result = sunRiseSet.GetSunrise(schedule->astroLat, schedule->astroLon, Poco::DateTime(now.julianDay() + 1));
+			// values are specified in local time; convert to UTC
+			result.makeUTC(Poco::Timezone::tzd());
+			return result.timestamp() + schedule->astroOffset * 1000000;		// add offset in nanoseconds
+		}
+		}
+		return Poco::Timestamp();
 	} else
 	if (schedule->type == RANDOM) {
 		// determine next point in type randomly
+		return Poco::Timestamp();
 	} else
-*/
 		// return default value (now; must not be enqueued)
 		return Poco::Timestamp();
 }
@@ -1000,13 +1250,13 @@ void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Po
 	if (timestamp > now) {
 		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 			this->opdid->log(std::string(this->getID()) + ": Next scheduled time for node " + 
-				notification->schedule.nodeName + " is: " + Poco::DateTimeFormatter::format(ldt, "%Y-%m-%d %H:%M:%S"));
+				notification->schedule.nodeName + " is: " + Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat));
 		// add with the specified activation time
 		this->queue.enqueueNotification(notification, timestamp);
 	} else {
 		if (this->opdid->logVerbosity >= AbstractOPDID::NORMAL)
 			this->opdid->log(std::string(this->getID()) + ": Warning: Scheduled time for node " + 
-				notification->schedule.nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, "%Y-%m-%d %H:%M:%S"));
+				notification->schedule.nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat));
 /*
 		this->opdid->log(std::string(this->getID()) + ": Timestamp is: " + Poco::DateTimeFormatter::format(timestamp, "%Y-%m-%d %H:%M:%S"));
 		this->opdid->log(std::string(this->getID()) + ": Now is      : " + Poco::DateTimeFormatter::format(now, "%Y-%m-%d %H:%M:%S"));
@@ -1041,6 +1291,9 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 				if (nextOccurrence > Poco::Timestamp()) {
 					// add with the specified occurrence time
 					this->addNotification(workNf, nextOccurrence);
+				} else {
+					if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+						this->opdid->log(std::string(this->getID()) + ": Next scheduled time for " + workNf->schedule.nodeName + " could not be determined");
 				}
 			}
 
@@ -1053,7 +1306,8 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 				Poco::Timestamp deacTime;
 				deacTime += workNf->schedule.delayMs * Poco::Timestamp::resolution() / 1000;
 				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-					this->opdid->log(std::string(this->getID()) + ": Scheduled deactivation time for node " + deacSchedule.nodeName + " is: UTC " + Poco::DateTimeFormatter::format(deacTime, "%Y-%m-%d %H:%M:%S"));
+					this->opdid->log(std::string(this->getID()) + ": Scheduled deactivation time for node " + deacSchedule.nodeName + " is: " + 
+						Poco::DateTimeFormatter::format(deacTime, this->opdid->timestampFormat, Poco::Timezone::tzd()));
 				// add with the specified deactivation time
 				this->addNotification(notification, deacTime);
 			}
@@ -1105,16 +1359,22 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 			this->queue.clear();
 		}
 	}
-	
+
 	// set to High?
 	if (this->line == 1) {
 		if (wasLow) {
 			// recalculate all schedules
 			for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
 				Schedule schedule = (*it);
-				// calculate 
+				// calculate
 				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&schedule);
-				this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
+				if (nextOccurrence > Poco::Timestamp()) {
+					// add with the specified occurrence time
+					this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
+				} else {
+					if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+						this->opdid->log(std::string(this->getID()) + ": Next scheduled time for " + schedule.nodeName + " could not be determined");
+				}
 			}
 		}
 	}

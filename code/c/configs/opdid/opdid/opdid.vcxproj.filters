@@ -162,6 +162,9 @@
     <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\timer.h">
       <Filter>Headerdateien\libraries\libctb</Filter>
     </ClInclude>
+    <ClInclude Include="SunRiseSet.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -229,6 +232,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\libraries\libctb\src\win32\timer.cpp">
       <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="SunRiseSet.cpp">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -303,12 +303,41 @@ public:
 class OPDID_TimerPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
 
+	// helper class
+	class ScheduleComponent {
+	private:
+		std::vector<bool> values;
+
+	public:
+		enum Type {
+			MONTH,
+			DAY,
+			WEEKDAY,
+			HOUR,
+			MINUTE,
+			SECOND
+		};
+		Type type;
+
+		static ScheduleComponent* Parse(Type type, std::string def);
+
+		bool getNextPossibleValue(int* currentValue, bool* rollover, bool* changed, int month, int year);
+
+		bool getFirstPossibleValue(int* value, int month, int year);
+	};
+
 	enum ScheduleType {
 		ONCE,
 		INTERVAL,
 		PERIODIC,
+		ASTRONOMICAL,
 		RANDOM,
 		_DEACTIVATE
+	};
+
+	enum AstroEvent {
+		SUNRISE,
+		SUNSET
 	};
 
 	enum Action {
@@ -336,6 +365,18 @@ protected:
 
 			} random;
 		} data;
+		// schedule components for PERIODIC
+		ScheduleComponent* monthComponent;
+		ScheduleComponent* dayComponent;
+		ScheduleComponent* hourComponent;
+		ScheduleComponent* minuteComponent;
+		ScheduleComponent* secondComponent;
+		// parameters for ASTRONOMICAL
+		AstroEvent astroEvent;
+		int astroOffset;
+		double astroLon;
+		double astroLat;
+
 		int occurrences;		// occurrence counter
 		int maxOccurrences;		// maximum number of occurrences that this schedule is active
 		long delayMs;			// deactivation time in milliseconds

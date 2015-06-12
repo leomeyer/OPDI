@@ -70,6 +70,8 @@ protected:
 	std::string errorPortStr;
 	std::string resetPortStr;
 	ResetTo resetTo;
+	uint16_t positionAfterClose;
+	uint16_t positionAfterOpen;
 
 	// processed configuration
 	OPDI_DigitalPort *sensorPort;
@@ -162,11 +164,19 @@ WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(i
 	this->directionPort = NULL;
 	this->statusPort = NULL;
 	this->resetTo = RESET_NONE;
+	this->positionAfterClose = -1;
+	this->positionAfterOpen = -1;
 }
 
 void WindowPort::setPosition(uint16_t position) {
 	// recovery from error state is always possible
 	if ((this->currentState == ERR) || this->position != position) {
+		// prohibit disabling the automatic mode by setting the position to the current state
+		if ((this->positionAfterClose >= 0) && (position == POSITION_CLOSED ) && (this->currentState == CLOSED))
+			position = POSITION_AUTO;
+		if ((this->positionAfterOpen >= 0) && (position == POSITION_OPEN ) && (this->currentState == OPEN))
+			position = POSITION_AUTO;
+
 		OPDI_SelectPort::setPosition(position);
 		this->positionNewlySet = true;
 
@@ -192,7 +202,7 @@ void WindowPort::setPosition(uint16_t position) {
 }
 
 void WindowPort::getState(uint16_t *position) {
-	if (this->currentState == ERR)
+	if (this->currentState == ERR && !this->positionNewlySet)
 		throw PortError(std::string(this->getID()) + ": Sensor or motor failure or misconfiguration");
 	OPDI_SelectPort::getState(position);
 }
@@ -424,6 +434,11 @@ void WindowPort::setCurrentState(WindowState state) {
 			(state == CLOSED) || 
 			(state == OPEN) || 
 			(state == ERR)) {
+
+			if ((state == CLOSED) && (this->positionAfterClose >= 0) && (this->position != POSITION_OFF))
+				this->setPosition(this->positionAfterClose);
+			if ((state == OPEN) && (this->positionAfterOpen >= 0) && (this->position != POSITION_OFF))
+				this->setPosition(this->positionAfterOpen);
 
 			this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 		}
@@ -750,18 +765,24 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		} else
 		// unknown; waiting for command
 		if ((this->currentState == UNKNOWN_WAITING)) {
-			// do not change current state
+			if (this->isSensorClosed()) {
+				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
+					opdid->log(std::string(this->id) + ": Closing sensor signal detected");
+				this->setCurrentState(CLOSED);
+			} else {
+				// do not change current state
 
-			// opening required?
-			if (this->targetState == OPEN) {
-				this->delayTimer = opdi_get_time_ms();
-				this->setCurrentState(WAITING_BEFORE_ENABLE_OPENING);
-			}
+				// opening required?
+				if (this->targetState == OPEN) {
+					this->delayTimer = opdi_get_time_ms();
+					this->setCurrentState(WAITING_BEFORE_ENABLE_OPENING);
+				}
 
-			// closing required?
-			if (this->targetState == CLOSED) {
-				this->delayTimer = opdi_get_time_ms();
-				this->setCurrentState(WAITING_BEFORE_ENABLE_CLOSING);
+				// closing required?
+				if (this->targetState == CLOSED) {
+					this->delayTimer = opdi_get_time_ms();
+					this->setCurrentState(WAITING_BEFORE_ENABLE_CLOSING);
+				}
 			}
 		} else
 		// open?
@@ -1079,6 +1100,9 @@ void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, P
 			port->resetTo = WindowPort::RESET_TO_OPEN;
 		} else if (resetTo != "Off")
 			throw Poco::DataException("Invalid value for the ResetTo setting; expected 'Off', 'Closed' or 'Open'", resetTo);
+		port->positionAfterClose = nodeConfig->getInt("PositionAfterClose", -1);
+		port->positionAfterOpen = nodeConfig->getInt("PositionAfterOpen", -1);
+
 		abstractOPDID->addPort(port);
 	} else
 		throw Poco::DataException("Node type 'SelectPort' expected", portType);

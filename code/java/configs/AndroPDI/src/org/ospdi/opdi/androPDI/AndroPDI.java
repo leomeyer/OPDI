@@ -22,14 +22,16 @@ import org.ospdi.opdi.androPDI.tcpip.TCPIPDevice;
 import org.ospdi.opdi.androPDI.utils.ResourceFactory;
 import org.ospdi.opdi.interfaces.IDevice;
 import org.ospdi.opdi.interfaces.IDevice.DeviceStatus;
-import org.ospdi.opdi.androPDI.R;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager.WakeLock;
@@ -110,7 +112,16 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
 	private ListView lvDevices;
 	private AndroPDIDevice selectedDevice;
 	private boolean dialogOk;
-	
+
+    BroadcastReceiver screenReceiver = new BroadcastReceiver() {
+    	@Override
+    	public void onReceive(Context context, Intent intent) {
+    		// disconnect when the screen is turned off
+    		if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF))
+    			disconnectAllDevices();
+    	}
+    };
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -118,6 +129,10 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
         setContentView(R.layout.main);
         
         instance = this;
+        
+        // detect when the screen is turned off
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+        registerReceiver(screenReceiver, filter);        
 
         // use localized resource factory
         org.ospdi.opdi.utils.ResourceFactory.instance = new org.ospdi.opdi.androPDI.utils.ResourceFactory(this);
@@ -223,6 +238,15 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
 		} catch (Exception e) {
 	        Toast.makeText(this, "The settings could not be saved: " + e.getMessage(), Toast.LENGTH_SHORT).show();            
 		}		
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		
+		disconnectAllDevices();
+
+		unregisterReceiver(screenReceiver);
 	}
 	
 	@Override

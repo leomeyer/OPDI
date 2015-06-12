@@ -29,7 +29,6 @@ void protocol_callback(uint8_t state) {
 	Opdi->protocolCallback(state);
 }
 
-
 AbstractOPDID::AbstractOPDID(void) {
 	this->majorVersion = OPDID_MAJOR_VERSION;
 	this->minorVersion = OPDID_MINOR_VERSION;
@@ -39,6 +38,7 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->configuration = NULL;
 
 	this->logger = NULL;
+	this->timestampFormat = "%Y-%m-%d %H:%M:%S.%i";
 
 	// map result codes
 	opdiCodeTexts[0] = "STATUS_OK";
@@ -155,7 +155,7 @@ void AbstractOPDID::showHelp(void) {
 }
 
 std::string AbstractOPDID::getTimestampStr(void) {
-	return Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y-%m-%d %H:%M:%S.%i");
+	return Poco::DateTimeFormatter::format(Poco::LocalDateTime(), this->timestampFormat);
 }
 
 std::string AbstractOPDID::getOPDIResult(uint8_t code) {
@@ -223,7 +223,9 @@ void AbstractOPDID::logError(std::string text) {
 	Poco::Mutex::ScopedLock(this->mutex);
 
 	std::string msg = "ERROR: " + text;
-	this->log(msg);
+	if (this->logger != NULL) {
+		this->logger->error(msg);
+	}
 	this->printlne("[" + this->getTimestampStr() + "] " + msg);
 }
 
@@ -849,7 +851,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		if (nodeType == "ExpressionPort") {
 			this->setupExpressionPort(nodeConfig, node);
 #else
-#warning Expression library not included, cannot use the ExpressionPort node type
+#pragma message( "Expression library not included, cannot use the ExpressionPort node type" )
 #endif	// def OPDID_USE_EXPRTK
 		} else
 		if (nodeType == "Timer") {
