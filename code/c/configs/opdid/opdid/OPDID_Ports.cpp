@@ -778,9 +778,6 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 
 
 OPDID_TimerPort::ScheduleComponent* OPDID_TimerPort::ScheduleComponent::Parse(Type type, std::string def) {
-	if (type == WEEKDAY)
-		throw Poco::ApplicationException("Weekday is currently not supported");
-
 	ScheduleComponent* result = new ScheduleComponent();
 	result->type = type;
 
@@ -791,6 +788,8 @@ OPDID_TimerPort::ScheduleComponent* OPDID_TimerPort::ScheduleComponent::Parse(Ty
 	case HOUR: result->values.resize(24); compName = "Hour"; break;
 	case MINUTE: result->values.resize(60); compName = "Minute"; break;
 	case SECOND: result->values.resize(60); compName = "Second"; break;
+	case WEEKDAY:
+		throw Poco::ApplicationException("Weekday is currently not supported");
 	}
 
 	// split definition at blanks
@@ -817,6 +816,8 @@ OPDID_TimerPort::ScheduleComponent* OPDID_TimerPort::ScheduleComponent::Parse(Ty
 			case HOUR: valid = (number >= 0) && (number <= 23); break;
 			case MINUTE: valid = (number >= 0) && (number <= 59); break;
 			case SECOND: valid = (number >= 0) && (number <= 59); break;
+			case WEEKDAY:
+				throw Poco::ApplicationException("Weekday is currently not supported");
 			}
 			if (!valid)
 				throw Poco::DataException("The specification '" + item + "' is not valid for the date/time component " + compName);
@@ -832,7 +833,7 @@ bool OPDID_TimerPort::ScheduleComponent::getNextPossibleValue(int* currentValue,
 	*changed = false;
 	// find a match
 	int i = *currentValue;
-	for (; i < this->values.size(); i++) {
+	for (; i < (int)this->values.size(); i++) {
 		if (this->values[i]) {
 			// for days, make a special check whether the month has as many days
 			if ((this->type != DAY) || (i < Poco::DateTime::daysOfMonth(year, month))) {
@@ -858,8 +859,10 @@ bool OPDID_TimerPort::ScheduleComponent::getFirstPossibleValue(int* currentValue
 	case HOUR: break;
 	case MINUTE: break;
 	case SECOND: break;
+	case WEEKDAY:
+		throw Poco::ApplicationException("Weekday is currently not supported");
 	}
-	for (; i < this->values.size(); i++) {
+	for (; i < (int)this->values.size(); i++) {
 		if (this->values[i]) {
 			*currentValue = i;
 			return true;

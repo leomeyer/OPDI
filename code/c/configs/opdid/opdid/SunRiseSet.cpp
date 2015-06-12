@@ -1,13 +1,13 @@
 // Code copied from: http://read.pudn.com/downloads75/sourcecode/multimedia/277333/SunRiseSet.cpp__.htm
 // Adjusted to use POCO, L. Meyer, 2015-06-12
 
-#include "stdafx.h" 
 #include "math.h" 
 
 #include "Poco/DateTime.h"
+#include "Poco/Timezone.h"
 #include "Poco/NumberFormatter.h"
 
-#include "SunriseSet.h" 
+#include "SunRiseSet.h" 
  
 std::string CSunRiseSet::JulianDayToDate(int jday, bool bLeapYear) 
 { 
@@ -165,7 +165,7 @@ double  CSunRiseSet::calcSolNoonGMT(int iJulDay, double dLongitude)
  
 	double gamma_solnoon = CalcGamma2(iJulDay, 12 + (dLongitude/15)); 
 	double eqTime = CalcEqofTime(gamma_solnoon); 
-	double solarNoonDec = CalcSolarDec(gamma_solnoon); 
+//	double solarNoonDec = CalcSolarDec(gamma_solnoon); 
 	double solNoonGMT = 720 + (dLongitude * 4) - eqTime; // min 
 	 
 	return solNoonGMT; 
@@ -205,8 +205,8 @@ Poco::DateTime CSunRiseSet::GetSunrise(double dLat,double dLon, Poco::DateTime t
 	double dSecond = 60 * (dMinute - iMinute); 
 	int iSecond = (int)dSecond; 
 	 
-	_tzset(); 
-	int iHrToTimeZone = _timezone / 3600; //returns a difference value in seconds 
+//	_tzset(); 
+	int iHrToTimeZone = Poco::Timezone::tzd(); //returns a difference value in seconds 
 	iHour -= iHrToTimeZone; 
  
 	Poco::DateTime NewTime(time.year(),time.month(),time.day(),iHour,iMinute,iSecond); 
@@ -248,8 +248,8 @@ Poco::DateTime CSunRiseSet::GetSunset(double dLat,double dLon,Poco::DateTime tim
 	 
  
  
-	_tzset(); 
-	int iHrToTimeZone = _timezone / 3600; //returns a difference value in seconds 
+//	_tzset(); 
+	int iHrToTimeZone = Poco::Timezone::tzd(); // _timezone / 3600; //returns a difference value in seconds 
 	iHour -= iHrToTimeZone; 
  
 	 
@@ -273,8 +273,8 @@ Poco::DateTime CSunRiseSet::GetSolarNoon(double dLon, Poco::DateTime time)
 	double dSecond = 60 * (dMinute - iMinute); 
 	int iSecond = (int)dSecond; 
 	 
-	_tzset(); 
-	int iHrToTimeZone = _timezone / 3600; //returns a difference value in seconds 
+//	_tzset(); 
+	int iHrToTimeZone = Poco::Timezone::tzd(); // _timezone / 3600; //returns a difference value in seconds 
 	iHour -= iHrToTimeZone; 
  
 	Poco::DateTime NewTime(time.year(),time.month(),time.day(),iHour,iMinute,iSecond); 
@@ -359,195 +359,3 @@ double CSunRiseSet::findNextSunset(int iJulDay, double dLatitude, double dLongit
  
     return jday; 
 } 
- 
- 
-/* 
- 
-	function calcSun(riseSetForm, latLongForm, index, index2)  
- 
-	{ 
-		if(index2 != 0) 
-		{ 
-			setLatLong(latLongForm, index2); 
-		} 
- 
-		var latitude = getLatitude(latLongForm); 
- 
-		var longitude = getLongitude(latLongForm); 
- 
-		var indexRS = riseSetForm.mos.selectedIndex 
- 
-		if (isValidInput(riseSetForm, indexRS, latLongForm)) { 
-             
- 
-			if((latitude >= -90) && (latitude < -89.8)) 
-			{ 
-				alert("All latitudes between 89.8 and 90 S\n will be set to -89.8."); 
-		                latLongForm["latDeg"].value = -89.8; 
-               			latitude = -89.8; 
-			} 
-			if ((latitude <= 90) && (latitude > 89.8)) 
-			{ 
-		                alert("All latitudes between 89.8 and 90 N\n will be set to 89.8."); 
-		                latLongForm["latDeg"].value = 89.8; 
-               			latitude = 89.8; 
-			} 
-			 
- 
- 
-			//*****	Calculate the time of sunrise			 
- 
- 
- 
-			var julDay = calcJulianDay(indexRS,  
-parseInt(riseSetForm["day"].value), isLeapYear(riseSetForm["year"].value)); 
- 
-			var gamma_solnoon = calcGamma2(julDay, 12 + (longitude/15)); 
-			var eqTime = calcEqofTime(gamma_solnoon); 
-			var solarDec = calcSolarDec(gamma_solnoon); 
- 
-			riseSetForm["eqTime"].value = (Math.floor(1000*eqTime))/1000; 
-			riseSetForm["solarDec"].value = (Math.floor(1000*radToDeg(solarDec)))/1000; 
- 
-			var timeGMT = calcSunriseGMT(julDay, latitude, longitude);  
- 
-			var solNoonGMT = calcSolNoonGMT(julDay, longitude); 
- 
-			var daySavings = YesNo[index].value; 
-			//var zone = Math.floor(longitude / 15); 
-			var zone = latLongForm["hrsToGMT"].value; 
-			       if(zone > 12 || zone < -12.5){ 
-                alert("The offset must be between -12.5 and 12.  \n Setting \"Off-Set\"=0"); 
-                zone = "0"; 
-                latLongForm["hrsToGMT"].value = zone; 
-            } 
- 
-			var timeLST = timeGMT - (60 * zone) + daySavings;	//	in minutes 
-			var riseStr = timeString(timeLST); 
-			var utcRiseStr = timeString(timeGMT); 
- 
-			riseSetForm["sunrise"].value = riseStr; 
-			riseSetForm["utcsunrise"].value = utcRiseStr; 
- 
-			//*****Calculate Solar noon 
-			var solNoonLST = solNoonGMT - (60 * zone) + daySavings; 
-			var solnStr = timeString(solNoonLST); 
-			var utcSolnStr = timeString(solNoonGMT); 
- 
-			//alert("Solar Noon = " + solnStr); 
-			riseSetForm["solnoon"].value = solnStr; 
-			riseSetForm["utcsolnoon"].value = utcSolnStr; 
-			 
- 
-			//*****	Calculate the time of sunset 
- 
-			var setTimeGMT = calcSunsetGMT(julDay, latitude, longitude); 
- 
-			var setTimeLST = setTimeGMT - (60 * zone) + daySavings; 
-			var setStr = timeString(setTimeLST); 
-			var utcSetStr = timeString(setTimeGMT); 
- 
-		//***********Conv lat and long 
-			convLatLong(latLongForm); 
- 
-			// report special cases of no sunrise 
- 
-			if(riseSetForm["sunrise"].value== "NaN:NaN:NaN" 
-				|| (riseSetForm["sunrise"].value== "NaN:0NaN:NaN") 
-                		|| (riseSetForm["sunrise"].value== "NaN:NaN:0NaN") 
-				|| (riseSetForm["sunrise"].value== "NaN:0NaN:0NaN")) 
-			{  
-// if Northern hemisphere and spring or summer, use last sunrise and next sunset 
-				if ((latitude > 66.4) && (julDay > 79) && (julDay < 267)) 
-					riseSetForm["sunrise"].value = jdayToDate(findRecentSunrise(julDay, latitude, longitude),riseSetForm["year"].value); 
-// if Northern hemisphere and fall or winter, use next sunrise and last sunset 
-				else if ((latitude > 66.4) && ((julDay < 83) || (julDay > 263))) 
-					riseSetForm["sunrise"].value = jdayToDate(findNextSunrise(julDay, latitude, longitude),riseSetForm["year"].value); 
-// if Southern hemisphere and fall or winter, use last sunrise and next sunset 
-				else if((latitude < -66.4) && ((julDay < 83) || (julDay > 263))) 
-					riseSetForm["sunrise"].value = jdayToDate(findRecentSunrise(julDay, latitude, longitude),riseSetForm["year"].value); 
-// if Southern hemisphere and spring or summer, use next sunrise and last sunset 
-				else if((latitude < -66.4) && (julDay > 79) && (julDay < 267)) 
-					riseSetForm["sunrise"].value = jdayToDate(findNextSunrise(julDay, latitude, longitude),riseSetForm["year"].value); 
-				else  
-				{ 
-					alert("Unaccountable Missing Sunrise!"); 
-				} 
- 
-//				alert("Last Sunrise was on day " + findRecentSunrise(julDay, latitude, longitude)); 
-//				alert("Next Sunrise will be on day " + findNextSunrise(julDay, latitude, longitude)); 
- 
-			} 
-  			else if(timeLST < 0 ){ 
-                alert("The sunrise occurs in the day before."); 
-                } 
-			else if(timeLST > 1440 ){ 
-                alert("The sunrise occurs in the next day."); 
-                } 
- 
- 
-			riseSetForm["sunset"].value = setStr; 
-			riseSetForm["utcsunset"].value = utcSetStr; 
-			 
- 
-			if(riseSetForm["sunset"].value== "NaN:NaN:NaN"  
-				|| (riseSetForm["sunset"].value== "NaN:0NaN:0NaN") 
-				|| (riseSetForm["sunset"].value== "NaN:0NaN:NaN") 
-				|| (riseSetForm["sunset"].value== "NaN:NaN:0NaN") 
-				|| (riseSetForm["sunset"].value== "-NaN:-NaN:-NaN") 
-				|| (riseSetForm["sunset"].value== "-NaN:0-NaN:0-NaN") 
-				|| (riseSetForm["sunset"].value== "-NaN:0-NaN:-NaN") 
-				|| (riseSetForm["sunset"].value== "-NaN:-NaN:0-NaN")) 
-			{  
-// if Northern hemisphere and spring or summer, use last sunrise and next sunset 
-				if ((latitude > 66.4) && (julDay > 79) && (julDay < 267)) 
-					riseSetForm["sunset"].value = jdayToDate(findNextSunset(julDay, latitude, longitude),riseSetForm["year"].value); 
-// if Northern hemisphere and fall or winter, use next sunrise and last sunset 
-				else if ((latitude > 66.4) && ((julDay < 83) || (julDay > 263))) 
-					riseSetForm["sunset"].value = jdayToDate(findRecentSunset(julDay, latitude, longitude),riseSetForm["year"].value); 
-// if Southern hemisphere and fall or winter, use last sunrise and next sunset 
-				else if((latitude < -66.4) && ((julDay < 83) || (julDay > 263))) 
-					riseSetForm["sunset"].value = jdayToDate(findNextSunset(julDay, latitude, longitude),riseSetForm["year"].value); 
-// if Southern hemisphere and spring or summer, use next sunrise and last sunset 
-				else if((latitude < -66.4) && (julDay > 79) && (julDay < 267)) 
-					riseSetForm["sunset"].value = jdayToDate(findRecentSunset(julDay, latitude, longitude),riseSetForm["year"].value); 
-				else alert ("Unaccountable Missing Sunset!"); 
- 
-			} 
-		else if(setTimeLST > 1440 ){ 
-                alert("The sunset occurs in the next day."); 
-                } 
-        else if(setTimeLST < 0 ){ 
-                alert("The sunset occurs in the day before."); 
-                } 
- 
- 
-		} 
- 
-	} 
- 
-	function timeString(minutes) 
-	// timeString returns a zero-padded string given time in minutes 
-	{ 
-		var floatHour = minutes / 60; 
-		var hour = Math.floor(floatHour); 
-		var floatMinute = 60 * (floatHour - Math.floor(floatHour)); 
-		var minute = Math.floor(floatMinute); 
-		var floatSec = 60 * (floatMinute - Math.floor(floatMinute)); 
-		var second = Math.floor(floatSec); 
- 
-		var timeStr = hour + ":"; 
-		if (minute < 10)	//	i.e. only one digit 
-			timeStr += "0" + minute + ":"; 
-		else 
-			timeStr += minute + ":"; 
-		if (second < 10)	//	i.e. only one digit 
-			timeStr += "0" + second; 
-		else 
-			timeStr += second; 
- 
-		return timeStr; 
-	} 
- 
-	 
-*/ 
