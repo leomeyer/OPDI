@@ -22,7 +22,7 @@ OPDI_Port *OPDID_PortFunctions::findPort(std::string configPort, std::string set
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
-	if (port == NULL) { 
+	if (port == NULL) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
 		return NULL;
@@ -57,7 +57,7 @@ OPDI_DigitalPort *OPDID_PortFunctions::findDigitalPort(std::string configPort, s
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
-	if (port == NULL) { 
+	if (port == NULL) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
 		return NULL;
@@ -88,7 +88,7 @@ OPDI_AnalogPort *OPDID_PortFunctions::findAnalogPort(std::string configPort, std
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
-	if (port == NULL) { 
+	if (port == NULL) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
 		return NULL;
@@ -119,7 +119,7 @@ OPDI_SelectPort *OPDID_PortFunctions::findSelectPort(std::string configPort, std
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
-	if (port == NULL) { 
+	if (port == NULL) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
 		return NULL;
@@ -258,23 +258,23 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 	switch (this->function) {
 	case UNKNOWN:
 		return OPDI_STATUS_OK;
-	case OR: if (highCount > 0) 
+	case OR: if (highCount > 0)
 				 newLine = (this->negate ? 0 : 1);
 		break;
-	case AND: if (highCount == this->inputPorts.size()) 
+	case AND: if (highCount == this->inputPorts.size())
 				  newLine = (this->negate ? 0 : 1);
 		break;
 	// XOR is implemented as modulo; meaning an odd number of inputs must be high
-	case XOR: if (highCount % 2 == 1) 
+	case XOR: if (highCount % 2 == 1)
 				newLine = (this->negate ? 0 : 1);
 		break;
-	case ATLEAST: if (highCount >= this->funcN) 
+	case ATLEAST: if (highCount >= this->funcN)
 					  newLine = (this->negate ? 0 : 1);
 		break;
-	case ATMOST: if (highCount <= this->funcN) 
+	case ATMOST: if (highCount <= this->funcN)
 					 newLine = (this->negate ? 0 : 1);
 		break;
-	case EXACT: if (highCount == this->funcN) 
+	case EXACT: if (highCount == this->funcN)
 					 newLine = (this->negate ? 0 : 1);
 		break;
 	}
@@ -283,7 +283,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 	if (newLine != this->line) {
 		if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
 			opdid->log(std::string(this->id) + ": Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High)");
-	
+
 		OPDI_DigitalPort::setLine(newLine);
 
 		// regular output ports
@@ -444,7 +444,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 		this->dutyCycle = this->dutyCyclePort->getRelativeValue();
 	}
 
-	// determine new line level 
+	// determine new line level
 	uint8_t newState = this->pulseState;
 
 	if (enabled) {
@@ -656,17 +656,17 @@ bool OPDID_ExpressionPort::prepareVariables(void) {
 				uint8_t line;
 				((OPDI_DigitalPort *)port)->getState(&mode, &line);
 				value = line;
-			} else 
+			} else
 			if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
 				// analog port: relative value (0..1)
 				value = ((OPDI_AnalogPort *)port)->getRelativeValue();
-			} else 
+			} else
 			if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
 				// dial port: absolute value
 				int64_t position;
 				((OPDI_DialPort *)port)->getState(&position);
 				value = (double)position;
-			} else 
+			} else
 			if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
 				// select port: current position number
 				uint16_t position;
@@ -1063,7 +1063,7 @@ void OPDID_TimerPort::prepare() {
 		// calculate all schedules
 		for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
 			Schedule schedule = (*it);
-
+/*
 			// test cases
 			if (schedule.type == ASTRONOMICAL) {
 				CSunRiseSet sunRiseSet;
@@ -1076,8 +1076,8 @@ void OPDID_TimerPort::prepare() {
 					this->opdid->println("Sunset: " + Poco::DateTimeFormatter::format(result, this->opdid->timestampFormat));
 				}
 			}
-
-			// calculate 
+*/
+			// calculate
 			Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&schedule);
 			if (nextOccurrence > Poco::Timestamp()) {
 				// add with the specified occurrence time
@@ -1359,14 +1359,14 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 			this->queue.clear();
 		}
 	}
-	
+
 	// set to High?
 	if (this->line == 1) {
 		if (wasLow) {
 			// recalculate all schedules
 			for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
 				Schedule schedule = (*it);
-				// calculate 
+				// calculate
 				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&schedule);
 				if (nextOccurrence > Poco::Timestamp()) {
 					// add with the specified occurrence time
