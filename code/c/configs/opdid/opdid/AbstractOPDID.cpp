@@ -849,7 +849,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		if (nodeType == "ExpressionPort") {
 			this->setupExpressionPort(nodeConfig, node);
 #else
-#warning Expression library not included, cannot use the ExpressionPort node type
+#pragma message( "Expression library not included, cannot use the ExpressionPort node type" )
 #endif	// def OPDID_USE_EXPRTK
 		} else
 		if (nodeType == "Timer") {
