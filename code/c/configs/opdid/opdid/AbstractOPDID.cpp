@@ -223,7 +223,9 @@ void AbstractOPDID::logError(std::string text) {
 	Poco::Mutex::ScopedLock(this->mutex);
 
 	std::string msg = "ERROR: " + text;
-	this->log(msg);
+	if (this->logger != NULL) {
+		this->logger->error(msg);
+	}
 	this->printlne("[" + this->getTimestampStr() + "] " + msg);
 }
 

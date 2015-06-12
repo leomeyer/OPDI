@@ -1031,6 +1031,8 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 				throw Poco::DataException(nodeName + ": Parameter Longitude must be specified and within -180..180");
 			if ((schedule.astroLat < -90) || (schedule.astroLat > 90))
 				throw Poco::DataException(nodeName + ": Parameter Latitude must be specified and within -90..90");
+			if ((schedule.astroLat < -65) || (schedule.astroLat > 65))
+				throw Poco::DataException(nodeName + ": Sorry. Latitudes outside -65..65 are currently not supported (library crash). You may either relocate or try and fix the bug.");
 		} else
 		if (scheduleType == "Random") {
 			schedule.type = RANDOM;
@@ -1061,6 +1063,20 @@ void OPDID_TimerPort::prepare() {
 		// calculate all schedules
 		for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
 			Schedule schedule = (*it);
+
+			// test cases
+			if (schedule.type == ASTRONOMICAL) {
+				CSunRiseSet sunRiseSet;
+				Poco::DateTime now;
+				Poco::DateTime today(now.julianDay());
+				for (size_t i = 0; i < 365; i++) {
+					Poco::DateTime result = sunRiseSet.GetSunrise(schedule.astroLat, schedule.astroLon, Poco::DateTime(now.julianDay() + i));
+					this->opdid->println("Sunrise: " + Poco::DateTimeFormatter::format(result, this->opdid->timestampFormat));
+					result = sunRiseSet.GetSunset(schedule.astroLat, schedule.astroLon, Poco::DateTime(now.julianDay() + i));
+					this->opdid->println("Sunset: " + Poco::DateTimeFormatter::format(result, this->opdid->timestampFormat));
+				}
+			}
+
 			// calculate 
 			Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&schedule);
 			if (nextOccurrence > Poco::Timestamp()) {
