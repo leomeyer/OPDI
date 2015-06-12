@@ -98,7 +98,7 @@ extern "C" {
 
 // To be able to use the ExpressionPort define this macro. The ../../../libraries/ExprTk folder must contain the
 // file exprtk.hpp.
-// #define OPDID_USE_EXPRTK			1
+#define OPDID_USE_EXPRTK			1
 
 #ifdef __cplusplus
 }

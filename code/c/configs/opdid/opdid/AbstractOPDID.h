@@ -79,6 +79,7 @@ public:
 	};
 
 	int logVerbosity;
+	std::string timestampFormat;
 
 	AbstractOPDID(void);
 

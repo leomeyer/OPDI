@@ -12,6 +12,8 @@
 
 #include "OPDID_Ports.h"
 
+#include "SunRiseSet.h"
+
 ///////////////////////////////////////////////////////////////////////////////
 // PortFunctions
 ///////////////////////////////////////////////////////////////////////////////
@@ -1009,11 +1011,27 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 			schedule.minuteComponent = ScheduleComponent::Parse(ScheduleComponent::MINUTE, scheduleConfig->getString("Minute", "*"));
 			schedule.secondComponent = ScheduleComponent::Parse(ScheduleComponent::SECOND, scheduleConfig->getString("Second", "*"));
 		} else
+		if (scheduleType == "Astronomical") {
+			schedule.type = ASTRONOMICAL;
+			std::string astroEventStr = this->opdid->getConfigString(scheduleConfig, "AstroEvent", "", true);
+			if (astroEventStr == "Sunrise") {
+				schedule.astroEvent = SUNRISE;
+			} else
+			if (astroEventStr == "Sunset") {
+				schedule.astroEvent = SUNSET;
+			} else
+				throw Poco::DataException(nodeName + ": Parameter AstroEvent must be specified; use either 'Sunrise' or 'Sunset'");
+			schedule.astroOffset = scheduleConfig->getInt("AstroOffset", 0);
+			schedule.astroLon = scheduleConfig->getDouble("Longitude", -999);
+			schedule.astroLat = scheduleConfig->getDouble("Latitude", -999);
+			if ((schedule.astroLon < -180) || (schedule.astroLon > 180))
+				throw Poco::DataException(nodeName + ": Parameter Longitude must be specified and within -180..180");
+			if ((schedule.astroLat < -90) || (schedule.astroLat > 90))
+				throw Poco::DataException(nodeName + ": Parameter Latitude must be specified and within -90..90");
+		} else
 		if (scheduleType == "Random") {
 			schedule.type = RANDOM;
-
 		} else
-
 			throw Poco::DataException(nodeName + ": Schedule type is not supported: " + scheduleType);
 
 		this->schedules.push_back(schedule);
@@ -1042,13 +1060,18 @@ void OPDID_TimerPort::prepare() {
 			Schedule schedule = (*it);
 			// calculate 
 			Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&schedule);
-			this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
+			if (nextOccurrence > Poco::Timestamp()) {
+				// add with the specified occurrence time
+				this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
+			} else {
+				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+					this->opdid->log(std::string(this->getID()) + ": Next scheduled time for " + schedule.nodeName + " could not be determined");
+			}
 		}
 	}
 }
 
 Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
-
 	if (schedule->type == ONCE) {
 		// validate
 		if ((schedule->data.time.month < 1) || (schedule->data.time.month > 12))
@@ -1162,8 +1185,39 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 		result.makeUTC(Poco::Timezone::tzd());
 		return result.timestamp();
 	} else
+	if (schedule->type == ASTRONOMICAL) {
+		CSunRiseSet sunRiseSet;
+		Poco::DateTime now;
+		Poco::DateTime today(now.julianDay());
+		switch (schedule->astroEvent) {
+		case SUNRISE: {
+			// find today's sunrise
+			Poco::DateTime result = sunRiseSet.GetSunrise(schedule->astroLat, schedule->astroLon, today);
+			// sun already risen?
+			if (result < now)
+				// find tomorrow's sunrise
+				result = sunRiseSet.GetSunrise(schedule->astroLat, schedule->astroLon, Poco::DateTime(now.julianDay() + 1));
+			// values are specified in local time; convert to UTC
+			result.makeUTC(Poco::Timezone::tzd());
+			return result.timestamp() + schedule->astroOffset * 1000000;		// add offset in nanoseconds
+		}
+		case SUNSET: {
+			// find today's sunset
+			Poco::DateTime result = sunRiseSet.GetSunset(schedule->astroLat, schedule->astroLon, today);
+			// sun already set?
+			if (result < now)
+				// find tomorrow's sunset
+				result = sunRiseSet.GetSunrise(schedule->astroLat, schedule->astroLon, Poco::DateTime(now.julianDay() + 1));
+			// values are specified in local time; convert to UTC
+			result.makeUTC(Poco::Timezone::tzd());
+			return result.timestamp() + schedule->astroOffset * 1000000;		// add offset in nanoseconds
+		}
+		}
+		return Poco::Timestamp();
+	} else
 	if (schedule->type == RANDOM) {
 		// determine next point in type randomly
+		return Poco::Timestamp();
 	} else
 		// return default value (now; must not be enqueued)
 		return Poco::Timestamp();
@@ -1177,13 +1231,13 @@ void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Po
 	if (timestamp > now) {
 		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
 			this->opdid->log(std::string(this->getID()) + ": Next scheduled time for node " + 
-				notification->schedule.nodeName + " is: " + Poco::DateTimeFormatter::format(ldt, "%Y-%m-%d %H:%M:%S"));
+				notification->schedule.nodeName + " is: " + Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat));
 		// add with the specified activation time
 		this->queue.enqueueNotification(notification, timestamp);
 	} else {
 		if (this->opdid->logVerbosity >= AbstractOPDID::NORMAL)
 			this->opdid->log(std::string(this->getID()) + ": Warning: Scheduled time for node " + 
-				notification->schedule.nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, "%Y-%m-%d %H:%M:%S"));
+				notification->schedule.nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat));
 /*
 		this->opdid->log(std::string(this->getID()) + ": Timestamp is: " + Poco::DateTimeFormatter::format(timestamp, "%Y-%m-%d %H:%M:%S"));
 		this->opdid->log(std::string(this->getID()) + ": Now is      : " + Poco::DateTimeFormatter::format(now, "%Y-%m-%d %H:%M:%S"));
@@ -1218,6 +1272,9 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 				if (nextOccurrence > Poco::Timestamp()) {
 					// add with the specified occurrence time
 					this->addNotification(workNf, nextOccurrence);
+				} else {
+					if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+						this->opdid->log(std::string(this->getID()) + ": Next scheduled time for " + workNf->schedule.nodeName + " could not be determined");
 				}
 			}
 
@@ -1230,7 +1287,8 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 				Poco::Timestamp deacTime;
 				deacTime += workNf->schedule.delayMs * Poco::Timestamp::resolution() / 1000;
 				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-					this->opdid->log(std::string(this->getID()) + ": Scheduled deactivation time for node " + deacSchedule.nodeName + " is: UTC " + Poco::DateTimeFormatter::format(deacTime, "%Y-%m-%d %H:%M:%S"));
+					this->opdid->log(std::string(this->getID()) + ": Scheduled deactivation time for node " + deacSchedule.nodeName + " is: " + 
+						Poco::DateTimeFormatter::format(deacTime, this->opdid->timestampFormat, Poco::Timezone::tzd()));
 				// add with the specified deactivation time
 				this->addNotification(notification, deacTime);
 			}
@@ -1291,7 +1349,13 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 				Schedule schedule = (*it);
 				// calculate 
 				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&schedule);
-				this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
+				if (nextOccurrence > Poco::Timestamp()) {
+					// add with the specified occurrence time
+					this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
+				} else {
+					if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+						this->opdid->log(std::string(this->getID()) + ": Next scheduled time for " + schedule.nodeName + " could not be determined");
+				}
 			}
 		}
 	}

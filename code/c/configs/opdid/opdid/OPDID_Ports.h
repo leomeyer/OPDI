@@ -330,8 +330,14 @@ protected:
 		ONCE,
 		INTERVAL,
 		PERIODIC,
+		ASTRONOMICAL,
 		RANDOM,
 		_DEACTIVATE
+	};
+
+	enum AstroEvent {
+		SUNRISE,
+		SUNSET
 	};
 
 	enum Action {
@@ -365,6 +371,11 @@ protected:
 		ScheduleComponent* hourComponent;
 		ScheduleComponent* minuteComponent;
 		ScheduleComponent* secondComponent;
+		// parameters for ASTRONOMICAL
+		AstroEvent astroEvent;
+		int astroOffset;
+		double astroLon;
+		double astroLat;
 
 		int occurrences;		// occurrence counter
 		int maxOccurrences;		// maximum number of occurrences that this schedule is active

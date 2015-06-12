@@ -29,7 +29,6 @@ void protocol_callback(uint8_t state) {
 	Opdi->protocolCallback(state);
 }
 
-
 AbstractOPDID::AbstractOPDID(void) {
 	this->majorVersion = OPDID_MAJOR_VERSION;
 	this->minorVersion = OPDID_MINOR_VERSION;
@@ -39,6 +38,7 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->configuration = NULL;
 
 	this->logger = NULL;
+	this->timestampFormat = "%Y-%m-%d %H:%M:%S.%i";
 
 	// map result codes
 	opdiCodeTexts[0] = "STATUS_OK";
@@ -155,7 +155,7 @@ void AbstractOPDID::showHelp(void) {
 }
 
 std::string AbstractOPDID::getTimestampStr(void) {
-	return Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y-%m-%d %H:%M:%S.%i");
+	return Poco::DateTimeFormatter::format(Poco::LocalDateTime(), this->timestampFormat);
 }
 
 std::string AbstractOPDID::getOPDIResult(uint8_t code) {
