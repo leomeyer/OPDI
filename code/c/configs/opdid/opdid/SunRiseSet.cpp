@@ -205,13 +205,9 @@ Poco::DateTime CSunRiseSet::GetSunrise(double dLat,double dLon, Poco::DateTime t
 	double dSecond = 60 * (dMinute - iMinute); 
 	int iSecond = (int)dSecond; 
 	 
-//	_tzset(); 
-	int iHrToTimeZone = Poco::Timezone::tzd(); //returns a difference value in seconds 
-	iHour -= iHrToTimeZone; 
- 
 	Poco::DateTime NewTime(time.year(),time.month(),time.day(),iHour,iMinute,iSecond); 
-	return NewTime; 
- 
+	NewTime.makeLocal(Poco::Timezone::tzd() - Poco::Timezone::dst()); 
+	return NewTime;
 } 
  
 Poco::DateTime CSunRiseSet::GetSunset(double dLat,double dLon,Poco::DateTime time) 
@@ -246,16 +242,9 @@ Poco::DateTime CSunRiseSet::GetSunset(double dLat,double dLon,Poco::DateTime tim
 	double dSecond = 60 * (dMinute - iMinute); 
 	int iSecond = (int)dSecond; 
 	 
- 
- 
-//	_tzset(); 
-	int iHrToTimeZone = Poco::Timezone::tzd(); // _timezone / 3600; //returns a difference value in seconds 
-	iHour -= iHrToTimeZone; 
- 
-	 
 	Poco::DateTime NewTime(time.year(),time.month(),time.day(),iHour,iMinute,iSecond); 
+	NewTime.makeLocal(Poco::Timezone::tzd() - Poco::Timezone::dst()); 
 	return NewTime; 
- 
 } 
  
 Poco::DateTime CSunRiseSet::GetSolarNoon(double dLon, Poco::DateTime time) 
@@ -273,12 +262,9 @@ Poco::DateTime CSunRiseSet::GetSolarNoon(double dLon, Poco::DateTime time)
 	double dSecond = 60 * (dMinute - iMinute); 
 	int iSecond = (int)dSecond; 
 	 
-//	_tzset(); 
-	int iHrToTimeZone = Poco::Timezone::tzd(); // _timezone / 3600; //returns a difference value in seconds 
-	iHour -= iHrToTimeZone; 
- 
 	Poco::DateTime NewTime(time.year(),time.month(),time.day(),iHour,iMinute,iSecond); 
-	return NewTime; 
+	NewTime.makeLocal(Poco::Timezone::tzd() - Poco::Timezone::dst()); 
+	return NewTime;
 } 
  
 double CSunRiseSet::findRecentSunrise(int iJulDay, double dLatitude, double dLongitude) 
