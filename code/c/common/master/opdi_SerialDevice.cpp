@@ -36,7 +36,10 @@ SerialDevice::SerialDevice(std::string id, Poco::URI uri, bool *debug) : IODevic
 	if ((parts.size() > 2) && (parts[2] != ""))
 		setPassword(parts[2]);
 
-	comport = uri.getHost() + (uri.getPath() != "" ? "/" + uri.getPath() : "");
+	if (uri.getHost() != "")
+		comport = uri.getHost() + (uri.getPath() != "" ? "/" + uri.getPath() : "");
+	else
+		comport = uri.getPath();
 
 	if (comport == "")
 		throw Poco::InvalidArgumentException("Serial port must be specified");
