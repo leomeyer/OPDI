@@ -19,6 +19,7 @@
 /** Defines the OPDI classes that wrap the functions of the OPDI C implementation
  *  for use in Arduino sketches.
  */
+#include <Stream.h>
 
 #include <opdi_config.h>
 #include <opdi_port.h>
@@ -201,10 +202,13 @@ protected:
 	uint8_t (*workFunction)();
 
 public:
+	Stream* ioStream;
+	Stream* debugStream;
+
 	/** Prepares the OPDI class for use.
 	 *
 	 */
-	uint8_t setup(const char *slave_name, int16_t deviceFlags);
+	uint8_t setup(const char *slave_name, int16_t deviceFlags, Stream* ioStream, Stream* debugStream);
 
 	/** Sets the idle timeout. If the master sends no meaningful messages during this time
 	 * the slave sends a disconnect message. If the value is 0 (default), the setting has no effect.

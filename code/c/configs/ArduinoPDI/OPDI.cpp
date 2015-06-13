@@ -338,7 +338,10 @@ OPDI_DialPort::~OPDI_DialPort() {}
 // Main class for OPDI functionality
 //////////////////////////////////////////////////////////////////////////////////////////
 
-uint8_t OPDI::setup(const char *slaveName, int16_t deviceFlags) {
+uint8_t OPDI::setup(const char *slaveName, int16_t deviceFlags, Stream* ioStream, Stream* debugStream) {
+	this->ioStream = ioStream;
+	this->debugStream = debugStream;
+
 	// initialize linked list of ports
 	this->first_port = NULL;
 	this->last_port = NULL;

@@ -77,7 +77,7 @@ uint8_t setupDevice() {
 	Serial.begin(9600);
 
 	// initialize the OPDI system
-	uint8_t result = ArduinOpdi.setup("ArduinOPDI", 20000);
+	uint8_t result = ArduinOpdi.setup("ArduinOPDI", 20000, 0, &Serial, NULL);
 	if (checkerror(result) == 0)
 		return 0;
 

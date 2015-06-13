@@ -4,7 +4,7 @@
 		<cconfiguration id="de.innot.avreclipse.configuration.app.release.1602708466">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="de.innot.avreclipse.configuration.app.release.1602708466" moduleId="org.eclipse.cdt.core.settings" name="Release">
 				<macros>
-					<stringMacro name="ARDUINO_TARGET" type="VALUE_TEXT" value="Duemilanove"/>
+					<stringMacro name="ARDUINO_TARGET" type="VALUE_TEXT" value="Mega2560"/>
 					<stringMacro name="FOR_ARDUINO_TARGET" type="VALUE_TEXT" value="Enter one of the sub folder names of the lib folder (content will be used for the Arduino library)."/>
 				</macros>
 				<externalSettings/>
@@ -112,11 +112,11 @@
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="de.innot.avreclipse.configuration.app.release.1602708466;de.innot.avreclipse.configuration.app.release.1602708466.;de.innot.avreclipse.tool.cppcompiler.app.release.1068200909;de.innot.avreclipse.cppcompiler.input.1469960720">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="de.innot.avreclipse.core.AVRGCCManagedMakePerProjectProfileCPP"/>
-		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="de.innot.avreclipse.configuration.app.release.1602708466;de.innot.avreclipse.configuration.app.release.1602708466.;de.innot.avreclipse.tool.compiler.winavr.app.release.894148084;de.innot.avreclipse.compiler.winavr.input.84295540">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="de.innot.avreclipse.core.AVRGCCManagedMakePerProjectProfileC"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="de.innot.avreclipse.configuration.app.release.1602708466;de.innot.avreclipse.configuration.app.release.1602708466.;de.innot.avreclipse.tool.cppcompiler.app.release.1068200909;de.innot.avreclipse.cppcompiler.input.1469960720">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="de.innot.avreclipse.core.AVRGCCManagedMakePerProjectProfileCPP"/>
 		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>

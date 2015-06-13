@@ -46,7 +46,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 
 	unsigned long ticks = millis();
 
-	while (Serial.available() == 0) {
+	while (Opdi->ioStream->available() == 0) {
 		// timed out?
 		if ((millis() - ticks) > timeout)
 			return OPDI_TIMEOUT;
@@ -55,7 +55,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 		if (result != OPDI_STATUS_OK)
 			return result;
 	}
-	uint16_t data = Serial.read();
+	uint16_t data = Opdi->ioStream->read();
 
 	*byte = (uint8_t)data;
 
@@ -64,7 +64,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 
 /** Sends count bytes to the serial port. */
 static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
-	Serial.write(bytes, count);
+	Opdi->ioStream->write(bytes, count);
 
 	return OPDI_STATUS_OK;
 }
@@ -73,6 +73,26 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
  *
  */
 uint8_t opdi_debug_msg(const char *message, uint8_t direction) {
+	if (Opdi->debugStream != NULL) {
+
+		if (direction == OPDI_DIR_INCOMING)
+			Opdi->debugStream->print(">");
+		else
+		if (direction == OPDI_DIR_OUTGOING)
+			Opdi->debugStream->print("<");
+#ifndef OPDI_NO_ENCRYPTION
+		else
+		if (direction == OPDI_DIR_INCOMING_ENCR)
+			Opdi->debugStream->print("}");
+		else
+		if (direction == OPDI_DIR_OUTGOING_ENCR)
+			Opdi->debugStream->print("{");
+#endif
+		else
+			Opdi->debugStream->print("-");
+		Opdi->debugStream->println(message);
+
+	}
 	return OPDI_STATUS_OK;
 }
 
@@ -80,8 +100,8 @@ uint8_t opdi_debug_msg(const char *message, uint8_t direction) {
 // Device specific OPDI implementation
 //////////////////////////////////////////////////////////////////////////////////////////
 
-uint8_t ArduinOPDI::setup(const char *slaveName, uint32_t idleTimeout, int16_t deviceFlags) {
-	uint8_t result = OPDI::setup(slaveName, deviceFlags);
+uint8_t ArduinOPDI::setup(const char *slaveName, uint32_t idleTimeout, int16_t deviceFlags, Stream* ioStream, Stream* debugStream) {
+	uint8_t result = OPDI::setup(slaveName, deviceFlags, ioStream, debugStream);
 	if (result != OPDI_STATUS_OK)
 		return result;
 
