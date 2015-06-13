@@ -1207,6 +1207,7 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 	if (schedule->type == ASTRONOMICAL) {
 		CSunRiseSet sunRiseSet;
 		Poco::DateTime now;
+		now.makeLocal(Poco::Timezone::tzd());
 		Poco::DateTime today(now.julianDay());
 		switch (schedule->astroEvent) {
 		case SUNRISE: {
@@ -1292,8 +1293,8 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 					// add with the specified occurrence time
 					this->addNotification(workNf, nextOccurrence);
 				} else {
-					if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-						this->opdid->log(std::string(this->getID()) + ": Next scheduled time for " + workNf->schedule.nodeName + " could not be determined");
+					if (this->opdid->logVerbosity >= AbstractOPDID::NORMAL)
+						this->opdid->log(std::string(this->getID()) + ": Warning: Next scheduled time for " + workNf->schedule.nodeName + " could not be determined");
 				}
 			}
 
