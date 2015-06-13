@@ -18,7 +18,7 @@ SerialDevice::SerialDevice(std::string id, Poco::URI uri, bool *debug) : IODevic
 	this->uri = uri;
 	this->debug = debug;
 
-	this->baudRate = 115000;
+	this->baudRate = 9600;
 	this->protocol = "8N1";
 	this->serialPort = new ctb::SerialPort();
 
@@ -166,9 +166,8 @@ char SerialDevice::read()
 
 void SerialDevice::write(char buffer[], int length)
 {
-	if (!this->device->IsOpen())
-		throw Poco::ApplicationException("serial device not open, cannot write");
-	this->device->Write(buffer, length);
+	if (this->device->IsOpen())
+		this->device->Write(buffer, length);
 }
 
 int SerialDevice::read_bytes(char buffer[], int maxlength)
