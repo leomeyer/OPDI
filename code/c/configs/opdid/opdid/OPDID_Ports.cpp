@@ -18,6 +18,10 @@
 // PortFunctions
 ///////////////////////////////////////////////////////////////////////////////
 
+OPDID_PortFunctions::OPDID_PortFunctions() {
+	this->logVerbosity = AbstractOPDID::UNKNOWN;
+}
+
 OPDI_Port *OPDID_PortFunctions::findPort(std::string configPort, std::string setting, std::string portID, bool required) {
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
@@ -132,6 +136,61 @@ OPDI_SelectPort *OPDID_PortFunctions::findSelectPort(std::string configPort, std
 	return (OPDI_SelectPort *)port;
 }
 
+void OPDID_PortFunctions::configureVerbosity(Poco::Util::AbstractConfiguration* config) {
+	std::string logVerbosityStr = config->getString("LogVerbosity", "");
+
+	// set log verbosity only if it's not already set
+	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) && (logVerbosityStr != "")) {
+		if (logVerbosityStr == "Quiet") {
+			this->logVerbosity = AbstractOPDID::QUIET;
+		} else
+		if (logVerbosityStr == "Normal") {
+			this->logVerbosity = AbstractOPDID::NORMAL;
+		} else
+		if (logVerbosityStr == "Verbose") {
+			this->logVerbosity = AbstractOPDID::VERBOSE;
+		} else
+		if (logVerbosityStr == "Debug") {
+			this->logVerbosity = AbstractOPDID::DEBUG;
+		} else
+		if (logVerbosityStr == "Extreme") {
+			this->logVerbosity = AbstractOPDID::EXTREME;
+		} else
+			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', 'Verbose', 'Debug' or 'Extreme')", logVerbosityStr);
+	}
+}
+
+void OPDID_PortFunctions::logWarning(std::string message) {
+	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity > AbstractOPDID::QUIET)) {
+		this->opdid->logWarning(message);
+	}
+}
+
+void OPDID_PortFunctions::logNormal(std::string message) {
+	if (((this->logVerbosity == AbstractOPDID::UNKNOWN) && (this->opdid->logVerbosity >= AbstractOPDID::NORMAL)) || (this->logVerbosity >= AbstractOPDID::NORMAL)) {
+		this->opdid->log(message);
+	}
+}
+
+void OPDID_PortFunctions::logVerbose(std::string message) {
+	if (((this->logVerbosity == AbstractOPDID::UNKNOWN) && (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)) || (this->logVerbosity >= AbstractOPDID::VERBOSE)) {
+		this->opdid->log(message);
+	}
+}
+
+void OPDID_PortFunctions::logDebug(std::string message) {
+	if (((this->logVerbosity == AbstractOPDID::UNKNOWN) && (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)) || (this->logVerbosity >= AbstractOPDID::DEBUG)) {
+		this->opdid->log(message);
+	}
+}
+
+void OPDID_PortFunctions::logExtreme(std::string message) {
+	if (((this->logVerbosity == AbstractOPDID::UNKNOWN) && (this->opdid->logVerbosity >= AbstractOPDID::EXTREME)) || (this->logVerbosity >= AbstractOPDID::EXTREME)) {
+		this->opdid->log(message);
+	}
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Logic Port
@@ -156,6 +215,7 @@ OPDID_LogicPort::~OPDID_LogicPort() {
 
 void OPDID_LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
+	this->configureVerbosity(config);
 
 	std::string function = config->getString("Function", "OR");
 
@@ -281,8 +341,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 
 	// change detected?
 	if (newLine != this->line) {
-		if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
-			opdid->log(std::string(this->id) + ": Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High)");
+		this->logDebug(ID() + ": Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High)");
 
 		OPDI_DigitalPort::setLine(newLine);
 
@@ -296,8 +355,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 				(*it)->getState(&mode, &line);
 				// changed?
 				if (line != newLine) {
-					if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
-						opdid->log(std::string(this->id) + ": Changing line of port " + (*it)->getID() + " to " + (newLine == 0 ? "Low" : "High"));
+					this->logDebug(ID() + ": Changing line of port " + (*it)->getID() + " to " + (newLine == 0 ? "Low" : "High"));
 					(*it)->setLine(newLine);
 				}
 			} catch (Poco::Exception &e) {
@@ -315,8 +373,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 				(*it)->getState(&mode, &line);
 				// changed?
 				if (line == newLine) {
-					if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
-						opdid->log(std::string(this->id) + ": Changing line of inverse port " + (*it)->getID() + " to " + (newLine == 0 ? "High" : "Low"));
+					this->logDebug(ID() + ": Changing line of inverse port " + (*it)->getID() + " to " + (newLine == 0 ? "High" : "Low"));
 					(*it)->setLine((newLine == 0 ? 1 : 0));
 				}
 			} catch (Poco::Exception &e) {
@@ -352,6 +409,7 @@ OPDID_PulsePort::~OPDID_PulsePort() {
 
 void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
+	this->configureVerbosity(config);
 
 	this->negate = config->getBool("Negate", false);
 
@@ -472,9 +530,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 
 	// change detected?
 	if (newState != this->pulseState) {
-		if (opdid->logVerbosity >= AbstractOPDID::DEBUG) {
-			opdid->log(std::string(this->id) + ": Changing pulse to " + (newState == 1 ? "High" : "Low") + " (dTime: " + to_string(opdi_get_time_ms() - this->lastStateChangeTime) + " ms)");
-		}
+		this->logDebug(ID() + ": Changing pulse to " + (newState == 1 ? "High" : "Low") + " (dTime: " + to_string(opdi_get_time_ms() - this->lastStateChangeTime) + " ms)");
 
 		this->lastStateChangeTime = opdi_get_time_ms();
 
@@ -524,6 +580,7 @@ OPDID_SelectorPort::~OPDID_SelectorPort() {
 
 void OPDID_SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
+	this->configureVerbosity(config);
 
 	this->selectPortStr = config->getString("SelectPort", "");
 	if (this->selectPortStr == "")
@@ -571,14 +628,12 @@ uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
 	this->selectPort->getState(&pos);
 	if (pos == this->position) {
 		if (this->line != 1) {
-			if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
-				this->opdid->log(std::string(this->getID()) + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to High");
+			this->logDebug(ID() + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to High");
 			OPDI_DigitalPort::setLine(1);
 		}
 	} else {
 		if (this->line != 0) {
-			if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
-				this->opdid->log(std::string(this->getID()) + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to Low");
+			this->logDebug(ID() + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to Low");
 			OPDI_DigitalPort::setLine(0);
 		}
 	}
@@ -607,6 +662,7 @@ OPDID_ExpressionPort::~OPDID_ExpressionPort() {
 
 void OPDID_ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
+	this->configureVerbosity(config);
 
 	this->expressionStr = config->getString("Expression", "");
 	if (this->expressionStr == "")
@@ -676,8 +732,7 @@ bool OPDID_ExpressionPort::prepareVariables(void) {
 				// port type not supported
 				return false;
 		} catch (Poco::Exception &pe) {
-			if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
-				this->opdid->log(std::string(this->getID()) + ": Unable to get state of port " + port->getID() + ": " + pe.message());
+			this->logDebug(ID() + ": Unable to get state of port " + port->getID() + ": " + pe.message());
 			return false;
 		}
 
@@ -731,8 +786,7 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 
 			double value = expression.value();
 
-			if (this->opdid->logVerbosity >= AbstractOPDID::EXTREME)
-				this->opdid->log(std::string(this->getID()) + ": Expression result: " + to_string(value));
+			this->logExtreme(ID() + ": Expression result: " + to_string(value));
 
 			// go through list of output ports
 			PortList::iterator it = this->outputPorts.begin();
@@ -886,12 +940,12 @@ OPDID_TimerPort::~OPDID_TimerPort() {
 
 void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configureDigitalPort(config, this);
+	this->configureVerbosity(config);
 
 	this->outputPortStr = this->opdid->getConfigString(config, "OutputPorts", "", true);
 
 	// enumerate schedules of the <timer>.Schedules node
-	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-		this->opdid->log(std::string("Enumerating Timer schedules: ") + this->getID() + ".Schedules");
+	this->logVerbose(std::string("Enumerating Timer schedules: ") + this->getID() + ".Schedules");
 
 	Poco::Util::AbstractConfiguration *nodes = config->createView("Schedules");
 
@@ -923,8 +977,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	}
 
 	if (orderedItems.size() == 0) {
-		if (this->opdid->logVerbosity >= AbstractOPDID::NORMAL)
-			this->opdid->log(std::string("Warning: No schedules configured in node ") + this->getID() + ".Schedules; is this intended?");
+		this->logNormal(std::string("Warning: No schedules configured in node ") + this->getID() + ".Schedules; is this intended?");
 	}
 
 	// go through items, create schedules in specified order
@@ -933,8 +986,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 
 		std::string nodeName = nli->get<1>();
 
-		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-			this->opdid->log("Setting up timer schedule for node: " + nodeName);
+		this->logVerbose("Setting up timer schedule for node: " + nodeName);
 
 		// get schedule section from the configuration
 		Poco::Util::AbstractConfiguration *scheduleConfig = this->opdid->getConfiguration()->createView(nodeName);
@@ -1083,8 +1135,7 @@ void OPDID_TimerPort::prepare() {
 				// add with the specified occurrence time
 				this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
 			} else {
-				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-					this->opdid->log(std::string(this->getID()) + ": Next scheduled time for " + schedule.nodeName + " could not be determined");
+				this->logVerbose(ID() + ": Next scheduled time for " + schedule.nodeName + " could not be determined");
 			}
 		}
 	}
@@ -1249,14 +1300,12 @@ void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Po
 	// for debug output: convert UTC timestamp to local time
 	Poco::LocalDateTime ldt(timestamp);
 	if (timestamp > now) {
-		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-			this->opdid->log(std::string(this->getID()) + ": Next scheduled time for node " + 
+		this->logVerbose(ID() + ": Next scheduled time for node " + 
 				notification->schedule.nodeName + " is: " + Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat));
 		// add with the specified activation time
 		this->queue.enqueueNotification(notification, timestamp);
 	} else {
-		if (this->opdid->logVerbosity >= AbstractOPDID::NORMAL)
-			this->opdid->log(std::string(this->getID()) + ": Warning: Scheduled time for node " + 
+		this->logNormal(ID() + ": Warning: Scheduled time for node " + 
 				notification->schedule.nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat));
 /*
 		this->opdid->log(std::string(this->getID()) + ": Timestamp is: " + Poco::DateTimeFormatter::format(timestamp, "%Y-%m-%d %H:%M:%S"));
@@ -1279,8 +1328,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 		try {
 			ScheduleNotification::Ptr workNf = notification.cast<ScheduleNotification>();
 
-			if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-				this->opdid->log(std::string(this->getID()) + ": Timer reached scheduled time for node: " + workNf->schedule.nodeName);
+			this->logVerbose(ID() + ": Timer reached scheduled time for node: " + workNf->schedule.nodeName);
 
 			workNf->schedule.occurrences++;
 
@@ -1293,8 +1341,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 					// add with the specified occurrence time
 					this->addNotification(workNf, nextOccurrence);
 				} else {
-					if (this->opdid->logVerbosity >= AbstractOPDID::NORMAL)
-						this->opdid->log(std::string(this->getID()) + ": Warning: Next scheduled time for " + workNf->schedule.nodeName + " could not be determined");
+					this->logNormal(ID() + ": Warning: Next scheduled time for " + workNf->schedule.nodeName + " could not be determined");
 				}
 			}
 
@@ -1306,8 +1353,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 				ScheduleNotification *notification = new ScheduleNotification(deacSchedule);
 				Poco::Timestamp deacTime;
 				deacTime += workNf->schedule.delayMs * Poco::Timestamp::resolution() / 1000;
-				if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-					this->opdid->log(std::string(this->getID()) + ": Scheduled deactivation time for node " + deacSchedule.nodeName + " is: " + 
+				this->logVerbose(ID() + ": Scheduled deactivation time for node " + deacSchedule.nodeName + " is: " + 
 						Poco::DateTimeFormatter::format(deacTime, this->opdid->timestampFormat, Poco::Timezone::tzd()));
 				// add with the specified deactivation time
 				this->addNotification(notification, deacTime);
@@ -1373,8 +1419,7 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 					// add with the specified occurrence time
 					this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
 				} else {
-					if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-						this->opdid->log(std::string(this->getID()) + ": Next scheduled time for " + schedule.nodeName + " could not be determined");
+					this->logVerbose(ID() + ": Next scheduled time for " + schedule.nodeName + " could not be determined");
 				}
 			}
 		}
@@ -1398,7 +1443,8 @@ OPDID_ErrorDetectorPort::~OPDID_ErrorDetectorPort() {
 }
 
 void OPDID_ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration *config) {
-	this->opdid->configureDigitalPort(config, this);
+	this->opdid->configureDigitalPort(config, this);	
+	this->configureVerbosity(config);
 
 	this->inputPortStr = this->opdid->getConfigString(config, "InputPorts", "", true);
 	this->negate = config->getBool("Negate", false);
@@ -1428,8 +1474,7 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 	PortList::iterator it = this->inputPorts.begin();
 	while (it != this->inputPorts.end()) {
 		if ((*it)->hasError()) {
-			if (this->opdid->logVerbosity >= AbstractOPDID::EXTREME)
-				this->opdid->log(std::string(this->getID()) + ": Detected error on port: " + (*it)->getID());
+			this->logExtreme(ID() + ": Detected error on port: " + (*it)->getID());
 			newState = 1;
 			break;
 		}
@@ -1441,8 +1486,7 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 
 	// change?
 	if (this->line != newState) {
-		if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
-			this->opdid->log(std::string(this->getID()) + ": Changing line state to: " + (newState == 1 ? "High" : "Low"));
+		this->logDebug(ID() + ": Changing line state to: " + (newState == 1 ? "High" : "Low"));
 		this->line = newState;
 		this->doSelfRefresh();
 	}
@@ -1475,8 +1519,7 @@ uint8_t OPDID_SerialStreamingPort::doWork(uint8_t canSend)  {
 		if (this->available(0) > 0) {
 			char result;
 			if (this->read(&result) > 0) {
-				if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
-					this->opdid->log(std::string(this->getID()) + ": Looping back received serial data byte: " + this->opdid->to_string((int)result));
+				this->logDebug(ID() + ": Looping back received serial data byte: " + this->opdid->to_string((int)result));
 
 				// echo
 				this->write(&result, 1);
@@ -1490,14 +1533,14 @@ uint8_t OPDID_SerialStreamingPort::doWork(uint8_t canSend)  {
 
 void OPDID_SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configureStreamingPort(config, this);
+	this->configureVerbosity(config);
 
 	std::string serialPortName = this->opdid->getConfigString(config, "SerialPort", "", true);
 	int baudRate = config->getInt("BaudRate", 9600);
 	std::string protocol = config->getString("Protocol", "8N1");
 	// int timeout = config->getInt("Timeout", 100);
 
-	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-		this->opdid->log(std::string(this->getID()) + ": Opening serial port " + serialPortName + " with " + this->opdid->to_string(baudRate) + " baud and protocol " + protocol);
+	this->logVerbose(ID() + ": Opening serial port " + serialPortName + " with " + this->opdid->to_string(baudRate) + " baud and protocol " + protocol);
 
 	// try to lock the port name as a resource
 	this->opdid->lockResource(serialPortName, this->getID());
@@ -1510,8 +1553,7 @@ void OPDID_SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *con
 		throw Poco::ApplicationException(std::string(this->getID()) + ": Unable to open serial port: " + serialPortName);
 	}
 
-	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-		this->opdid->log(std::string(this->getID()) + ": Serial port " + serialPortName + " opened successfully");
+	this->logVerbose(ID() + ": Serial port " + serialPortName + " opened successfully");
 
 	std::string modeStr = config->getString("Mode", "");
 	if (modeStr == "Loopback") {
@@ -1673,6 +1715,7 @@ uint8_t OPDID_LoggingPort::doWork(uint8_t canSend)  {
 
 void OPDID_LoggingPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configureStreamingPort(config, this);
+	this->configureVerbosity(config);
 
 	this->logPeriod = config->getInt("Period", this->logPeriod);
 	this->separator = config->getString("Separator", this->separator);
@@ -1686,8 +1729,7 @@ void OPDID_LoggingPort::configure(Poco::Util::AbstractConfiguration *config) {
 		// try to lock the output file name as a resource
 		this->opdid->lockResource(outFileStr, this->getID());
 
-		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-			this->opdid->log(std::string(this->getID()) + ": Opening output log file " + outFileStr);
+		this->logVerbose(ID() + ": Opening output log file " + outFileStr);
 
 		// open the stream in append mode
 		this->outFile.open(outFileStr, std::ios_base::app);

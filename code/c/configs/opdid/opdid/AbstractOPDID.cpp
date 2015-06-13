@@ -213,6 +213,25 @@ void AbstractOPDID::log(std::string text) {
 	}
 }
 
+void AbstractOPDID::logWarning(std::string text) {
+	// suppress warnings?
+	if (this->logVerbosity == QUIET)
+		return;
+
+	// important: log must be thread-safe.
+	// encapsulate in a mutex
+
+	// Try to lock the mutex. If this does not work in time, it will throw
+	// an exception. The calling thread should deal with this exception.
+	Poco::Mutex::ScopedLock(this->mutex);
+
+	std::string msg = "WARNING: " + text;
+	if (this->logger != NULL) {
+		this->logger->error(msg);
+	}
+	this->printlne("[" + this->getTimestampStr() + "] " + msg);
+}
+
 void AbstractOPDID::logError(std::string text) {
 
 	// important: log must be thread-safe.

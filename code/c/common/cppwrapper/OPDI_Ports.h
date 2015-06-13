@@ -138,6 +138,8 @@ public:
 
 	virtual const char *getID(void);
 
+	std::string ID();
+
 	virtual const char *getType(void);
 
 	virtual void setHidden(bool hidden);

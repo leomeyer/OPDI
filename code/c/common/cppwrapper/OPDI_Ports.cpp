@@ -97,6 +97,10 @@ const char *OPDI_Port::getID(void) {
 	return this->id;
 }
 
+std::string OPDI_Port::ID() {
+	return std::string(this->getID());
+}
+
 const char *OPDI_Port::getType(void) {
 	return this->type;
 }

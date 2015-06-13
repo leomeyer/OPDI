@@ -122,10 +122,13 @@ public:
 	/** Converts a given object to a string. */
 	template <class T> inline std::string to_string(const T& t);
 
-	/** Writes a log message with a timestamp. */
+	/** Outputs a log message with a timestamp. */
 	virtual void log(std::string text);
 
-	/** Writes an error message with a timestamp. */
+	/** Outputs a warning message with a timestamp. */
+	virtual void logWarning(std::string text);
+
+	/** Outputs an error message with a timestamp. */
 	virtual void logError(std::string text);
 
 	virtual Poco::Util::AbstractConfiguration *getConfiguration(void);
