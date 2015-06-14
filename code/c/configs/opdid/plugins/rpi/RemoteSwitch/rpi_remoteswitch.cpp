@@ -12,6 +12,7 @@
 #include "../rpi.h"
 
 #include "LinuxOPDID.h"
+#include "OPDID_PortFunctions.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // RemoteSwitch: Plugin for remote power outlet control
@@ -41,7 +42,7 @@ public:
 // thus we don't know what's really going on with the device.
 ///////////////////////////////////////////////////////////////////////////////
 
-class RemoteSwitchPort : public OPDI_SelectPort {
+class RemoteSwitchPort : public OPDI_SelectPort, protected OPDID_PortFunctions {
 protected:
 	AbstractOPDID *opdid;
 	RCSwitch* rcSwitch;
@@ -58,11 +59,12 @@ public:
 
 RemoteSwitchPort::RemoteSwitchPort(AbstractOPDID *opdid, const char *ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode) : OPDI_SelectPort(ID, 
 	(std::string("RemoteSwitchPort@") + systemCode + "/" + to_string(unitCode)).c_str(), // default label - can be changed by configuration
-	0) {
+	NULL) {
 	this->opdid = opdid;
 	this->rcSwitch = rcSwitch;
 	this->systemCode = systemCode;
 	this->unitCode = unitCode;
+	this->logDebug("Setup complete: RemoteSwitchPort " + to_string(this->getLabel()));
 }
 
 RemoteSwitchPort::~RemoteSwitchPort(void) {
@@ -73,8 +75,10 @@ void RemoteSwitchPort::setPosition(uint16_t position)  {
 	OPDI_SelectPort::setPosition(position);
 
 	if (position == 0) {
+		//this->logDebug(this->ID() + ": Switching off");
 		this->rcSwitch->switchOff((char*)this->systemCode.c_str(), this->unitCode);
 	} else {
+		//this->logDebug(this->ID() + ": Switching on");
 		this->rcSwitch->switchOn((char*)this->systemCode.c_str(), this->unitCode);
 	}
 }
@@ -95,7 +99,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 
 	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
 
-	int pin = config->getInt("Pin", -1);
+	int pin = nodeConfig->getInt("Pin", -1);
 	if (pin < 0)
 		throw Poco::DataException("You have to specify a pin for the 433 MHz remote control module data line");
 	// TODO validate pin
@@ -176,7 +180,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 			if ((unitCode < 1) || (unitCode > 4))
 				throw Poco::DataException("A 'UnitCode' between 1 and 4 must be specified for a RemoteSwitch port");
 
-			// setup the port instance and add it; use internal pin number
+			// setup the port instance and add it
 			RemoteSwitchPort *port = new RemoteSwitchPort(abstractOPDID, nodeName.c_str(), &this->rcSwitch, systemCode, unitCode);
 			// set default group: RemoteSwitchPlugin node's group
 			port->setGroup(group);

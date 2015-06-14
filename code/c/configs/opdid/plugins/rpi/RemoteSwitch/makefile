@@ -19,7 +19,7 @@ PPATHBASE = $(OPDIDPATH)/../../../platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List source files of the plugin here.
-SRC = $(TARGET).cpp
+SRC = $(TARGET).cpp ../../../opdid/OPDID_PortFunctions.cpp
 
 # C++ wrapper
 CPPPATH = $(CPATH)/cppwrapper
@@ -39,9 +39,6 @@ SRC += $(OPDIDPATH)/../../../platforms/linux/opdi_platformfuncs.c
 # library include paths
 LIBINCPATH = $(OPDIDPATH)/../../../libraries/rpi/wiringPi $(OPDIDPATH)/../../../libraries/rpi/raspberry-remote
 
-# conio include path
-CONIOINCPATH = $(OPDIDPATH)/../../../libraries/conio
-
 # POCO include path
 POCOINCPATH = $(OPDIDPATH)/../../../libraries/POCO/Util/include $(OPDIDPATH)/../../../libraries/POCO/Foundation/include $(OPDIDPATH)/../../../libraries/POCO/Net/include
 
@@ -52,14 +49,17 @@ POCOLIBPATH = $(OPDIDPATH)/../../../libraries/POCO/lib/Linux/x86_64
 POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
 
 # Additional libraries
-LIBS = -lpthread 
+LIBS = -lpthread -lwiringPi
+
+# Additional library paths
+LIBPATHS = $(OPDIDPATH)/../../../libraries/rpi/wiringPi
 
 # The compiler to be used.
 CC = g++
 
 # List any extra directories to look for include files here.
 # Each directory must be separated by a space.
-EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(OPDIDPATH) $(LIBINCPATH) .
+EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(OPDIDPATH) $(LIBINCPATH) .
 
 # Place -I options here
 CINCS =
@@ -68,7 +68,7 @@ CINCS =
 CDEFINES = -Dlinux
 
 # Compiler flags.
-CFLAGS = -Wall -fpermissive $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES) -Wno-narrowing
+CFLAGS = -Wall -fpermissive $(CDEFS) $(CINCS) $(patsubst %,-L%,$(LIBPATHS)) -L $(POCOLIBPATH) $(CDEFINES) -Wno-narrowing
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -O3 -std=c++11 -static-libstdc++
 
 OBJECTS = $(SRC)

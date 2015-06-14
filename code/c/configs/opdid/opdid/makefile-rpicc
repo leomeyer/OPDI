@@ -14,7 +14,7 @@ PPATHBASE = ../../../platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List C source files of the configuration here.
-SRC = LinuxOPDID.cpp OPDIDConfigurationFile.cpp SunRiseSet.cpp
+SRC = LinuxOPDID.cpp OPDIDConfigurationFile.cpp SunRiseSet.cpp OPDID_PortFunctions.cpp
 
 # platform specific files
 SRC += $(PPATH)/opdi_platformfuncs.c
