@@ -732,7 +732,7 @@ bool OPDID_ExpressionPort::prepareVariables(void) {
 				// port type not supported
 				return false;
 		} catch (Poco::Exception &pe) {
-			this->logDebug(ID() + ": Unable to get state of port " + port->getID() + ": " + pe.message());
+			this->logExtreme(ID() + ": Unable to get state of port " + port->getID() + ": " + pe.message());
 			return false;
 		}
 
