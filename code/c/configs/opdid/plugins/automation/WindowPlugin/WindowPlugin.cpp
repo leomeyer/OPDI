@@ -907,7 +907,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		pi = this->forceOpenPorts.begin();
 		while (pi != this->forceOpenPorts.end()) {
 			if (this->getPortLine(*pi) == 1) {
-				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
+				if (opdid->logVerbosity >= AbstractOPDID::EXTREME)
 					opdid->log(std::string(this->id) + ": ForceOpen detected from port: " + (*pi)->getID());
 				forceOpen = true;
 				break;
@@ -918,7 +918,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		pi = this->forceClosePorts.begin();
 		while (pi != this->forceClosePorts.end()) {
 			if (this->getPortLine(*pi) == 1) {
-				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
+				if (opdid->logVerbosity >= AbstractOPDID::EXTREME)
 					opdid->log(std::string(this->id) + ": ForceClose detected from port: " + (*pi)->getID());
 				forceClose = true;
 				break;
@@ -930,7 +930,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		pi = this->resetPorts.begin();
 		while (pi != this->resetPorts.end()) {
 			if (this->getPortLine(*pi) == 1) {
-				if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
+				if (opdid->logVerbosity >= AbstractOPDID::EXTREME)
 					opdid->log(std::string(this->id) + ": Reset detected from port: " + (*pi)->getID());
 				this->setCurrentState(UNKNOWN);
 				if (this->resetTo == RESET_TO_CLOSED)
@@ -958,7 +958,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 				if (this->getPortLine(*pi) == 1) {
 					// avoid repeating messages
 					if (this->targetState != CLOSED) {
-						if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
+						if (opdid->logVerbosity >= AbstractOPDID::EXTREME)
 							opdid->log(std::string(this->id) + ": AutoClose detected from port: " + (*pi)->getID());
 					}
 					target = CLOSED;
@@ -973,7 +973,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 					if (this->getPortLine(*pi) == 1) {
 						// avoid repeating messages
 						if (this->targetState != OPEN) {
-							if (opdid->logVerbosity >= AbstractOPDID::DEBUG)
+							if (opdid->logVerbosity >= AbstractOPDID::EXTREME)
 								opdid->log(std::string(this->id) + ": AutoOpen detected from port: " + (*pi)->getID());
 						}
 						target = OPEN;
