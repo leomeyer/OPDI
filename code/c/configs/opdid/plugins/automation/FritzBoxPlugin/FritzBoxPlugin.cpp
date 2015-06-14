@@ -496,7 +496,7 @@ std::string FritzBoxPlugin::getXMLValue(std::string xml, std::string node) {
 			pNode = it.nextNode();
 		}
 	} catch (Poco::Exception &e) {
-		throw new Poco::Exception("Error parsing XML", e);
+		throw Poco::Exception("Error parsing XML", e);
 	}
 
 	throw Poco::NotFoundException("Node or value not found in XML: " + node);
