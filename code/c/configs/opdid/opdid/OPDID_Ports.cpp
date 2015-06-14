@@ -733,7 +733,7 @@ bool OPDID_ExpressionPort::prepareVariables(void) {
 				return false;
 		} catch (Poco::Exception &pe) {
 			this->logExtreme(ID() + ": Unable to get state of port " + port->getID() + ": " + pe.message());
-			return false;
+			value = 0;
 		}
 
 		this->portValues.push_back(value);
