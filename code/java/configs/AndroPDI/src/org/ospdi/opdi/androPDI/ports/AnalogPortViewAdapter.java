@@ -92,8 +92,11 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 				final int val = value;
 				showDevicePorts.addPortAction(new PortAction(AnalogPortViewAdapter.this) {
 					@Override
-					void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
-						aPort.setValue(val);
+					void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+						try {
+							aPort.setValue(val);
+						} catch (PortAccessDeniedException e) {
+						}
 						queryState();
 					}
 				});
@@ -144,7 +147,7 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
         
 		showDevicePorts.addPortAction(new PortAction(AnalogPortViewAdapter.this) {
 			@Override
-			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 				queryState();
 				showDevicePorts.mHandler.post(new Runnable() {
 					@Override
@@ -176,13 +179,17 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 		openMenu(MENU_OUTER);
 	}
 
-	protected void queryState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+	protected void queryState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
         // attempt to retrieve the values
-        value = aPort.getValue();
-        maxValue = aPort.getMaxValue();
-        mode = aPort.getMode();
-        resolution = aPort.getResolution();
-        reference = aPort.getReference();
+        try {
+			value = aPort.getValue();
+	        maxValue = aPort.getMaxValue();
+	        mode = aPort.getMode();
+	        resolution = aPort.getResolution();
+	        reference = aPort.getReference();
+		} catch (PortAccessDeniedException e) {
+			// TODO find a meaningful way to deal with this situation
+		}
         stateError = aPort.hasError();
 	}
 	
@@ -272,7 +279,7 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 					InterruptedException,
 					DisconnectedException,
 					DeviceException,
-					ProtocolException, PortAccessDeniedException {
+					ProtocolException {
 				// reload the port state
 				aPort.refresh();
 				queryState();
@@ -300,7 +307,7 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return showDevicePorts.addPortAction(new PortAction(AnalogPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 								aPort.refresh();
 								queryState();
 							}
@@ -371,9 +378,12 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 												InterruptedException,
 												DisconnectedException,
 												DeviceException,
-												ProtocolException, PortAccessDeniedException {
+												ProtocolException {
 											// set the port value
-											aPort.setValue(val);
+											try {
+												aPort.setValue(val);
+											} catch (PortAccessDeniedException e) {
+											}
 											AnalogPortViewAdapter.this.queryState();
 										}
 									});
@@ -443,9 +453,12 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return AnalogPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(AnalogPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 								// set mode
-								aPort.setMode(AnalogPort.PortMode.INPUT);
+								try {
+									aPort.setMode(AnalogPort.PortMode.INPUT);
+								} catch (PortAccessDeniedException e) {
+								}
 								AnalogPortViewAdapter.this.queryState();
 							}
 						});
@@ -461,9 +474,12 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return AnalogPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(AnalogPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 								// set mode
-								aPort.setMode(AnalogPort.PortMode.OUTPUT);
+								try {
+									aPort.setMode(AnalogPort.PortMode.OUTPUT);
+								} catch (PortAccessDeniedException e) {
+								}
 								AnalogPortViewAdapter.this.queryState();
 							}
 						});
@@ -485,9 +501,12 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return AnalogPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(AnalogPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 								// set line
-								aPort.setResolution(AnalogPort.Resolution.BITS_8);
+								try {
+									aPort.setResolution(AnalogPort.Resolution.BITS_8);
+								} catch (PortAccessDeniedException e) {
+								}
 								AnalogPortViewAdapter.this.queryState();
 							}
 						});
@@ -501,9 +520,12 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return AnalogPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(AnalogPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 								// set line
-								aPort.setResolution(AnalogPort.Resolution.BITS_9);
+								try {
+									aPort.setResolution(AnalogPort.Resolution.BITS_9);
+								} catch (PortAccessDeniedException e) {
+								}
 								AnalogPortViewAdapter.this.queryState();
 							}
 						});
@@ -517,10 +539,13 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return AnalogPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(AnalogPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 								// set line
-								aPort.setResolution(AnalogPort.Resolution.BITS_10);
-								AnalogPortViewAdapter.this.queryState();
+								try {
+									aPort.setResolution(AnalogPort.Resolution.BITS_10);
+								} catch (PortAccessDeniedException e) {
+								}
+								queryState();
 							}
 						});
 					}
@@ -533,10 +558,13 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return AnalogPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(AnalogPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 								// set line
-								aPort.setResolution(AnalogPort.Resolution.BITS_11);
-								AnalogPortViewAdapter.this.queryState();
+								try {
+									aPort.setResolution(AnalogPort.Resolution.BITS_11);
+								} catch (PortAccessDeniedException e) {
+								}
+								queryState();
 							}
 						});
 					}
@@ -549,10 +577,13 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return AnalogPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(AnalogPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 								// set line
-								aPort.setResolution(AnalogPort.Resolution.BITS_12);
-								AnalogPortViewAdapter.this.queryState();
+								try {
+									aPort.setResolution(AnalogPort.Resolution.BITS_12);
+								} catch (PortAccessDeniedException e) {
+								}
+								queryState();
 							}
 						});
 					}
@@ -573,10 +604,13 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return AnalogPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(AnalogPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 								// set line
-								aPort.setReference(AnalogPort.Reference.INTERNAL);
-								AnalogPortViewAdapter.this.queryState();
+								try {
+									aPort.setReference(AnalogPort.Reference.INTERNAL);
+								} catch (PortAccessDeniedException e) {
+								}
+								queryState();
 							}
 						});
 					}
@@ -590,9 +624,12 @@ class AnalogPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return AnalogPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(AnalogPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 								// set reference
-								aPort.setReference(AnalogPort.Reference.EXTERNAL);
+								try {
+									aPort.setReference(AnalogPort.Reference.EXTERNAL);
+								} catch (PortAccessDeniedException e) {
+								}
 								AnalogPortViewAdapter.this.queryState();
 							}									
 						});

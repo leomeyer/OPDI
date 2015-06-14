@@ -32,7 +32,7 @@ abstract class PortAction {
 	 * @throws ProtocolException
 	 * @throws PortAccessDeniedException 
 	 */
-	abstract void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException;
+	abstract void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
 
 	/** Defines the operations to be done on the UI thread after perform() has been run.
 	 * By default calls the updateState() method of the adapter. This causes a UI refresh.

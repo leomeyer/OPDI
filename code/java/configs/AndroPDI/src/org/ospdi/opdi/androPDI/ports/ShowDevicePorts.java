@@ -129,7 +129,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 		}
 		
 		@Override
-		void perform() throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException, PortAccessDeniedException {
+		void perform() throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException {
             IBasicProtocol protocol = device.getProtocol();
             final BasicDeviceCapabilities bdc;
             
@@ -139,7 +139,10 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 	        // get the state of all ports
             // this avoids too much flickering of the GUI
 	        for (Port port: bdc.getPorts()) {
-				port.getPortState();
+				try {
+					port.getPortState();
+				} catch (PortAccessDeniedException e) {
+				}
 				// clear previous view adapter
 				port.setViewAdapter(null);
 	        }
@@ -234,10 +237,6 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 	                        	ShowDevicePorts.this.onActionCompleted(op);
 	                        }
 	                    });
-                    } catch (PortAccessDeniedException e) {
-                    	// display a message
-                    	op.adapter.showMessage(ResourceFactory.instance.getString(ResourceFactory.PORT_ACCESS_DENIED) + 
-                    			(e.getMessage() != null ? " " + e.getMessage() : ""));
                     } catch (DisconnectedException de) {
                     	// if disconnected, exit the thread and the view immediately
                     	ShowDevicePorts.this.finish();
@@ -387,8 +386,11 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 		    				@Override
 		    				void perform() throws TimeoutException,
 		    						InterruptedException, DisconnectedException,
-		    						DeviceException, ProtocolException, PortAccessDeniedException {
-		    					((StreamingPort)port).unbind();
+		    						DeviceException, ProtocolException {
+		    					try {
+									((StreamingPort)port).unbind();
+								} catch (PortAccessDeniedException e) {
+								}
 		    				}
 		    			});
 		    		}

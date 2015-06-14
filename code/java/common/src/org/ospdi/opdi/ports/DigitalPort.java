@@ -27,7 +27,9 @@ public class DigitalPort extends Port {
 		/** The port is in input mode and the pull down resistor is active. */
 		INPUT_PULLDOWN,
 		/** The port is in output mode. */
-		OUTPUT
+		OUTPUT,
+		/** UNKNOWN must be the last one */
+		UNKNOWN		
 	}	
 
 	/** The states a digital line may be in. */
@@ -35,7 +37,9 @@ public class DigitalPort extends Port {
 		/** Indicates that the port is low. */
 		LOW,
 		/** Indicates that the port is high. */
-		HIGH
+		HIGH,
+		/** UNKNOWN must be the last one */
+		UNKNOWN		
 	}	
 	
 	static final String MAGIC = "DP";

@@ -73,7 +73,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 
 		showDevicePorts.addPortAction(new PortAction(SelectPortViewAdapter.this) {
 			@Override
-			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+			void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 				queryState();
 				showDevicePorts.mHandler.post(new Runnable() {
 					@Override
@@ -104,8 +104,12 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 		openMenu();
 	}
 	
-	protected void queryState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
-		position = sPort.getPosition();
+	protected void queryState() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+		try {
+			position = sPort.getPosition();
+		} catch (PortAccessDeniedException e) {
+			position = -1;
+		}
 	}
 	
 	@Override
@@ -131,7 +135,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 					InterruptedException,
 					DisconnectedException,
 					DeviceException,
-					ProtocolException, PortAccessDeniedException {
+					ProtocolException {
 				// reload the port state
 				sPort.refresh();
 				queryState();
@@ -202,7 +206,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 					public boolean onMenuItemClick(MenuItem item) {
 						return showDevicePorts.addPortAction(new PortAction(SelectPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 								sPort.refresh();
 								queryState();
 							}
@@ -217,7 +221,9 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 				
 				item = menu.add(sPort.getLabelAt(i));
 				item.setCheckable(true);
-				item.setChecked(i == sPort.getPosition());
+				try {
+					item.setChecked(i == sPort.getPosition());
+				} catch (PortAccessDeniedException pade) {}
 				// store index in numeric shortcut
 				item.setNumericShortcut((char)i);
 				item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -228,13 +234,18 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 						
 						return SelectPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(SelectPortViewAdapter.this) {
 							@Override
-							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
+							void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 								// set position
-								if (sPort.setPosition(mItem.getNumericShortcut()))
-									position = sPort.getPosition();
-								else
+								try {
+									if (sPort.setPosition(mItem.getNumericShortcut()))
+										position = sPort.getPosition();
+									else
+										// error state; no position is selected
+										position = -1;
+								} catch (PortAccessDeniedException e) {
 									// error state; no position is selected
 									position = -1;
+								}
 							}
 						});
 					}

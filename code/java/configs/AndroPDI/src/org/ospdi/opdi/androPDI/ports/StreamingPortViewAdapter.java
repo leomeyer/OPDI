@@ -76,8 +76,11 @@ class StreamingPortViewAdapter implements IPortViewAdapter, IStreamingPortListen
     		// try to autobind
 			showDevicePorts.addPortAction(new PortAction(StreamingPortViewAdapter.this) {
 				@Override
-				void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException {
-					sPort.bind();
+				void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+					try {
+						sPort.bind();
+					} catch (PortAccessDeniedException e) {
+					}
 			        stateError = sPort.hasError();
 			    	// listen for port events
 			    	sPort.setStreamingPortListener(StreamingPortViewAdapter.this);

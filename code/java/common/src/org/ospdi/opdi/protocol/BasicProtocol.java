@@ -322,10 +322,10 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 
 		// set port state
 		port.setPortState(this, 
-				DigitalPort.PortMode.values()[Strings.parseInt(parts[MODE], "mode", 0, DigitalPort.PortMode.values().length - 1)]);
+				DigitalPort.PortMode.values()[Strings.parseInt(parts[MODE], "mode", 0, DigitalPort.PortMode.values().length - 2)]);	// ignore UNKNOWN
 		
 		port.setPortLine(this, 
-				DigitalPort.PortLine.values()[Strings.parseInt(parts[LINE], "line", 0, DigitalPort.PortLine.values().length - 1)]);
+				DigitalPort.PortLine.values()[Strings.parseInt(parts[LINE], "line", 0, DigitalPort.PortLine.values().length - 2)]);	// ignore UNKNOWN
 	}
 
 	@Override
