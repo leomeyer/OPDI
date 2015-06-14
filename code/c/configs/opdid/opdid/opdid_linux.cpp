@@ -62,15 +62,26 @@ int main(int argc, char *argv[], char *envp[])
 		env = envp[counter];
 	}
 
+	int exitcode;
 	try
 	{
-		return Opdi->startup(args, environment);
+		exitcode = Opdi->startup(args, environment);
 	}
 	catch (Poco::Exception& e) {
-		Opdi->log(e.displayText());
+		Opdi->logError(e.displayText());
+		// signal error
+		exitcode = 1;
+	}
+	catch (std::exception& e) {
+		Opdi->logError(e.what());
+		exitcode = 1;
 	}
 	catch (...) {
 		Opdi->log("An unknown error occurred. Exiting.");
+		exitcode = 1;
 	}
-}
+
+	Opdi->log("OPDID exited with code " + Opdi->to_string(exitcode));
+
+	return exitcode;
 

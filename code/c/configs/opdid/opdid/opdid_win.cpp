@@ -70,15 +70,27 @@ int _tmain(int argc, _TCHAR* argv[], _TCHAR* envp[])
 
 	Opdi = new WindowsOPDID();
 
+	int exitcode;
 	try
 	{
-		return Opdi->startup(args, environment);
+		exitcode = Opdi->startup(args, environment);
 	}
 	catch (Poco::Exception& e) {
 		Opdi->logError(e.displayText());
+		// signal error
+		exitcode = 1;
+	}
+	catch (std::exception& e) {
+		Opdi->logError(e.what());
+		exitcode = 1;
+	}
+	catch (...) {
+		Opdi->log("An unknown error occurred. Exiting.");
+		exitcode = 1;
 	}
 
-	// signal error
-	return 1;
+	Opdi->log("OPDID exited with code " + Opdi->to_string(exitcode));
+
+	return exitcode;
 }
 

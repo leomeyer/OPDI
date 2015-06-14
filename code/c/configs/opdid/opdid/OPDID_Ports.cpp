@@ -769,7 +769,7 @@ void OPDID_ExpressionPort::prepare() {
 	parser.dec().symbols(this->symbol_list);
 
 	if (!this->prepareVariables()) {
-		throw new Poco::Exception(std::string(this->getID()) + ": Unable to resolve variables");
+		throw Poco::Exception(std::string(this->getID()) + ": Unable to resolve variables");
 	}
 	parser.disable_unknown_symbol_resolver();
 
