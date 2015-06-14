@@ -630,7 +630,7 @@ bool OPDI_AnalogPort::hasError(void) {
 #ifndef OPDI_NO_SELECT_PORTS
 
 OPDI_SelectPort::OPDI_SelectPort(const char *id) : OPDI_Port(id, NULL, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, NULL) {
-	this->itemCount = 0;
+	this->count = 0;
 	this->items = NULL;
 	this->position = 0;
 }
@@ -663,9 +663,12 @@ void OPDI_SelectPort::freeItems() {
 void OPDI_SelectPort::setItems(const char **items) {
 	this->freeItems();
 	this->items = NULL;
+	this->count = 0;
+	if (items == NULL)
+		return;
 	// determine array size
 	const char *item = items[0];
-	itemCount = 0;
+	int itemCount = 0;
 	while (item) {
 		itemCount++;
 		item = items[itemCount];
@@ -704,7 +707,7 @@ void OPDI_SelectPort::getState(uint16_t *position) {
 
 
 uint16_t OPDI_SelectPort::getMaxPosition(void) {
-	return this->itemCount - 1;
+	return this->count;
 }
 
 bool OPDI_SelectPort::hasError(void) {

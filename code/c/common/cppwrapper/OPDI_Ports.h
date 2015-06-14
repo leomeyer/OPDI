@@ -351,7 +351,6 @@ class OPDI_SelectPort : public OPDI_Port {
 friend class OPDI;
 
 protected:
-	int itemCount;
 	char **items;
 	uint16_t count;
 	uint16_t position;
