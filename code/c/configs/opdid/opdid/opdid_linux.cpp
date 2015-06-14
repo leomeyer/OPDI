@@ -16,7 +16,7 @@ AbstractOPDID *Opdi;
 
 void signal_handler(int s){
 	std::cout << "Interrupted, exiting" << std::endl;
-	
+
 	// tell the OPDI system to shut down
 	if (Opdi != NULL)
 		Opdi->shutdown();
@@ -34,7 +34,7 @@ int main(int argc, char *argv[], char *envp[])
 	sigIntHandler.sa_flags = 0;
 
 	sigaction(SIGINT, &sigIntHandler, NULL);
-	
+
 	// convert arguments to vector list
 	std::vector<std::string> args;
 	args.reserve(argc);
@@ -84,4 +84,4 @@ int main(int argc, char *argv[], char *envp[])
 	Opdi->log("OPDID exited with code " + Opdi->to_string(exitcode));
 
 	return exitcode;
-
+}
