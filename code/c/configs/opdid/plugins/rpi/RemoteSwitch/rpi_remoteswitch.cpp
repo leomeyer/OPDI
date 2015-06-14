@@ -2,6 +2,7 @@
 // OPDID plugin that supports 433 MHz radio controlled power sockets on Raspberry Pi
 
 #include "Poco/Tuple.h"
+#include "Poco/RegularExpression.h"
 
 #include "opdi_constants.h"
 #include "opdi_platformfuncs.h"
@@ -44,7 +45,6 @@ public:
 
 class RemoteSwitchPort : public OPDI_SelectPort, protected OPDID_PortFunctions {
 protected:
-	AbstractOPDID *opdid;
 	RCSwitch* rcSwitch;
 
 	std::string systemCode;
@@ -57,14 +57,14 @@ public:
 	virtual void getState(uint16_t *position) override;
 };
 
-RemoteSwitchPort::RemoteSwitchPort(AbstractOPDID *opdid, const char *ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode) : OPDI_SelectPort(ID, 
-	(std::string("RemoteSwitchPort@") + systemCode + "/" + to_string(unitCode)).c_str(), // default label - can be changed by configuration
-	NULL) {
+RemoteSwitchPort::RemoteSwitchPort(AbstractOPDID *opdid, const char *ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode) : OPDI_SelectPort(ID) {
 	this->opdid = opdid;
 	this->rcSwitch = rcSwitch;
 	this->systemCode = systemCode;
 	this->unitCode = unitCode;
-	this->logDebug("Setup complete: RemoteSwitchPort " + to_string(this->getLabel()));
+	this->setLabel((this->ID() + "@" + systemCode + "/" + to_string(unitCode)).c_str());
+
+	opdid->log("Setup complete: RemoteSwitchPort " + to_string(this->getLabel()));
 }
 
 RemoteSwitchPort::~RemoteSwitchPort(void) {
@@ -75,17 +75,17 @@ void RemoteSwitchPort::setPosition(uint16_t position)  {
 	OPDI_SelectPort::setPosition(position);
 
 	if (position == 0) {
-		//this->logDebug(this->ID() + ": Switching off");
+		this->logDebug(this->ID() + ": Switching off");
 		this->rcSwitch->switchOff((char*)this->systemCode.c_str(), this->unitCode);
 	} else {
-		//this->logDebug(this->ID() + ": Switching on");
+		this->logDebug(this->ID() + ": Switching on");
 		this->rcSwitch->switchOn((char*)this->systemCode.c_str(), this->unitCode);
 	}
 }
 
 void RemoteSwitchPort::getState(uint16_t *position) {
 	// the position is always unknown
-	*position = -1;
+	throw AccessDenied("Cannot read a RemoteSwitch");
 }
 
 
@@ -173,7 +173,10 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 		if (portType == "RemoteSwitch") {
 			// read system code (DIP switch)
 			std::string systemCode = abstractOPDID->getConfigString(portConfig, "SystemCode", "", true);
-			// TODO validate; must be a string of type xxxxx with x = [1, 0]
+			// validate; must be a string of type xxxxx with x = [1, 0]
+			Poco::RegularExpression re("^[01][01][01][01][01]$");
+			if (!re.match(systemCode))
+				throw Poco::DataException("The 'SystemCode' must be a string of 0's and 1's of length 5");
 			// read unit code
 			int unitCode = portConfig->getInt("UnitCode", -1);
 			// check whether the code is valid
