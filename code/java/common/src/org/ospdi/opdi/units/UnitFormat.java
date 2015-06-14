@@ -68,32 +68,40 @@ public class UnitFormat {
 	}
 	
 	public String format(int value) {
-		if ("unixSeconds".equals(conversion)) {
-			return formatUnixSeconds(value);
+		try {
+			if ("unixSeconds".equals(conversion)) {
+				return formatUnixSeconds(value);
+			}
+			if ("unixSecondsLocal".equals(conversion)) {
+				return formatUnixSecondsLocal(value);
+			}
+			// calculate value; format the result
+			if ((numerator != 1) || (denominator != 1)) {
+				double val = value * numerator / (double)denominator;
+				return String.format(formatString, val);
+			} else
+				return String.format(formatString, value);
+		} catch (Exception e) {
+			return e.getClass().getSimpleName() + " " + e.getMessage();
 		}
-		if ("unixSecondsLocal".equals(conversion)) {
-			return formatUnixSecondsLocal(value);
-		}
-		// calculate value; format the result
-		if ((numerator != 1) || (denominator != 1)) {
-			double val = value * numerator / (double)denominator;
-			return String.format(formatString, val);
-		} else
-			return String.valueOf(value);
 	}
 	
 	public String format(long value) {
-		if ("unixSeconds".equals(conversion)) {
-			return formatUnixSeconds(value);
+		try {
+			if ("unixSeconds".equals(conversion)) {
+				return formatUnixSeconds(value);
+			}
+			if ("unixSecondsLocal".equals(conversion)) {
+				return formatUnixSecondsLocal(value);
+			}
+			// calculate value; format the result
+			if ((numerator != 1) || (denominator != 1)) {
+				double val = value * numerator / (double)denominator;
+				return String.format(formatString, val);
+			} else
+				return String.format(formatString, value);
+		} catch (Exception e) {
+			return e.getClass().getSimpleName() + " " + e.getMessage();
 		}
-		if ("unixSecondsLocal".equals(conversion)) {
-			return formatUnixSecondsLocal(value);
-		}
-		// calculate value; format the result
-		if ((numerator != 1) || (denominator != 1)) {
-			double val = value * numerator / (double)denominator;
-			return String.format(formatString, val);
-		} else
-			return String.valueOf(value);
 	}
 }
