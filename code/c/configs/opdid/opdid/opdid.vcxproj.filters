@@ -165,6 +165,9 @@
     <ClInclude Include="SunRiseSet.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="OPDID_PortFunctions.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -234,6 +237,9 @@
       <Filter>Quelldateien\libraries\libctb</Filter>
     </ClCompile>
     <ClCompile Include="SunRiseSet.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="OPDID_PortFunctions.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
