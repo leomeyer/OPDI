@@ -22,6 +22,7 @@
 
 // #include <iostream>
 #include <cstdlib>
+#include <algorithm>    // std::sort
 #include <string.h>
 
 #include "opdi_constants.h"
@@ -40,15 +41,11 @@
 
 uint8_t OPDI::shutdownInternal(void) {
 	// free all ports
-	OPDI_Port *port = this->first_port;
-	this->first_port = NULL;
-	this->last_port = NULL;
-	while (port) {
-		OPDI_Port *next = port->next;
-		delete port;
-		port = next;
+	PortList::iterator it = this->ports.begin();
+	while (it != this->ports.end()) {
+		delete *it;
+		it++;
 	}
-
 	this->disconnect();
 	return OPDI_SHUTDOWN;
 }
@@ -56,9 +53,8 @@ uint8_t OPDI::shutdownInternal(void) {
 uint8_t OPDI::setup(const char *slaveName, int idleTimeout) {
 	this->shutdownRequested = false;
 
-	// initialize linked lists
-	this->first_port = NULL;
-	this->last_port = NULL;
+	// initialize port list
+	this->ports.clear();
 	this->first_portGroup = NULL;
 	this->last_portGroup = NULL;
 
@@ -80,27 +76,28 @@ void OPDI::setEncoding(const char* encoding) {
 	strncpy((char*)opdi_encoding, encoding, OPDI_MAX_ENCODINGNAMELENGTH - 1);
 }
 
-uint8_t OPDI::addPort(OPDI_Port *port) {
+void OPDI::addPort(OPDI_Port *port) {
 	// associate port with this instance
 	port->opdi = this;
 
-	// first added port?
-	if (this->first_port == NULL) {
-		this->first_port = port;
-		this->last_port = port;
-	} else {
-		// subsequently added port, add to list
-		this->last_port->next = port;
-		this->last_port = port;
-	}
+	// first port?
+	if (this->ports.size() == 0)
+		this->currentOrderID = 0;
+
+	this->ports.push_back(port);
 
 	this->updatePortData(port);
 
-	// do not add hidden ports to the device capabilities
-	if (!port->isHidden())
-		return opdi_add_port((opdi_Port*)port->data);
-	else
-		return OPDI_STATUS_OK;
+	// do not use hidden ports for display sort order
+	if (!port->isHidden()) {
+		// order not defined?
+		if (port->orderID < 0) {
+			port->orderID = this->currentOrderID;
+			this->currentOrderID++;
+		} else
+			if (this->currentOrderID < port->orderID)
+				this->currentOrderID = port->orderID + 1;
+	}
 }
 
 // possible race conditions here, if one thread updates port data while the other retrieves it
@@ -145,35 +142,33 @@ void OPDI::updatePortData(OPDI_Port *port) {
 
 OPDI_Port *OPDI::findPort(opdi_Port *port) {
 	if (port == NULL)
-		return this->first_port;
-	OPDI_Port *p = this->first_port;
-	// go through linked list
-	while (p != NULL) {
-		if ((opdi_Port*)p->data == port)
-			return p;
-		p = p->next;
+		return *this->ports.begin();
+	PortList::iterator it = this->ports.begin();
+	while (it != this->ports.end()) {
+		if ((opdi_Port*)(*it)->data == port)
+			return *it;
+		it++;
 	}
 	// not found
 	return NULL;
 }
 
 OPDI_Port *OPDI::findPortByID(const char *portID, bool caseInsensitive) {
-	OPDI_Port *p = this->first_port;
-	// go through linked list
-	while (p != NULL) {
-		opdi_Port *oPort = (opdi_Port *)p->data;
+	PortList::iterator it = this->ports.begin();
+	while (it != this->ports.end()) {
+		opdi_Port *oPort = (opdi_Port *)(*it)->data;
 		if (caseInsensitive) {
 #ifdef linux
 			if (strcasecmp(oPort->id, portID) == 0)
 #else
 			if (strcmpi(oPort->id, portID) == 0)
 #endif
-				return p;
+				return *it;
 		} else {
 			if (strcmp(oPort->id, portID) == 0)
-				return p;
+				return *it;
 		}
-		p = p->next;
+		it++;
 	}
 	// not found
 	return NULL;
@@ -214,11 +209,24 @@ void OPDI::addPortGroup(OPDI_PortGroup *portGroup) {
 	opdi_add_portgroup((opdi_PortGroup*)portGroup->data);
 }
 
+bool OPDI_Port_Sort(OPDI_Port *i, OPDI_Port *j) { return i->orderID < j->orderID; }
+
+void OPDI::sortPorts(void) {
+	std::sort(this->ports.begin(), this->ports.end(), OPDI_Port_Sort);
+}
+
 void OPDI::preparePorts(void) {
-	OPDI_Port *port = this->first_port;
-	while (port) {
-		port->prepare();
-		port = port->next;
+	PortList::iterator it = this->ports.begin();
+	while (it != this->ports.end()) {
+		(*it)->prepare();
+
+		// add ports to the OPDI C subsystem; ignore hidden ports
+		if (!(*it)->isHidden()) {
+			int result = opdi_add_port((opdi_Port*)(*it)->data);
+			if (result != OPDI_STATUS_OK)
+				throw Poco::ApplicationException("Unable to add port: " + (*it)->ID() + "; code = " + (*it)->to_string(result));
+		}
+		it++;
 	}
 }
 
@@ -249,16 +257,13 @@ uint8_t OPDI::waiting(uint8_t canSend) {
 	this->canSend = canSend;
 
 	// call ports' doWork function
-	OPDI_Port *p = this->first_port;
-	// go through ports
-	while (p != NULL) {
-		// call doWork function, return errors immediately
-		uint8_t result = p->doWork(canSend);
+	PortList::iterator it = this->ports.begin();
+	while (it != this->ports.end()) {
+		uint8_t result = (*it)->doWork(canSend);
 		if (result != OPDI_STATUS_OK)
 			return result;
-		p = p->next;
+		it++;
 	}
-
 	return OPDI_STATUS_OK;
 }
 

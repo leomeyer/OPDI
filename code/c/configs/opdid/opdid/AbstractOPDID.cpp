@@ -317,6 +317,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 	if (this->logVerbosity >= AbstractOPDID::VERBOSE)
 		this->log("Node setup complete, preparing ports");
 
+	this->sortPorts();
 	this->preparePorts();
 
 	// create view to "Connection" section
@@ -551,6 +552,10 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 	if (group != "") {
 		port->setGroup(group);
 	}
+
+	port->tag = this->getConfigString(portConfig, "Tag", "", false);
+
+	port->orderID = portConfig->getInt("OrderID", -1);
 }
 
 void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port) {

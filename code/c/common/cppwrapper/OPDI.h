@@ -39,9 +39,12 @@ protected:
 	// internal flag for the methods that possibly send messages
 	uint8_t canSend;
 
+	// used to remember internal ordering when adding ports
+	int currentOrderID;
+
 	// list pointers
-	OPDI_Port *first_port;
-	OPDI_Port *last_port;
+	typedef std::vector<OPDI_Port *> PortList;
+	PortList ports;
 
 	OPDI_PortGroup *first_portGroup;
 	OPDI_PortGroup *last_portGroup;
@@ -75,7 +78,7 @@ public:
 
 	/** Adds the specified port.
 	 * */
-	virtual uint8_t addPort(OPDI_Port *port);
+	virtual void addPort(OPDI_Port *port);
 
 	/** Updates the internal port data structure. Is automatically called; do not use.
 	*/
@@ -93,7 +96,11 @@ public:
 	/** Returns NULL if the port could not be found. */
 	virtual OPDI_Port *findPortByID(const char *portID, bool caseInsensitive = false);
 
-	/** Iterates through all ports and calls their prepare() methods. */
+	/** Sorts the added ports by their OrderID. */
+	virtual void sortPorts(void);
+
+	/** Iterates through all ports and calls their prepare() methods. 
+	Also, adds the ports to the OPDI subsystem. */
 	virtual void preparePorts(void);
 
 	/** Adds the specified port group. */
