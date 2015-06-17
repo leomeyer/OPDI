@@ -21,7 +21,7 @@ SRC += $(PPATH)/opdi_platformfuncs.c
 
 # common files
 SRC += $(CPATH)/opdi_message.c $(CPATH)/opdi_port.c $(CPATH)/opdi_protocol.c $(CPATH)/opdi_slave_protocol.c $(CPATH)/opdi_strings.c
-# $(CPATH)/opdi_aes.cpp $(CPATH)/opdi_rijndael.cpp
+SRC += $(CPATH)/opdi_aes.cpp $(CPATH)/opdi_rijndael.cpp
 
 # master implementation
 MPATH = $(CPATH)/master
@@ -37,9 +37,6 @@ SRC += $(CPPPATH)/OPDI.cpp $(CPPPATH)/OPDI_Ports.cpp
 
 # additional source files
 SRC += ./AbstractOPDID.cpp ./OPDID_Ports.cpp ./opdid_linux.cpp
-
-# conio include path
-CONIOINCPATH = ../../../libraries/conio
 
 # POCO include path
 POCOINCPATH = ../../../libraries/POCO/Util/include ../../../libraries/POCO/Foundation/include ../../../libraries/POCO/Net/include
@@ -81,7 +78,7 @@ CDEFINES = -Dlinux
 
 # Compiler flags.
 CFLAGS = -Wall $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
-CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11
+CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -Wno-narrowing
 
 # Debug flags
 CFLAGS += -ggdb -O0 -fbuiltin
