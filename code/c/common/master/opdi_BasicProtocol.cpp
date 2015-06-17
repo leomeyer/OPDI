@@ -275,12 +275,12 @@ void BasicProtocol::getPortState(DigitalPort* aDigitalPort)
 void BasicProtocol::expectSelectPortPosition(SelectPort* port, int channel)
 {
 	OPDIMessage* m = expect(channel, DEFAULT_TIMEOUT);
-		
+
 	int PREFIX = 0;
 	int ID = 1;
 	int POSITION = 2;
 	unsigned int PART_COUNT = 3;
-		
+
 	std::vector<std::string> parts;
 	StringTools::split(m->getPayload(), SEPARATOR, parts);
 	if (parts.size() != PART_COUNT)
@@ -297,13 +297,13 @@ void BasicProtocol::expectSelectPortPosition(SelectPort* port, int channel)
 std::string BasicProtocol::expectSelectPortLabel(SelectPort* port, int channel)
 {
 	OPDIMessage* m = expect(channel, DEFAULT_TIMEOUT);
-		
+
 	int PREFIX = 0;
 	int ID = 1;
-	int POSITION = 2;
+//	int POSITION = 2;
 	int LABEL = 3;
 	unsigned int PART_COUNT = 4;
-		
+
 	std::vector<std::string> parts;
 	StringTools::split(m->getPayload(), SEPARATOR, parts);
 	if (parts.size() != PART_COUNT)

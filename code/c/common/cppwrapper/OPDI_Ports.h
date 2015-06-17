@@ -31,7 +31,7 @@ protected:
 	// protected constructor - for use by friend classes only
 	OPDI_Port(const char *id, const char *type);
 
-	// Protected constructor: This class can't be instantiated directly
+	// protected constructor: This class can't be instantiated directly
 	OPDI_Port(const char *id, const char *label, const char *type, const char* dircaps, int32_t flags, void* ptr);
 
 	char *id;
@@ -53,7 +53,7 @@ protected:
 	std::string icon;
 	std::string group;
 
-	// Utility function for string conversion 
+	// utility function for string conversion 
 	template <class T> std::string to_string(const T& t);
 
 	/** Called regularly by the OPDI system. Enables the port to do work.
@@ -130,8 +130,11 @@ public:
 	// linked list of ports - pointer to next port
 	OPDI_Port *next;
 
-	/** Pointer for help structures. Not used internally; may be used by the application. */
-	void* tag;
+	// used to provide display ordering on ports
+	int orderID;
+
+	// The tag is additional information not used elsewhere.
+	std::string tag;
 
 	/** Virtual destructor for the port. */
 	virtual ~OPDI_Port();

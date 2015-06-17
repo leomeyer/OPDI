@@ -36,12 +36,23 @@
 class OPDI {
 
 protected:
+
+	std::string slaveName;
+	std::string encoding;
+
+	std::string masterName;
+	std::string languages;
+	std::string username;
+
 	// internal flag for the methods that possibly send messages
 	uint8_t canSend;
 
+	// used to remember internal ordering when adding ports
+	int currentOrderID;
+
 	// list pointers
-	OPDI_Port *first_port;
-	OPDI_Port *last_port;
+	typedef std::vector<OPDI_Port *> PortList;
+	PortList ports;
 
 	OPDI_PortGroup *first_portGroup;
 	OPDI_PortGroup *last_portGroup;
@@ -68,14 +79,24 @@ public:
 	 */
 	virtual void setIdleTimeout(uint32_t idleTimeoutMs);
 
+	virtual std::string getSlaveName(void);
+
+	virtual uint8_t setMasterName(std::string masterName);
+
 	/** Sets the encoding which must be a valid Java Charset identifier. Examples: ascii, utf-8, iso8859-1.
 	 * The default encoding of this implementation is utf-8.
 	 */
-	virtual void setEncoding(const char* encoding);
+	virtual void setEncoding(std::string encoding);
+	virtual std::string getEncoding(void);
+
+	virtual uint8_t setLanguages(std::string languages);
+
+	virtual uint8_t setUsername(std::string userName);
+	virtual uint8_t setPassword(std::string userName);
 
 	/** Adds the specified port.
 	 * */
-	virtual uint8_t addPort(OPDI_Port *port);
+	virtual void addPort(OPDI_Port *port);
 
 	/** Updates the internal port data structure. Is automatically called; do not use.
 	*/
@@ -93,7 +114,11 @@ public:
 	/** Returns NULL if the port could not be found. */
 	virtual OPDI_Port *findPortByID(const char *portID, bool caseInsensitive = false);
 
-	/** Iterates through all ports and calls their prepare() methods. */
+	/** Sorts the added ports by their OrderID. */
+	virtual void sortPorts(void);
+
+	/** Iterates through all ports and calls their prepare() methods. 
+	Also, adds the ports to the OPDI subsystem. */
 	virtual void preparePorts(void);
 
 	/** Adds the specified port group. */

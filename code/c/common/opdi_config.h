@@ -15,7 +15,7 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 // Common device functions
 //
 // The functions and variables in this module must be provided by a config implementation.
@@ -25,6 +25,8 @@
 
 #ifndef __OPDI_CONFIG_H
 #define __OPDI_CONFIG_H
+
+#include <stdlib.h>
 
 #include "opdi_platformtypes.h"
 #include "opdi_configspecs.h"
@@ -37,13 +39,6 @@ extern "C" {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Common properties of masters and slaves
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** The name of the configuration. */
-extern const char *opdi_config_name;
-
-/** The encoding that should be used. One of the encoding identifiers defined in the class java.lang.Charset.
-May be empty or NULL. */
-extern const char *opdi_encoding;
 
 /** Flag combination that is valid for this configuration.
 *   The meaning of the flags depends on whether this configuration acts as a master or a slave.
@@ -64,7 +59,7 @@ extern uint8_t opdi_debug_msg(const char *str, uint8_t direction);
 *   To use encryption you must also provide functions for encrypting and decrypting blocks.
 *   You must also define ENCRYPTION_BLOCKSIZE in the config specs.
 */
-extern const char *opdi_encryption_method;
+extern char opdi_encryption_method[];
 
 /** Is used to encrypt a block of bytes of size ENCRYTION_BLOCKSIZE.
 *   dest and src are buffers of exactly this size.
@@ -86,19 +81,26 @@ extern uint8_t opdi_decrypt_block(uint8_t *dest, const uint8_t *src);
 
 #ifdef OPDI_IS_SLAVE
 
-/** A pointer to a buffer of at least length OPDI_MASTER_NAME_LENGTH that accepts the connecting master's name. */
-extern char opdi_master_name[];
+/** The slave callback function that is used by the OPDI system to send data to or request data from
+* the slave implementation. This function exists mostly to allow memory-limited devices, such as Arduinos,
+* to keep string constants in flash ROM rather than defining them as extern const char*s, which would require
+* them to be kept in RAM.
+* An opdiFunctionCode can be either a SET or a GET code. If the code is SET the buffer or data fields will
+* contain the information to transfer (depending on the code). If the code is GET the buffer may be filled
+* by the implementation to transfer the values back to the OPDI system. In this case data may contain the
+* maximum number of bytes to copy.
+*/
+extern uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data);
 
-/** A comma-separated list of protocols supported by this slave. */
-extern const char *opdi_supported_protocols;
+#define OPDI_FUNCTION_GET_CONFIG_NAME			0		/** The name of the configuration. */
+#define OPDI_FUNCTION_SET_MASTER_NAME			1		/** Called when a connecting master's name has been received. */
+#define OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS	2		/** A comma-separated list of supported protocols. */
+#define OPDI_FUNCTION_GET_ENCODING				3		/** The encoding that should be used. One of the encoding identifiers defined in the class java.lang.Charset. May be empty. */
+#define OPDI_FUNCTION_SET_LANGUAGES				4		/** Passes a string of comma-separated preferred languages as received from the master. The language names correspond to the predefined constants in the class java.util.Locale. */
 
 #ifndef OPDI_NO_AUTHENTICATION
-
-/** The username for authentication */
-extern const char *opdi_username;
-/** The password for authentication */
-extern const char *opdi_password;
-
+#define OPDI_FUNCTION_SET_USERNAME				10		/** During authentication, first the username is set. */
+#define OPDI_FUNCTION_SET_PASSWORD				11		/** Next, the password is set. If the implementation returns any code other than OPDI_STATUS_OK it is interpreted as "authentication failed". */
 #endif
 
 #ifdef OPDI_HAS_MESSAGE_HANDLED
@@ -110,11 +112,6 @@ extern const char *opdi_password;
 extern uint8_t opdi_message_handled(channel_t channel, const char **parts);
 
 #endif
-
-/** Passes a string of comma-separated preferred languages as received from the master.
-*   The language names correspond to the predefined constants in the class java.util.Locale.
-*/
-extern uint8_t opdi_choose_language(const char *languages);
 
 #ifndef OPDI_NO_ANALOG_PORTS
 

@@ -242,5 +242,11 @@
     <ClCompile Include="OPDID_PortFunctions.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\common\opdi_aes.cpp">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\common\opdi_rijndael.cpp">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

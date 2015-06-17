@@ -126,9 +126,11 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\common\cppwrapper\OPDI_Ports.cpp" />
     <ClCompile Include="..\..\..\common\cppwrapper\OPDI.cpp" />
+    <ClCompile Include="..\..\..\common\opdi_aes.cpp" />
     <ClCompile Include="..\..\..\common\opdi_message.c" />
     <ClCompile Include="..\..\..\common\opdi_port.c" />
     <ClCompile Include="..\..\..\common\opdi_protocol.c" />
+    <ClCompile Include="..\..\..\common\opdi_rijndael.cpp" />
     <ClCompile Include="..\..\..\common\opdi_slave_protocol.c" />
     <ClCompile Include="..\..\..\common\opdi_strings.c" />
     <ClCompile Include="..\..\..\libraries\libctb\src\fifo.cpp" />

@@ -20,6 +20,7 @@
 #define __OPDI_PROTOCOL_H
 
 #include "opdi_platformtypes.h"
+#include "opdi_configspecs.h"
 
 // buffer sizes for numeric to string conversions
 #define BUFSIZE_8BIT	5
@@ -29,10 +30,9 @@
 
 // Common functions of the OPDI protocol.
 
-// for splitting messages into parts
-extern const char *opdi_msg_parts[];
+extern const char *opdi_msg_parts[OPDI_MAX_MESSAGE_PARTS];
 // for assembling a payload
-extern char opdi_msg_payload[];
+extern char opdi_msg_payload[OPDI_MESSAGE_PAYLOAD_LENGTH];
 
 // expects a control message on channel 0
 uint8_t expect_control_message(const char **parts, uint8_t *partCount);

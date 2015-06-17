@@ -44,9 +44,6 @@ extern "C" {
 // on systems with only single-byte character sets.
 #define OPDI_MESSAGE_PAYLOAD_LENGTH	(OPDI_MESSAGE_BUFFER_SIZE - 9)
 
-// maximum length of master's name this device will accept
-#define OPDI_MASTER_NAME_LENGTH	32
-
 // maximum permitted message parts
 #define OPDI_MAX_MESSAGE_PARTS	16
 
@@ -70,10 +67,10 @@ extern "C" {
 #define OPDI_STREAMING_PORTS		0
 
 // define to conserve memory
-#define OPDI_NO_ENCRYPTION
+// #define OPDI_NO_ENCRYPTION
 
 // define to conserve memory
-#define OPDI_NO_AUTHENTICATION
+// #define OPDI_NO_AUTHENTICATION
 
 // this device supports the extended protocol
 #define OPDI_EXTENDED_PROTOCOL			1

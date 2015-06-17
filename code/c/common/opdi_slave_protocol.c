@@ -729,6 +729,16 @@ static uint8_t send_extended_group_info(channel_t channel, opdi_PortGroup *group
 
 	return send_parts(channel);
 }
+
+static uint8_t send_extended_device_info(channel_t channel, char *deviceInfo) {
+	// join payload
+	opdi_msg_parts[0] = OPDI_extendedDeviceInfo;
+	opdi_msg_parts[1] = deviceInfo;
+	opdi_msg_parts[2] = NULL;
+
+	return send_parts(channel);
+}
+
 #endif		// OPDI_EXTENDED_PROTOCOL
 
 /** Implements the basic protocol message handler.
@@ -987,6 +997,9 @@ static uint8_t extended_protocol_message(channel_t channel) {
 			return OPDI_GROUP_UNKNOWN;
 		return send_extended_group_info(channel, group);
 	} 
+	else if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedDeviceInfo)) {
+		return send_extended_device_info(channel, NULL);
+	} 
 	else
 		// for all other messages, fall back to the basic protocol
 		return basic_protocol_message(channel);
@@ -1135,8 +1148,13 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	uint8_t partCount;
 	int32_t flags;
 	char buf[BUFSIZE_32BIT];
+#ifndef OPDI_FUNCTION_BUFFERSIZE
+#define OPDI_FUNCTION_BUFFERSIZE	32
+#endif
+	char funcBuf1[OPDI_FUNCTION_BUFFERSIZE];
+	char funcBuf2[OPDI_FUNCTION_BUFFERSIZE];
 	opdi_ProtocolHandler protocol_handler = &basic_protocol_message;
-	
+
 #ifndef OPDI_NO_ENCRYPTION
 	const char *encryptions[MAX_ENCRYPTIONS];
 	uint8_t i;
@@ -1269,12 +1287,21 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	///// Send: Handshake reply
 	////////////////////////////////////////////////////////////
 
+	// get encoding
+	result = opdi_slave_callback(OPDI_FUNCTION_GET_ENCODING, funcBuf1, OPDI_FUNCTION_BUFFERSIZE);
+	if (result != OPDI_STATUS_OK)
+		return result;
+	// get supported protocols
+	result = opdi_slave_callback(OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS, funcBuf2, OPDI_FUNCTION_BUFFERSIZE);
+	if (result != OPDI_STATUS_OK)
+		return result;
+
 	// prepare handshake reply message
 	m.channel = 0;
 	m.payload = opdi_msg_payload;
 	opdi_msg_parts[0] = OPDI_Handshake;
 	opdi_msg_parts[1] = OPDI_Handshake_version;
-	opdi_msg_parts[2] = (opdi_encoding != NULL ? opdi_encoding : "");
+	opdi_msg_parts[2] = funcBuf1;
 #ifndef OPDI_NO_ENCRYPTION
 	opdi_msg_parts[3] = encryption;
 #else
@@ -1283,7 +1310,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	// convert flags to string
 	opdi_int32_to_str(opdi_device_flags, buf);
 	opdi_msg_parts[4] = buf;
-	opdi_msg_parts[5] = opdi_supported_protocols;
+	opdi_msg_parts[5] = funcBuf2;
 	opdi_msg_parts[6] = NULL;
 
 	result = strings_join(opdi_msg_parts, OPDI_PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
@@ -1331,11 +1358,13 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 			protocol_handler = &basic_protocol_message;
 	}
 
-	// copy master's name
-	strncpy(opdi_master_name, (char*)opdi_msg_parts[2], OPDI_MASTER_NAME_LENGTH - 1);
+	// set master's name
+	result = opdi_slave_callback(OPDI_FUNCTION_SET_MASTER_NAME, (char*)opdi_msg_parts[2], 0);
+	if (result != OPDI_STATUS_OK)
+		return result;
 
 	// pass preferred languages, see opdi_device.h
-	result = opdi_choose_language(opdi_msg_parts[1]);
+	result = opdi_slave_callback(OPDI_FUNCTION_SET_LANGUAGES, (char*)opdi_msg_parts[1], 0);
 	if (result != OPDI_STATUS_OK)
 		return result;
 
@@ -1343,10 +1372,15 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	///// Send: Slave Name
 	////////////////////////////////////////////////////////////
 		
+	// get slave name
+	result = opdi_slave_callback(OPDI_FUNCTION_GET_CONFIG_NAME, funcBuf1, OPDI_FUNCTION_BUFFERSIZE);
+	if (result != OPDI_STATUS_OK)
+		return result;
+
 	m.channel = 0;
 	m.payload = opdi_msg_payload;
 	opdi_msg_parts[0] = OPDI_Agreement;
-	opdi_msg_parts[1] = opdi_config_name;
+	opdi_msg_parts[1] = funcBuf1;
 	opdi_msg_parts[2] = NULL;
 
 	result = strings_join(opdi_msg_parts, OPDI_PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
@@ -1390,8 +1424,12 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 			return OPDI_AUTHENTICATION_EXPECTED;
 		}
 
-		// user name: match case insensitive
-		if (opdi_string_cmp(opdi_msg_parts[1], opdi_username) || strcmp(opdi_msg_parts[2], opdi_password)) {
+		// set user name
+		result = opdi_slave_callback(OPDI_FUNCTION_SET_USERNAME, (char *)opdi_msg_parts[1], 0);
+		if (result == OPDI_STATUS_OK)
+			// set password
+			result = opdi_slave_callback(OPDI_FUNCTION_SET_PASSWORD, (char *)opdi_msg_parts[2], 0);
+		if (result != OPDI_STATUS_OK) {
 			send_disagreement(0, OPDI_AUTHENTICATION_FAILED, "Authentication failed", NULL);
 			return OPDI_AUTHENTICATION_FAILED;
 		}

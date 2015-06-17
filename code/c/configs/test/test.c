@@ -45,19 +45,15 @@
 #include "opdi_slave_protocol.h"
 #include "test.h"
 
-const char *opdi_config_name;
-
 char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
-const char *opdi_encoding = OPDI_ENCODING_ISO8859_1;
-const char *opdi_encryption_method = "AES";
-const char *opdi_supported_protocols = "BP,EP";
-const char *opdi_username = "admin";
-const char *opdi_password = "admin";
-
 uint16_t opdi_device_flags = OPDI_FLAG_AUTHENTICATION_REQUIRED;
 
+char opdi_encryption_method[] = "AES";
 uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
-const char *opdi_encryption_key = "0123456789012345";
+char opdi_encryption_key[] = "0123456789012345";
+
+char loginUser[] = "admin";
+char loginPassword[] = "admin";
 
 // provide MS-specific encryption buffers
 // (The MS compiler can't do dynamic array allocation on the stack apparently)
@@ -100,8 +96,6 @@ static int64_t dialvalue = 0;
 static double temperature = 20.0;
 static double pressure = 1000.0;
 
-
-// is called by the protocol
 uint8_t opdi_choose_language(const char *languages) {
 	if (!strcmp(languages, "de_DE")) {
 		digPort.name = "Digitaler Port";
@@ -117,6 +111,22 @@ uint8_t opdi_choose_language(const char *languages) {
 	}
 
 	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data) {
+
+	switch (opdiFunctionCode) {
+	case OPDI_FUNCTION_GET_CONFIG_NAME: strncpy(buffer, "OPDI Test Slave", data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_MASTER_NAME: strncpy(opdi_master_name, buffer, data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS: strncpy(buffer, "BP", data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_ENCODING: strncpy(buffer, "ISO8859-1", data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_LANGUAGES: return opdi_choose_language(buffer);
+#ifndef OPDI_NO_AUTHENTICATION
+	case OPDI_FUNCTION_SET_USERNAME: if (strcmp(loginUser, buffer)) return OPDI_AUTHENTICATION_FAILED; else return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_PASSWORD: if (strcmp(loginPassword, buffer)) return OPDI_AUTHENTICATION_FAILED; else return OPDI_STATUS_OK;
+#endif
+	default: return OPDI_FUNCTION_UNKNOWN;
+	}
 }
 
 uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], char ref[], int32_t *value) {

@@ -57,10 +57,6 @@ static uint8_t EEMEM oscSpeed_ee;
 
 
 // define device-specific attributes
-const char* opdi_config_name = "Poladisc";
-char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
-const char* opdi_encoding = "";
-const char* opdi_supported_protocols = "BP";
 uint16_t opdi_device_flags = 0;
 
 volatile uint8_t red_pwm;
@@ -259,12 +255,20 @@ static struct opdi_Port oscSpeedPort =
 	.caps = OPDI_PORTDIRCAP_OUTPUT
 };
 
+uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data) {
 
-// is called by the protocol
-uint8_t opdi_choose_language(const char *languages) {
-	// no effect
-
-	return OPDI_STATUS_OK;
+	switch (opdiFunctionCode) {
+	case OPDI_FUNCTION_GET_CONFIG_NAME: strncpy(buffer, "Poladisc", data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_MASTER_NAME: return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS: strncpy(buffer, "BP", data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_ENCODING: strncpy(buffer, "ISO8859-1", data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_LANGUAGES: return OPDI_STATUS_OK;
+#ifndef OPDI_NO_AUTHENTICATION
+	case OPDI_FUNCTION_SET_USERNAME: return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_PASSWORD: return OPDI_STATUS_OK;
+#endif
+	default: return OPDI_FUNCTION_UNKNOWN;
+	}
 }
 
 uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], char ref[], int32_t *value) {

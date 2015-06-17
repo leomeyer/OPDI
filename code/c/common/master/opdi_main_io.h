@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include <iostream>
-#include <conio.h>
+// #include <conio.h>
 
 const char *read_line (char *buf, size_t length, FILE *f);
 

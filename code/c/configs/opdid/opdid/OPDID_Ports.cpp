@@ -1101,7 +1101,7 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 			// sun already set?
 			if (result < now)
 				// find tomorrow's sunset
-				result = sunRiseSet.GetSunrise(schedule->astroLat, schedule->astroLon, Poco::DateTime(now.julianDay() + 1));
+				result = sunRiseSet.GetSunset(schedule->astroLat, schedule->astroLon, Poco::DateTime(now.julianDay() + 1));
 			// values are specified in local time; convert to UTC
 			result.makeUTC(Poco::Timezone::tzd());
 			return result.timestamp() + schedule->astroOffset * 1000000;		// add offset in nanoseconds

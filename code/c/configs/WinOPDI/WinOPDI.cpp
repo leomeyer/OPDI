@@ -179,37 +179,6 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 }
 
 void init_device() {
-	// set slave name
-	TCHAR compName[1024];
-	DWORD dwCompNameLen = 1024;
-	TCHAR nameBuf[1024];
-
-	// UTF-8?
-	if (strcmp(opdi_encoding, OPDI_ENCODING_UTF8) == 0) {
-
-		// get the computer name (WSTRING)
-		if (0 != GetComputerName(compName, &dwCompNameLen)) {
-
-			// print the formatted name into the buffer
-			swprintf(nameBuf, dwCompNameLen, L"WinOPDI (%s)", compName);
-
-			opdi_config_name = (char*)malloc(OPDI_CONFIG_NAME_LENGTH);
-
-			// convert to multibyte character set (UTF-8)
-			WideCharToMultiByte(CP_UTF8, 0, &nameBuf[0], -1, (LPSTR)opdi_config_name, OPDI_CONFIG_NAME_LENGTH, NULL, NULL);
-		}
-	} else {
-		// single byte character set
-	
-		// TODO convert from wide char
-	}
-
-	// fallback to generic name
-	if (opdi_config_name == NULL) {
-		opdi_config_name = "WinOPDI";
-	}
-
-	// configure ports
 	configure_ports();
 
 	opdi_slave_init();

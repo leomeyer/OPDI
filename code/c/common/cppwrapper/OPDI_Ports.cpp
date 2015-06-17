@@ -39,6 +39,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->refreshRequired = false;
 	this->refreshTime = 0;
 	this->lastRefreshTime = 0;
+	this->orderID = -1;
 
 	this->id = (char*)malloc(strlen(id) + 1);
 	strcpy(this->id, id);

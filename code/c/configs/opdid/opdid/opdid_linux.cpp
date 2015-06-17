@@ -14,8 +14,16 @@
 // the main OPDI instance is declared here
 AbstractOPDID *Opdi;
 
-void signal_handler(int s){
+void signal_handler(int s) {
 	std::cout << "Interrupted, exiting" << std::endl;
+
+	// tell the OPDI system to shut down
+	if (Opdi != NULL)
+		Opdi->shutdown();
+}
+
+void signal_handler_term(int s) {
+	std::cout << "Terminated, exiting" << std::endl;
 
 	// tell the OPDI system to shut down
 	if (Opdi != NULL)
@@ -32,8 +40,12 @@ int main(int argc, char *argv[], char *envp[])
 	sigIntHandler.sa_handler = signal_handler;
 	sigemptyset(&sigIntHandler.sa_mask);
 	sigIntHandler.sa_flags = 0;
-
 	sigaction(SIGINT, &sigIntHandler, NULL);
+
+	sigIntHandler.sa_handler = signal_handler_term;
+	sigemptyset(&sigIntHandler.sa_mask);
+	sigIntHandler.sa_flags = 0;
+	sigaction(SIGTERM, &sigIntHandler, NULL);
 
 	// convert arguments to vector list
 	std::vector<std::string> args;

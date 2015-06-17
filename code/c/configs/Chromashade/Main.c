@@ -93,10 +93,6 @@ static uint8_t EEMEM oscBrightness_ee;
 
 
 // define device-specific attributes
-const char* opdi_config_name = "Chromashade";
-char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
-const char* opdi_encoding = "";
-const char* opdi_supported_protocols = "BP";
 uint16_t opdi_device_flags = 0;
 
 static long idle_timeout_ms = 120000;
@@ -243,8 +239,7 @@ static struct opdi_Port oscBrightnessPort =
 	.caps = OPDI_PORTDIRCAP_OUTPUT
 };
 
-// is called by the protocol
-uint8_t opdi_choose_language(const char *languages) {
+uint8_t choose_language(const char *languages) {
 	// supports German?
 	if (strcmp("de_DE", languages) == 0) {
 		// set German texts
@@ -261,6 +256,22 @@ uint8_t opdi_choose_language(const char *languages) {
 	}
 	
 	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data) {
+
+	switch (opdiFunctionCode) {
+	case OPDI_FUNCTION_GET_CONFIG_NAME: strncpy(buffer, "Poladisc", data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_MASTER_NAME: return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS: strncpy(buffer, "BP", data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_ENCODING: strncpy(buffer, "ISO8859-1", data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_LANGUAGES: return choose_language(buffer);
+#ifndef OPDI_NO_AUTHENTICATION
+	case OPDI_FUNCTION_SET_USERNAME: return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_PASSWORD: return OPDI_STATUS_OK;
+#endif
+	default: return OPDI_FUNCTION_UNKNOWN;
+	}
 }
 
 uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], char ref[], int32_t *value) {
