@@ -15,7 +15,7 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 // Common device functions
 //
 // The functions and variables in this module must be provided by a config implementation.
@@ -25,6 +25,8 @@
 
 #ifndef __OPDI_CONFIG_H
 #define __OPDI_CONFIG_H
+
+#include <stdlib.h>
 
 #include "opdi_platformtypes.h"
 #include "opdi_configspecs.h"

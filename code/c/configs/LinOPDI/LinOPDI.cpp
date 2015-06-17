@@ -173,23 +173,6 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 }
 
 void init_device() {
-	// set slave name
-	char nameBuf[1024];
-	size_t compNameLen = 1024;
-
-	if (opdi_config_name == NULL) {
-		opdi_config_name = (const char*)malloc(OPDI_CONFIG_NAME_LENGTH);
-	}
-
-	// requires #undef UNICODE to work properly
-	if (0 != gethostname(nameBuf, compNameLen)) {
-		sprintf((char *)opdi_config_name, "LinOPDI (%s)", nameBuf);
-	}
-	else {
-		opdi_config_name = "LinOPDI";
-	}
-
-	// configure ports
 	configure_ports();
 }
 
