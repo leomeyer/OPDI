@@ -355,7 +355,7 @@ protected:
 
 		int occurrences;		// occurrence counter
 		int maxOccurrences;		// maximum number of occurrences that this schedule is active
-		long delayMs;			// deactivation time in milliseconds
+		uint64_t duration;		// duration in milliseconds until the timer is deactivated (0 = no deactivation)
 	};
 
 	class ScheduleNotification : public Poco::Notification {
