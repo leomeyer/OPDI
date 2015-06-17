@@ -47,11 +47,13 @@ protected:
 
 	bool allowHiddenPorts;
 
+	// user and password for master authentication (set from the configuration)
+	std::string loginUser;
+	std::string loginPassword;
+
 	// environment variables for config file substitution (keys prefixed with $)
 	std::map<std::string, std::string> environment;
 	Poco::Util::AbstractConfiguration *configuration;
-
-	std::string masterName;
 
 	Poco::Mutex mutex;
 	Poco::Logger* logger;
@@ -87,7 +89,7 @@ public:
 
 	virtual void protocolCallback(uint8_t protState);
 
-	virtual void connected(const char *masterName);
+	virtual void connected(void);
 
 	virtual void disconnected(void);
 
@@ -142,6 +144,10 @@ public:
 	virtual void lockResource(std::string resourceID, std::string lockerID);
 
 	virtual void setGeneralConfiguration(Poco::Util::AbstractConfiguration *general);
+
+	virtual void configureEncryption(Poco::Util::AbstractConfiguration *config);
+
+	virtual void configureAuthentication(Poco::Util::AbstractConfiguration *config);
 
 	/** Reads common properties from the configuration and configures the port group. */
 	virtual void configureGroup(Poco::Util::AbstractConfiguration *groupConfig, OPDI_PortGroup *group, int defaultFlags);
@@ -213,6 +219,9 @@ public:
 	virtual IOPDIDPlugin *getPlugin(std::string driver) = 0;
 
 	virtual uint8_t waiting(uint8_t canSend) override;
+
+	// authenticate comparing the login data with the configuration login data
+	virtual uint8_t setPassword(std::string password) override;
 };
 
 

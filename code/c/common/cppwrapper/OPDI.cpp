@@ -59,9 +59,9 @@ uint8_t OPDI::setup(const char *slaveName, int idleTimeout) {
 	this->last_portGroup = NULL;
 
 	// copy slave name to internal buffer
-	strncpy((char*)opdi_config_name, slaveName, OPDI_MAX_SLAVENAMELENGTH - 1);
+	this->slaveName = slaveName;
 	// set standard encoding to "utf-8"
-	strncpy((char*)opdi_encoding, "utf-8", OPDI_MAX_ENCODINGNAMELENGTH - 1);
+	this->encoding = "utf-8";
 
 	this->idle_timeout_ms = idleTimeout;
 
@@ -72,9 +72,37 @@ void OPDI::setIdleTimeout(uint32_t idleTimeoutMs) {
 	this->idle_timeout_ms = idleTimeoutMs;
 }
 
-void OPDI::setEncoding(const char* encoding) {
-	strncpy((char*)opdi_encoding, encoding, OPDI_MAX_ENCODINGNAMELENGTH - 1);
+void OPDI::setEncoding(std::string encoding) {
+	this->encoding = encoding;
 }
+
+std::string OPDI::getSlaveName(void) {
+	return this->slaveName;
+}
+
+uint8_t OPDI::setMasterName(std::string masterName) {
+	this->masterName = masterName;
+	return OPDI_STATUS_OK;
+}
+
+std::string OPDI::getEncoding(void) {
+	return this->encoding;
+}
+
+uint8_t OPDI::setLanguages(std::string languages) {
+	this->languages = languages;
+	return OPDI_STATUS_OK;
+}
+
+uint8_t OPDI::setUsername(std::string userName) {
+	this->username = userName;
+	return OPDI_STATUS_OK;
+}
+
+uint8_t OPDI::setPassword(std::string userName) {
+	return OPDI_STATUS_OK;
+}
+
 
 void OPDI::addPort(OPDI_Port *port) {
 	// associate port with this instance

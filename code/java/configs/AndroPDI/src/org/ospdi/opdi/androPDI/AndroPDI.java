@@ -825,8 +825,8 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
 					public void onClick(View v) {
 						dialogOk = true;
 
-						fNamePassword[0] = username.getText().toString();
-						fNamePassword[1] = password.getText().toString();
+						fNamePassword[0] = username.getText().toString().trim();
+						fNamePassword[1] = password.getText().toString().trim();
 						fSave[0] = cbSave.isChecked();
 						
 						dl.dismiss();

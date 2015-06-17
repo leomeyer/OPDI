@@ -12,6 +12,7 @@
 #include "Poco/Path.h"
 #include "Poco/Mutex.h"
 #include "Poco/SimpleFileChannel.h"
+#include "Poco/UTF8String.h"
 
 #include "opdi_constants.h"
 
@@ -24,7 +25,22 @@
 
 #define OPDID_CONFIG_FILE_SETTING	"__OPDID_CONFIG_FILE_PATH"
 
-// slave protocoll callback
+#define OPDID_SUPPORTED_PROTOCOLS	"EP,BP"
+
+// global device flags
+uint16_t opdi_device_flags = 0;
+
+char opdi_encryption_method[16] = "";
+char opdi_encryption_key[16] = "";
+#define OPDI_ENCRYPTION_BLOCKSIZE	16
+uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
+
+#ifdef _MSC_VER
+unsigned char opdi_encryption_buffer[OPDI_ENCRYPTION_BLOCKSIZE];
+unsigned char opdi_encryption_buffer_2[OPDI_ENCRYPTION_BLOCKSIZE];
+#endif
+
+// slave protocol callback
 void protocol_callback(uint8_t state) {
 	Opdi->protocolCallback(state);
 }
@@ -85,16 +101,14 @@ void AbstractOPDID::protocolCallback(uint8_t protState) {
 			this->log("Handshake started");
 	} else
 	if (protState == OPDI_PROTOCOL_CONNECTED) {
-		this->connected(opdi_master_name);
+		this->connected();
 	} else
 	if (protState == OPDI_PROTOCOL_DISCONNECTED) {
 		this->disconnected();
 	}
 }
 
-void AbstractOPDID::connected(const char *masterName) {
-	this->masterName = std::string(masterName);
-
+void AbstractOPDID::connected() {
 	if (this->logVerbosity != AbstractOPDID::QUIET)
 		this->log("Connected to: " + this->masterName);
 
@@ -379,11 +393,58 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 
 	this->allowHiddenPorts = general->getBool("AllowHidden", true);
 
+	// encryption defined?
+	std::string encryptionNode = general->getString("Encryption", "");
+	if (encryptionNode != "") {
+		this->configureEncryption(general->createView(encryptionNode));
+	}
+
+	// authentication defined?
+	std::string authenticationNode = general->getString("Authentication", "");
+	if (authenticationNode != "") {
+		this->configureAuthentication(general->createView(authenticationNode));
+	}
+
 	// initialize OPDI slave
 	this->setup(slaveName.c_str(), idleTimeout);
 }
 
-	/** Reads common properties from the configuration and configures the port group. */
+void AbstractOPDID::configureEncryption(Poco::Util::AbstractConfiguration *config) {
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Configuring encryption");
+
+	std::string type = config->getString("Type", "");
+	if (type == "AES") {
+		std::string key = config->getString("Key", "");
+		if (key.length() != 16)
+			throw Poco::DataException("AES encryption setting 'Key' must be specified and 16 characters long");
+
+		strcpy(opdi_encryption_method, "AES");
+		strcpy(opdi_encryption_key, key.c_str());
+	} else
+		throw Poco::DataException("Encryption type not supported, expected 'AES': " + type);
+}
+
+void AbstractOPDID::configureAuthentication(Poco::Util::AbstractConfiguration *config) {
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Configuring authentication");
+
+	std::string type = config->getString("Type", "");
+	if (type == "Login") {
+		std::string username = config->getString("Username", "");
+		if (username == "")
+			throw Poco::DataException("Authentication setting 'Username' must be specified");
+		this->loginUser = username;
+
+		this->loginPassword = config->getString("Password", "");
+
+		// flag the device: expect authentication
+		opdi_device_flags |= OPDI_FLAG_AUTHENTICATION_REQUIRED;
+	} else
+		throw Poco::DataException("Authentication type not supported, expected 'Login': " + type);
+}
+
+/** Reads common properties from the configuration and configures the port group. */
 void AbstractOPDID::configureGroup(Poco::Util::AbstractConfiguration *groupConfig, OPDI_PortGroup *group, int defaultFlags) {
 	// the default label is the port ID
 	std::string portLabel = this->getConfigString(groupConfig, "Label", group->getID(), false);
@@ -943,7 +1004,7 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {
 
 	if (this->logVerbosity >= VERBOSE)
-		this->log(std::string("Setting up connection for slave: ") + opdi_config_name);
+		this->log(std::string("Setting up connection for slave: ") + this->slaveName);
 	std::string connectionType = this->getConfigString(config, "Type", "", true);
 
 	if (connectionType == "TCP") {
@@ -978,9 +1039,7 @@ void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
 	}
 }
 
-
 uint8_t AbstractOPDID::waiting(uint8_t canSend) {
-
 	// exception-safe processing
 	try {
 		return OPDI::waiting(canSend);
@@ -997,10 +1056,48 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
+bool icompare_pred(unsigned char a, unsigned char b)
+{
+    return std::tolower(a) == std::tolower(b);
+}
+
+bool icompare(std::string const& a, std::string const& b)
+{
+    return std::lexicographical_compare(a.begin(), a.end(),
+                                        b.begin(), b.end(), icompare_pred);
+}
+
+uint8_t AbstractOPDID::setPassword(std::string password) {
+	// TODO fix: username/password side channel leak (timing attack) (?)
+	// username must match case insensitive
+	if (Poco::UTF8::icompare(this->loginUser, this->username))
+		return OPDI_AUTHENTICATION_FAILED;
+	// password must match case sensitive
+	if (this->loginPassword != password)
+		return OPDI_AUTHENTICATION_FAILED;
+
+	return OPDI_STATUS_OK;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The following functions implement the glue code between C and C++.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data) {
+
+	switch (opdiFunctionCode) {
+	case OPDI_FUNCTION_GET_CONFIG_NAME: strncpy(buffer, Opdi->getSlaveName().c_str(), data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_MASTER_NAME: return Opdi->setMasterName(buffer);
+	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS: strncpy(buffer, OPDID_SUPPORTED_PROTOCOLS, data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_ENCODING: strncpy(buffer, Opdi->getEncoding().c_str(), data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_LANGUAGES: return Opdi->setLanguages(buffer);
+#ifndef OPDI_NO_AUTHENTICATION
+	case OPDI_FUNCTION_SET_USERNAME: return Opdi->setUsername(buffer);
+	case OPDI_FUNCTION_SET_PASSWORD: return Opdi->setPassword(buffer);
+#endif
+	default: return OPDI_FUNCTION_UNKNOWN;
+	}
+}
 
 /** Can be used to send debug messages to a monitor.
  *
@@ -1023,12 +1120,6 @@ uint8_t opdi_debug_msg(const char *message, uint8_t direction) {
 	Opdi->log(dirChar + message);
 	return OPDI_STATUS_OK;
 }
-
-const char *opdi_encoding = new char[OPDI_MAX_ENCODINGNAMELENGTH];
-uint16_t opdi_device_flags = 0;
-const char *opdi_supported_protocols = "EP,BP";
-const char *opdi_config_name = new char[OPDI_MAX_SLAVENAMELENGTH];
-char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
 
 // digital port functions
 #ifndef NO_DIGITAL_PORTS
