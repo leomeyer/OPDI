@@ -14,14 +14,14 @@ PPATHBASE = ../../../platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List C source files of the configuration here.
-SRC = LinuxOPDID.cpp OPDIDConfigurationFile.cpp SunRiseSet.cpp
+SRC = LinuxOPDID.cpp OPDIDConfigurationFile.cpp SunRiseSet.cpp OPDID_PortFunctions.cpp
 
 # platform specific files
 SRC += $(PPATH)/opdi_platformfuncs.c
 
 # common files
 SRC += $(CPATH)/opdi_message.c $(CPATH)/opdi_port.c $(CPATH)/opdi_protocol.c $(CPATH)/opdi_slave_protocol.c $(CPATH)/opdi_strings.c
-# $(CPATH)/opdi_aes.cpp $(CPATH)/opdi_rijndael.cpp
+SRC += $(CPATH)/opdi_aes.cpp $(CPATH)/opdi_rijndael.cpp
 
 # master implementation
 MPATH = $(CPATH)/master
@@ -77,7 +77,7 @@ CDEFINES = -Dlinux -DPOCO_STATIC
 
 # Compiler flags.
 CFLAGS = -Wall $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
-CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -static-libstdc++
+CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -static-libstdc++ -Wno-narrowing
 
 # Debug flags
 CFLAGS += -ggdb -O0 -fbuiltin
