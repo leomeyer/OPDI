@@ -808,7 +808,7 @@ void FritzBoxPlugin::run(void) {
 	while (!this->opdid->shutdownRequested) {
 		try {
 
-			Poco::Notification::Ptr notification = this->queue.waitDequeueNotification(1);
+			Poco::Notification::Ptr notification = this->queue.waitDequeueNotification(100);
 			if (notification) {
 				ActionNotification::Ptr workNf = notification.cast<ActionNotification>();
 				if (workNf) {
