@@ -383,7 +383,7 @@ uint8_t setupDevice() {
   digitalWrite(SWITCH, HIGH);
 
   // initialize the OPDI system
-  uint8_t result = ArduinOpdi.setup("DoorControl", 60000, OPDI_FLAG_AUTHENTICATION_REQUIRED);  // one minute timeout
+  uint8_t result = ArduinOpdi.setup(60000, OPDI_FLAG_AUTHENTICATION_REQUIRED, &Serial, NULL);  // one minute timeout
   if (checkerror(result) == 0)
     return 0;
 

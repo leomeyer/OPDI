@@ -32,17 +32,7 @@
 
 #include "OPDI.h"
 
-char m_encoding[MAX_ENCODINGNAMELENGTH];
-const char *opdi_encoding = (const char *)&m_encoding;
 uint16_t opdi_device_flags = 0;
-const char *opdi_supported_protocols =
-#ifdef OPDI_EXTENDED_PROTOCOL
-		"EP,"
-#endif
-"BP";
-char m_config_name[MAX_SLAVENAMELENGTH];
-const char *opdi_config_name = (const char *)&m_config_name;
-char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
 
 // digital port functions
 #ifndef NO_DIGITAL_PORTS
@@ -338,7 +328,7 @@ OPDI_DialPort::~OPDI_DialPort() {}
 // Main class for OPDI functionality
 //////////////////////////////////////////////////////////////////////////////////////////
 
-uint8_t OPDI::setup(const char *slaveName, int16_t deviceFlags, Stream* ioStream, Stream* debugStream) {
+uint8_t OPDI::setup(int16_t deviceFlags, Stream* ioStream, Stream* debugStream) {
 	this->ioStream = ioStream;
 	this->debugStream = debugStream;
 
@@ -348,11 +338,6 @@ uint8_t OPDI::setup(const char *slaveName, int16_t deviceFlags, Stream* ioStream
 
 	this->workFunction = NULL;
 	opdi_device_flags = deviceFlags;
-
-	// copy slave name to internal buffer
-	strncpy((char*)opdi_config_name, slaveName, MAX_SLAVENAMELENGTH - 1);
-	// set standard encoding to "utf-8"
-	strncpy((char*)opdi_encoding, "utf-8", MAX_ENCODINGNAMELENGTH - 1);
 
 	opdi_slave_init();
 
@@ -482,3 +467,40 @@ uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 	return OPDI_STATUS_OK;
 }
 
+
+void OPDI::getSlaveName(char *buffer, size_t length) {
+	strncpy(buffer, "OPDI Slave", length);
+}
+
+void OPDI::getEncoding(char *buffer, size_t length) {
+	strncpy(buffer, "utf-8", length);
+}
+
+uint8_t OPDI::setLanguages(char *languages) {
+	return OPDI_STATUS_OK;
+}
+
+uint8_t OPDI::setUsername(char *username) {
+	return OPDI_STATUS_OK;
+}
+
+uint8_t OPDI::setPassword(char *password) {
+	return OPDI_STATUS_OK;
+}
+
+
+uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data) {
+
+	switch (opdiFunctionCode) {
+	case OPDI_FUNCTION_GET_CONFIG_NAME: Opdi->getSlaveName(buffer, data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_MASTER_NAME: return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS: strncpy(buffer, "EP,BP", data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_ENCODING: Opdi->getEncoding(buffer, data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_LANGUAGES: return Opdi->setLanguages(buffer);
+#ifndef OPDI_NO_AUTHENTICATION
+	case OPDI_FUNCTION_SET_USERNAME: return Opdi->setUsername(buffer);
+	case OPDI_FUNCTION_SET_PASSWORD: return Opdi->setPassword(buffer);
+#endif
+	default: return OPDI_FUNCTION_UNKNOWN;
+	}
+}
