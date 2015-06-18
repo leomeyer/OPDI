@@ -29,11 +29,7 @@ void OPDID_PortFunctions::findPorts(std::string configPort, std::string setting,
 	while (std::getline(ss, item, ' ')) {
 		if (item == "*") {
 			// add all ports
-			OPDI_Port* port = this->opdid->findPort(NULL);
-			while (port != NULL) {
-				portList.push_back(port);
-				port = port->next;
-			}
+			portList = this->opdid->getPorts();
 		} else
 		// ignore empty items
 		if (item != "") {

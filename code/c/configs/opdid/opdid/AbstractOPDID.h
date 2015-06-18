@@ -222,6 +222,9 @@ public:
 
 	// authenticate comparing the login data with the configuration login data
 	virtual uint8_t setPassword(std::string password) override;
+
+	// log the refreshed ports
+	virtual uint8_t refresh(OPDI_Port **ports) override;
 };
 
 

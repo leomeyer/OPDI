@@ -127,9 +127,6 @@ public:
 		AccessDenied(std::string message): Poco::Exception(message) {};
 	};
 
-	// linked list of ports - pointer to next port
-	OPDI_Port *next;
-
 	// used to provide display ordering on ports
 	int orderID;
 

@@ -208,7 +208,7 @@ public:
 	/** Prepares the OPDI class for use.
 	 *
 	 */
-	uint8_t setup(const char *slave_name, int16_t deviceFlags, Stream* ioStream, Stream* debugStream);
+	uint8_t setup(int16_t deviceFlags, Stream* ioStream, Stream* debugStream);
 
 	/** Sets the idle timeout. If the master sends no meaningful messages during this time
 	 * the slave sends a disconnect message. If the value is 0 (default), the setting has no effect.
@@ -265,6 +265,16 @@ public:
 	/** An internal handler which is used to implement the idle timer.
 	 */
 	virtual uint8_t messageHandled(channel_t channel, const char **parts);
+
+	virtual void getSlaveName(char *buffer, size_t length);
+
+	virtual void getEncoding(char *buffer, size_t length);
+
+	virtual uint8_t setLanguages(char *languages);
+
+	virtual uint8_t setUsername(char *username);
+
+	virtual uint8_t setPassword(char *password);
 };
 
 // declare a singleton instance that must be defined by the implementation

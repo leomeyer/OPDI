@@ -24,7 +24,6 @@
 
 OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->data = NULL;
-	this->next = NULL;
 	this->id = NULL;
 	this->label = NULL;
 	this->caps[0] = OPDI_PORTDIRCAP_UNKNOWN[0];
@@ -48,7 +47,6 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 
 OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const char *dircaps, int32_t flags, void* ptr) {
 	this->data = NULL;
-	this->next = NULL;
 	this->id = NULL;
 	this->label = NULL;
 	this->opdi = NULL;

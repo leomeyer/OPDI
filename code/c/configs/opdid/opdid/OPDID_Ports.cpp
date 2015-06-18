@@ -818,7 +818,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 		schedule.nodeName = nodeName;
 
 		schedule.maxOccurrences = scheduleConfig->getInt("MaxOccurrences", -1);
-		schedule.delayMs = scheduleConfig->getInt("Delay", 0);		// default: no deactivation
+		schedule.duration = scheduleConfig->getInt("Duration", 1000);	// default duration: 1 second
 		schedule.action = SET_HIGH;									// default action
 
 		std::string action = this->opdid->getConfigString(scheduleConfig, "Action", "", false);
@@ -1169,13 +1169,13 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 			}
 
 			// need to deactivate?
-			if ((workNf->schedule.type != _DEACTIVATE) && (workNf->schedule.delayMs > 0)) {
+			if ((workNf->schedule.type != _DEACTIVATE) && (workNf->schedule.duration > 0)) {
 				// enqueue the notification for the deactivation
 				Schedule deacSchedule = workNf->schedule;
 				deacSchedule.type = _DEACTIVATE;
 				ScheduleNotification *notification = new ScheduleNotification(deacSchedule);
 				Poco::Timestamp deacTime;
-				deacTime += workNf->schedule.delayMs * Poco::Timestamp::resolution() / 1000;
+				deacTime += workNf->schedule.duration * Poco::Timestamp::resolution() / 1000;
 				this->logVerbose(ID() + ": Scheduled deactivation time for node " + deacSchedule.nodeName + " is: " + 
 						Poco::DateTimeFormatter::format(deacTime, this->opdid->timestampFormat, Poco::Timezone::tzd()));
 				// add with the specified deactivation time

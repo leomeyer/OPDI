@@ -346,7 +346,6 @@ bool digital_port_command(std::string cmd, OPDIPort* port)
 {
 	const char *part;
 
-
 	if (cmd == OPDI_setDigitalPortMode) {
 		part = strtok(NULL, " ");
 		if (part == NULL) {
@@ -399,7 +398,14 @@ bool digital_port_command(std::string cmd, OPDIPort* port)
 			return false;
 		thePort->getPortState();
 		return true;
-	} else 
+	}
+	output << "Command not implemented: " << cmd << std::endl;
+	return false;
+}
+
+bool select_port_command(std::string cmd, OPDIPort* port)
+{
+	const char *part;
 	if (cmd == OPDI_getSelectPortState)	{
 		SelectPort* thePort = checkSelectPort(cmd, port);
 		if (thePort == NULL)
@@ -464,15 +470,23 @@ bool port_command(const char *part)
 	}
 
 	// check command
-	if (cmd == OPDI_setDigitalPortMode || cmd == OPDI_setDigitalPortLine || cmd == OPDI_getDigitalPortState || 
-		cmd == OPDI_getSelectPortState || cmd == OPDI_setSelectPortPosition)
+	if (cmd == OPDI_setDigitalPortMode || cmd == OPDI_setDigitalPortLine || cmd == OPDI_getDigitalPortState)
 	{
 		if (digital_port_command(cmd, port))
 		{
 			output << port->toString() << std::endl;
 			return true;
 		}
-	} else {
+	} else 
+	if (cmd == OPDI_getSelectPortState || cmd == OPDI_setSelectPortPosition)
+	{
+		if (select_port_command(cmd, port))
+		{
+			output << port->toString() << std::endl;
+			return true;
+		}
+	} else
+	{
 		output << "Command not implemented: " << cmd << std::endl;
 	}
 
@@ -587,6 +601,9 @@ int start_master()
 				port_command(part);
 			} else 
 			if (strcmp(part, OPDI_getDigitalPortState) == 0) {
+				port_command(part);
+			} else 
+			if (strcmp(part, OPDI_getSelectPortState) == 0) {
 				port_command(part);
 			} else 
 			if (strcmp(part, OPDI_setSelectPortPosition) == 0) {

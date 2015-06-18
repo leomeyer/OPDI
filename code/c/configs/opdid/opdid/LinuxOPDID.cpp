@@ -36,8 +36,8 @@ static char first_com_byte = 0;
 
 /** For TCP connections, receives a byte from the socket specified in info and places the result in byte.
 *   For serial connections, reads a byte from the file handle specified in info and places the result in byte.
-*   Blocks until data is available or the timeout expires. 
-*   If an error occurs returns an error code != 0. 
+*   Blocks until data is available or the timeout expires.
+*   If an error occurs returns an error code != 0.
 *   If the connection has been gracefully closed, returns STATUS_DISCONNECTED.
 */
 static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t canSend) {
@@ -167,7 +167,7 @@ void LinuxOPDID::print(const char *text) {
 void LinuxOPDID::println(const char *text) {
 	// text is treated as UTF8.
 	std::cout << text << std::endl;	
-}	
+}
 
 void LinuxOPDID::printe(const char *text) {
 	// text is treated as UTF8.
@@ -177,7 +177,7 @@ void LinuxOPDID::printe(const char *text) {
 void LinuxOPDID::printlne(const char *text) {
 	// text is treated as UTF8.
 	std::cerr << text << std::endl;	
-}	
+}
 
 /** This method handles an incoming TCP connection. It blocks until the connection is closed.
 */
@@ -189,7 +189,7 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 
 	struct timeval aTimeout;
 	aTimeout.tv_sec = 0;
-	aTimeout.tv_usec = 1000;		// one ms timeout
+	aTimeout.tv_usec = 10000;		// one ms timeout
 
 	// set timeouts on socket
 	if (setsockopt (csock, SOL_SOCKET, SO_RCVTIMEO, (char *)&aTimeout, sizeof(aTimeout)) < 0) {
