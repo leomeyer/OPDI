@@ -320,7 +320,7 @@ uint8_t OPDI::refresh(OPDI_Port **ports) {
 	if (!this->isConnected() || !this->canSend)
 		return OPDI_DISCONNECTED;
 	// target array of internal ports to refresh
-	opdi_Port **iPorts = new opdi_Port*[OPDI_MAX_MESSAGE_PARTS + 1];
+	opdi_Port *iPorts[OPDI_MAX_MESSAGE_PARTS + 1];
 	OPDI_Port *port = ports[0];
 	uint8_t i = 0;
 	while (port != NULL) {

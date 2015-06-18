@@ -1079,6 +1079,23 @@ uint8_t AbstractOPDID::setPassword(std::string password) {
 	return OPDI_STATUS_OK;
 }
 
+uint8_t AbstractOPDID::refresh(OPDI_Port **ports) {
+	uint8_t result = OPDI::refresh(ports);
+	if (result != OPDI_STATUS_OK)
+		return result;
+
+	if (this->logVerbosity >= VERBOSE) {
+		OPDI_Port *port = ports[0];
+		uint8_t i = 0;
+		while (port != NULL) {
+			this->log("Sent refresh for port: " + port->ID());
+			port = ports[++i];
+		}
+	}
+
+	return result;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The following functions implement the glue code between C and C++.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////

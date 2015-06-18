@@ -111,6 +111,7 @@ public:
 	 */
 	virtual OPDI_Port *findPort(opdi_Port *port);
 
+	/** Returns the list of all ports registered in this instance. */
 	virtual PortList getPorts(void);
 
 	/** Returns NULL if the port could not be found. */
