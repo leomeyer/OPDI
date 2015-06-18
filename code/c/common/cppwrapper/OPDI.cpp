@@ -181,6 +181,10 @@ OPDI_Port *OPDI::findPort(opdi_Port *port) {
 	return NULL;
 }
 
+OPDI::PortList OPDI::getPorts() {
+	return this->ports;
+}
+
 OPDI_Port *OPDI::findPortByID(const char *portID, bool caseInsensitive) {
 	PortList::iterator it = this->ports.begin();
 	while (it != this->ports.end()) {
