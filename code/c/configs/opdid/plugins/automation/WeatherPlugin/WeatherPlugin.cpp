@@ -258,7 +258,7 @@ protected:
 
 	std::string xpath;
 	int64_t dataValiditySeconds;
-	
+
 	int refreshTimeMs;
 
 	std::string sid;
@@ -297,10 +297,10 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, 
 	if (this->provider == "Weewx") {
 		// configure xpath for default skin
 		this->xpath = nodeConfig->getString("XPath", "html/body/div/div[@id='stats_group']/div/table/tbody");
-	} else 
+	} else
 	if (this->provider == "Weewx-JSON") {
 		// nothing to do
-	} else 
+	} else
 		throw Poco::DataException(node + ": Provider not supported: " + this->provider);
 
 	this->timeoutSeconds = nodeConfig->getInt("Timeout", this->timeoutSeconds);
@@ -445,7 +445,7 @@ void WeatherPlugin::refreshData(void) {
 
 		// save stream content
 		std::string content;
-		Poco::StreamCopier::copyToString(*pStr.get(), content); 
+		Poco::StreamCopier::copyToString(*pStr.get(), content);
 
 		if (this->provider == "Weewx") {
 			// this code is not reliable (experimental only)
@@ -465,7 +465,7 @@ void WeatherPlugin::refreshData(void) {
 			Poco::AutoPtr<Poco::XML::Document> pDoc = parser.parse(&src);
 
 			Poco::XML::Node *node;
-			
+
 			node = pDoc->getNodeByPath(this->xpath);
 			if (node == NULL) {
 				this->opdid->log(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider);
@@ -591,8 +591,8 @@ void WeatherPlugin::run(void) {
 	if (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)
 		this->opdid->log(this->nodeID + ": WeatherPlugin worker thread started");
 
-	Poco::Net::HTTPStreamFactory::registerFactory();  
-	// Poco::Net::HTTPSStreamFactory::registerFactory();  
+	Poco::Net::HTTPStreamFactory::registerFactory();
+	// Poco::Net::HTTPSStreamFactory::registerFactory();
 	Poco::Net::FTPStreamFactory::registerFactory();
 
 	while (!this->opdid->shutdownRequested) {
