@@ -18,9 +18,9 @@ void DigitalTestPort::setLine(uint8_t line) {
 
 	AbstractOPDID *opdid = (AbstractOPDID *)this->opdi;
 	if (line == 0) {
-		opdid->println("DigitalTestPort line set to Low");
+		opdid->logNormal("DigitalTestPort line set to Low");
 	} else {
-		opdid->println("DigitalTestPort line set to High");
+		opdid->logNormal("DigitalTestPort line set to High");
 	}
 }
 
@@ -54,17 +54,17 @@ void LinuxTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string
 		throw Poco::DataException("This plugin supports only node type 'DigitalPort'", portType);
 
 	if (this->opdid->logVerbosity == AbstractOPDID::VERBOSE)
-		this->opdid->log("LinuxTestOPDIDPlugin setup completed successfully as node " + node);
+		this->opdid->logVerbose("LinuxTestOPDIDPlugin setup completed successfully as node " + node);
 }
 
 void LinuxTestOPDIDPlugin::masterConnected() {
 	if (this->opdid->logVerbosity != AbstractOPDID::QUIET)
-		this->opdid->log("Test plugin: master connected");
+		this->opdid->logNormal("Test plugin: master connected");
 }
 
 void LinuxTestOPDIDPlugin::masterDisconnected() {
 	if (this->opdid->logVerbosity != AbstractOPDID::QUIET)
-		this->opdid->log("Test plugin: master disconnected");
+		this->opdid->logNormal("Test plugin: master disconnected");
 }
 
 extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion) {

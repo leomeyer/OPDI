@@ -149,7 +149,7 @@ public:
 	 *  Use this mechanism to avoid resource conflicts. */
 	virtual void lockResource(std::string resourceID, std::string lockerID);
 
-	virtual LogVerbosity AbstractOPDID::getConfigLogVerbosity(Poco::Util::AbstractConfiguration *config, LogVerbosity defaultVerbosity);
+	virtual LogVerbosity getConfigLogVerbosity(Poco::Util::AbstractConfiguration *config, LogVerbosity defaultVerbosity);
 
 	virtual void setGeneralConfiguration(Poco::Util::AbstractConfiguration *general);
 
