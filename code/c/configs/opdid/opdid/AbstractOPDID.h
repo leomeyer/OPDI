@@ -51,6 +51,8 @@ protected:
 	std::string loginUser;
 	std::string loginPassword;
 
+	std::string deviceInfo;
+
 	// environment variables for config file substitution (keys prefixed with $)
 	std::map<std::string, std::string> environment;
 	Poco::Util::AbstractConfiguration *configuration;
@@ -230,6 +232,8 @@ public:
 
 	// authenticate comparing the login data with the configuration login data
 	virtual uint8_t setPassword(std::string password) override;
+
+	virtual std::string getExtendedDeviceInfo(void) override;
 
 	// log the refreshed ports
 	virtual uint8_t refresh(OPDI_Port **ports) override;

@@ -413,6 +413,8 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 
 	int idleTimeout = general->getInt("IdleTimeout", DEFAULT_IDLETIMEOUT_MS);
 
+	this->deviceInfo = general->getString("DeviceInfo", "");
+
 	// set log verbosity only if it's not already set
 	if (this->logVerbosity == UNKNOWN) {
 		this->logVerbosity = this->getConfigLogVerbosity(general, NORMAL);
@@ -1106,6 +1108,12 @@ uint8_t AbstractOPDID::setPassword(std::string password) {
 	return OPDI_STATUS_OK;
 }
 
+
+std::string AbstractOPDID::getExtendedDeviceInfo(void) {
+	return this->deviceInfo;
+}
+
+
 uint8_t AbstractOPDID::refresh(OPDI_Port **ports) {
 	uint8_t result = OPDI::refresh(ports);
 	if (result != OPDI_STATUS_OK)
@@ -1127,7 +1135,7 @@ uint8_t AbstractOPDID::refresh(OPDI_Port **ports) {
 // The following functions implement the glue code between C and C++.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data) {
+uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char *buffer, size_t data) {
 
 	switch (opdiFunctionCode) {
 	case OPDI_FUNCTION_GET_CONFIG_NAME: strncpy(buffer, Opdi->getSlaveName().c_str(), data); return OPDI_STATUS_OK;
@@ -1135,6 +1143,7 @@ uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data)
 	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS: strncpy(buffer, OPDID_SUPPORTED_PROTOCOLS, data); return OPDI_STATUS_OK;
 	case OPDI_FUNCTION_GET_ENCODING: strncpy(buffer, Opdi->getEncoding().c_str(), data); return OPDI_STATUS_OK;
 	case OPDI_FUNCTION_SET_LANGUAGES: return Opdi->setLanguages(buffer);
+	case OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO: strncpy(buffer, Opdi->getExtendedDeviceInfo().c_str(), data); return OPDI_STATUS_OK;
 #ifndef OPDI_NO_AUTHENTICATION
 	case OPDI_FUNCTION_SET_USERNAME: return Opdi->setUsername(buffer);
 	case OPDI_FUNCTION_SET_PASSWORD: return Opdi->setPassword(buffer);

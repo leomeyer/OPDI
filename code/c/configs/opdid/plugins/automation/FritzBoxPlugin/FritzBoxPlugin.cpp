@@ -470,8 +470,8 @@ std::string FritzBoxPlugin::httpGet(std::string url) {
 
 			return "";
 		} else
-		if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::VERBOSE))
-			this->opdid->logVerbose(this->nodeID + ": HTTP Response: " + this->opdid->to_string(res.getStatus()) + " " + res.getReason());
+		if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
+			this->opdid->logDebug(this->nodeID + ": HTTP Response: " + this->opdid->to_string(res.getStatus()) + " " + res.getReason());
 
 		std::stringstream ss;
 

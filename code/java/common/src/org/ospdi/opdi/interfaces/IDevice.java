@@ -2,6 +2,7 @@ package org.ospdi.opdi.interfaces;
 
 import java.util.Queue;
 
+import org.ospdi.opdi.devices.DeviceInfo;
 import org.ospdi.opdi.protocol.Message;
 
 /** This interface describes a remote device.
@@ -56,6 +57,10 @@ public interface IDevice {
 	
 	/** The unique address of the device. */
 	public String getAddress();
+	
+	public DeviceInfo getDeviceInfo();
+
+	public void setDeviceInfo(DeviceInfo deviceInfo);
 	
 	/** The resource id that identifies the icon. */
 	public int getImageResource();

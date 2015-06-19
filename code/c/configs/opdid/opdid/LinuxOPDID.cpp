@@ -260,7 +260,7 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 
 	while (true) {
         	if (Opdi->logVerbosity != QUIET)
-			this->log(std::string("Listening for a connection on port ") + this->to_string(port));
+			this->log(std::string("Listening for a connection on TCP port ") + this->to_string(port));
 
 		while (true) {
 

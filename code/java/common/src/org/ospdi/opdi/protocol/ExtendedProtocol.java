@@ -5,7 +5,9 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import org.ospdi.opdi.devices.DeviceException;
+import org.ospdi.opdi.devices.DeviceInfo;
 import org.ospdi.opdi.interfaces.IDevice;
+import org.ospdi.opdi.ports.BasicDeviceCapabilities;
 import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.ports.PortGroup;
 import org.ospdi.opdi.utils.Strings;
@@ -21,6 +23,9 @@ public class ExtendedProtocol extends BasicProtocol {
 	public static final String GROUP_INFO = "GI";
 	public static final String GET_EXTENDED_GROUP_INFO = "gEGI";
 	public static final String EXTENDED_GROUP_INFO = "EGI";
+
+	public static final String GET_EXTENDED_DEVICE_INFO = "gEDI";
+	public static final String EXTENDED_DEVICE_INFO = "EDI";
 	
 	protected Map<String, PortGroup> groupCache = new HashMap<String, PortGroup>();
 	
@@ -161,5 +166,50 @@ public class ExtendedProtocol extends BasicProtocol {
 	}
 
 	
+	protected DeviceInfo expectExtendedDeviceInfo(int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+		Message message;
+		try {
+			message = expect(channel, DEFAULT_TIMEOUT);
+		} catch (PortAccessDeniedException e) {
+			throw new IllegalStateException("Programming error on device: getExtendedPortInfo should never signal port access denied", e);
+		} catch (PortErrorException e) {
+			throw new IllegalStateException("Programming error on device: getExtendedPortInfo should never signal a port error", e);
+		}
+		
+		final int PREFIX = 0;
+		final int INFO = 1;
+		final int PARTS_COUNT = 2;
+		
+		String[] parts = Strings.split(message.getPayload(), SEPARATOR);
+		if (parts.length > PARTS_COUNT)
+			throw new ProtocolException("invalid number of message parts");
+		if (!parts[PREFIX].equals(EXTENDED_DEVICE_INFO))
+			throw new ProtocolException("unexpected reply, expected: " + EXTENDED_DEVICE_INFO);
+		// info is required
+		if (parts.length <= INFO)
+			throw new ProtocolException("invalid number of message parts");
+		return new DeviceInfo(parts[INFO]);
+			
+	}
+
+	public DeviceInfo getExtendedDeviceInfo() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+		
+		int channel = this.getSynchronousChannel();
+		
+		send(new Message(channel, Strings.join(SEPARATOR, GET_EXTENDED_DEVICE_INFO)));
+		return expectExtendedDeviceInfo(channel);
+	}
 	
+	@Override
+	public BasicDeviceCapabilities getDeviceCapabilities()
+			throws TimeoutException, ProtocolException, DeviceException,
+			InterruptedException, DisconnectedException {
+		BasicDeviceCapabilities result = super.getDeviceCapabilities();
+		
+		// additional query: extended device info
+		this.getDevice().setDeviceInfo(getExtendedDeviceInfo());
+		
+		return result;
+	}
+
 }

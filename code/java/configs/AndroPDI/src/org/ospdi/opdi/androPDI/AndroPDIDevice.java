@@ -3,6 +3,7 @@ package org.ospdi.opdi.androPDI;
 import java.lang.ref.WeakReference;
 
 import org.ospdi.opdi.androPDI.DeviceManager.IDeviceStatusListener;
+import org.ospdi.opdi.devices.DeviceInfo;
 import org.ospdi.opdi.devices.IODevice;
 
 public abstract class AndroPDIDevice extends IODevice {
@@ -10,6 +11,9 @@ public abstract class AndroPDIDevice extends IODevice {
 	protected static int idCounter = 1; 
 	protected String id;		// temporary identifier
 
+	// initially empty device info object (filled if the device supports the Extended Protocol)
+	DeviceInfo deviceInfo = new DeviceInfo("");
+	
 	// a device can have only one active listener
 	// which is set when the device is being connected
 	WeakReference<IDeviceStatusListener> deviceListener;
@@ -43,5 +47,13 @@ public abstract class AndroPDIDevice extends IODevice {
 	 */
 	public abstract boolean prepare();
 
+	@Override
+	public DeviceInfo getDeviceInfo() {
+		return deviceInfo;
+	}
 	
+	@Override
+	public void setDeviceInfo(DeviceInfo deviceInfo) {
+		this.deviceInfo = deviceInfo;
+	}
 }

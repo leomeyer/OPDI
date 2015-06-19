@@ -75,6 +75,9 @@ extern "C" {
 // this device supports the extended protocol
 #define OPDI_EXTENDED_PROTOCOL			1
 
+// extended device information buffer (on stack)
+#define OPDI_EXTENDED_DEVICEINFO_LENGTH		64
+
 /** Defines the block size of data for encryption. Depends on the encryption implementation.
 *   Data is always sent to the encrypt_block function in blocks of this size. If necessary, it is
 *   padded with random bytes. When receiving data, the receiving function waits until a full block has 

@@ -94,6 +94,8 @@ public:
 	virtual uint8_t setUsername(std::string userName);
 	virtual uint8_t setPassword(std::string userName);
 
+	virtual std::string getExtendedDeviceInfo(void);
+
 	/** Adds the specified port.
 	 * */
 	virtual void addPort(OPDI_Port *port);
