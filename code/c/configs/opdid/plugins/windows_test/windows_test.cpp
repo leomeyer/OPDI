@@ -18,9 +18,9 @@ void DigitalTestPort::setLine(uint8_t line) {
 
 	AbstractOPDID *opdid = (AbstractOPDID *)this->opdi;
 	if (line == 0) {
-		opdid->log("DigitalTestPort line set to Low");
+		opdid->logNormal("DigitalTestPort line set to Low");
 	} else {
-		opdid->log("DigitalTestPort line set to High");
+		opdid->logNormal("DigitalTestPort line set to High");
 	}
 }
 
@@ -54,18 +54,15 @@ void WindowsTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::stri
 
 	this->opdid->addConnectionListener(this);
 
-	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-		this->opdid->log("WindowsTestOPDIDPlugin setup completed successfully as node " + node);
+	this->opdid->logVerbose("WindowsTestOPDIDPlugin setup completed successfully as node " + node);
 }
 
 void WindowsTestOPDIDPlugin::masterConnected() {
-	if (this->opdid->logVerbosity != AbstractOPDID::QUIET)
-		this->opdid->log("Test plugin: master connected");
+	this->opdid->logNormal("Test plugin: master connected");
 }
 
 void WindowsTestOPDIDPlugin::masterDisconnected() {
-	if (this->opdid->logVerbosity != AbstractOPDID::QUIET)
-		this->opdid->log("Test plugin: master disconnected");
+	this->opdid->logNormal("Test plugin: master disconnected");
 }
 
 // plugin instance factory function

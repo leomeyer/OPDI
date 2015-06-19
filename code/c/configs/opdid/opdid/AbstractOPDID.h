@@ -69,6 +69,9 @@ protected:
 
 	virtual Poco::Util::AbstractConfiguration *readConfiguration(std::string fileName, std::map<std::string, std::string> parameters);
 
+	/** Outputs a log message with a timestamp. */
+	virtual void log(std::string text);
+
 public:
 
 	enum LogVerbosity {
@@ -124,14 +127,17 @@ public:
 	/** Converts a given object to a string. */
 	template <class T> inline std::string to_string(const T& t);
 
-	/** Outputs a log message with a timestamp. */
-	virtual void log(std::string text);
-
-	/** Outputs a warning message with a timestamp. */
 	virtual void logWarning(std::string text);
 
-	/** Outputs an error message with a timestamp. */
 	virtual void logError(std::string text);
+
+	virtual void logNormal(std::string message);
+
+	virtual void logVerbose(std::string message);
+
+	virtual void logDebug(std::string message);
+
+	virtual void logExtreme(std::string message);
 
 	virtual Poco::Util::AbstractConfiguration *getConfiguration(void);
 
@@ -142,6 +148,8 @@ public:
 	 *  When the same resource is attempted to be locked twice this method throws an exception.
 	 *  Use this mechanism to avoid resource conflicts. */
 	virtual void lockResource(std::string resourceID, std::string lockerID);
+
+	virtual LogVerbosity AbstractOPDID::getConfigLogVerbosity(Poco::Util::AbstractConfiguration *config, LogVerbosity defaultVerbosity);
 
 	virtual void setGeneralConfiguration(Poco::Util::AbstractConfiguration *general);
 

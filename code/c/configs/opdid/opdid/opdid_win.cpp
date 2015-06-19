@@ -85,11 +85,11 @@ int _tmain(int argc, _TCHAR* argv[], _TCHAR* envp[])
 		exitcode = 1;
 	}
 	catch (...) {
-		Opdi->log("An unknown error occurred. Exiting.");
+		Opdi->logError("An unknown error occurred. Exiting.");
 		exitcode = 1;
 	}
 
-	Opdi->log("OPDID exited with code " + Opdi->to_string(exitcode));
+	Opdi->logNormal("OPDID exited with code " + Opdi->to_string(exitcode));
 
 	return exitcode;
 }

@@ -241,7 +241,7 @@ void AbstractOPDID::logWarning(std::string text) {
 
 	std::string msg = "WARNING: " + text;
 	if (this->logger != NULL) {
-		this->logger->error(msg);
+		this->logger->warning(msg);
 	}
 	this->printlne("[" + this->getTimestampStr() + "] " + msg);
 }
@@ -260,6 +260,30 @@ void AbstractOPDID::logError(std::string text) {
 		this->logger->error(msg);
 	}
 	this->printlne("[" + this->getTimestampStr() + "] " + msg);
+}
+
+void AbstractOPDID::logNormal(std::string message) {
+	if (this->logVerbosity >= AbstractOPDID::NORMAL) {
+		this->log(message);
+	}
+}
+
+void AbstractOPDID::logVerbose(std::string message) {
+	if (this->logVerbosity >= AbstractOPDID::VERBOSE) {
+		this->log(message);
+	}
+}
+
+void AbstractOPDID::logDebug(std::string message) {
+	if (this->logVerbosity >= AbstractOPDID::DEBUG) {
+		this->log(message);
+	}
+}
+
+void AbstractOPDID::logExtreme(std::string message) {
+	if (this->logVerbosity >= AbstractOPDID::EXTREME) {
+		this->log(message);
+	}
 }
 
 int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
@@ -353,6 +377,30 @@ void AbstractOPDID::lockResource(std::string resourceID, std::string lockerID) {
 	this->lockedResources[resourceID] = lockerID;
 }
 
+AbstractOPDID::LogVerbosity AbstractOPDID::getConfigLogVerbosity(Poco::Util::AbstractConfiguration *config, LogVerbosity defaultVerbosity) {
+	std::string logVerbosityStr = config->getString("LogVerbosity", "");
+
+	if ((logVerbosityStr != "")) {
+		if (logVerbosityStr == "Quiet") {
+			return QUIET;
+		} else
+		if (logVerbosityStr == "Normal") {
+			return NORMAL;
+		} else
+		if (logVerbosityStr == "Verbose") {
+			return VERBOSE;
+		} else
+		if (logVerbosityStr == "Debug") {
+			return DEBUG;
+		} else
+		if (logVerbosityStr == "Extreme") {
+			return EXTREME;
+		} else
+			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', 'Verbose', 'Debug' or 'Extreme')", logVerbosityStr);
+	}
+	return defaultVerbosity;
+}
+
 void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *general) {
 	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up general configuration");
@@ -365,30 +413,9 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 
 	int idleTimeout = general->getInt("IdleTimeout", DEFAULT_IDLETIMEOUT_MS);
 
-	std::string logVerbosityStr = this->getConfigString(general, "LogVerbosity", "", false);
-
 	// set log verbosity only if it's not already set
-	if ((this->logVerbosity == UNKNOWN) && (logVerbosityStr != "")) {
-		if (logVerbosityStr == "Quiet") {
-			this->logVerbosity = QUIET;
-		} else
-		if (logVerbosityStr == "Normal") {
-			this->logVerbosity = NORMAL;
-		} else
-		if (logVerbosityStr == "Verbose") {
-			this->logVerbosity = VERBOSE;
-		} else
-		if (logVerbosityStr == "Debug") {
-			this->logVerbosity = DEBUG;
-		} else
-		if (logVerbosityStr == "Extreme") {
-			this->logVerbosity = EXTREME;
-		} else
-			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', 'Verbose', 'Debug' or 'Extreme')", logVerbosityStr);
-	}
-
 	if (this->logVerbosity == UNKNOWN) {
-		this->logVerbosity = NORMAL;
+		this->logVerbosity = this->getConfigLogVerbosity(general, NORMAL);
 	}
 
 	this->allowHiddenPorts = general->getBool("AllowHidden", true);
@@ -1134,7 +1161,7 @@ uint8_t opdi_debug_msg(const char *message, uint8_t direction) {
 	else
 	if (direction == OPDI_DIR_OUTGOING_ENCR)
 		dirChar = "{";
-	Opdi->log(dirChar + message);
+	Opdi->logDebug(dirChar + message);
 	return OPDI_STATUS_OK;
 }
 

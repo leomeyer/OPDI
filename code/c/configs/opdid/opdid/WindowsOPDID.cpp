@@ -80,7 +80,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 			FD_ZERO(&sockset);
 			FD_SET(*csock, &sockset);
 			if ((result = select(0, &sockset, NULL, NULL, &aTimeout)) == SOCKET_ERROR) {
-				Opdi->log("Network error: " + WSAGetLastError());
+				Opdi->logNormal("Network error: " + WSAGetLastError());
 				return OPDI_NETWORK_ERROR;
 			}
 			if (result == 0) {

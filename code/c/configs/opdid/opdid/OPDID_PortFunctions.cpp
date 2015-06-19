@@ -119,30 +119,6 @@ OPDI_SelectPort *OPDID_PortFunctions::findSelectPort(std::string configPort, std
 	return (OPDI_SelectPort *)port;
 }
 
-void OPDID_PortFunctions::configureVerbosity(Poco::Util::AbstractConfiguration* config) {
-	std::string logVerbosityStr = config->getString("LogVerbosity", "");
-
-	// set log verbosity only if it's not already set
-	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) && (logVerbosityStr != "")) {
-		if (logVerbosityStr == "Quiet") {
-			this->logVerbosity = AbstractOPDID::QUIET;
-		} else
-		if (logVerbosityStr == "Normal") {
-			this->logVerbosity = AbstractOPDID::NORMAL;
-		} else
-		if (logVerbosityStr == "Verbose") {
-			this->logVerbosity = AbstractOPDID::VERBOSE;
-		} else
-		if (logVerbosityStr == "Debug") {
-			this->logVerbosity = AbstractOPDID::DEBUG;
-		} else
-		if (logVerbosityStr == "Extreme") {
-			this->logVerbosity = AbstractOPDID::EXTREME;
-		} else
-			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', 'Verbose', 'Debug' or 'Extreme')", logVerbosityStr);
-	}
-}
-
 void OPDID_PortFunctions::logWarning(std::string message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity > AbstractOPDID::QUIET)) {
 		this->opdid->logWarning(message);
@@ -150,26 +126,26 @@ void OPDID_PortFunctions::logWarning(std::string message) {
 }
 
 void OPDID_PortFunctions::logNormal(std::string message) {
-	if (((this->logVerbosity == AbstractOPDID::UNKNOWN) && (this->opdid->logVerbosity >= AbstractOPDID::NORMAL)) || (this->logVerbosity >= AbstractOPDID::NORMAL)) {
-		this->opdid->log(message);
+	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::NORMAL)) {
+		this->opdid->logNormal(message);
 	}
 }
 
 void OPDID_PortFunctions::logVerbose(std::string message) {
-	if (((this->logVerbosity == AbstractOPDID::UNKNOWN) && (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)) || (this->logVerbosity >= AbstractOPDID::VERBOSE)) {
-		this->opdid->log(message);
+	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::VERBOSE)) {
+		this->opdid->logVerbose(message);
 	}
 }
 
 void OPDID_PortFunctions::logDebug(std::string message) {
-	if (((this->logVerbosity == AbstractOPDID::UNKNOWN) && (this->opdid->logVerbosity >= AbstractOPDID::DEBUG)) || (this->logVerbosity >= AbstractOPDID::DEBUG)) {
-		this->opdid->log(message);
+	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG)) {
+		this->opdid->logDebug(message);
 	}
 }
 
 void OPDID_PortFunctions::logExtreme(std::string message) {
-	if (((this->logVerbosity == AbstractOPDID::UNKNOWN) && (this->opdid->logVerbosity >= AbstractOPDID::EXTREME)) || (this->logVerbosity >= AbstractOPDID::EXTREME)) {
-		this->opdid->log(message);
+	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::EXTREME)) {
+		this->opdid->logExtreme(message);
 	}
 }
 

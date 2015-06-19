@@ -29,8 +29,6 @@ protected:
 
 	virtual OPDI_SelectPort *findSelectPort(std::string configPort, std::string setting, std::string portID, bool required);
 
-	virtual void configureVerbosity(Poco::Util::AbstractConfiguration* config);
-
 	virtual void logWarning(std::string message);
 
 	virtual void logNormal(std::string message);

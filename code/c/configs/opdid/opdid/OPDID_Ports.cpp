@@ -38,7 +38,7 @@ OPDID_LogicPort::~OPDID_LogicPort() {
 
 void OPDID_LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
-	this->configureVerbosity(config);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	std::string function = config->getString("Function", "OR");
 
@@ -129,7 +129,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 		try {
 			(*it)->getState(&mode, &line);
 		} catch (Poco::Exception &e) {
-			this->opdid->log(std::string("Querying port ") + (*it)->getID() + ": " + e.message());
+			this->opdid->logNormal(std::string("Error querying port ") + (*it)->getID() + ": " + e.message());
 		}
 		highCount += line;
 		it++;
@@ -182,7 +182,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 					(*it)->setLine(newLine);
 				}
 			} catch (Poco::Exception &e) {
-				this->opdid->log(std::string("Changing port ") + (*it)->getID() + ": " + e.message());
+				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
 			}
 			it++;
 		}
@@ -200,7 +200,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 					(*it)->setLine((newLine == 0 ? 1 : 0));
 				}
 			} catch (Poco::Exception &e) {
-				this->opdid->log(std::string("Changing port ") + (*it)->getID() + ": " + e.message());
+				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
 			}
 			it++;
 		}
@@ -232,7 +232,7 @@ OPDID_PulsePort::~OPDID_PulsePort() {
 
 void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
-	this->configureVerbosity(config);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	this->negate = config->getBool("Negate", false);
 
@@ -301,7 +301,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->getState(&mode, &line);
 			} catch (Poco::Exception &e) {
-				this->opdid->log(std::string(this->getID()) + ": Error querying port " + (*it)->getID() + ": " + e.message());
+				this->opdid->logNormal(std::string(this->getID()) + ": Error querying port " + (*it)->getID() + ": " + e.message());
 			}
 			highCount += line;
 			it++;
@@ -366,7 +366,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->setLine(newState);
 			} catch (Poco::Exception &e) {
-				this->opdid->log(std::string(this->getID()) + ": Error setting output port state: " + (*it)->getID() + ": " + e.message());
+				this->opdid->logNormal(std::string(this->getID()) + ": Error setting output port state: " + (*it)->getID() + ": " + e.message());
 			}
 			it++;
 		}
@@ -376,7 +376,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->setLine((newState == 0 ? 1 : 0));
 			} catch (Poco::Exception &e) {
-				this->opdid->log(std::string(this->getID()) + ": Error setting inverse output port state: " + (*it)->getID() + ": " + e.message());
+				this->opdid->logNormal(std::string(this->getID()) + ": Error setting inverse output port state: " + (*it)->getID() + ": " + e.message());
 			}
 			it++;
 		}
@@ -403,7 +403,7 @@ OPDID_SelectorPort::~OPDID_SelectorPort() {
 
 void OPDID_SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
-	this->configureVerbosity(config);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	this->selectPortStr = config->getString("SelectPort", "");
 	if (this->selectPortStr == "")
@@ -485,7 +485,7 @@ OPDID_ExpressionPort::~OPDID_ExpressionPort() {
 
 void OPDID_ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
-	this->configureVerbosity(config);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	this->expressionStr = config->getString("Expression", "");
 	if (this->expressionStr == "")
@@ -635,7 +635,7 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 					} else
 						throw PortError("");
 				} catch (Poco::Exception &e) {
-					this->opdid->log(std::string(this->getID()) + ": Error setting output port value of port " + (*it)->getID() + ": " + e.message());
+					this->opdid->logNormal(std::string(this->getID()) + ": Error setting output port value of port " + (*it)->getID() + ": " + e.message());
 				}
 
 				it++;
@@ -763,7 +763,7 @@ OPDID_TimerPort::~OPDID_TimerPort() {
 
 void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configureDigitalPort(config, this);
-	this->configureVerbosity(config);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	this->outputPortStr = this->opdid->getConfigString(config, "OutputPorts", "", true);
 
@@ -1175,9 +1175,13 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 				deacSchedule.type = _DEACTIVATE;
 				ScheduleNotification *notification = new ScheduleNotification(deacSchedule);
 				Poco::Timestamp deacTime;
-				deacTime += workNf->schedule.duration * Poco::Timestamp::resolution() / 1000;
-				this->logVerbose(ID() + ": Scheduled deactivation time for node " + deacSchedule.nodeName + " is: " + 
-						Poco::DateTimeFormatter::format(deacTime, this->opdid->timestampFormat, Poco::Timezone::tzd()));
+				Poco::Timestamp::TimeDiff timediff = workNf->schedule.duration * Poco::Timestamp::resolution() / 1000;
+				deacTime += timediff;
+				Poco::DateTime deacLocal(deacTime);
+				deacLocal.makeLocal(Poco::Timezone::tzd());
+				this->logVerbose(ID() + ": Scheduled deactivation time for node " + deacSchedule.nodeName + " is at: " + 
+						Poco::DateTimeFormatter::format(deacLocal, this->opdid->timestampFormat)
+						+ "; in " + this->to_string(timediff / 1000000) + " second(s)");
 				// add with the specified deactivation time
 				this->addNotification(notification, deacTime);
 			}
@@ -1205,12 +1209,12 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 					// set output line
 					(*it)->setLine(outputLine);
 				} catch (Poco::Exception &e) {
-					this->opdid->log(std::string(this->getID()) + ": Error setting output port state: " + (*it)->getID() + ": " + e.message());
+					this->opdid->logNormal(std::string(this->getID()) + ": Error setting output port state: " + (*it)->getID() + ": " + e.message());
 				}
 				it++;
 			}
 		} catch (Poco::Exception &e) {
-			this->opdid->log(std::string(this->getID()) + ": Error processing timer schedule: " + e.message());
+			this->opdid->logNormal(std::string(this->getID()) + ": Error processing timer schedule: " + e.message());
 		}
 	}
 
@@ -1267,7 +1271,7 @@ OPDID_ErrorDetectorPort::~OPDID_ErrorDetectorPort() {
 
 void OPDID_ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configureDigitalPort(config, this);	
-	this->configureVerbosity(config);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	this->inputPortStr = this->opdid->getConfigString(config, "InputPorts", "", true);
 	this->negate = config->getBool("Negate", false);
@@ -1353,10 +1357,9 @@ uint8_t OPDID_SerialStreamingPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-
 void OPDID_SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configureStreamingPort(config, this);
-	this->configureVerbosity(config);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	std::string serialPortName = this->opdid->getConfigString(config, "SerialPort", "", true);
 	int baudRate = config->getInt("BaudRate", 9600);
@@ -1535,10 +1538,9 @@ uint8_t OPDID_LoggingPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-
 void OPDID_LoggingPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configureStreamingPort(config, this);
-	this->configureVerbosity(config);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	this->logPeriod = config->getInt("Period", this->logPeriod);
 	this->separator = config->getString("Separator", this->separator);
