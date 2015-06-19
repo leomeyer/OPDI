@@ -189,7 +189,7 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 
 	struct timeval aTimeout;
 	aTimeout.tv_sec = 0;
-	aTimeout.tv_usec = 10000;		// one ms timeout
+	aTimeout.tv_usec = 1000;		// one ms timeout
 
 	// set timeouts on socket
 	if (setsockopt (csock, SOL_SOCKET, SO_RCVTIMEO, (char *)&aTimeout, sizeof(aTimeout)) < 0) {
@@ -272,8 +272,13 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 					uint8_t waitResult = this->waiting(false);
 					if (waitResult != OPDI_STATUS_OK)
 						return waitResult;
-					usleep(1000);
-				} else 
+   struct timespec tim;
+   tim.tv_sec = 0;
+   tim.tv_nsec = 1000000;
+
+      nanosleep(&tim , NULL);
+//					usleep(1000);
+				} else
 					this->log(std::string("Error accepting connection: ") + this->to_string(errno));
 			} else {
 
@@ -316,7 +321,7 @@ IOPDIDPlugin *LinuxOPDID::getPlugin(std::string driver) {
 
 	dlerror();
 	void *getPluginInstance = dlsym(hndl, "GetOPDIDPluginInstance");
-	
+
 	char *lasterror = dlerror();
 	if (lasterror != NULL) {
 		dlclose(hndl);
