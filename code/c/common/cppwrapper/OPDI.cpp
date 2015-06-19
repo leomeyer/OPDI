@@ -103,6 +103,9 @@ uint8_t OPDI::setPassword(std::string userName) {
 	return OPDI_STATUS_OK;
 }
 
+std::string OPDI::getExtendedDeviceInfo(void) {
+	return "";
+}
 
 void OPDI::addPort(OPDI_Port *port) {
 	// associate port with this instance

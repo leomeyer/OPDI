@@ -963,9 +963,11 @@ static uint8_t basic_protocol_message(channel_t channel) {
 /** Implements the extended protocol message handler.
 */
 static uint8_t extended_protocol_message(channel_t channel) {
+	uint8_t result;
 	opdi_Port *port;
 	opdi_PortGroup *group;
-	
+	char buffer[OPDI_EXTENDED_DEVICEINFO_LENGTH];
+
 	// only handle messages of the extended protocol here
 	if (!strcmp(opdi_msg_parts[0], OPDI_getAllPortStates)) {
 		return send_all_port_states(channel);
@@ -998,7 +1000,10 @@ static uint8_t extended_protocol_message(channel_t channel) {
 		return send_extended_group_info(channel, group);
 	} 
 	else if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedDeviceInfo)) {
-		return send_extended_device_info(channel, NULL);
+		result = opdi_slave_callback(OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO, buffer, OPDI_EXTENDED_DEVICEINFO_LENGTH);
+		if (result != OPDI_STATUS_OK)
+			return result;
+		return send_extended_device_info(channel, buffer);
 	} 
 	else
 		// for all other messages, fall back to the basic protocol

@@ -81,6 +81,21 @@ extern uint8_t opdi_decrypt_block(uint8_t *dest, const uint8_t *src);
 
 #ifdef OPDI_IS_SLAVE
 
+/** Callback function codes */
+typedef enum {
+	OPDI_FUNCTION_GET_CONFIG_NAME,					/** The name of the configuration. */
+	OPDI_FUNCTION_SET_MASTER_NAME,					/** Called when a connecting master's name has been received. */
+	OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS,			/** A comma-separated list of supported protocols. */
+	OPDI_FUNCTION_GET_ENCODING,						/** The encoding that should be used. One of the encoding identifiers defined in the class java.lang.Charset. May be empty. */
+	OPDI_FUNCTION_SET_LANGUAGES,					/** Passes a string of comma-separated preferred languages as received from the master. The language names correspond to the predefined constants in the class java.util.Locale. */
+	OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO			/** Returns a key=value;-string describing extended device information. May be empty. */
+
+#ifndef OPDI_NO_AUTHENTICATION
+	, OPDI_FUNCTION_SET_USERNAME					/** During authentication, first the username is set. */
+	, OPDI_FUNCTION_SET_PASSWORD					/** Next, the password is set. If the implementation returns any code other than OPDI_STATUS_OK it is interpreted as "authentication failed". */
+#endif
+} OPDIFunctionCode;
+
 /** The slave callback function that is used by the OPDI system to send data to or request data from
 * the slave implementation. This function exists mostly to allow memory-limited devices, such as Arduinos,
 * to keep string constants in flash ROM rather than defining them as extern const char*s, which would require
@@ -90,18 +105,8 @@ extern uint8_t opdi_decrypt_block(uint8_t *dest, const uint8_t *src);
 * by the implementation to transfer the values back to the OPDI system. In this case data may contain the
 * maximum number of bytes to copy.
 */
-extern uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data);
+extern uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char *buffer, size_t data);
 
-#define OPDI_FUNCTION_GET_CONFIG_NAME			0		/** The name of the configuration. */
-#define OPDI_FUNCTION_SET_MASTER_NAME			1		/** Called when a connecting master's name has been received. */
-#define OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS	2		/** A comma-separated list of supported protocols. */
-#define OPDI_FUNCTION_GET_ENCODING				3		/** The encoding that should be used. One of the encoding identifiers defined in the class java.lang.Charset. May be empty. */
-#define OPDI_FUNCTION_SET_LANGUAGES				4		/** Passes a string of comma-separated preferred languages as received from the master. The language names correspond to the predefined constants in the class java.util.Locale. */
-
-#ifndef OPDI_NO_AUTHENTICATION
-#define OPDI_FUNCTION_SET_USERNAME				10		/** During authentication, first the username is set. */
-#define OPDI_FUNCTION_SET_PASSWORD				11		/** Next, the password is set. If the implementation returns any code other than OPDI_STATUS_OK it is interpreted as "authentication failed". */
-#endif
 
 #ifdef OPDI_HAS_MESSAGE_HANDLED
 

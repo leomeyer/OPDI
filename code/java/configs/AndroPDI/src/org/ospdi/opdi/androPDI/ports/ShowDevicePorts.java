@@ -306,6 +306,10 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
         	return;
         }
         
+    	// set current group from device info, if present
+    	if (device.getDeviceInfo().getStartGroup() != null)
+    		currentGroup = device.getDeviceInfo().getStartGroup();
+        
     	tvName = (TextView)findViewById(R.id.devicecaps_name);
     	tvName.setText(device.getDeviceName());
     	tvName.setVisibility(View.VISIBLE);
