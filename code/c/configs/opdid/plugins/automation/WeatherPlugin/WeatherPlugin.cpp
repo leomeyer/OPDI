@@ -292,7 +292,7 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, 
 
 	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
 
-	this->logVerbosity = opdid->getConfigLogVerbosity(config, AbstractOPDID::NORMAL);
+	this->logVerbosity = opdid->getConfigLogVerbosity(nodeConfig, AbstractOPDID::UNKNOWN);
 
 	this->url = abstractOPDID->getConfigString(nodeConfig, "Url", "", true);
 	this->provider = abstractOPDID->getConfigString(nodeConfig, "Provider", "", true);
