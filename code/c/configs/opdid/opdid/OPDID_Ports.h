@@ -307,8 +307,7 @@ protected:
 		INTERVAL,
 		PERIODIC,
 		ASTRONOMICAL,
-		RANDOM,
-		_DEACTIVATE
+		RANDOM
 	};
 
 	enum AstroEvent {
@@ -356,16 +355,20 @@ protected:
 		int occurrences;		// occurrence counter
 		int maxOccurrences;		// maximum number of occurrences that this schedule is active
 		uint64_t duration;		// duration in milliseconds until the timer is deactivated (0 = no deactivation)
+
+		Poco::Timestamp nextEvent;
 	};
 
 	class ScheduleNotification : public Poco::Notification {
 	public:
 		typedef Poco::AutoPtr<ScheduleNotification> Ptr;
 		Poco::Timestamp timestamp;
-		Schedule schedule;
+		Schedule *schedule;
+		bool deactivate;
 
-		inline ScheduleNotification(Schedule schedule) {
+		inline ScheduleNotification(Schedule *schedule, bool deactivate) {
 			this->schedule = schedule;
+			this->deactivate = deactivate;
 		};
 	};
 
@@ -378,6 +381,7 @@ protected:
 	Poco::TimedNotificationQueue queue;
 
 	Poco::Timestamp calculateNextOccurrence(Schedule *schedule);
+	std::string nextOccurrenceStr;
 
 	void addNotification(ScheduleNotification::Ptr notification, Poco::Timestamp timestamp);
 
@@ -397,6 +401,8 @@ public:
 	virtual void setLine(uint8_t line) override;
 
 	virtual void prepare() override;
+
+	virtual std::string getExtendedState(void) override;
 };
 
 

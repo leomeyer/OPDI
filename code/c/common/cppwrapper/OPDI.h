@@ -96,6 +96,10 @@ public:
 
 	virtual std::string getExtendedDeviceInfo(void);
 
+	virtual std::string getExtendedPortInfo(char *portID, uint8_t *code);
+
+	virtual std::string getExtendedPortState(char *portID, uint8_t *code);
+
 	/** Adds the specified port.
 	 * */
 	virtual void addPort(OPDI_Port *port);

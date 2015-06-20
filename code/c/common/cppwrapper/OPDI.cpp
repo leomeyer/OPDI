@@ -107,6 +107,28 @@ std::string OPDI::getExtendedDeviceInfo(void) {
 	return "";
 }
 
+std::string OPDI::getExtendedPortInfo(char *portID, uint8_t *code) {
+	OPDI_Port *port = this->findPortByID(portID, false);
+	if (port == NULL) {
+		*code = OPDI_PORT_UNKNOWN;
+		return "";
+	} else {
+		*code = OPDI_STATUS_OK;
+		return port->getExtendedInfo();
+	}
+}
+
+std::string OPDI::getExtendedPortState(char *portID, uint8_t *code) {
+	OPDI_Port *port = this->findPortByID(portID, false);
+	if (port == NULL) {
+		*code = OPDI_PORT_UNKNOWN;
+		return "";
+	} else {
+		*code = OPDI_STATUS_OK;
+		return port->getExtendedState();
+	}
+}
+
 void OPDI::addPort(OPDI_Port *port) {
 	// associate port with this instance
 	port->opdi = this;
@@ -149,7 +171,6 @@ void OPDI::updatePortData(OPDI_Port *port) {
 	oPort->type = (const char*)port->type;
 	oPort->caps = (const char*)port->caps;
 	oPort->flags = port->flags;
-	oPort->extendedInfo = port->extendedInfo;
 
 	// more complex ports require the pointer to contain additional information
 

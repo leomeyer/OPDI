@@ -1138,12 +1138,38 @@ uint8_t AbstractOPDID::refresh(OPDI_Port **ports) {
 uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char *buffer, size_t data) {
 
 	switch (opdiFunctionCode) {
-	case OPDI_FUNCTION_GET_CONFIG_NAME: strncpy(buffer, Opdi->getSlaveName().c_str(), data); return OPDI_STATUS_OK;
-	case OPDI_FUNCTION_SET_MASTER_NAME: return Opdi->setMasterName(buffer);
-	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS: strncpy(buffer, OPDID_SUPPORTED_PROTOCOLS, data); return OPDI_STATUS_OK;
-	case OPDI_FUNCTION_GET_ENCODING: strncpy(buffer, Opdi->getEncoding().c_str(), data); return OPDI_STATUS_OK;
-	case OPDI_FUNCTION_SET_LANGUAGES: return Opdi->setLanguages(buffer);
-	case OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO: strncpy(buffer, Opdi->getExtendedDeviceInfo().c_str(), data); return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_CONFIG_NAME: 
+		strncpy(buffer, Opdi->getSlaveName().c_str(), data); 
+		return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_MASTER_NAME: 
+		return Opdi->setMasterName(buffer);
+	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS: 
+		strncpy(buffer, OPDID_SUPPORTED_PROTOCOLS, data); 
+		return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_ENCODING: 
+		strncpy(buffer, Opdi->getEncoding().c_str(), data); 
+		return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_SET_LANGUAGES: 
+		return Opdi->setLanguages(buffer);
+	case OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO:
+		strncpy(buffer, Opdi->getExtendedDeviceInfo().c_str(), data); 
+		return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_EXTENDED_PORTINFO: {
+		uint8_t code;
+		std::string exPortInfo = Opdi->getExtendedPortInfo(buffer, &code);
+		if (code != OPDI_STATUS_OK)
+			return code;
+		strncpy(buffer, exPortInfo.c_str(), data);
+		return OPDI_STATUS_OK;
+	}
+	case OPDI_FUNCTION_GET_EXTENDED_PORTSTATE: {
+		uint8_t code;
+		std::string exPortInfo = Opdi->getExtendedPortState(buffer, &code);
+		if (code != OPDI_STATUS_OK)
+			return code;
+		strncpy(buffer, exPortInfo.c_str(), data);
+		return OPDI_STATUS_OK;
+	}
 #ifndef OPDI_NO_AUTHENTICATION
 	case OPDI_FUNCTION_SET_USERNAME: return Opdi->setUsername(buffer);
 	case OPDI_FUNCTION_SET_PASSWORD: return Opdi->setPassword(buffer);

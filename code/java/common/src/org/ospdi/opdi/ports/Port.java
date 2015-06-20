@@ -53,7 +53,6 @@ public abstract class Port {
 	protected PortType type;
 	protected PortDirCaps dirCaps;
 	protected int flags;
-	protected String extendedInfo;
 	protected Object viewAdapter;
 	protected boolean hasError;
 	protected String errorMessage;
@@ -64,7 +63,8 @@ public abstract class Port {
 	
 	protected PortGroup group;
 	
-	protected Map<String, String> extendedProperties = new HashMap<String, String>(); 
+	protected Map<String, String> extendedInfoProperties = new HashMap<String, String>(); 
+	protected Map<String, String> extendedStateProperties = new HashMap<String, String>(); 
 
 	/** Only to be used by subclasses
 	 * 
@@ -237,19 +237,29 @@ public abstract class Port {
 	}
 	
 	public void setExtendedPortInfo(String info) {
-		this.extendedInfo = info;
-		
 		// extract detailed information from extended info
-		extendedProperties = Strings.getProperties(info);
+		extendedInfoProperties = Strings.getProperties(info);
 		
-		if (extendedProperties.containsKey("unit")) {
-			unit = extendedProperties.get("unit");
+		if (extendedInfoProperties.containsKey("unit")) {
+			unit = extendedInfoProperties.get("unit");
 		}
 	}
 	
-	public String getExtendedProperty(String property, String defaultValue) {
-		if (extendedProperties.containsKey(property)) {
-			return extendedProperties.get(property);
+	public void setExtendedPortState(String info) {
+		// extract detailed information from extended info
+		extendedStateProperties = Strings.getProperties(info);
+	}
+	
+	public String getExtendedInfo(String property, String defaultValue) {
+		if (extendedInfoProperties.containsKey(property)) {
+			return extendedInfoProperties.get(property);
+		}
+		return defaultValue;
+	}
+
+	public String getExtendedState(String property, String defaultValue) {
+		if (extendedStateProperties.containsKey(property)) {
+			return extendedStateProperties.get(property);
 		}
 		return defaultValue;
 	}
@@ -263,8 +273,8 @@ public abstract class Port {
 	}
 
 	public String getGroupID() {
-		if (extendedProperties.containsKey("group"))
-			return extendedProperties.get("group");
+		if (extendedInfoProperties.containsKey("group"))
+			return extendedInfoProperties.get("group");
 		return null;
 	}
 
