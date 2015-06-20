@@ -122,9 +122,6 @@ typedef struct opdi_Port {
 	int32_t flags;				// port flags
 	opdi_PtrInt info;			// pointer to additional info (port type dependent)
 	struct opdi_Port *next;		// pointer to next port
-#ifdef OPDI_EXTENDED_PROTOCOL
-	char *extendedInfo;			// pointer to extended port info (key=value; list)
-#endif
 } opdi_Port;
 
 #ifdef OPDI_EXTENDED_PROTOCOL

@@ -615,6 +615,8 @@ static uint8_t unbind_streaming_port(channel_t channel, opdi_Port *port) {
 #endif
 
 #ifdef OPDI_EXTENDED_PROTOCOL
+
+/*
 // send all port states in one message
 static uint8_t send_all_port_states(channel_t channel) {
 	opdi_Message message;
@@ -691,12 +693,23 @@ static uint8_t send_all_port_states(channel_t channel) {
 	
 	return OPDI_STATUS_OK;
 }
+*/
 
-static uint8_t send_extended_port_info(channel_t channel, opdi_Port *port) {
+static uint8_t send_extended_port_info(channel_t channel, const char *portID, char *portInfo) {
 	// join payload
 	opdi_msg_parts[0] = OPDI_extendedPortInfo;
-	opdi_msg_parts[1] = port->id;
-	opdi_msg_parts[2] = port->extendedInfo;
+	opdi_msg_parts[1] = portID;
+	opdi_msg_parts[2] = portInfo;
+	opdi_msg_parts[3] = NULL;
+
+	return send_parts(channel);
+}
+
+static uint8_t send_extended_port_state(channel_t channel, const char *portID, char *portState) {
+	// join payload
+	opdi_msg_parts[0] = OPDI_extendedPortState;
+	opdi_msg_parts[1] = portID;
+	opdi_msg_parts[2] = portState;
 	opdi_msg_parts[3] = NULL;
 
 	return send_parts(channel);
@@ -720,7 +733,6 @@ static uint8_t send_group_info(channel_t channel, opdi_PortGroup *group) {
 }
 
 static uint8_t send_extended_group_info(channel_t channel, opdi_PortGroup *group) {
-
 	// join payload
 	opdi_msg_parts[0] = OPDI_extendedGroupInfo;
 	opdi_msg_parts[1] = group->id;
@@ -964,22 +976,35 @@ static uint8_t basic_protocol_message(channel_t channel) {
 */
 static uint8_t extended_protocol_message(channel_t channel) {
 	uint8_t result;
-	opdi_Port *port;
 	opdi_PortGroup *group;
-	char buffer[OPDI_EXTENDED_DEVICEINFO_LENGTH];
+	char buffer[OPDI_EXTENDED_INFO_LENGTH];
 
 	// only handle messages of the extended protocol here
+/*
 	if (!strcmp(opdi_msg_parts[0], OPDI_getAllPortStates)) {
 		return send_all_port_states(channel);
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedPortInfo)) {
+	else 
+*/
+	if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedPortInfo)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
-		// find port
-		port = opdi_find_port_by_id(opdi_msg_parts[1]);
-		if (port == NULL)
-			return OPDI_PORT_UNKNOWN;
-		return send_extended_port_info(channel, port);
+		// copy port ID to the buffer
+		strncpy(buffer, opdi_msg_parts[1], OPDI_EXTENDED_INFO_LENGTH);
+		result = opdi_slave_callback(OPDI_FUNCTION_GET_EXTENDED_PORTINFO, buffer, OPDI_EXTENDED_INFO_LENGTH);
+		if (result != OPDI_STATUS_OK)
+			return result;
+		return send_extended_port_info(channel, opdi_msg_parts[1], buffer);
+	} 
+	else if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedPortState)) {
+		if (opdi_msg_parts[1] == NULL)
+			return OPDI_PROTOCOL_ERROR;
+		// copy port ID to the buffer
+		strncpy(buffer, opdi_msg_parts[1], OPDI_EXTENDED_INFO_LENGTH);
+		result = opdi_slave_callback(OPDI_FUNCTION_GET_EXTENDED_PORTSTATE, buffer, OPDI_EXTENDED_INFO_LENGTH);
+		if (result != OPDI_STATUS_OK)
+			return result;
+		return send_extended_port_state(channel, opdi_msg_parts[1], buffer);
 	} 
 	else if (!strcmp(opdi_msg_parts[0], OPDI_getGroupInfo)) {
 		if (opdi_msg_parts[1] == NULL)
@@ -1000,7 +1025,7 @@ static uint8_t extended_protocol_message(channel_t channel) {
 		return send_extended_group_info(channel, group);
 	} 
 	else if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedDeviceInfo)) {
-		result = opdi_slave_callback(OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO, buffer, OPDI_EXTENDED_DEVICEINFO_LENGTH);
+		result = opdi_slave_callback(OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO, buffer, OPDI_EXTENDED_INFO_LENGTH);
 		if (result != OPDI_STATUS_OK)
 			return result;
 		return send_extended_device_info(channel, buffer);

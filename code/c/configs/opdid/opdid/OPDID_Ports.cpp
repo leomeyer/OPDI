@@ -756,6 +756,9 @@ OPDID_TimerPort::OPDID_TimerPort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 
 	// default: enabled
 	this->line = 1;
+
+	// set default icon
+	this->icon = "alarmclock";
 }
 
 OPDID_TimerPort::~OPDID_TimerPort() {
@@ -937,7 +940,7 @@ void OPDID_TimerPort::prepare() {
 	if (this->line == 1) {
 		// calculate all schedules
 		for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
-			Schedule schedule = (*it);
+			Schedule *schedule = it._Ptr;
 /*
 			// test cases
 			if (schedule.type == ASTRONOMICAL) {
@@ -953,12 +956,12 @@ void OPDID_TimerPort::prepare() {
 			}
 */
 			// calculate
-			Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&schedule);
+			Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(schedule);
 			if (nextOccurrence > Poco::Timestamp()) {
 				// add with the specified occurrence time
-				this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
+				this->addNotification(new ScheduleNotification(schedule, false), nextOccurrence);
 			} else {
-				this->logVerbose(ID() + ": Next scheduled time for " + schedule.nodeName + " could not be determined");
+				this->logVerbose(ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
 			}
 		}
 	}
@@ -1123,13 +1126,15 @@ void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Po
 	// for debug output: convert UTC timestamp to local time
 	Poco::LocalDateTime ldt(timestamp);
 	if (timestamp > now) {
+		std::string timeText = Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat);
 		this->logVerbose(ID() + ": Next scheduled time for node " + 
-				notification->schedule.nodeName + " is: " + Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat));
+				notification->schedule->nodeName + " is: " + timeText);
 		// add with the specified activation time
 		this->queue.enqueueNotification(notification, timestamp);
+		notification->schedule->nextEvent = timestamp;
 	} else {
 		this->logNormal(ID() + ": Warning: Scheduled time for node " + 
-				notification->schedule.nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat));
+				notification->schedule->nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat));
 /*
 		this->opdid->log(std::string(this->getID()) + ": Timestamp is: " + Poco::DateTimeFormatter::format(timestamp, "%Y-%m-%d %H:%M:%S"));
 		this->opdid->log(std::string(this->getID()) + ": Now is      : " + Poco::DateTimeFormatter::format(now, "%Y-%m-%d %H:%M:%S"));
@@ -1151,35 +1156,38 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 		try {
 			ScheduleNotification::Ptr workNf = notification.cast<ScheduleNotification>();
 
-			this->logVerbose(ID() + ": Timer reached scheduled time for node: " + workNf->schedule.nodeName);
+			this->logVerbose(ID() + ": Timer reached scheduled " + (workNf->deactivate ? "deactivation " : "") 
+				+ "time for node: " + workNf->schedule->nodeName);
 
-			workNf->schedule.occurrences++;
+			workNf->schedule->occurrences++;
+
+			// cause master's UI state refresh
+			this->refreshRequired = true;
 
 			// calculate next occurrence depending on type; maximum ocurrences must not have been reached
-			if ((workNf->schedule.type != ONCE) && (workNf->schedule.type != _DEACTIVATE) 
-				&& ((workNf->schedule.maxOccurrences < 0) || (workNf->schedule.occurrences < workNf->schedule.maxOccurrences))) {
+			if ((workNf->schedule->type != ONCE) 
+				&& ((workNf->schedule->maxOccurrences < 0) || (workNf->schedule->occurrences < workNf->schedule->maxOccurrences))) {
 
-				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&workNf->schedule);
+				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(workNf->schedule);
 				if (nextOccurrence > Poco::Timestamp()) {
 					// add with the specified occurrence time
 					this->addNotification(workNf, nextOccurrence);
 				} else {
-					this->logNormal(ID() + ": Warning: Next scheduled time for " + workNf->schedule.nodeName + " could not be determined");
+					this->logNormal(ID() + ": Warning: Next scheduled time for " + workNf->schedule->nodeName + " could not be determined");
 				}
 			}
 
 			// need to deactivate?
-			if ((workNf->schedule.type != _DEACTIVATE) && (workNf->schedule.duration > 0)) {
+			if ((!workNf->deactivate) && (workNf->schedule->duration > 0)) {
 				// enqueue the notification for the deactivation
-				Schedule deacSchedule = workNf->schedule;
-				deacSchedule.type = _DEACTIVATE;
-				ScheduleNotification *notification = new ScheduleNotification(deacSchedule);
+				Schedule *deacSchedule = workNf->schedule;
+				ScheduleNotification *notification = new ScheduleNotification(deacSchedule, true);
 				Poco::Timestamp deacTime;
-				Poco::Timestamp::TimeDiff timediff = workNf->schedule.duration * Poco::Timestamp::resolution() / 1000;
+				Poco::Timestamp::TimeDiff timediff = workNf->schedule->duration * Poco::Timestamp::resolution() / 1000;
 				deacTime += timediff;
 				Poco::DateTime deacLocal(deacTime);
 				deacLocal.makeLocal(Poco::Timezone::tzd());
-				this->logVerbose(ID() + ": Scheduled deactivation time for node " + deacSchedule.nodeName + " is at: " + 
+				this->logVerbose(ID() + ": Scheduled deactivation time for node " + deacSchedule->nodeName + " is at: " + 
 						Poco::DateTimeFormatter::format(deacLocal, this->opdid->timestampFormat)
 						+ "; in " + this->to_string(timediff / 1000000) + " second(s)");
 				// add with the specified deactivation time
@@ -1188,10 +1196,10 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 
 			// set the output ports' state
 			int8_t outputLine = -1;	// assume: toggle
-			if (workNf->schedule.action == SET_HIGH)
-				outputLine = (workNf->schedule.type == _DEACTIVATE ? 0 : 1);
-			if (workNf->schedule.action == SET_LOW)
-				outputLine = (workNf->schedule.type == _DEACTIVATE ? 1 : 0);
+			if (workNf->schedule->action == SET_HIGH)
+				outputLine = (workNf->deactivate ? 0 : 1);
+			if (workNf->schedule->action == SET_LOW)
+				outputLine = (workNf->deactivate ? 1 : 0);
 
 			DigitalPortList::iterator it = this->outputPorts.begin();
 			while (it != this->outputPorts.end()) {
@@ -1218,6 +1226,28 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 		}
 	}
 
+	// determine next scheduled time text
+	this->nextOccurrenceStr = "";
+
+	if (this->line == 1) {
+		// go through schedules
+		Poco::Timestamp ts = Poco::Timestamp::TIMEVAL_MAX;
+		Poco::Timestamp now;
+		ScheduleList::iterator it = this->schedules.begin();
+		// select schedule with the earliest nextEvent timestamp
+		while (it != this->schedules.end()) {
+			if (((*it).nextEvent > now) && ((*it).nextEvent < ts)) {
+				ts = (*it).nextEvent;
+			}
+			it++;
+		}
+
+		if (ts < Poco::Timestamp::TIMEVAL_MAX) {
+			Poco::LocalDateTime ldt(ts);
+			nextOccurrenceStr = Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat);
+		}
+	}
+
 	return OPDI_STATUS_OK;
 }
 
@@ -1239,18 +1269,34 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 		if (wasLow) {
 			// recalculate all schedules
 			for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
-				Schedule schedule = (*it);
+				Schedule *schedule = it._Ptr;
 				// calculate
-				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(&schedule);
+				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(schedule);
 				if (nextOccurrence > Poco::Timestamp()) {
 					// add with the specified occurrence time
-					this->addNotification(new ScheduleNotification(schedule), nextOccurrence);
+					this->addNotification(new ScheduleNotification(schedule, false), nextOccurrence);
 				} else {
-					this->logVerbose(ID() + ": Next scheduled time for " + schedule.nodeName + " could not be determined");
+					this->logVerbose(ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
 				}
 			}
 		}
 	}
+
+	this->refreshRequired = true;
+}
+
+std::string OPDID_TimerPort::getExtendedState(void) {
+	std::string result;
+	if (this->line != 1) {
+		result = "Deactivated";
+	} else {
+		result = "Next event: ";
+		if (this->nextOccurrenceStr == "")
+			result += "Not scheduled";
+		else
+			result += this->nextOccurrenceStr;
+	}
+	return "text=" + this->escapeKeyValueText(result);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

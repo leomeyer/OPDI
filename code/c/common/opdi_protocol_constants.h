@@ -76,10 +76,11 @@
 #define OPDI_unbindStreamingPort  		"uSP"
 
 // extended protocol
-#define OPDI_getAllPortStates			"gAPS"
-
 #define OPDI_getExtendedPortInfo		"gEPI"
 #define OPDI_extendedPortInfo			"EPI"
+
+#define OPDI_getExtendedPortState		"gEPS"
+#define OPDI_extendedPortState			"EPS"
 
 #define OPDI_getExtendedDeviceInfo		"gEDI"
 #define OPDI_extendedDeviceInfo			"EDI"

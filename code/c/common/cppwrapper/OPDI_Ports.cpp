@@ -31,7 +31,6 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->opdi = NULL;
 	this->flags = 0;
 	this->ptr = NULL;
-	this->extendedInfo = NULL;
 	this->hidden = false;
 	this->readonly = false;
 	this->refreshMode = REFRESH_NOT_SET;
@@ -52,7 +51,6 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->opdi = NULL;
 	this->flags = flags;
 	this->ptr = ptr;
-	this->extendedInfo = NULL;
 	this->hidden = false;
 	this->readonly = false;
 	this->refreshMode = REFRESH_NOT_SET;
@@ -168,11 +166,7 @@ void OPDI_Port::updateExtendedInfo(void) {
 	if (this->icon.size() > 0) {
 		exInfo += "icon=" + this->icon + ";";
 	}
-	if (this->extendedInfo != NULL) {
-		free(this->extendedInfo);
-	}
-	this->extendedInfo = (char *)malloc(exInfo.size() + 1);
-	strcpy(this->extendedInfo, exInfo.c_str());
+	this->extendedInfo = exInfo;
 }
 
 void OPDI_Port::setUnit(std::string unit) {
@@ -202,6 +196,34 @@ void OPDI_Port::setGroup(std::string group) {
 	}
 }
 
+std::string OPDI_Port::getExtendedInfo() {
+	return this->extendedInfo;
+}
+
+std::string OPDI_Port::getExtendedState() {
+	return "";
+}
+
+std::string OPDI_Port::escapeKeyValueText(std::string str) {
+	std::string result = str;
+    size_t start_pos;
+	start_pos = 0;
+    while ((start_pos = result.find("\\", start_pos)) != std::string::npos) {
+        result.replace(start_pos, 1, "\\\\");
+        start_pos += 2;
+    }
+	start_pos = 0;
+    while ((start_pos = result.find("=", start_pos)) != std::string::npos) {
+        result.replace(start_pos, 1, "\\=");
+        start_pos += 2;
+    }
+	start_pos = 0;
+    while ((start_pos = result.find(";", start_pos)) != std::string::npos) {
+        result.replace(start_pos, 1, "\\;");
+        start_pos += 2;
+    }
+	return result;
+}
 
 /*
 void OPDI_Port::doAutoRefresh(void) {
@@ -264,6 +286,7 @@ uint8_t OPDI_Port::refresh() {
 void OPDI_Port::prepare() {
 	// update flags (for example, OR other flags to current flag settings)
 	this->setFlags(this->flags);
+	this->updateExtendedInfo();
 }
 
 OPDI_Port::~OPDI_Port() {
