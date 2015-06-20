@@ -44,10 +44,10 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	protected static int CHANNEL_LOWEST_SYNCHRONOUS = CHANNEL_HIGHEST_STREAMING + 1;
 	protected static int CHANNEL_ROLLOVER = 100;
 	
-	private BasicDeviceCapabilities deviceCaps;
+	protected BasicDeviceCapabilities deviceCaps;
 	
-	private Integer currentChannel = CHANNEL_LOWEST_SYNCHRONOUS - 1;
-	private Hashtable<Integer, StreamingPort> boundStreamingPorts = new Hashtable<Integer, StreamingPort>();
+	protected Integer currentChannel = CHANNEL_LOWEST_SYNCHRONOUS - 1;
+	protected Hashtable<Integer, StreamingPort> boundStreamingPorts = new Hashtable<Integer, StreamingPort>();
 	
 	protected boolean expectingMessage;
 	protected Queue<Message> messagesToDispatch = new ArrayDeque<Message>();

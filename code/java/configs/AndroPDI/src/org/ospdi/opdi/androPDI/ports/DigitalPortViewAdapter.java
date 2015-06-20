@@ -161,116 +161,120 @@ class DigitalPortViewAdapter implements IPortViewAdapter {
 		}
 
 		// set the proper icon
-		if (ivPortIcon != null) {
-			// default icon
-			Drawable portIcon = null;
-			String iconName = dPort.getExtendedProperty("icon","");
-			if (iconName != "") {
-				// get icon identifier
-				int iconID = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
-				if (iconID == 0)
-					throw new IllegalArgumentException("Drawable resource not found: " + iconName);							
-					
-				portIcon = context.getResources().getDrawable(iconID);
-			}
-			
-			if (portIcon == null) {
-		    	switch(mode) {
-		    	case OUTPUT: 
-		    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_output);
-		    		tvBottomtext.setText("Mode: Output");
-		    		break;
-		    	case INPUT_FLOATING: 
-		    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
-		    		tvBottomtext.setText("Mode: Input");
-		    		break;
-		    	case INPUT_PULLUP: 
-		    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
-		            tvBottomtext.setText("Mode: Input, pullup on");
-		    		break;
-		    	case INPUT_PULLDOWN: 
-		    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
-		            tvBottomtext.setText("Mode: Input, pulldown on");
-		    		break;
-		    	default:
-		    		portIcon = context.getResources().getDrawable(R.drawable.digital_port); 
-		            tvBottomtext.setText("Mode: Unknown");
-		    		break;
-		    	}
-			}
-			
-			ivPortIcon.setImageDrawable(portIcon);
-			
-			Drawable stateIcon = null;
-			if (!dPort.isReadonly() && (mode == DigitalPort.PortMode.OUTPUT)) {
-	        	switch(line) {
-	        	case UNKNOWN:
-	        		// TODO icon for UNKNOWN
-	        		stateIcon = context.getResources().getDrawable(R.drawable.switch_off);
-	        	case LOW: 
-	        		stateIcon = context.getResources().getDrawable(R.drawable.switch_off);
-	        		if (ivStateIcon != null)
-		        		ivStateIcon.setOnClickListener(new View.OnClickListener() {							
-							@Override
-							public void onClick(View v) {
-								DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
-									@Override
-									void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
-										// set line
-										try {
-											dPort.setLine(DigitalPort.PortLine.HIGH);
-											line = dPort.getLine();
-										} catch (PortAccessDeniedException e) {
-											line = DigitalPort.PortLine.UNKNOWN;
-										}
-									}							
-								});
-							}
-						});
-	        		break;
-	        	case HIGH: 
-	        		stateIcon = context.getResources().getDrawable(R.drawable.switch_on);
-	        		if (ivStateIcon != null)
-		        		ivStateIcon.setOnClickListener(new View.OnClickListener() {							
-							@Override
-							public void onClick(View v) {
-								DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
-									@Override
-									void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
-										// set line
-										try {
-											dPort.setLine(DigitalPort.PortLine.LOW);
-											line = dPort.getLine();
-										} catch (PortAccessDeniedException e) {
-											line = DigitalPort.PortLine.UNKNOWN;
-										}
-									}						
-								});
-							}
-						});
-	        		break;
-	        	}
-			} else {
-				// an input mode is active
-				// disable click listener
-				if (ivStateIcon != null)
-					ivStateIcon.setOnClickListener(null);				
-	        	switch(line) {
-	        	case LOW: 
-	        		stateIcon = context.getResources().getDrawable(R.drawable.led_red);
-	        		break;
-	        	case HIGH: 
-	        		stateIcon = context.getResources().getDrawable(R.drawable.led_green);
-	        		break;
-	        	default: 
-	        		stateIcon = context.getResources().getDrawable(R.drawable.led_yellow);
-	        		break;            		
-	        	}
-			}
-
-			if (ivStateIcon != null)
-				ivStateIcon.setImageDrawable(stateIcon);
+		Drawable portIcon = null;
+		String bText = "";
+    	switch(mode) {
+	    	case OUTPUT: 
+	    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_output);
+	    		bText = "Mode: Output";
+	    		break;
+	    	case INPUT_FLOATING: 
+	    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
+	    		bText = "Mode: Input";
+	    		break;
+	    	case INPUT_PULLUP: 
+	    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
+	            bText = "Mode: Input, pullup on";
+	    		break;
+	    	case INPUT_PULLDOWN: 
+	    		portIcon = context.getResources().getDrawable(R.drawable.digital_port_input); 
+	            bText = "Mode: Input, pulldown on";
+	    		break;
+	    	default:
+	    		portIcon = context.getResources().getDrawable(R.drawable.digital_port); 
+	            bText = "Mode: Unknown";
+	    		break;
+    	}
+    	
+		// default icon
+		String iconName = dPort.getExtendedInfo("icon","");
+		if (iconName != "") {
+			// get icon identifier
+			int iconID = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
+			if (iconID == 0)
+				throw new IllegalArgumentException("Drawable resource not found: " + iconName);							
+				
+			portIcon = context.getResources().getDrawable(iconID);
 		}
+
+		// use text from device if present
+		bText = dPort.getExtendedState("text", bText);
+
+		if (ivPortIcon != null)
+			ivPortIcon.setImageDrawable(portIcon);
+		if (tvBottomtext != null)
+			tvBottomtext.setText(bText);
+		
+		Drawable stateIcon = null;
+		if (!dPort.isReadonly() && (mode == DigitalPort.PortMode.OUTPUT)) {
+        	switch(line) {
+        	case UNKNOWN:
+        		// TODO icon for UNKNOWN
+        		stateIcon = context.getResources().getDrawable(R.drawable.switch_off);
+        	case LOW: 
+        		stateIcon = context.getResources().getDrawable(R.drawable.switch_off);
+        		if (ivStateIcon != null)
+	        		ivStateIcon.setOnClickListener(new View.OnClickListener() {							
+						@Override
+						public void onClick(View v) {
+							DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
+								@Override
+								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+									// set line
+									try {
+										dPort.setLine(DigitalPort.PortLine.HIGH);
+										line = dPort.getLine();
+									} catch (PortAccessDeniedException e) {
+										line = DigitalPort.PortLine.UNKNOWN;
+									}
+								}							
+							});
+						}
+					});
+        		break;
+        	case HIGH: 
+        		stateIcon = context.getResources().getDrawable(R.drawable.switch_on);
+        		if (ivStateIcon != null)
+	        		ivStateIcon.setOnClickListener(new View.OnClickListener() {							
+						@Override
+						public void onClick(View v) {
+							DigitalPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DigitalPortViewAdapter.this) {
+								@Override
+								void perform() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+									// set line
+									try {
+										dPort.setLine(DigitalPort.PortLine.LOW);
+										line = dPort.getLine();
+									} catch (PortAccessDeniedException e) {
+										line = DigitalPort.PortLine.UNKNOWN;
+									}
+								}						
+							});
+						}
+					});
+        		break;
+        	}
+		} else {
+			// an input mode is active
+			// disable click listener
+			if (ivStateIcon != null)
+				ivStateIcon.setOnClickListener(null);				
+        	switch(line) {
+        	case LOW: 
+        		stateIcon = context.getResources().getDrawable(R.drawable.led_red);
+        		break;
+        	case HIGH: 
+        		stateIcon = context.getResources().getDrawable(R.drawable.led_green);
+        		break;
+        	default: 
+        		stateIcon = context.getResources().getDrawable(R.drawable.led_yellow);
+        		break;            		
+        	}
+		}
+
+		if (ivStateIcon != null)
+			ivStateIcon.setImageDrawable(stateIcon);
+		
     			
 		// context menu when clicking
 		if (ivPortIcon != null)

@@ -5,9 +5,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeoutException;
 
-import org.ospdi.opdi.androPDI.DeviceManager;
 import org.ospdi.opdi.androPDI.AndroPDI;
 import org.ospdi.opdi.androPDI.AndroPDIDevice;
+import org.ospdi.opdi.androPDI.DeviceManager;
+import org.ospdi.opdi.androPDI.R;
 import org.ospdi.opdi.androPDI.gui.LoggingActivity;
 import org.ospdi.opdi.androPDI.portdetails.ShowPortDetails;
 import org.ospdi.opdi.devices.DeviceException;
@@ -22,8 +23,6 @@ import org.ospdi.opdi.ports.StreamingPort;
 import org.ospdi.opdi.protocol.DisconnectedException;
 import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.ProtocolException;
-import org.ospdi.opdi.utils.ResourceFactory;
-import org.ospdi.opdi.androPDI.R;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -32,7 +31,6 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -124,8 +122,10 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 	 */
 	class ReconfigureOperation extends PortAction {
 		
-		public ReconfigureOperation() {
+		boolean setInitialGroup;
+		public ReconfigureOperation(boolean setInitialGroup) {
 			super();
+			this.setInitialGroup = setInitialGroup;
 		}
 		
 		@Override
@@ -146,6 +146,12 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 				// clear previous view adapter
 				port.setViewAdapter(null);
 	        }
+	        
+	        // set group initially?
+	        if (setInitialGroup)
+	        	// set current group from device info, if present
+	        	if (device.getDeviceInfo().getStartGroup() != null)
+	        		currentGroup = device.getDeviceInfo().getStartGroup();
 	        
 	        // build group list
 	    	portGroups = bdc.getPortGroups(currentGroup);
@@ -180,7 +186,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 			    			currentGroup = groups.get(position).getID();
 			    			if (!currentGroup.equals(oldGroup))
 				    			// reconfigure to filter the ports
-				    	        queue.add(new ReconfigureOperation());
+				    	        queue.add(new ReconfigureOperation(false));
 			    		}
 			    		
 			    		@Override
@@ -305,11 +311,6 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
         	finish();
         	return;
         }
-        
-    	// set current group from device info, if present
-    	if (device.getDeviceInfo().getStartGroup() != null)
-    		currentGroup = device.getDeviceInfo().getStartGroup();
-        
     	tvName = (TextView)findViewById(R.id.devicecaps_name);
     	tvName.setText(device.getDeviceName());
     	tvName.setVisibility(View.VISIBLE);
@@ -353,7 +354,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
         processorThread.start();
         
         // query the device capabilities
-        queue.add(new ReconfigureOperation());
+        queue.add(new ReconfigureOperation(true));
     }
 
     @Override
@@ -514,7 +515,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 	@Override
 	public void receivedReconfigure(IDevice device) {
         // query the device capabilities
-        queue.add(new ReconfigureOperation());
+        queue.add(new ReconfigureOperation(false));
 	}
 	
 	@Override
