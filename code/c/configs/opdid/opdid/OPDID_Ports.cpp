@@ -940,7 +940,7 @@ void OPDID_TimerPort::prepare() {
 	if (this->line == 1) {
 		// calculate all schedules
 		for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
-			Schedule *schedule = it._Ptr;
+			Schedule *schedule = &*it;
 /*
 			// test cases
 			if (schedule.type == ASTRONOMICAL) {
@@ -1131,7 +1131,8 @@ void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Po
 				notification->schedule->nodeName + " is: " + timeText);
 		// add with the specified activation time
 		this->queue.enqueueNotification(notification, timestamp);
-		notification->schedule->nextEvent = timestamp;
+		if (!notification->deactivate)
+			notification->schedule->nextEvent = timestamp;
 	} else {
 		this->logNormal(ID() + ": Warning: Scheduled time for node " + 
 				notification->schedule->nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat));
@@ -1269,7 +1270,7 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 		if (wasLow) {
 			// recalculate all schedules
 			for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
-				Schedule *schedule = it._Ptr;
+				Schedule *schedule = &*it;
 				// calculate
 				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(schedule);
 				if (nextOccurrence > Poco::Timestamp()) {
