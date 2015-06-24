@@ -4,6 +4,7 @@
 #include "Poco/Timezone.h"
 #include "Poco/DateTimeFormatter.h"
 #include "Poco/NumberParser.h"
+#include "Poco/Format.h"
 
 #include "ctb-0.16/ctb.h"
 
@@ -759,6 +760,11 @@ OPDID_TimerPort::OPDID_TimerPort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 
 	// set default icon
 	this->icon = "alarmclock";
+
+	// set default texts
+	this->deactivatedText = "Deactivated";
+	this->notScheduledText = "Not scheduled";
+	this->timestampFormat = "Next event: " + opdid->timestampFormat;
 }
 
 OPDID_TimerPort::~OPDID_TimerPort() {
@@ -769,6 +775,10 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	this->outputPortStr = this->opdid->getConfigString(config, "OutputPorts", "", true);
+
+	this->deactivatedText = config->getString("DeactivatedText", this->deactivatedText);
+	this->notScheduledText = config->getString("NotScheduledText", this->notScheduledText);
+	this->timestampFormat = config->getString("TimestampFormat", this->timestampFormat);
 
 	// enumerate schedules of the <timer>.Schedules node
 	this->logVerbose(std::string("Enumerating Timer schedules: ") + this->getID() + ".Schedules");
@@ -1002,7 +1012,7 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 	} else
 	if (schedule->type == PERIODIC) {
 
-#define correctValues	if (minute > 59) { minute = 0; hour++; if (hour > 23) { hour = 0; day++; if (day > Poco::DateTime::daysOfMonth(year, month)) { day = 1; month++; if (month > 12) { month = 1; year++; }}}}
+#define correctValues	if (second > 59) { second = 0; minute++; if (minute > 59) { minute = 0; hour++; if (hour > 23) { hour = 0; day++; if (day > Poco::DateTime::daysOfMonth(year, month)) { day = 1; month++; if (month > 12) { month = 1; year++; }}}}}
 
 		Poco::LocalDateTime now;
 		// start from the next second
@@ -1127,8 +1137,9 @@ void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Po
 	Poco::LocalDateTime ldt(timestamp);
 	if (timestamp > now) {
 		std::string timeText = Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat);
-		this->logVerbose(ID() + ": Next scheduled time for node " + 
-				notification->schedule->nodeName + " is: " + timeText);
+		if (!notification->deactivate)
+			this->logVerbose(ID() + ": Next scheduled time for node " + 
+					notification->schedule->nodeName + " is: " + timeText);
 		// add with the specified activation time
 		this->queue.enqueueNotification(notification, timestamp);
 		if (!notification->deactivate)
@@ -1162,11 +1173,11 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 
 			workNf->schedule->occurrences++;
 
-			// cause master's UI state refresh
-			this->refreshRequired = true;
+			// cause master's UI state refresh if no deactivate
+			this->refreshRequired = !workNf->deactivate;
 
 			// calculate next occurrence depending on type; maximum ocurrences must not have been reached
-			if ((workNf->schedule->type != ONCE) 
+			if ((!workNf->deactivate) && (workNf->schedule->type != ONCE) 
 				&& ((workNf->schedule->maxOccurrences < 0) || (workNf->schedule->occurrences < workNf->schedule->maxOccurrences))) {
 
 				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(workNf->schedule);
@@ -1244,8 +1255,9 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 		}
 
 		if (ts < Poco::Timestamp::TIMEVAL_MAX) {
+			// calculate extended port info text
 			Poco::LocalDateTime ldt(ts);
-			nextOccurrenceStr = Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat);
+			this->nextOccurrenceStr = Poco::DateTimeFormatter::format(ldt, this->timestampFormat);
 		}
 	}
 
@@ -1289,13 +1301,12 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 std::string OPDID_TimerPort::getExtendedState(void) {
 	std::string result;
 	if (this->line != 1) {
-		result = "Deactivated";
+		result = this->deactivatedText;
 	} else {
-		result = "Next event: ";
 		if (this->nextOccurrenceStr == "")
-			result += "Not scheduled";
+			result = this->notScheduledText;
 		else
-			result += this->nextOccurrenceStr;
+			result = this->nextOccurrenceStr;
 	}
 	return "text=" + this->escapeKeyValueText(result);
 }

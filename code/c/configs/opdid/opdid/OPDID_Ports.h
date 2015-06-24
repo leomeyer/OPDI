@@ -381,7 +381,11 @@ protected:
 	Poco::TimedNotificationQueue queue;
 
 	Poco::Timestamp calculateNextOccurrence(Schedule *schedule);
+	std::string deactivatedText;
+	std::string notScheduledText;
+	std::string timestampFormat;
 	std::string nextOccurrenceStr;
+
 
 	void addNotification(ScheduleNotification::Ptr notification, Poco::Timestamp timestamp);
 
