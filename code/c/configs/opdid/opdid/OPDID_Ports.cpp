@@ -1558,7 +1558,8 @@ void OPDID_LoggingPort::configure(Poco::Util::AbstractConfiguration *config) {
 
 		// open the stream in append mode
 		this->outFile.open(outFileStr, std::ios_base::app);
-	}
+	} else
+		throw Poco::DataException(std::string(this->getID()) + ": The OutputFile setting must be specified");
 
 	this->portsToLogStr = this->opdid->getConfigString(config, "Ports", "", true);
 }
