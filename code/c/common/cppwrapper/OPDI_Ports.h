@@ -40,7 +40,6 @@ protected:
 	char caps[2];	// caps constants are one character (port direction constants)
 	int32_t flags;
 	void* ptr;
-	char *extendedInfo;
 
 	// If a port is hidden it is not included in the device capabilities as queried by the master.
 	bool hidden;
@@ -52,6 +51,9 @@ protected:
 	std::string unit;
 	std::string icon;
 	std::string group;
+
+	// total extended info string
+	std::string extendedInfo;
 
 	// utility function for string conversion 
 	template <class T> std::string to_string(const T& t);
@@ -98,6 +100,8 @@ protected:
 	virtual void doSelfRefresh(void) = 0;
 
 	virtual void updateExtendedInfo(void);
+
+	std::string escapeKeyValueText(std::string str);
 
 public:
 
@@ -166,6 +170,10 @@ public:
 	virtual void setIcon(std::string icon);
 
 	virtual void setGroup(std::string group);
+
+	virtual std::string getExtendedState(void);
+
+	virtual std::string getExtendedInfo(void);
 
 	/** Causes the port to be refreshed by sending a refresh message to a connected master.
 	*   Only if the port is not hidden. */

@@ -7,9 +7,13 @@ import java.util.concurrent.TimeoutException;
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.devices.DeviceInfo;
 import org.ospdi.opdi.interfaces.IDevice;
+import org.ospdi.opdi.ports.AnalogPort;
 import org.ospdi.opdi.ports.BasicDeviceCapabilities;
+import org.ospdi.opdi.ports.DialPort;
+import org.ospdi.opdi.ports.DigitalPort;
 import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.ports.PortGroup;
+import org.ospdi.opdi.ports.SelectPort;
 import org.ospdi.opdi.utils.Strings;
 
 public class ExtendedProtocol extends BasicProtocol {
@@ -18,6 +22,8 @@ public class ExtendedProtocol extends BasicProtocol {
 
 	public static final String GET_EXTENDED_PORT_INFO = "gEPI";
 	public static final String EXTENDED_PORT_INFO = "EPI";
+	public static final String GET_EXTENDED_PORT_STATE = "gEPS";
+	public static final String EXTENDED_PORT_STATE = "EPS";
 
 	public static final String GET_GROUP_INFO = "gGI";
 	public static final String GROUP_INFO = "GI";
@@ -43,7 +49,7 @@ public class ExtendedProtocol extends BasicProtocol {
 		return MAGIC;
 	}
 
-	protected void expectExtendedPortState(Port port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+	protected void expectExtendedPortInfo(Port port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 		Message message;
 		try {
 			message = expect(channel, DEFAULT_TIMEOUT);
@@ -70,7 +76,7 @@ public class ExtendedProtocol extends BasicProtocol {
 			port.setExtendedPortInfo(parts[INFO]);
 		
 		// check whether there's a group specified
-		String group = port.getExtendedProperty("group", ""); 
+		String group = port.getExtendedInfo("group", ""); 
 		if (!group.isEmpty()) {
 			// assign group
 			port.setGroup(this.getGroupInfo(group, channel));
@@ -84,10 +90,81 @@ public class ExtendedProtocol extends BasicProtocol {
 		if (result != null) {
 			// send extended port info request on the same channel
 			send(new Message(channel, Strings.join(SEPARATOR, GET_EXTENDED_PORT_INFO, portID)));
-			expectExtendedPortState(result, channel);
+			expectExtendedPortInfo(result, channel);
 		}
 
 		return result;
+	}
+
+	protected void expectExtendedPortState(Port port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+		Message message;
+		try {
+			message = expect(channel, DEFAULT_TIMEOUT);
+		} catch (PortAccessDeniedException e) {
+			return;
+		} catch (PortErrorException e) {
+			return;
+		}
+		
+		final int PREFIX = 0;
+		final int PORT_ID = 1;
+		final int INFO = 2;
+		final int PARTS_COUNT = 3;
+		
+		String[] parts = Strings.split(message.getPayload(), SEPARATOR);
+		if (parts.length > PARTS_COUNT)
+			throw new ProtocolException("invalid number of message parts");
+		if (!parts[PREFIX].equals(EXTENDED_PORT_STATE))
+			throw new ProtocolException("unexpected reply, expected: " + EXTENDED_PORT_STATE);
+		if (!parts[PORT_ID].equals(port.getID()))
+			throw new ProtocolException("wrong port ID");
+		// info is optional
+		if (parts.length > INFO)
+			port.setExtendedPortState(parts[INFO]);
+	}
+	
+	@Override
+	public void getPortState(AnalogPort analogPort) throws TimeoutException,
+			InterruptedException, DisconnectedException, DeviceException,
+			ProtocolException, PortAccessDeniedException, PortErrorException {
+		super.getPortState(analogPort);
+
+		int channel = this.getSynchronousChannel();
+		send(new Message(channel, Strings.join(SEPARATOR, GET_EXTENDED_PORT_STATE, analogPort.getID())));
+		expectExtendedPortState(analogPort, channel);
+	}
+
+	@Override
+	public void getPortState(DigitalPort digitalPort) throws TimeoutException,
+			InterruptedException, DisconnectedException, DeviceException,
+			ProtocolException, PortAccessDeniedException, PortErrorException {
+		super.getPortState(digitalPort);
+
+		int channel = this.getSynchronousChannel();
+		send(new Message(channel, Strings.join(SEPARATOR, GET_EXTENDED_PORT_STATE, digitalPort.getID())));
+		expectExtendedPortState(digitalPort, channel);
+	}
+	
+	@Override
+	public void getPosition(DialPort port) throws TimeoutException,
+			InterruptedException, DisconnectedException, DeviceException,
+			ProtocolException, PortAccessDeniedException, PortErrorException {
+		super.getPosition(port);
+
+		int channel = this.getSynchronousChannel();
+		send(new Message(channel, Strings.join(SEPARATOR, GET_EXTENDED_PORT_STATE, port.getID())));
+		expectExtendedPortState(port, channel);
+	}
+	
+	@Override
+	public void getPosition(SelectPort port) throws TimeoutException,
+			InterruptedException, DisconnectedException, DeviceException,
+			ProtocolException, PortAccessDeniedException, PortErrorException {
+		super.getPosition(port);
+
+		int channel = this.getSynchronousChannel();
+		send(new Message(channel, Strings.join(SEPARATOR, GET_EXTENDED_PORT_STATE, port.getID())));
+		expectExtendedPortState(port, channel);
 	}
 	
 	protected void expectExtendedGroupInfo(Port port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
@@ -171,9 +248,12 @@ public class ExtendedProtocol extends BasicProtocol {
 		try {
 			message = expect(channel, DEFAULT_TIMEOUT);
 		} catch (PortAccessDeniedException e) {
-			throw new IllegalStateException("Programming error on device: getExtendedPortInfo should never signal port access denied", e);
+			throw new IllegalStateException("Programming error on device: getExtendedDeviceInfo should never signal port access denied", e);
 		} catch (PortErrorException e) {
-			throw new IllegalStateException("Programming error on device: getExtendedPortInfo should never signal a port error", e);
+			throw new IllegalStateException("Programming error on device: getExtendedDeviceInfo should never signal a port error", e);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new DeviceInfo("");
 		}
 		
 		final int PREFIX = 0;
@@ -204,6 +284,10 @@ public class ExtendedProtocol extends BasicProtocol {
 	public BasicDeviceCapabilities getDeviceCapabilities()
 			throws TimeoutException, ProtocolException, DeviceException,
 			InterruptedException, DisconnectedException {
+		// has cached device capabilities?
+		if (deviceCaps != null)
+			return deviceCaps;
+		
 		BasicDeviceCapabilities result = super.getDeviceCapabilities();
 		
 		// additional query: extended device info

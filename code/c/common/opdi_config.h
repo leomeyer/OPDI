@@ -88,7 +88,9 @@ typedef enum {
 	OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS,			/** A comma-separated list of supported protocols. */
 	OPDI_FUNCTION_GET_ENCODING,						/** The encoding that should be used. One of the encoding identifiers defined in the class java.lang.Charset. May be empty. */
 	OPDI_FUNCTION_SET_LANGUAGES,					/** Passes a string of comma-separated preferred languages as received from the master. The language names correspond to the predefined constants in the class java.util.Locale. */
-	OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO			/** Returns a key=value;-string describing extended device information. May be empty. */
+	OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO,			/** Returns a key=value;-string describing extended device information. May be empty. */
+	OPDI_FUNCTION_GET_EXTENDED_PORTINFO,			/** Returns a key=value;-string describing extended pprt information. The buffer contains the port ID. May be empty. */
+	OPDI_FUNCTION_GET_EXTENDED_PORTSTATE			/** Returns a key=value;-string describing the extended port state. The buffer contains the port ID. May be empty. */
 
 #ifndef OPDI_NO_AUTHENTICATION
 	, OPDI_FUNCTION_SET_USERNAME					/** During authentication, first the username is set. */

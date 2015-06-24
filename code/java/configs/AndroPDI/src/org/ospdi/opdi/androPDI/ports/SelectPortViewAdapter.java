@@ -156,7 +156,7 @@ class SelectPortViewAdapter implements IPortViewAdapter {
 			// set the proper icon
 			Drawable portIcon = context.getResources().getDrawable(R.drawable.select_port);
 			String iconName = sPort.getUnitFormat().getProperty("icon", 
-					sPort.getExtendedProperty("icon", "select_port"));
+					sPort.getExtendedInfo("icon", "select_port"));
 			
 			if (!iconName.equals("")) {
 				// get icon identifier
