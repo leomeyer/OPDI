@@ -18,7 +18,6 @@ import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.ports.PortFactory;
 import org.ospdi.opdi.ports.SelectPort;
 import org.ospdi.opdi.ports.StreamingPort;
-import org.ospdi.opdi.protocol.AbstractProtocol.IAbortable;
 import org.ospdi.opdi.utils.Strings;
 
 
@@ -49,8 +48,15 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	protected Integer currentChannel = CHANNEL_LOWEST_SYNCHRONOUS - 1;
 	protected Hashtable<Integer, StreamingPort> boundStreamingPorts = new Hashtable<Integer, StreamingPort>();
 	
-	protected boolean expectingMessage;
+	enum ExpectationMode {
+		NORMAL,
+		IGNORE_REFRESHES
+	};
+	
+	protected volatile boolean expectingMessage;
 	protected Queue<Message> messagesToDispatch = new ArrayDeque<Message>();
+	protected volatile ExpectationMode expectationMode;
+	
 	
 	/** Returns a new unique channel for a new protocol.
 	 * 
@@ -58,7 +64,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	 */
 	public int getSynchronousChannel() {
 		// calculate new unique channel number for synchronous protocol run
-		synchronized(currentChannel) {
+		synchronized (currentChannel) {
 			int channel = currentChannel + 1;
 			// prevent channel numbers from becoming too large
 			if (channel >= CHANNEL_ROLLOVER)
@@ -157,10 +163,11 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		}).start();
 	}
 
-	protected Message expect(long channel, int timeout, IAbortable abortable) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException, PortErrorException {
+	protected Message expect(long channel, int timeout, IAbortable abortable, ExpectationMode mode) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException, PortErrorException {
 		try {
 			// set flag: expecting a message
 			expectingMessage = true;
+			this.expectationMode = mode;
 			
 			return super.expect(channel, timeout, abortable);
 			
@@ -183,6 +190,18 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 			}
 		}
 	}
+
+	protected Message expect(long channel, int timeout, ExpectationMode mode)  throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException, PortErrorException {
+		return this.expect(channel, timeout, null, mode);
+	}
+
+	@Override
+	protected Message expect(long channel, int timeout)
+			throws TimeoutException, InterruptedException,
+			DisconnectedException, DeviceException, PortAccessDeniedException,
+			PortErrorException {
+		return this.expect(channel, timeout, ExpectationMode.NORMAL);
+	}
 	
 	@Override
 	public boolean dispatch(Message message) {
@@ -203,7 +222,8 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 					return true;
 				}
 				
-				if (message.getPayload().equals(RECONFIGURE)) {
+				// ignore RECONFIGURE if specified
+				if (message.getPayload().equals(RECONFIGURE) && expectationMode != ExpectationMode.IGNORE_REFRESHES) {
 					// clear cached device capabilities
 					deviceCaps = null;
 					// reset bound streaming ports (reconfigure on the device unbinds streaming ports)
@@ -223,7 +243,8 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 					if (parts[0].equals(DEBUG)) {
 						device.receivedDebug(Strings.join(1, SEPARATOR, (Object[])parts));
 					} else
-					if (parts[0].equals(REFRESH)) {
+						// ignore REFRESH if specified
+					if (parts[0].equals(REFRESH) && expectationMode != ExpectationMode.IGNORE_REFRESHES) {
 						// remaining components are port IDs
 						String[] portIDs = new String[parts.length - 1];
 						System.arraycopy(parts, 1, portIDs, 0, parts.length - 1);
@@ -270,7 +291,8 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		send(new Message(channel, GET_DEVICE_CAPS));
 		Message capResult;
 		try {
-			capResult = expect(channel, DEFAULT_TIMEOUT);
+			// ignore refreshes because they would trigger immediate reloading of device capabilities
+			capResult = expect(channel, DEFAULT_TIMEOUT, ExpectationMode.IGNORE_REFRESHES);
 		} catch (PortAccessDeniedException e) {
 			throw new IllegalStateException("Programming error on device: getDeviceCapabilities should never signal port access denied", e);
 		} catch (PortErrorException e) {
