@@ -168,6 +168,12 @@
     <ClInclude Include="OPDID_PortFunctions.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="OPDID_TimerPort.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="OPDID_ExpressionPort.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -247,6 +253,12 @@
     </ClCompile>
     <ClCompile Include="..\..\..\common\opdi_rijndael.cpp">
       <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="OPDID_TimerPort.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="OPDID_ExpressionPort.cpp">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

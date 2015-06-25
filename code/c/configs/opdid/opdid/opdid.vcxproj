@@ -115,8 +115,10 @@
     <ClInclude Include="..\..\..\platforms\win32\opdi_platformtypes.h" />
     <ClInclude Include="AbstractOPDID.h" />
     <ClInclude Include="OPDIDConfigurationFile.h" />
+    <ClInclude Include="OPDID_ExpressionPort.h" />
     <ClInclude Include="OPDID_PortFunctions.h" />
     <ClInclude Include="OPDID_Ports.h" />
+    <ClInclude Include="OPDID_TimerPort.h" />
     <ClInclude Include="opdi_configspecs.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="SunRiseSet.h" />
@@ -144,8 +146,10 @@
     <ClCompile Include="..\..\..\platforms\win32\opdi_platformfuncs.c" />
     <ClCompile Include="AbstractOPDID.cpp" />
     <ClCompile Include="OPDIDConfigurationFile.cpp" />
+    <ClCompile Include="OPDID_ExpressionPort.cpp" />
     <ClCompile Include="OPDID_PortFunctions.cpp" />
     <ClCompile Include="OPDID_Ports.cpp" />
+    <ClCompile Include="OPDID_TimerPort.cpp" />
     <ClCompile Include="opdid_win.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="SunRiseSet.cpp" />
