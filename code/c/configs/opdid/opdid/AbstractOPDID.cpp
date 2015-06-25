@@ -291,6 +291,11 @@ void AbstractOPDID::logExtreme(std::string message) {
 int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
 
 	this->environment = environment;
+
+	// add default environment parameters
+	this->environment["$DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), this->timestampFormat);
+	this->environment["$LOG_DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y%m%d_%H%M%S");
+
 	this->shutdownRequested = false;
 
 	// evaluate arguments
@@ -322,7 +327,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 				throw Poco::SyntaxException("Expected configuration file name after argument -c");
 			} else {
 				// load configuration, substituting environment parameters
-				this->configuration = this->readConfiguration(args.at(i), environment);
+				this->configuration = this->readConfiguration(args.at(i), this->environment);
 			}
 		} else
 		if (args.at(i) == "-l") {
