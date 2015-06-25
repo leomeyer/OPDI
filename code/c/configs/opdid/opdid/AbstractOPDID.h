@@ -194,7 +194,7 @@ public:
 
 	virtual void setupSerialStreamingPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
-	virtual void setupLoggingPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+	virtual void setupLoggerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	virtual void setupLogicPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
@@ -209,6 +209,8 @@ public:
 	virtual void setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	virtual void setupErrorDetectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
+	virtual void setupFaderPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);

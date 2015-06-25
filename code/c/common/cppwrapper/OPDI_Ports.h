@@ -92,7 +92,7 @@ protected:
 	bool refreshRequired;
 
 	// the minimum time in milliseconds between self-refresh messages
-	uint32_t refreshTime;
+	uint32_t selfRefreshTime;
 	uint64_t lastRefreshTime;
 
 	// Called when a periodic self-refresh is due. If a refresh is necessary, implementations

@@ -240,12 +240,12 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// Logging Streaming Port
+// Logger Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
 
 /** Defines a streaming port that can log port states and optionally write them to a log file.
  */
-class OPDID_LoggingPort : public OPDI_StreamingPort, protected OPDID_PortFunctions {
+class OPDID_LoggerPort : public OPDI_StreamingPort, protected OPDID_PortFunctions {
 
 friend class OPDI;
 
@@ -269,9 +269,9 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	OPDID_LoggingPort(AbstractOPDID *opdid, const char *id);
+	OPDID_LoggerPort(AbstractOPDID *opdid, const char *id);
 
-	virtual ~OPDID_LoggingPort();
+	virtual ~OPDID_LoggerPort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
 
@@ -284,4 +284,56 @@ public:
 	virtual int read(char *result) override;
 
 	virtual bool hasError(void) override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Fader Port
+///////////////////////////////////////////////////////////////////////////////
+
+/** A FaderPort can fade AnalogPorts in or out. You can set a left and right value
+* as well as a duration time in milliseconds. If the FaderPort is inactive (line = Low),
+* it will not act on the output ports. If it is set to High it will start at the
+* left value and count to the right value within the specified time. The values have 
+* to be specified as percentages. Once the duration is up the port sets itself to 
+* inactive (line = Low).
+*/
+class OPDID_FaderPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+protected:
+
+	enum FaderMode {
+		LINEAR,
+		EXPONENTIAL
+	};
+
+	FaderMode mode;
+	double left;
+	double right;
+	int durationMs;
+	double expA;
+	double expB;
+	double expMax;
+	bool invert;
+
+	std::string outputPortStr;
+	AnalogPortList outputPorts;
+
+	Poco::Timestamp startTime;
+	double lastValue;
+
+	virtual uint8_t doWork(uint8_t canSend);
+
+public:
+	OPDID_FaderPort(AbstractOPDID *opdid, const char *id);
+
+	virtual ~OPDID_FaderPort();
+
+	virtual void configure(Poco::Util::AbstractConfiguration *config);
+
+	virtual void setDirCaps(const char *dirCaps) override;
+
+	virtual void setMode(uint8_t mode) override;
+
+	virtual void setLine(uint8_t line) override;
+
+	virtual void prepare() override;
 };

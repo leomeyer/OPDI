@@ -1,4 +1,6 @@
 #include <bitset>
+#define _USE_MATH_DEFINES // for C++
+#include <math.h>
 
 #include "Poco/Tuple.h"
 #include "Poco/Timezone.h"
@@ -643,10 +645,10 @@ bool OPDID_SerialStreamingPort::hasError(void) {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Logging Streaming Port
+// Logger Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_LoggingPort::OPDID_LoggingPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id) {
+OPDID_LoggerPort::OPDID_LoggerPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id) {
 	this->opdid = opdid;
 	this->logPeriod = 10000;		// default: 10 seconds
 	this->lastEntryTime = 0;
@@ -654,10 +656,10 @@ OPDID_LoggingPort::OPDID_LoggingPort(AbstractOPDID *opdid, const char *id) : OPD
 	this->separator = ";";
 }
 
-OPDID_LoggingPort::~OPDID_LoggingPort() {
+OPDID_LoggerPort::~OPDID_LoggerPort() {
 }
 
-std::string OPDID_LoggingPort::getPortStateStr(OPDI_Port* port) {
+std::string OPDID_LoggerPort::getPortStateStr(OPDI_Port* port) {
 	try {
 		if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
 			uint8_t line;
@@ -689,14 +691,14 @@ std::string OPDID_LoggingPort::getPortStateStr(OPDI_Port* port) {
 	}
 }
 
-void OPDID_LoggingPort::prepare() {
+void OPDID_LoggerPort::prepare() {
 	OPDI_StreamingPort::prepare();
 
 	// find ports; throws errors if something required is missing
 	this->findPorts(this->getID(), "Ports", this->portsToLogStr, this->portsToLog);
 }
 
-uint8_t OPDID_LoggingPort::doWork(uint8_t canSend)  {
+uint8_t OPDID_LoggerPort::doWork(uint8_t canSend)  {
 	OPDI_StreamingPort::doWork(canSend);
 
 	// check whether the time for a new entry has been reached
@@ -747,7 +749,7 @@ uint8_t OPDID_LoggingPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void OPDID_LoggingPort::configure(Poco::Util::AbstractConfiguration *config) {
+void OPDID_LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configureStreamingPort(config, this);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -773,21 +775,165 @@ void OPDID_LoggingPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->portsToLogStr = this->opdid->getConfigString(config, "Ports", "", true);
 }
 
-int OPDID_LoggingPort::write(char *bytes, size_t length) {
+int OPDID_LoggerPort::write(char *bytes, size_t length) {
 	return 0;
 }
 
-int OPDID_LoggingPort::available(size_t count) {
+int OPDID_LoggerPort::available(size_t count) {
 	// count has no meaning in this implementation
 	// nothing available
 	return 0;
 }
 
-int OPDID_LoggingPort::read(char *result) {
+int OPDID_LoggerPort::read(char *result) {
 	// nothing available
 	return 0;
 }
 
-bool OPDID_LoggingPort::hasError(void) {
+bool OPDID_LoggerPort::hasError(void) {
 	return false;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Fader Port
+///////////////////////////////////////////////////////////////////////////////
+
+OPDID_FaderPort::OPDID_FaderPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+	this->opdid = opdid;
+	this->mode = LINEAR;
+	this->left = 0;
+	this->right = 0;
+	this->durationMs = 0;
+	this->lastValue = -1;
+	this->invert = false;
+
+	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+}
+
+OPDID_FaderPort::~OPDID_FaderPort() {
+}
+
+void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
+	this->opdid->configurePort(config, this, 0);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+
+	std::string modeStr = config->getString("Mode", "");
+	if (modeStr == "Linear") 
+		this->mode = LINEAR;
+	else if (modeStr == "Exponential")
+		this->mode = EXPONENTIAL;
+	else if (modeStr != "")
+		throw Poco::DataException(this->ID() + ": Invalid Mode setting specified; expected 'Linear' or 'Exponential': " + modeStr);
+
+	this->left = config->getDouble("Left", -1);
+	if ((this->left < 0.0) || (this->left > 100.0))
+		throw Poco::DataException(this->ID() + ": Value for 'Left' must be between 0 and 100 percent");
+	this->right = config->getDouble("Right", -1);
+	if ((this->right < 0.0) || (this->right > 100.0))
+		throw Poco::DataException(this->ID() + ": Value for 'Right' must be between 0 and 100 percent");
+	this->durationMs = config->getInt("Duration", -1);
+	if (this->durationMs < 0)
+		throw Poco::DataException(this->ID() + ": 'Duration' must be a positive non-zero value (in milliseconds)");
+
+	if (this->mode == EXPONENTIAL) {
+		this->expA = config->getDouble("ExpA", 1);
+		if (this->expA < 0.0)
+			throw Poco::DataException(this->ID() + ": Value for 'ExpA' must be greater than 0 (default: 1)");
+		this->expB = config->getDouble("ExpB", 10);
+		if (this->expB < 0.0)
+			throw Poco::DataException(this->ID() + ": Value for 'ExpB' must be greater than 0 (default: 10)");
+
+		// determine maximum result of the exponentiation, depending on the coefficients expA and expB
+		this->expMax = this->expA * (exp(this->expB) - 1);
+	}
+	this->invert = config->getBool("Invert", this->invert);
+
+	this->outputPortStr = opdid->getConfigString(config, "OutputPorts", "", true);
+}
+
+void OPDID_FaderPort::setDirCaps(const char *dirCaps) {
+	throw PortError(std::string(this->getID()) + ": The direction capabilities of a FaderPort cannot be changed");
+}
+
+void OPDID_FaderPort::setMode(uint8_t mode) {
+	throw PortError(std::string(this->getID()) + ": The mode of a FaderPort cannot be changed");
+}
+
+void OPDID_FaderPort::setLine(uint8_t line) {
+	OPDI_DigitalPort::setLine(line);
+	if (line == 1) {
+		this->startTime = Poco::Timestamp();
+		// cause correct log output
+		this->lastValue = -1;
+		this->logDebug(this->ID() + ": Start fading at " + to_string(this->left) + "%");
+	} else {
+		this->logDebug(this->ID() + ": Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
+	}
+}
+
+void OPDID_FaderPort::prepare() {
+	OPDI_DigitalPort::prepare();
+
+	// find ports; throws errors if something required is missing
+	this->findAnalogPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
+}
+
+uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
+	OPDI_DigitalPort::doWork(canSend);
+
+	if (this->line == 1) {
+		// calculate time difference
+		Poco::Timestamp now;
+		Poco::Timestamp::TimeVal elapsedMs = (now.epochMicroseconds() - this->startTime.epochMicroseconds()) / 1000;
+
+		// end reached?
+		if (elapsedMs > this->durationMs) {
+			this->setLine(0);
+			this->refreshRequired = true;
+			return OPDI_STATUS_OK;
+		}
+
+		// calculate current value (linear first) within the range [0, 1]
+		double value;
+		if (this->mode == LINEAR) {
+			if (this->invert)
+				value = (this->right - (double)elapsedMs / (double)this->durationMs * (this->right - this->left)) / 100.0;
+			else
+				value = (this->left + (double)elapsedMs / (double)this->durationMs * (this->right - this->left)) / 100.0;
+		} else
+		if (this->mode == EXPONENTIAL) {
+			// calculate exponential value; start with value relative to the range
+			if (this->invert)
+				value = 1-0 - (double)elapsedMs / (double)this->durationMs;
+			else
+				value = (double)elapsedMs / (double)this->durationMs;
+
+			// exponentiate value; map within [0..1]
+			value = (this->expMax <= 0 ? 1 : (this->expA * (exp(this->expB * value)) - 1) / this->expMax);
+
+			if (value < 0.0)
+				value = 0.0;
+
+			// map back to the target range
+			value = (this->left + value * (this->right - this->left)) / 100.0;
+		}
+
+		this->logExtreme(this->ID() + ": Setting current fader value to " + to_string(value * 100.0) + "%");
+
+		// regular output ports
+		AnalogPortList::iterator it = this->outputPorts.begin();
+		while (it != this->outputPorts.end()) {
+			try {
+				(*it)->setRelativeValue(value);
+			} catch (Poco::Exception &e) {
+				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
+			}
+			it++;
+		}
+
+		this->lastValue = value;
+	}
+
+	return OPDI_STATUS_OK;
 }
