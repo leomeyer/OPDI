@@ -74,12 +74,9 @@
  * Assumes that the upper and lower case
  * alphabets and digits are each contiguous.
  */
-int64_t strtoll (const char*, char **, int);
-
 int64_t
-strtoll(const char * nptr, char ** endptr, int base)
+strtoll(const char * nptr, char ** endptr, int base, uint8_t *errno)
 {
-	static uint8_t errno;
         const char *s;
         uint64_t acc;
         char c;
@@ -161,10 +158,10 @@ strtoll(const char * nptr, char ** endptr, int base)
         }
         if (any < 0) {
                 acc = neg ? LLONG_MIN : LLONG_MAX;
-                errno = -1;
+                *errno = -1;
         } else if (!any) {
 noconv:
-                errno = -2;
+                *errno = -2;
         } else if (neg)
                 acc = -acc;
         if (endptr != NULL)
@@ -225,16 +222,16 @@ uint8_t opdi_str_to_int32(const char *str, int32_t *result) {
 }
 
 uint8_t opdi_str_to_int64(const char *str, int64_t *result) {
-	static uint8_t  errno;
+	uint8_t  error;
 	char *p;
 	int64_t res;
 
 	// clear error
-	errno = 0;
+	error = 0;
 
-	res = strtoll(str, &p, 10);
+	res = strtoll(str, &p, 10, &error);
 
-	if (errno != 0 || *p != 0 || p == str)
+	if (error != 0 || *p != 0 || p == str)
 	  return OPDI_ERROR_CONVERSION;
 
 	*result = res;
