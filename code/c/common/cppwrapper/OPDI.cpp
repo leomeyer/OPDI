@@ -369,12 +369,24 @@ uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 	// a complete message has been processed; it's now safe to send
 	this->canSend = true;
 
+	// idle timeout detection active?
 	if (this->idle_timeout_ms > 0) {
-		if (channel != 0) {
+		// Channels above a given threshold do reset the activity time.
+		// Messages on channels below this do not reset it. Usually the
+		// channel assignments are as follows:
+		// 0: control channel
+		// 1: refresh channel
+		// 2 - 19: reserved for streaming ports
+		// 20 and more: user interaction channels
+		// We want to reset the activity only if a "real" user interaction occurs.
+		// That means, ping messages and automatic refreshes caused by the device
+		// should not cause the device to be connected indefinitely.
+		// TODO find a better way to specify this (masters must respect this convention)
+		if (channel >= 20) {
 			// reset activity time
 			this->last_activity = opdi_get_time_ms();
 		} else {
-			// control channel message
+			// non-resetting message
 
 			// check idle timeout
 			if (opdi_get_time_ms() - this->last_activity > this->idle_timeout_ms) {

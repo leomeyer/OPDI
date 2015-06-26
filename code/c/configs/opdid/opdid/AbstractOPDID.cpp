@@ -19,6 +19,8 @@
 #include "AbstractOPDID.h"
 #include "OPDI_Ports.h"
 #include "OPDID_Ports.h"
+#include "OPDID_TimerPort.h"
+#include "OPDID_ExpressionPort.h"
 
 #define DEFAULT_IDLETIMEOUT_MS	180000
 #define DEFAULT_TCP_PORT		13110
@@ -93,6 +95,16 @@ AbstractOPDID::AbstractOPDID(void) {
 }
 
 AbstractOPDID::~AbstractOPDID(void) {
+}
+
+uint8_t AbstractOPDID::idleTimeoutReached(void) {
+	uint8_t result = OPDI::idleTimeoutReached();
+
+	// log if idle timeout occurred
+	if (result == OPDI_DISCONNECTED)
+		this->logNormal("Idle timeout reached");
+
+	return result;
 }
 
 void AbstractOPDID::protocolCallback(uint8_t protState) {
@@ -289,6 +301,11 @@ void AbstractOPDID::logExtreme(std::string message) {
 int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
 
 	this->environment = environment;
+
+	// add default environment parameters
+	this->environment["$DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), this->timestampFormat);
+	this->environment["$LOG_DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y%m%d_%H%M%S");
+
 	this->shutdownRequested = false;
 
 	// evaluate arguments
@@ -320,7 +337,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 				throw Poco::SyntaxException("Expected configuration file name after argument -c");
 			} else {
 				// load configuration, substituting environment parameters
-				this->configuration = this->readConfiguration(args.at(i), environment);
+				this->configuration = this->readConfiguration(args.at(i), this->environment);
 			}
 		} else
 		if (args.at(i) == "-l") {
@@ -834,11 +851,11 @@ void AbstractOPDID::setupSerialStreamingPort(Poco::Util::AbstractConfiguration *
 	this->addPort(ssPort);
 }
 
-void AbstractOPDID::setupLoggingPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupLoggerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
 	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up logging port: " + port);
+		this->log("Setting up Logger port: " + port);
 
-	OPDID_LoggingPort *logPort = new OPDID_LoggingPort(this, port.c_str());
+	OPDID_LoggerPort *logPort = new OPDID_LoggerPort(this, port.c_str());
 	logPort->configure(portConfig);
 
 	this->addPort(logPort);
@@ -852,6 +869,16 @@ void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration *portConfig
 	dlPort->configure(portConfig);
 
 	this->addPort(dlPort);
+}
+
+void AbstractOPDID::setupFaderPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	if (this->logVerbosity >= VERBOSE)
+		this->log("Setting up FaderPort: " + port);
+
+	OPDID_FaderPort *fPort = new OPDID_FaderPort(this, port.c_str());
+	fPort->configure(portConfig);
+
+	this->addPort(fPort);
 }
 
 void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
@@ -951,20 +978,20 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		if (nodeType == "SerialStreamingPort") {
 			this->setupSerialStreamingPort(nodeConfig, node);
 		} else
-		if (nodeType == "LoggingPort") {
-			this->setupLoggingPort(nodeConfig, node);
+		if (nodeType == "Logger") {
+			this->setupLoggerPort(nodeConfig, node);
 		} else
-		if (nodeType == "LogicPort") {
+		if (nodeType == "Logic") {
 			this->setupLogicPort(nodeConfig, node);
 		} else
-		if (nodeType == "PulsePort") {
+		if (nodeType == "Pulse") {
 			this->setupPulsePort(nodeConfig, node);
 		} else
-		if (nodeType == "SelectorPort") {
+		if (nodeType == "Selector") {
 			this->setupSelectorPort(nodeConfig, node);
 #ifdef OPDID_USE_EXPRTK
 		} else
-		if (nodeType == "ExpressionPort") {
+		if (nodeType == "Expression") {
 			this->setupExpressionPort(nodeConfig, node);
 #else
 #pragma message( "Expression library not included, cannot use the ExpressionPort node type" )
@@ -975,6 +1002,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else
 		if (nodeType == "ErrorDetector") {
 			this->setupErrorDetectorPort(nodeConfig, node);
+		} else
+		if (nodeType == "Fader") {
+			this->setupFaderPort(nodeConfig, node);
 		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}

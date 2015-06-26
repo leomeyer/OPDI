@@ -35,7 +35,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->readonly = false;
 	this->refreshMode = REFRESH_NOT_SET;
 	this->refreshRequired = false;
-	this->refreshTime = 0;
+	this->selfRefreshTime = 0;
 	this->lastRefreshTime = 0;
 	this->orderID = -1;
 
@@ -55,7 +55,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->readonly = false;
 	this->refreshMode = REFRESH_NOT_SET;
 	this->refreshRequired = false;
-	this->refreshTime = 0;
+	this->selfRefreshTime = 0;
 	this->lastRefreshTime = 0;
 
 	this->id = (char*)malloc(strlen(id) + 1);
@@ -72,18 +72,17 @@ uint8_t OPDI_Port::doWork(uint8_t canSend) {
 	if ((this->opdi == NULL) || !this->opdi->isConnected())
 		this->refreshRequired = false;
 
-	// refresh necessary?
-	if (canSend && this->refreshRequired) {
+	// refresh necessary? don't refresh too often
+	if (canSend && this->refreshRequired && (opdi_get_time_ms() - this->lastRefreshTime > 1000)) {
 		this->refresh();
 		this->refreshRequired = false;
 	}
 
 	// determine whether periodic self refresh is necessary
-	if ((this->refreshMode == REFRESH_PERIODIC) && (this->refreshTime > 0)) {
+	if ((this->refreshMode == REFRESH_PERIODIC) && (this->selfRefreshTime > 0)) {
 		// self refresh timer reached?
-		if (opdi_get_time_ms() - this->lastRefreshTime > this->refreshTime) {
+		if (opdi_get_time_ms() - this->lastRefreshTime > this->selfRefreshTime) {
 			this->doSelfRefresh();
-			this->lastRefreshTime = opdi_get_time_ms();
 		}
 	}
 
@@ -225,41 +224,6 @@ std::string OPDI_Port::escapeKeyValueText(std::string str) {
 	return result;
 }
 
-/*
-void OPDI_Port::doAutoRefresh(void) {
-	// only while connected
-	// this is important because if an auto refresh is issued during startup
-	// (because a port state may be changed by the configuration) it may fail
-	// if the ports to auto-refresh have not already been added.
-	if ((this->opdi == NULL) || (!this->opdi->isConnected()))
-		return;
-
-	std::vector<OPDI_Port *> portsToRefresh;
-	// go through port list
-	for(std::vector<std::string>::iterator it = this->autoRefreshPorts.begin(); it != this->autoRefreshPorts.end(); ++it) {
-		OPDI_Port *port = opdi->findPortByID((*it).c_str());
-		if (port == NULL)
-			throw PortError(std::string("Specified auto-refresh port could not be found while auto-refreshing port ") + this->id + ": " + *it);
-		portsToRefresh.push_back(port);
-	}
-	if (portsToRefresh.size() > 0) {
-		// add end token
-		portsToRefresh.push_back(NULL);
-		opdi->refresh(&portsToRefresh[0]);
-	}
-}
-void OPDI_Port::setAutoRefreshPorts(std::string portList) {
-	// split list at blanks
-	std::stringstream ss(portList);
-	std::string item;
-	while (std::getline(ss, item, ' ')) {
-		// ignore empty items
-		if (item != "")
-			this->autoRefreshPorts.push_back(item);
-	}
-}
-*/
-
 void OPDI_Port::setRefreshMode(RefreshMode refreshMode) {
 	this->refreshMode = refreshMode;
 }
@@ -269,7 +233,7 @@ OPDI_Port::RefreshMode OPDI_Port::getRefreshMode(void) {
 }
 
 void OPDI_Port::setRefreshTime(uint32_t timeInMs) {
-	this->refreshTime = timeInMs;
+	this->selfRefreshTime = timeInMs;
 }
 
 uint8_t OPDI_Port::refresh() {
@@ -280,6 +244,7 @@ uint8_t OPDI_Port::refresh() {
 	ports[0] = this;
 	ports[1] = NULL;
 
+	this->lastRefreshTime = opdi_get_time_ms();
 	return this->opdi->refresh(ports);
 }
 

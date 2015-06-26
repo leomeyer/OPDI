@@ -124,47 +124,51 @@ public class ExtendedProtocol extends BasicProtocol {
 	}
 	
 	@Override
-	public void getPortState(AnalogPort analogPort) throws TimeoutException,
+	public int getPortState(AnalogPort analogPort) throws TimeoutException,
 			InterruptedException, DisconnectedException, DeviceException,
 			ProtocolException, PortAccessDeniedException, PortErrorException {
-		super.getPortState(analogPort);
+		int channel = super.getPortState(analogPort);
 
-		int channel = this.getSynchronousChannel();
 		send(new Message(channel, Strings.join(SEPARATOR, GET_EXTENDED_PORT_STATE, analogPort.getID())));
 		expectExtendedPortState(analogPort, channel);
+		
+		return channel;
 	}
 
 	@Override
-	public void getPortState(DigitalPort digitalPort) throws TimeoutException,
+	public int getPortState(DigitalPort digitalPort) throws TimeoutException,
 			InterruptedException, DisconnectedException, DeviceException,
 			ProtocolException, PortAccessDeniedException, PortErrorException {
-		super.getPortState(digitalPort);
+		int channel = super.getPortState(digitalPort);
 
-		int channel = this.getSynchronousChannel();
 		send(new Message(channel, Strings.join(SEPARATOR, GET_EXTENDED_PORT_STATE, digitalPort.getID())));
 		expectExtendedPortState(digitalPort, channel);
+		
+		return channel;
 	}
 	
 	@Override
-	public void getPosition(DialPort port) throws TimeoutException,
+	public int getPosition(DialPort port) throws TimeoutException,
 			InterruptedException, DisconnectedException, DeviceException,
 			ProtocolException, PortAccessDeniedException, PortErrorException {
-		super.getPosition(port);
+		int channel = super.getPosition(port);
 
-		int channel = this.getSynchronousChannel();
 		send(new Message(channel, Strings.join(SEPARATOR, GET_EXTENDED_PORT_STATE, port.getID())));
 		expectExtendedPortState(port, channel);
+		
+		return channel;
 	}
 	
 	@Override
-	public void getPosition(SelectPort port) throws TimeoutException,
+	public int getPosition(SelectPort port) throws TimeoutException,
 			InterruptedException, DisconnectedException, DeviceException,
 			ProtocolException, PortAccessDeniedException, PortErrorException {
-		super.getPosition(port);
+		int channel = super.getPosition(port);
 
-		int channel = this.getSynchronousChannel();
 		send(new Message(channel, Strings.join(SEPARATOR, GET_EXTENDED_PORT_STATE, port.getID())));
 		expectExtendedPortState(port, channel);
+		
+		return channel;
 	}
 	
 	protected void expectExtendedGroupInfo(Port port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
@@ -274,7 +278,7 @@ public class ExtendedProtocol extends BasicProtocol {
 
 	public DeviceInfo getExtendedDeviceInfo() throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 		
-		int channel = this.getSynchronousChannel();
+		int channel = this.getSynchronousChannel(false);
 		
 		send(new Message(channel, Strings.join(SEPARATOR, GET_EXTENDED_DEVICE_INFO)));
 		return expectExtendedDeviceInfo(channel);

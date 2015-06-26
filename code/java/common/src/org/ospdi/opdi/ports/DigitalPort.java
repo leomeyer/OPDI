@@ -200,4 +200,5 @@ public class DigitalPort extends Port {
 	public boolean isReadonly() {
 		return (flags & PORTFLAG_READONLY) == PORTFLAG_READONLY;
 	}
+
 }

@@ -69,6 +69,8 @@ protected:
 	typedef std::map<std::string, std::string> LockedResources;
 	LockedResources lockedResources;
 
+	virtual uint8_t idleTimeoutReached(void) override;
+
 	virtual Poco::Util::AbstractConfiguration *readConfiguration(std::string fileName, std::map<std::string, std::string> parameters);
 
 	/** Outputs a log message with a timestamp. */
@@ -194,7 +196,7 @@ public:
 
 	virtual void setupSerialStreamingPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
-	virtual void setupLoggingPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+	virtual void setupLoggerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	virtual void setupLogicPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
@@ -209,6 +211,8 @@ public:
 	virtual void setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	virtual void setupErrorDetectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
+	virtual void setupFaderPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);

@@ -64,7 +64,9 @@ public abstract class Port {
 	protected PortGroup group;
 	
 	protected Map<String, String> extendedInfoProperties = new HashMap<String, String>(); 
-	protected Map<String, String> extendedStateProperties = new HashMap<String, String>(); 
+	protected Map<String, String> extendedStateProperties = new HashMap<String, String>();
+
+	protected boolean refreshing; 
 
 	/** Only to be used by subclasses
 	 * 
@@ -172,13 +174,27 @@ public abstract class Port {
 	 */
 	public abstract String serialize();
 	
-	/** Clear cached state values.
-	 * 
+	/** Called when the port should be refreshed.
+	 * Clears cached state values and sets the refreshing flag to indicate
+	 * that the next state query should use the refresh channel instead of an
+	 * ordinary synchronous channel.
 	 */
 	public void refresh() {
 		clearError();
+		// flag: the next state query is in response to a refresh command
+		refreshing = true;
 	}
 
+	/** Returns whether the next port state query is in response to a refresh. Calling this method
+	 * resets the refreshing flag. 
+	 * @return
+	 */
+	public boolean isRefreshing() {
+		boolean result = refreshing;
+		refreshing = false;
+		return result;
+	}
+	
 	@Override
 	public String toString() {
 		return "Port id=" + getID() + "; name='" + getName() + "'; type=" + getType() + "; dir_caps=" + getDirCaps();
