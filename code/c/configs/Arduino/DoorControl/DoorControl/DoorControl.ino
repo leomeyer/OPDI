@@ -57,7 +57,7 @@
 #define OPDI_MASTER_NAME_LENGTH	1
 
 // maximum possible ports on this device
-#define OPDI_MAX_DEVICE_PORTS	8
+#define OPDI_MAX_DEVICE_PORTS	7
 
 // define to conserve RAM and ROM
 //#define OPDI_NO_DIGITAL_PORTS
@@ -90,11 +90,13 @@
 #define MAX_PORTIDLENGTH		2
 #define MAX_PORTNAMELENGTH		5
 #define MAX_SLAVENAMELENGTH		12
-#define MAX_ENCODINGNAMELENGTH	7
+#define MAX_ENCODINGNAMELENGTH          7
 
 #define OPDI_MAX_PORT_INFO_MESSAGE	0
 
-#define OPDI_EXTENDED_PROTOCOL	1
+#define OPDI_EXTENDED_INFO_LENGTH	16
+
+#define OPDI_EXTENDED_PROTOCOL          1
 
 #endif		// __OPDI_CONFIGSPECS_H
 
@@ -132,12 +134,12 @@
 class OPDI_EEPROMDialPort : public OPDI_DialPort {
 protected:
   int address;
-  
+  char *extendedInfo;
 public:
 OPDI_EEPROMDialPort(const char *id, const char *label, const int address, const int64_t minValue, const int64_t maxValue, char *extendedInfo) : 
     OPDI_DialPort(id, label, minValue, maxValue, 1, 0) {
    this->address = address;
-   this->port.extendedInfo = extendedInfo;     
+   this->extendedInfo = extendedInfo;     
 }
 
 virtual ~OPDI_EEPROMDialPort() {}
@@ -183,6 +185,11 @@ virtual uint8_t getState(int64_t *position) {
     *position = portInfo->min;
   return OPDI_STATUS_OK;
 }
+
+virtual uint8_t getExtendedInfo(char *buffer, size_t length) {
+  strncpy(buffer, this->extendedInfo, length);
+  return OPDI_STATUS_OK;
+}
 };
 
 // DS1307 dial port: a connection to a DS1307 RTC module
@@ -190,9 +197,8 @@ virtual uint8_t getState(int64_t *position) {
 // Technically the value is in the UTC time zone but we treat it as local time.
 class OPDI_DS1307DialPort : public OPDI_DialPort {
 public:
-OPDI_DS1307DialPort(const char *id, const char *label, char *extendedInfo) : 
+OPDI_DS1307DialPort(const char *id, const char *label) : 
     OPDI_DialPort(id, label, 0, 999999999999, 1, 0) {
-   this->port.extendedInfo = extendedInfo;     
 }
 
 virtual ~OPDI_DS1307DialPort() {}
@@ -219,6 +225,11 @@ virtual uint8_t getState(int64_t *position) {
   // convert time to Unix epoch seconds
   *position = makeTime(tm);
   
+  return OPDI_STATUS_OK;
+}
+
+virtual uint8_t getExtendedInfo(char *buffer, size_t length) {
+  strncpy(buffer, "unit=unixTime", length);
   return OPDI_STATUS_OK;
 }
 };
@@ -280,11 +291,11 @@ const char* opdi_password = "test";
 
 // Port definitions
 OPDI_EEPROMDialPort codePort = OPDI_EEPROMDialPort("C", "Code", 0, 0, 99999, "unit=keypadCode");
-OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("T", "Time", "unit=unixTime");
+OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("T", "Time");
 OPDI_DigitalPortDoor doorPort = OPDI_DigitalPortDoor("D", "Door");
 OPDI_EEPROMDialPort tag1Port = OPDI_EEPROMDialPort("1", "Tag1", 10, 0, 999999999999, "");
 OPDI_EEPROMDialPort tag2Port = OPDI_EEPROMDialPort("2", "Tag2", 20, 0, 999999999999, "");
-OPDI_EEPROMDialPort tag3Port = OPDI_EEPROMDialPort("3", "Tag3", 30, 0, 999999999999, "");
+//OPDI_EEPROMDialPort tag3Port = OPDI_EEPROMDialPort("3", "Tag3", 30, 0, 999999999999, "");
 OPDI_EEPROMDialPort lastTagPort = OPDI_EEPROMDialPort("L", "LTag", 40, 0, 999999999999, "");
 OPDI_EEPROMDialPort lastAccessPort = OPDI_EEPROMDialPort("A", "LAcc", 50, 0, 999999999999, "unit=unixTime"); // store time for keypad opening only
 
@@ -412,7 +423,7 @@ uint8_t setupDevice() {
   Opdi->addPort(&doorPort);
   Opdi->addPort(&tag1Port);
   Opdi->addPort(&tag2Port);
-  Opdi->addPort(&tag3Port);
+//  Opdi->addPort(&tag3Port);
   Opdi->addPort(&lastTagPort);
   Opdi->addPort(&lastAccessPort);
 
@@ -515,7 +526,7 @@ uint8_t doWork() {
       success = tagID == uid;
     }
     if (!success) {
-      tag3Port.getState(&tagID);
+//      tag3Port.getState(&tagID);
       success = tagID == uid;
     }
     if (success) {
