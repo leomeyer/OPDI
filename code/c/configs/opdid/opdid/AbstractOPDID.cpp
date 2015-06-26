@@ -97,6 +97,16 @@ AbstractOPDID::AbstractOPDID(void) {
 AbstractOPDID::~AbstractOPDID(void) {
 }
 
+uint8_t AbstractOPDID::idleTimeoutReached(void) {
+	uint8_t result = OPDI::idleTimeoutReached();
+
+	// log if idle timeout occurred
+	if (result == OPDI_DISCONNECTED)
+		this->logNormal("Idle timeout reached");
+
+	return result;
+}
+
 void AbstractOPDID::protocolCallback(uint8_t protState) {
 	if (protState == OPDI_PROTOCOL_START_HANDSHAKE) {
 		if (this->logVerbosity >= AbstractOPDID::VERBOSE)

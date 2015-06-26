@@ -69,6 +69,8 @@ protected:
 	typedef std::map<std::string, std::string> LockedResources;
 	LockedResources lockedResources;
 
+	virtual uint8_t idleTimeoutReached(void) override;
+
 	virtual Poco::Util::AbstractConfiguration *readConfiguration(std::string fileName, std::map<std::string, std::string> parameters);
 
 	/** Outputs a log message with a timestamp. */

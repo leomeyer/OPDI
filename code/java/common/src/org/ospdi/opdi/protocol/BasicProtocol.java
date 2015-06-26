@@ -38,7 +38,9 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 
 	protected static final int DEFAULT_TIMEOUT = 10000;
 	
-	protected static int CHANNEL_LOWEST_STREAMING = 1;
+	protected static int CHANNEL_CONTROL = 0;
+	protected static int CHANNEL_REFRESH = 1;
+	protected static int CHANNEL_LOWEST_STREAMING = 2;
 	protected static int CHANNEL_HIGHEST_STREAMING = 19;
 	protected static int CHANNEL_LOWEST_SYNCHRONOUS = CHANNEL_HIGHEST_STREAMING + 1;
 	protected static int CHANNEL_ROLLOVER = 100;
@@ -62,13 +64,16 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	 * 
 	 * @return
 	 */
-	public int getSynchronousChannel() {
+	public int getSynchronousChannel(boolean isRefresh) {
+		// send refresh messages on a special channel to avoid triggering an idle timeout activity reset on the device
+		if (isRefresh)
+			return CHANNEL_REFRESH;
 		// calculate new unique channel number for synchronous protocol run
 		synchronized (currentChannel) {
 			int channel = currentChannel + 1;
 			// prevent channel numbers from becoming too large
 			if (channel >= CHANNEL_ROLLOVER)
-				channel = 1;
+				channel = CHANNEL_LOWEST_SYNCHRONOUS;
 			currentChannel = channel;
 			return channel;
 		}
@@ -141,7 +146,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 			@Override
 			public void run() {
 				// send ping message on the control channel (channel == 0)
-				Message ping = new Message(0, Strings.join(SEPARATOR, PING_MESSAGE));
+				Message ping = new Message(CHANNEL_CONTROL, Strings.join(SEPARATOR, PING_MESSAGE));
 				while (getDevice().isConnected()) {
 					try {
 						// wait for the specified time after the last message
@@ -285,7 +290,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		if (deviceCaps != null)
 			return deviceCaps;
 
-		int channel = getSynchronousChannel();
+		int channel = getSynchronousChannel(false);
 		
 		// request device capabilities from the slave
 		send(new Message(channel, GET_DEVICE_CAPS));
@@ -354,18 +359,22 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	public void setPortMode(DigitalPort port, DigitalPort.PortMode portMode)
 			throws TimeoutException, InterruptedException,
 			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {		
-		expectDigitalPortState(port, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, SET_DIGITAL_PORT_MODE, port.getID(), portMode.ordinal()))));
+		expectDigitalPortState(port, send(new Message(getSynchronousChannel(false), Strings.join(SEPARATOR, SET_DIGITAL_PORT_MODE, port.getID(), portMode.ordinal()))));
 	}
 	
 	
 	@Override
 	public void setPortLine(DigitalPort digitalPort, DigitalPort.PortLine portLine) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {		
-		expectDigitalPortState(digitalPort, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, SET_DIGITAL_PORT_LINE, digitalPort.getID(), portLine.ordinal()))));
+		expectDigitalPortState(digitalPort, send(new Message(getSynchronousChannel(false), Strings.join(SEPARATOR, SET_DIGITAL_PORT_LINE, digitalPort.getID(), portLine.ordinal()))));
 	}
 
 	@Override
-	public void getPortState(DigitalPort digitalPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
-		expectDigitalPortState(digitalPort, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, GET_DIGITAL_PORT_STATE, digitalPort.getID()))));
+	public int getPortState(DigitalPort digitalPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
+		int channel = getSynchronousChannel(digitalPort.isRefreshing());
+
+		expectDigitalPortState(digitalPort, send(new Message(channel, Strings.join(SEPARATOR, GET_DIGITAL_PORT_STATE, digitalPort.getID()))));
+
+		return channel;
 	}
 
 	/// Analog port
@@ -401,37 +410,38 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 
 	@Override
 	public void setPortValue(AnalogPort analogPort, int value) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
-		expectAnalogPortState(analogPort, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, SET_ANALOG_PORT_VALUE, analogPort.getID(), value))));
+		expectAnalogPortState(analogPort, send(new Message(getSynchronousChannel(false), Strings.join(SEPARATOR, SET_ANALOG_PORT_VALUE, analogPort.getID(), value))));
 	}
 
 	@Override
-	public void getPortState(AnalogPort analogPort) throws TimeoutException,
+	public int getPortState(AnalogPort analogPort) throws TimeoutException,
 			InterruptedException, DisconnectedException, DeviceException,
 			ProtocolException, PortAccessDeniedException, PortErrorException {
-		int channel = getSynchronousChannel();
+		int channel = getSynchronousChannel(analogPort.isRefreshing());
 		send(new Message(channel, Strings.join(SEPARATOR, GET_ANALOG_PORT_STATE, analogPort.getID())));
 		expectAnalogPortState(analogPort, channel);
+		return channel;
 	}
 
 	@Override
 	public void setPortMode(AnalogPort analogPort, AnalogPort.PortMode mode)
 			throws TimeoutException, InterruptedException,
 			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
-		expectAnalogPortState(analogPort, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, SET_ANALOG_PORT_MODE, analogPort.getID(), mode.ordinal()))));
+		expectAnalogPortState(analogPort, send(new Message(getSynchronousChannel(false), Strings.join(SEPARATOR, SET_ANALOG_PORT_MODE, analogPort.getID(), mode.ordinal()))));
 	}
 
 	@Override
 	public void setPortResolution(AnalogPort analogPort, Resolution resolution)
 			throws TimeoutException, InterruptedException,
 			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
-		expectAnalogPortState(analogPort, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, SET_ANALOG_PORT_RESOLUTION, analogPort.getID(), resolution.ordinal()))));
+		expectAnalogPortState(analogPort, send(new Message(getSynchronousChannel(false), Strings.join(SEPARATOR, SET_ANALOG_PORT_RESOLUTION, analogPort.getID(), resolution.ordinal()))));
 	}
 
 	@Override
 	public void setPortReference(AnalogPort analogPort, AnalogPort.Reference reference)
 			throws TimeoutException, InterruptedException,
 			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
-		expectAnalogPortState(analogPort, send(new Message(getSynchronousChannel(), Strings.join(SEPARATOR, SET_ANALOG_PORT_REFERENCE, analogPort.getID(), reference.ordinal()))));
+		expectAnalogPortState(analogPort, send(new Message(getSynchronousChannel(false), Strings.join(SEPARATOR, SET_ANALOG_PORT_REFERENCE, analogPort.getID(), reference.ordinal()))));
 	}
 	
 	@Override
@@ -440,7 +450,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		
 		// send request
-		int channel = getSynchronousChannel();
+		int channel = getSynchronousChannel(port.isRefreshing());
 		send(new Message(channel, Strings.join(SEPARATOR, GET_SELECT_PORT_LABEL, port.getID(), pos)));
 		
 		Message m = expect(channel, DEFAULT_TIMEOUT);
@@ -484,14 +494,16 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	}
 
 	@Override
-	public void getPosition(SelectPort port) throws TimeoutException,
+	public int getPosition(SelectPort port) throws TimeoutException,
 			InterruptedException, DisconnectedException, DeviceException,
 			ProtocolException, PortAccessDeniedException, PortErrorException {
 		// send request
-		int channel = getSynchronousChannel();
+		int channel = getSynchronousChannel(port.isRefreshing());
 		send(new Message(channel, Strings.join(SEPARATOR, GET_SELECT_PORT_STATE, port.getID())));
 		
 		expectSelectPortPosition(port, channel);
+		
+		return channel;
 	}
 	
 	@Override
@@ -499,7 +511,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 			throws TimeoutException, InterruptedException,
 			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		// send request
-		int channel = getSynchronousChannel();
+		int channel = getSynchronousChannel(false);
 		send(new Message(channel, Strings.join(SEPARATOR, SET_SELECT_PORT_POSITION, port.getID(), pos)));
 		
 		expectSelectPortPosition(port, channel);
@@ -525,14 +537,16 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	}
 
 	@Override
-	public void getPosition(DialPort port) throws TimeoutException,
+	public int getPosition(DialPort port) throws TimeoutException,
 			InterruptedException, DisconnectedException, DeviceException,
 			ProtocolException, PortAccessDeniedException, PortErrorException {
 		// send request
-		int channel = getSynchronousChannel();
+		int channel = getSynchronousChannel(port.isRefreshing());
 		send(new Message(channel, Strings.join(SEPARATOR, GET_DIAL_PORT_STATE, port.getID())));
 		
 		expectDialPortPosition(port, channel);
+		
+		return channel;
 	}
 	
 	@Override
@@ -540,7 +554,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 			throws TimeoutException, InterruptedException,
 			DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		// send request
-		int channel = getSynchronousChannel();
+		int channel = getSynchronousChannel(false);
 		send(new Message(channel, Strings.join(SEPARATOR, SET_DIAL_PORT_POSITION, port.getID(), pos)));
 		
 		expectDialPortPosition(port, channel);
@@ -566,7 +580,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		if (bChannel == 0)
 			return false;
 
-		int channel = getSynchronousChannel();
+		int channel = getSynchronousChannel(false);
 		// send binding message
 		send(new Message(channel, Strings.join(SEPARATOR, BIND_STREAMING_PORT, streamingPort.getID(), bChannel)));			
 		
@@ -603,7 +617,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 				return;
 		}
 		
-		int channel = getSynchronousChannel();
+		int channel = getSynchronousChannel(false);
 		// send unbinding message
 		send(new Message(channel, Strings.join(SEPARATOR, UNBIND_STREAMING_PORT, streamingPort.getID())));			
 		

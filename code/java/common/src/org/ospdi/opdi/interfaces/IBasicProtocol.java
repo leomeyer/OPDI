@@ -118,7 +118,7 @@ public interface IBasicProtocol {
 	/** Gets the state for the given port.
 	 * 
 	 * @param digitalPort
-	 * @return 
+	 * @return the channel number used for the query
 	 * @throws TimeoutException
 	 * @throws InterruptedException
 	 * @throws DisconnectedException
@@ -128,12 +128,12 @@ public interface IBasicProtocol {
 	 * @throws PortAccessDeniedException 
 	 * @throws AbortedException
 	 */
-	public void getPortState(DigitalPort digitalPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException;;
+	public int getPortState(DigitalPort digitalPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException;;
 
 	/** Gets the state of an analog port. Returns the current value.
 	 * 
 	 * @param analogPort
-	 * @return 
+	 * @return the channel number used for the query
 	 * @throws TimeoutException
 	 * @throws InterruptedException
 	 * @throws DisconnectedException
@@ -143,7 +143,7 @@ public interface IBasicProtocol {
 	 * @throws PortAccessDeniedException 
 	 * @throws AbortedException
 	 */
-	public void getPortState(AnalogPort analogPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException;;
+	public int getPortState(AnalogPort analogPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException;;
 
 	/** Sets the mode for the given analog port and returns the new mode.
 	 * 
@@ -228,7 +228,7 @@ public interface IBasicProtocol {
 	/** Retrieves the current position setting of a select port as a zero-based integer value.
 	 * 
 	 * @param selectPort
-	 * @return
+	 * @return the channel number used for the query
 	 * @throws TimeoutException
 	 * @throws InterruptedException
 	 * @throws DisconnectedException
@@ -237,7 +237,7 @@ public interface IBasicProtocol {
 	 * @throws PortErrorException 
 	 * @throws PortAccessDeniedException 
 	 */
-	public void getPosition(SelectPort selectPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException;
+	public int getPosition(SelectPort selectPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException;
 
 	/** Sets the current position setting of a select port to the given value.
 	 * Returns the current setting.
@@ -256,7 +256,7 @@ public interface IBasicProtocol {
 	/** Retrieves the current position setting of a dial port.
 	 * 
 	 * @param port
-	 * @return
+	 * @return the channel number used for the query
 	 * @throws TimeoutException
 	 * @throws InterruptedException
 	 * @throws DisconnectedException
@@ -265,7 +265,7 @@ public interface IBasicProtocol {
 	 * @throws PortErrorException 
 	 * @throws PortAccessDeniedException 
 	 */
-	public void getPosition(DialPort port) throws TimeoutException,
+	public int getPosition(DialPort port) throws TimeoutException,
 			InterruptedException, DisconnectedException, DeviceException,
 			ProtocolException, PortAccessDeniedException, PortErrorException;
 	
