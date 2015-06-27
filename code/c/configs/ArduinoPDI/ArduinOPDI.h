@@ -12,6 +12,10 @@ public:
 	virtual ~ArduinOPDI();
 
 	virtual uint32_t getTimeMs() override;
+
+	virtual uint8_t setUsername(char *username);
+
+	virtual uint8_t setPassword(char *password);
 };
 
 #ifndef OPDI_NO_DIGITAL_PORTS

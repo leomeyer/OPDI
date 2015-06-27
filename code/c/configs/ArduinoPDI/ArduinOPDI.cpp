@@ -39,6 +39,9 @@
 
 #include "ArduinOPDI.h"
 
+extern const char* opdi_username;
+extern const char* opdi_password;
+
 /** Receives a character from the UART and places the result in byte.
 *   Blocks until data is available or the timeout expires. 
 */
@@ -116,6 +119,18 @@ ArduinOPDI::~ArduinOPDI() {
 
 uint32_t ArduinOPDI::getTimeMs() {
 	return millis();
+}
+
+uint8_t ArduinOPDI::setUsername(char *username) {
+	if (strcmp(username, opdi_username))
+		return OPDI_AUTHENTICATION_FAILED;
+	return OPDI_STATUS_OK;
+}
+
+uint8_t ArduinOPDI::setPassword(char *password) {
+	if (strcmp(password, opdi_password))
+		return OPDI_AUTHENTICATION_FAILED;
+	return OPDI_STATUS_OK;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////

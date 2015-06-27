@@ -458,7 +458,9 @@ uint8_t OPDI::refresh(OPDI_Port **ports) {
 
 uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 	if (this->idle_timeout_ms > 0) {
-		if (channel != 0) {
+		// channels below 20 do not reset the activity timer
+		// (control messages and device-caused refreshes)
+		if (channel >= 20) {
 			// reset activity time
 			this->last_activity = this->getTimeMs();
 		} else {
