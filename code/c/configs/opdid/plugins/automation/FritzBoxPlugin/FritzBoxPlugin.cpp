@@ -206,7 +206,7 @@ public:
 FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin *plugin, const char *id) : OPDI_DigitalPort(id) {
 	this->plugin = plugin;
 	this->switchState = -1;	// unknown
-	this->refreshMode = REFRESH_AUTO;
+	this->refreshMode = REFRESH_PERIODIC;
 
 	// output only
 	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
@@ -261,7 +261,7 @@ void FritzDECT200Switch::setSwitchState(int8_t line) {
 FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin *plugin, const char *id) : OPDI_DialPort(id) {
 	this->plugin = plugin;
 	this->power = -1;	// unknown
-	this->refreshMode = REFRESH_AUTO;
+	this->refreshMode = REFRESH_PERIODIC;
 
 	this->minValue = 0;
 	this->maxValue = 2300000;	// measured in mW; 2300 W is maximum power load for the DECT200
@@ -287,27 +287,12 @@ void FritzDECT200Power::configure(Poco::Util::AbstractConfiguration *portConfig)
 		this->setFlags(flags);
 	}
 
-	std::string refreshMode = portConfig->getString("PowerRefreshMode", "");
-	if (refreshMode == "Off") {
-		this->setRefreshMode(OPDI_Port::REFRESH_OFF);
-	} else
-	if (refreshMode == "Periodic") {
-		this->setRefreshMode(OPDI_Port::REFRESH_PERIODIC);
-	} else
-	if (refreshMode == "Auto") {
-		this->setRefreshMode(OPDI_Port::REFRESH_AUTO);
-	} else
-		if (refreshMode != "")
-			throw Poco::DataException("Unknown PowerRefreshMode specified; expected 'Off', 'Periodic' or 'Auto': " + refreshMode);
-
-	if (this->getRefreshMode() == OPDI_Port::REFRESH_PERIODIC) {
-		int time = portConfig->getInt("PowerRefreshTime", -1);
+		int time = portConfig->getInt("PowerRefreshTime", portConfig->getInt("RefreshTime", -1));
 		if (time >= 0) {
 			this->setRefreshTime(time);
 		} else {
 			throw Poco::DataException("A PowerRefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
 		}
-	}
 
 	// extended properties
 	std::string unit = portConfig->getString("PowerUnit", "");
@@ -326,7 +311,6 @@ void FritzDECT200Power::query(FritzBoxPlugin *plugin) {
 
 void FritzDECT200Power::getState(int64_t *position) {
 	if (this->power < 0) {
-		// this->plugin->nodeID + "/" + this->id + " (" + this->ain + ") : 
 		throw PortError(std::string(this->getID()) + ": The power state is unknown");
 	}
 	OPDI_DialPort::getState(position);
@@ -352,7 +336,7 @@ void FritzDECT200Power::doSelfRefresh(void) {
 FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin *plugin, const char *id) : OPDI_DialPort(id) {
 	this->plugin = plugin;
 	this->energy = -1;	// unknown
-	this->refreshMode = REFRESH_AUTO;
+	this->refreshMode = REFRESH_PERIODIC;
 
 	this->minValue = 0;
 	this->maxValue = 2147483647;	// measured in Wh
@@ -378,27 +362,12 @@ void FritzDECT200Energy::configure(Poco::Util::AbstractConfiguration *portConfig
 		this->setFlags(flags);
 	}
 
-	std::string refreshMode = portConfig->getString("EnergyRefreshMode", "");
-	if (refreshMode == "Off") {
-		this->setRefreshMode(OPDI_Port::REFRESH_OFF);
-	} else
-	if (refreshMode == "Periodic") {
-		this->setRefreshMode(OPDI_Port::REFRESH_PERIODIC);
-	} else
-	if (refreshMode == "Auto") {
-		this->setRefreshMode(OPDI_Port::REFRESH_AUTO);
-	} else
-		if (refreshMode != "")
-			throw Poco::DataException("Unknown EnergyRefreshMode specified; expected 'Off', 'Periodic' or 'Auto': " + refreshMode);
-
-	if (this->getRefreshMode() == OPDI_Port::REFRESH_PERIODIC) {
-		int time = portConfig->getInt("EnergyRefreshTime", -1);
+		int time = portConfig->getInt("EnergyRefreshTime", portConfig->getInt("RefreshTime", -1));
 		if (time >= 0) {
 			this->setRefreshTime(time);
 		} else {
 			throw Poco::DataException("An EnergyRefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
 		}
-	}
 
 	// extended properties
 	std::string unit = portConfig->getString("EnergyUnit", "");
@@ -417,7 +386,6 @@ void FritzDECT200Energy::query(FritzBoxPlugin *plugin) {
 
 void FritzDECT200Energy::getState(int64_t *position) {
 	if (this->energy < 0) {
-		// this->plugin->nodeID + "/" + this->id + " (" + this->ain + ") : 
 		throw PortError(std::string(this->getID()) + ": The energy state is unknown");
 	}
 	OPDI_DialPort::getState(position);

@@ -83,6 +83,7 @@ uint8_t OPDI_Port::doWork(uint8_t canSend) {
 		// self refresh timer reached?
 		if (opdi_get_time_ms() - this->lastRefreshTime > this->selfRefreshTime) {
 			this->doSelfRefresh();
+			this->lastRefreshTime = opdi_get_time_ms();
 		}
 	}
 
