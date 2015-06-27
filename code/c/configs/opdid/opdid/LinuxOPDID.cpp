@@ -240,7 +240,7 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 	// create socket (non-blocking)
 	sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (sockfd < 0) {
-		throw Poco::ApplicationException("ERROR opening socket");
+		throw Poco::ApplicationException("ERROR opening socket", errno);
 	}
 
 	// prepare address
@@ -251,12 +251,11 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 
 	// bind to specified port
 	if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-		throw Poco::ApplicationException("ERROR on binding");
+		throw Poco::ApplicationException("ERROR on binding", errno);
 	}
 
-	// listen for incoming connections
-	// set maximum queue size to 5
-	listen(sockfd, 5);
+	// listen for an incoming connection
+	listen(sockfd, 1);
 
 	while (true) {
         	if (Opdi->logVerbosity != QUIET)
@@ -272,12 +271,8 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 					uint8_t waitResult = this->waiting(false);
 					if (waitResult != OPDI_STATUS_OK)
 						return waitResult;
-   struct timespec tim;
-   tim.tv_sec = 0;
-   tim.tv_nsec = 1000000;
 
-      nanosleep(&tim , NULL);
-//					usleep(1000);
+					usleep(1000);
 				} else
 					this->log(std::string("Error accepting connection: ") + this->to_string(errno));
 			} else {
