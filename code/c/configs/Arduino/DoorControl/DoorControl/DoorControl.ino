@@ -26,6 +26,9 @@
  * - RTC
  * - RFID access
  * - OPDI slave implementation
+ *
+ * Important! Copy the file DoorControl_secrets.inc to the installed OPDI library folder and
+ * modify to fit your desired settings!
  */
  
 /*
@@ -110,6 +113,8 @@
 
 #include <opdi_constants.h>
 
+#include <DoorControl_secrets.inc>
+
 #include <EEPROM.h>
 #include <SPI.h>
 #include <Wire.h>
@@ -118,8 +123,7 @@
 #include <Keypad.h>    // from: http://playground.arduino.cc/code/keypad
 #include <DS1307RTC.h>  // from: http://www.pjrc.com/teensy/td_libs_DS1307RTC.html
 #include <Time.h>      // from: http://www.pjrc.com/teensy/td_libs_Time.html
-#include "ArduinOPDI.h"
-
+#include "ArduinOPDI.h"+
 #define STATUS_LED    6
 #define SWITCH        7
 #define RELAY         8
@@ -157,6 +161,8 @@ virtual uint8_t setPosition(int64_t position) {
     EEPROM.write(this->address + i, val);
     checksum += val;
     value >>= 8;
+
+
   }
   // write checksum
   EEPROM.write(this->address + 8, (byte)(checksum & 0xff));
@@ -285,14 +291,11 @@ ArduinOPDI ArduinOpdi = ArduinOPDI();
 // important: for polymorphism to work, assign own OPDI instance
 OPDI* Opdi = &ArduinOpdi;
 
-// login credentials
-const char* opdi_username = "test";
-const char* opdi_password = "test";
-
 // Port definitions
 OPDI_EEPROMDialPort codePort = OPDI_EEPROMDialPort("C", "Code", 0, 0, 99999, "unit=keypadCode");
 OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("T", "Time");
 OPDI_DigitalPortDoor doorPort = OPDI_DigitalPortDoor("D", "Door");
+//OPDI_DigitalPortPin doorOpenPort = OPDI_DigitalPortPin("O", "Open", OPDI_PORTDIRCAP_INPUT, OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS, SWITCH);
 OPDI_EEPROMDialPort tag1Port = OPDI_EEPROMDialPort("1", "Tag1", 10, 0, 999999999999, "");
 OPDI_EEPROMDialPort tag2Port = OPDI_EEPROMDialPort("2", "Tag2", 20, 0, 999999999999, "");
 //OPDI_EEPROMDialPort tag3Port = OPDI_EEPROMDialPort("3", "Tag3", 30, 0, 999999999999, "");
@@ -315,6 +318,7 @@ Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
 // time data structure
 tmElements_t tm;
+
 
 // month name constants for compile timestamp parsing
 const char str_jan[] PROGMEM = "Jan";
@@ -355,6 +359,34 @@ uint8_t checkerror(uint8_t result) {
   }
   return 1;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // date and time parsing from compiler timestamp
 bool getTime(const char *str) {
@@ -421,6 +453,7 @@ uint8_t setupDevice() {
   // add the ports provided by this configuration
   Opdi->addPort(&codePort);
   Opdi->addPort(&doorPort);
+//  Opdi->addPort(&doorOpenPort);
   Opdi->addPort(&tag1Port);
   Opdi->addPort(&tag2Port);
 //  Opdi->addPort(&tag3Port);
@@ -443,8 +476,7 @@ void openDoor() {
 
 /* This function performs regular housekeeping.
 * It is used to check whether the door relay should be activated.
-* First it checks the switch. If it is low (pressed), the door is opened.
-* Then it checks the keypad and determines the total entered code.
+* First it checks the keypad and determines the total entered code.
 * If the code matches the one stored in the EEPROM the door is opened and
 * the last access time is stored in the EEPROM.
 * Next, if an RFID tag is detected its ID is checked against the three
@@ -457,12 +489,6 @@ uint8_t doWork() {
       rtcPort.refresh();
     }  
     timeRefreshCounter = millis();
-  }
-  
-  // check switch
-  if (digitalRead(SWITCH) == 0) {
-    openDoor();
-    return OPDI_STATUS_OK;
   }
   
   // check keypad
@@ -482,22 +508,39 @@ uint8_t doWork() {
       enteredValue = 0;  
     }
     
-    int64_t codeValue;
-    // read keypad code value from EEPROM
-    codePort.getState(&codeValue);
-
-    if ((codeValue > 0) && (enteredValue == codeValue)) {
-      // success
+    // during daytime (8:00 - 18:00) the regular keycode opens the door
+    // also, if the RTC is not working
+    if (!RTC.read(tm) || ((tm.Hour >= 8) && (tm.Hour < 18))) {
+    
+      int64_t codeValue;
+      // read keypad code value from EEPROM
+      codePort.getState(&codeValue);
+  
+      if ((codeValue > 0) && (enteredValue == codeValue)) {
+        // success
+        openDoor();
+        enteredValue = 0;
+        // store last access time if possible
+        if (RTC.read(tm)) {
+           int64_t accessTime = makeTime(tm);
+           // store last time in EEPROM
+           lastAccessPort.setPosition(accessTime);
+        }  
+      }
+    }
+    
+    // the special code always opens the door
+    if (enteredValue == SPECIAL_DOORCODE) {
       openDoor();
       enteredValue = 0;
-      // store last access time if possible
-      if (RTC.read(tm)) {
-         int64_t accessTime = makeTime(tm);
-         // store last time in EEPROM
-         lastAccessPort.setPosition(accessTime);
-      }  
-      return OPDI_STATUS_OK;
     }
+  }
+
+  // check open door switch (switch on status LED if closed)
+  if (digitalRead(SWITCH) == 0) {
+    digitalWrite(STATUS_LED, HIGH);   // set the LED on
+  } else {
+    digitalWrite(STATUS_LED, LOW);   // set the LED off
   }
 
   // check RFID tags
@@ -525,10 +568,12 @@ uint8_t doWork() {
       tag2Port.getState(&tagID);
       success = tagID == uid;
     }
+    /*
     if (!success) {
-//      tag3Port.getState(&tagID);
+      tag3Port.getState(&tagID);
       success = tagID == uid;
     }
+    */
     if (success) {
       openDoor();
     }
@@ -583,5 +628,14 @@ int main(void)
 
   return 0;
 }
+
+
+
+
+
+
+
+
+
 
 
