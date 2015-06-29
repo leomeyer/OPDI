@@ -452,7 +452,7 @@ uint8_t OPDI::refresh(OPDI_Port **ports) {
 
 uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 	if (this->idle_timeout_ms > 0) {
-		if (channel != 0) {
+		if (channel >= 20) {
 			// reset activity time
 			this->last_activity = this->getTimeMs();
 		} else {
@@ -489,7 +489,7 @@ uint8_t OPDI::setPassword(char *password) {
 }
 
 
-uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data) {
+uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char *buffer, size_t data) {
 
 	switch (opdiFunctionCode) {
 	case OPDI_FUNCTION_GET_CONFIG_NAME: Opdi->getSlaveName(buffer, data); return OPDI_STATUS_OK;
