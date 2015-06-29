@@ -22,6 +22,7 @@
 #define __OPDI_CONFIGSPECS_H
 
 #define OPDI_IS_SLAVE	1
+#define OPDI_ENCODING_DEFAULT	OPDI_ENCODING_UTF8
 
 // Defines the maximum message length this slave can receive.
 // Consumes this amount of bytes in data and the same amount on the stack.
@@ -35,13 +36,13 @@
 #define OPDI_MESSAGE_PAYLOAD_LENGTH	(OPDI_MESSAGE_BUFFER_SIZE - 9)
 
 // maximum permitted message parts
-#define OPDI_MAX_MESSAGE_PARTS	10
+#define OPDI_MAX_MESSAGE_PARTS	8
 
 // maximum length of master's name this device will accept
 #define OPDI_MASTER_NAME_LENGTH	1
 
 // maximum possible ports on this device
-#define OPDI_MAX_DEVICE_PORTS	6
+#define OPDI_MAX_DEVICE_PORTS	8
 
 // define to conserve RAM and ROM
 //#define OPDI_NO_DIGITAL_PORTS
@@ -77,6 +78,8 @@
 #define MAX_ENCODINGNAMELENGTH	7
 
 #define OPDI_MAX_PORT_INFO_MESSAGE	0
+
+#define OPDI_EXTENDED_INFO_LENGTH	16
 
 #define OPDI_EXTENDED_PROTOCOL	1
 

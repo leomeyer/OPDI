@@ -264,6 +264,12 @@ uint8_t OPDI_Port::refresh() {
 	return Opdi->refresh(ports);
 }
 
+uint8_t OPDI_Port::getExtendedInfo(char *buffer, size_t length) {
+	// standard implementation returns an empty string
+	buffer[0] = '\0';
+	return OPDI_STATUS_OK;
+}
+
 OPDI_Port::~OPDI_Port() {
 }
 
@@ -452,6 +458,8 @@ uint8_t OPDI::refresh(OPDI_Port **ports) {
 
 uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 	if (this->idle_timeout_ms > 0) {
+		// channels below 20 do not reset the activity timer
+		// (control messages and device-caused refreshes)
 		if (channel >= 20) {
 			// reset activity time
 			this->last_activity = this->getTimeMs();
@@ -488,6 +496,20 @@ uint8_t OPDI::setPassword(char *password) {
 	return OPDI_STATUS_OK;
 }
 
+uint8_t OPDI::getExtendedPortInfo(char *buffer, size_t length) {
+	OPDI_Port *port = this->first_port;
+	// go through linked list
+	while (port != NULL) {
+		if (!strcmp(port->id, buffer)) break;
+		port = port->next;
+	}
+	if (port == NULL) {
+		return OPDI_PORT_UNKNOWN;
+	} else {
+		return port->getExtendedInfo(buffer, length);
+	}
+}
+
 
 uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char *buffer, size_t data) {
 
@@ -497,6 +519,12 @@ uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char *buffer, siz
 	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS: strncpy(buffer, "EP,BP", data); return OPDI_STATUS_OK;
 	case OPDI_FUNCTION_GET_ENCODING: Opdi->getEncoding(buffer, data); return OPDI_STATUS_OK;
 	case OPDI_FUNCTION_SET_LANGUAGES: return Opdi->setLanguages(buffer);
+	case OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO: buffer[0] = '\0'; return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_EXTENDED_PORTINFO: {
+		uint8_t code = Opdi->getExtendedPortInfo(buffer, data);
+		return OPDI_STATUS_OK;
+	}
+	case OPDI_FUNCTION_GET_EXTENDED_PORTSTATE: buffer[0] = '\0'; return OPDI_STATUS_OK;
 #ifndef OPDI_NO_AUTHENTICATION
 	case OPDI_FUNCTION_SET_USERNAME: return Opdi->setUsername(buffer);
 	case OPDI_FUNCTION_SET_PASSWORD: return Opdi->setPassword(buffer);

@@ -59,6 +59,8 @@ public:
 
 	/** Causes the port to be refreshed by sending a refresh message to a connected master. */
 	uint8_t refresh();
+
+	virtual uint8_t getExtendedInfo(char *buffer, size_t length);
 };
 
 
@@ -275,6 +277,8 @@ public:
 	virtual uint8_t setUsername(char *username);
 
 	virtual uint8_t setPassword(char *password);
+
+	uint8_t getExtendedPortInfo(char *buffer, size_t length);
 };
 
 // declare a singleton instance that must be defined by the implementation
