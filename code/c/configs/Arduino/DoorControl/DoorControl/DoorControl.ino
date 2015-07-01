@@ -28,7 +28,7 @@
  * - OPDI slave implementation
  *
  * Important! Copy the file DoorControl_secrets.inc to the installed OPDI library folder and
- * modify to fit your desired settings!
+ * modify it to fit your desired settings!
  */
  
 /*
@@ -123,7 +123,8 @@
 #include <Keypad.h>    // from: http://playground.arduino.cc/code/keypad
 #include <DS1307RTC.h>  // from: http://www.pjrc.com/teensy/td_libs_DS1307RTC.html
 #include <Time.h>      // from: http://www.pjrc.com/teensy/td_libs_Time.html
-#include "ArduinOPDI.h"+
+#include "ArduinOPDI.h"
+
 #define STATUS_LED    6
 #define SWITCH        7
 #define RELAY         8
@@ -161,8 +162,6 @@ virtual uint8_t setPosition(int64_t position) {
     EEPROM.write(this->address + i, val);
     checksum += val;
     value >>= 8;
-
-
   }
   // write checksum
   EEPROM.write(this->address + 8, (byte)(checksum & 0xff));
@@ -189,6 +188,7 @@ virtual uint8_t getState(int64_t *position) {
     *position = portInfo->max;
   if (*position < portInfo->min)
     *position = portInfo->min;
+    
   return OPDI_STATUS_OK;
 }
 
@@ -240,8 +240,8 @@ virtual uint8_t getExtendedInfo(char *buffer, size_t length) {
 }
 };
 
-/** Defines a digital port that opens the door using the specified relay pin.
- *
+/** Defines a digital port that opens the door using the specified RELAY pin.
+ * The SWITCH pin is read to indicate whether the door is open or closed.
  */
 class OPDI_DigitalPortDoor : public OPDI_DigitalPort {
 
@@ -266,7 +266,10 @@ uint8_t setLine(uint8_t line) {
 
 uint8_t getState(uint8_t *mode, uint8_t *line) {
   *mode = OPDI_DIGITAL_MODE_OUTPUT;
-  *line = 0;
+  if (digitalRead(SWITCH))
+    *line = 0;
+  else
+    *line = 1;
   return OPDI_STATUS_OK;
 }
 };
@@ -295,10 +298,8 @@ OPDI* Opdi = &ArduinOpdi;
 OPDI_EEPROMDialPort codePort = OPDI_EEPROMDialPort("C", "Code", 0, 0, 99999, "unit=keypadCode");
 OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("T", "Time");
 OPDI_DigitalPortDoor doorPort = OPDI_DigitalPortDoor("D", "Door");
-//OPDI_DigitalPortPin doorOpenPort = OPDI_DigitalPortPin("O", "Open", OPDI_PORTDIRCAP_INPUT, OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS, SWITCH);
 OPDI_EEPROMDialPort tag1Port = OPDI_EEPROMDialPort("1", "Tag1", 10, 0, 999999999999, "");
 OPDI_EEPROMDialPort tag2Port = OPDI_EEPROMDialPort("2", "Tag2", 20, 0, 999999999999, "");
-//OPDI_EEPROMDialPort tag3Port = OPDI_EEPROMDialPort("3", "Tag3", 30, 0, 999999999999, "");
 OPDI_EEPROMDialPort lastTagPort = OPDI_EEPROMDialPort("L", "LTag", 40, 0, 999999999999, "");
 OPDI_EEPROMDialPort lastAccessPort = OPDI_EEPROMDialPort("A", "LAcc", 50, 0, 999999999999, "unit=unixTime"); // store time for keypad opening only
 
@@ -319,7 +320,6 @@ Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 // time data structure
 tmElements_t tm;
 
-
 // month name constants for compile timestamp parsing
 const char str_jan[] PROGMEM = "Jan";
 const char str_feb[] PROGMEM = "Feb";
@@ -337,6 +337,10 @@ const char* const monthName[12] PROGMEM = {
   str_jan, str_feb, str_mar, str_apr, str_may, str_jun,
   str_jul, str_aug, str_sep, str_oct, str_nov, str_dec
 };
+
+// last door state for refresh of door port
+uint8_t lastDoorState = -1;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Routines
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -359,34 +363,6 @@ uint8_t checkerror(uint8_t result) {
   }
   return 1;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // date and time parsing from compiler timestamp
 bool getTime(const char *str) {
@@ -453,10 +429,8 @@ uint8_t setupDevice() {
   // add the ports provided by this configuration
   Opdi->addPort(&codePort);
   Opdi->addPort(&doorPort);
-//  Opdi->addPort(&doorOpenPort);
   Opdi->addPort(&tag1Port);
   Opdi->addPort(&tag2Port);
-//  Opdi->addPort(&tag3Port);
   Opdi->addPort(&lastTagPort);
   Opdi->addPort(&lastAccessPort);
 
@@ -484,12 +458,20 @@ void openDoor() {
 */
 uint8_t doWork() {
   // time to refresh the RTC port on a connected master?
-  if (millis() - timeRefreshCounter > 3000) {
+  if (millis() - timeRefreshCounter > 3000) {  // every three seconds
     if (Opdi->isConnected()) {
       rtcPort.refresh();
     }  
     timeRefreshCounter = millis();
   }
+  
+  // door state changed?
+  uint8_t doorState = digitalRead(SWITCH);
+  if (doorState != lastDoorState)
+    if (Opdi->isConnected()) {
+      doorPort.refresh();
+    }  
+  lastDoorState = doorState;
   
   // check keypad
   char key = keypad.getKey();
@@ -511,7 +493,6 @@ uint8_t doWork() {
     // during daytime (8:00 - 18:00) the regular keycode opens the door
     // also, if the RTC is not working
     if (!RTC.read(tm) || ((tm.Hour >= 8) && (tm.Hour < 18))) {
-    
       int64_t codeValue;
       // read keypad code value from EEPROM
       codePort.getState(&codeValue);
@@ -568,12 +549,6 @@ uint8_t doWork() {
       tag2Port.getState(&tagID);
       success = tagID == uid;
     }
-    /*
-    if (!success) {
-      tag3Port.getState(&tagID);
-      success = tagID == uid;
-    }
-    */
     if (success) {
       openDoor();
     }
