@@ -113,7 +113,7 @@ uint8_t opdi_choose_language(const char *languages) {
 	return OPDI_STATUS_OK;
 }
 
-uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data) {
+uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char *buffer, size_t data) {
 
 	switch (opdiFunctionCode) {
 	case OPDI_FUNCTION_GET_CONFIG_NAME: strncpy(buffer, "OPDI Test Slave", data); return OPDI_STATUS_OK;
