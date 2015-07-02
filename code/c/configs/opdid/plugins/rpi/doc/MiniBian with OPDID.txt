@@ -103,6 +103,7 @@ This will take a while (easily an hour or so). Ignore '#pragma unknown option' w
 - Update the linker cache:
 > sudo ldconfig
 - Install GCC 4.8:
+> sudo apt-get install gcc-4.8
 > sudo apt-get install g++-4.8
 - To make GCC 4.8 the default compiler adjust the G++ symlinks:
 > sudo rm /usr/bin/gcc /usr/bin/g++
