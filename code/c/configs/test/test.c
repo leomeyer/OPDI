@@ -46,7 +46,7 @@
 #include "test.h"
 
 char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
-uint16_t opdi_device_flags = OPDI_FLAG_AUTHENTICATION_REQUIRED;
+uint16_t opdi_device_flags = 0; // OPDI_FLAG_AUTHENTICATION_REQUIRED;
 
 char opdi_encryption_method[] = "AES";
 uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
