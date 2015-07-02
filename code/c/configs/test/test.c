@@ -121,6 +121,17 @@ uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data)
 	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS: strncpy(buffer, "BP", data); return OPDI_STATUS_OK;
 	case OPDI_FUNCTION_GET_ENCODING: strncpy(buffer, "ISO8859-1", data); return OPDI_STATUS_OK;
 	case OPDI_FUNCTION_SET_LANGUAGES: return opdi_choose_language(buffer);
+	case OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO:
+		strncpy(buffer, "", data); 
+		return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_EXTENDED_PORTINFO: {
+		strncpy(buffer, "", data);
+		return OPDI_STATUS_OK;
+	}
+	case OPDI_FUNCTION_GET_EXTENDED_PORTSTATE: {
+		strncpy(buffer, "", data);
+		return OPDI_STATUS_OK;
+	}
 #ifndef OPDI_NO_AUTHENTICATION
 	case OPDI_FUNCTION_SET_USERNAME: if (strcmp(loginUser, buffer)) return OPDI_AUTHENTICATION_FAILED; else return OPDI_STATUS_OK;
 	case OPDI_FUNCTION_SET_PASSWORD: if (strcmp(loginPassword, buffer)) return OPDI_AUTHENTICATION_FAILED; else return OPDI_STATUS_OK;
