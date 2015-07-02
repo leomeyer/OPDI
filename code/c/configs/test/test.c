@@ -46,7 +46,7 @@
 #include "test.h"
 
 char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
-uint16_t opdi_device_flags = OPDI_FLAG_AUTHENTICATION_REQUIRED;
+uint16_t opdi_device_flags = 0; // OPDI_FLAG_AUTHENTICATION_REQUIRED;
 
 char opdi_encryption_method[] = "AES";
 uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
@@ -113,7 +113,7 @@ uint8_t opdi_choose_language(const char *languages) {
 	return OPDI_STATUS_OK;
 }
 
-uint8_t opdi_slave_callback(uint8_t opdiFunctionCode, char *buffer, size_t data) {
+uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char *buffer, size_t data) {
 
 	switch (opdiFunctionCode) {
 	case OPDI_FUNCTION_GET_CONFIG_NAME: strncpy(buffer, "OPDI Test Slave", data); return OPDI_STATUS_OK;
