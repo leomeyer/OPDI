@@ -46,7 +46,7 @@
 #include "test.h"
 
 char opdi_master_name[OPDI_MASTER_NAME_LENGTH];
-uint16_t opdi_device_flags = OPDI_FLAG_AUTHENTICATION_REQUIRED;
+uint16_t opdi_device_flags = 0; // OPDI_FLAG_AUTHENTICATION_REQUIRED;
 
 char opdi_encryption_method[] = "AES";
 uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
@@ -121,6 +121,17 @@ uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char *buffer, siz
 	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS: strncpy(buffer, "BP", data); return OPDI_STATUS_OK;
 	case OPDI_FUNCTION_GET_ENCODING: strncpy(buffer, "ISO8859-1", data); return OPDI_STATUS_OK;
 	case OPDI_FUNCTION_SET_LANGUAGES: return opdi_choose_language(buffer);
+	case OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO:
+		strncpy(buffer, "", data); 
+		return OPDI_STATUS_OK;
+	case OPDI_FUNCTION_GET_EXTENDED_PORTINFO: {
+		strncpy(buffer, "", data);
+		return OPDI_STATUS_OK;
+	}
+	case OPDI_FUNCTION_GET_EXTENDED_PORTSTATE: {
+		strncpy(buffer, "", data);
+		return OPDI_STATUS_OK;
+	}
 #ifndef OPDI_NO_AUTHENTICATION
 	case OPDI_FUNCTION_SET_USERNAME: if (strcmp(loginUser, buffer)) return OPDI_AUTHENTICATION_FAILED; else return OPDI_STATUS_OK;
 	case OPDI_FUNCTION_SET_PASSWORD: if (strcmp(loginPassword, buffer)) return OPDI_AUTHENTICATION_FAILED; else return OPDI_STATUS_OK;
