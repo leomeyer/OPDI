@@ -285,8 +285,7 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
     int addr_size = sizeof(SOCKADDR);
     
     while (true) {
-		if (Opdi->logVerbosity != QUIET)
-			this->log(std::string("Listening for a connection on TCP port ") + this->to_string(port));
+		this->logNormal(std::string("Listening for a connection on TCP port ") + this->to_string(port));
 
 		while (true) {
 			int csock = accept(hsock, (SOCKADDR *)&sadr, &addr_size);
@@ -304,10 +303,9 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 					// that the thread spends sleeping may be much higher.
 					Sleep(1);
 				} else 
-					this->log(std::string("Error accepting connection: ") + this->to_string(lastError));
+					this->logError(std::string("Error accepting connection: ") + this->to_string(lastError));
 			} else {
-				if (Opdi->logVerbosity != QUIET)
-					this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(sadr.sin_addr))).c_str());
+				this->logNormal((std::string("Connection attempt from ") + std::string(inet_ntoa(sadr.sin_addr))).c_str());
 
 				err = HandleTCPConnection(&csock);
 			
@@ -315,8 +313,7 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 				if (this->shutdownRequested)
 					return OPDI_SHUTDOWN;
 
-				if (Opdi->logVerbosity != QUIET)
-					this->log(std::string("Result: ") + this->getOPDIResult(err));
+				this->logNormal(std::string("Result: ") + this->getOPDIResult(err));
 
 				break;
 			}
