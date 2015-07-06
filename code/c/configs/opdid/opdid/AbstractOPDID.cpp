@@ -1133,9 +1133,9 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 	// add up microseconds of processing time
 	this->totalMicroseconds += this->monSecondStats[this->monSecondPos];
 	this->monSecondPos++;
+	// buffer rollover?
 	if (this->monSecondPos >= maxSecondStats) {
-		this->logError("Statictics buffer exeeded");
-		return OPDI_DEVICE_ERROR;
+		this->monSecondPos = 0;
 	}
 	// collect statistics until a second has elapsed
 	if (this->totalMicroseconds >= 1000000) {
