@@ -10,6 +10,8 @@
 #include <stdio.h>
 #pragma comment(lib, "Winmm.lib")
 
+#include "Poco/Stopwatch.h"
+
 #include "opdi_platformtypes.h"
 #include "opdi_config.h"
 #include "opdi_constants.h"
@@ -293,10 +295,13 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 			if (csock == INVALID_SOCKET) {
 				int lastError = WSAGetLastError();
 				if (lastError == WSAEWOULDBLOCK) {
-					// not yet connected; process housekeeping about every millisecond
+					// not yet connected; process housekeeping regularly
 					uint8_t waitResult = this->waiting(false);
 					if (waitResult != OPDI_STATUS_OK)
 						return waitResult;
+
+					// the minimum time to sleep in Windows is one millisecond. However, the actual time
+					// that the thread spends sleeping may be much higher.
 					Sleep(1);
 				} else 
 					this->log(std::string("Error accepting connection: ") + this->to_string(lastError));

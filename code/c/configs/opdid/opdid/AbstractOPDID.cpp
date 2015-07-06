@@ -58,6 +58,9 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->logger = NULL;
 	this->timestampFormat = "%Y-%m-%d %H:%M:%S.%i";
 
+	this->monSecondPos = 0;
+	this->totalMicroseconds = 0;
+
 	// map result codes
 	opdiCodeTexts[0] = "STATUS_OK";
 	opdiCodeTexts[1] = "DISCONNECTED";
@@ -1099,20 +1102,68 @@ void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
 }
 
 uint8_t AbstractOPDID::waiting(uint8_t canSend) {
+	uint8_t result;
+
+	// add up microseconds of idle time
+	this->totalMicroseconds += this->idleStopwatch.elapsed();
+	this->waitingCallsPerSecond++;
+
+	// start local stopwatch
+	Poco::Stopwatch stopwatch;
+	stopwatch.start();
+
 	// exception-safe processing
 	try {
-		return OPDI::waiting(canSend);
+		result = OPDI::waiting(canSend);
 	} catch (Poco::Exception &pe) {
 		this->log(std::string("Unhandled exception while housekeeping: ") + pe.message());
 	} catch (std::exception &e) {
 		this->log(std::string("Unhandled exception while housekeeping: ") + e.what());
 	} catch (...) {
-		this->log(std::string("Unknown error while housekeeping: "));
+		this->log(std::string("Unknown error while housekeeping"));
 	}
-
 	// TODO decide: ignore errors or abort?
 
-	return OPDI_STATUS_OK;
+	// add runtime statistics to monitor buffer
+	this->monSecondStats[this->monSecondPos] = stopwatch.elapsed();		// microseconds
+	// add up microseconds of processing time
+	this->totalMicroseconds += this->monSecondStats[this->monSecondPos];
+	this->monSecondPos++;
+	if (this->monSecondPos >= maxSecondStats) {
+		this->logError("Statictics buffer exeeded");
+		return OPDI_DEVICE_ERROR;
+	}
+	// collect statistics until a second has elapsed
+	if (this->totalMicroseconds >= 1000000) {
+		int maxProcTime = -1;
+		int sumProcTime = 0;
+		for (int i = 0; i < this->monSecondPos; i++) {
+			sumProcTime += this->monSecondStats[i];
+			if (this->monSecondStats[i] > maxProcTime)
+				maxProcTime = this->monSecondStats[i];
+		}
+		this->monSecondPos = 0;
+		double procAverageUsPerCall = sumProcTime / this->waitingCallsPerSecond;	// microseconds
+		// if a doWork invocation in this period took more than 1000 microseconds, emit a warning
+		if (maxProcTime > 1000)
+			this->logWarning("Processing the doWork loop of all ports took longer than one millisecond; this may lead to timing inaccuracies. Maximum was: " + this->to_string(maxProcTime) + " us");
+
+		this->logDebug("Elapsed processing time: " + this->to_string(this->totalMicroseconds) + " us");
+		this->logDebug("Loop iterations per second: " + this->to_string(waitingCallsPerSecond * 1000000.0 / this->totalMicroseconds));
+		this->logDebug("Processing time average per iteration: " + this->to_string(procAverageUsPerCall) + " us");
+		this->logDebug("Processing load: " + this->to_string(sumProcTime * 1.0 / this->totalMicroseconds * 100.0) + "%");
+
+		// reset counters
+		this->totalMicroseconds = 0;
+		this->waitingCallsPerSecond = 0;
+
+		// write status file if specified
+	}
+
+	// restart idle stopwatch to measure time until waiting() is called again
+	this->idleStopwatch.restart();
+
+	return result;
 }
 
 bool icompare_pred(unsigned char a, unsigned char b)
