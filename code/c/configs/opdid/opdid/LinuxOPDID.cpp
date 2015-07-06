@@ -285,13 +285,13 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 
 					// sleep for remainder of the millisecond
 					//  usleep has some overhead that might be different on different systems
-					// calculate sleep remainder base to approximate 1000 fps
+					// calculate sleep remainder base to approximate the specified target fps
 					if (sleepRemainderAdjustCount > 100) {
 						sleepRemainderAdjustCount = 0;
 						if (this->framesPerSecond > 0) {
-							if (this->framesPerSecond > 1000)
+							if (this->framesPerSecond > this->targetFramesPerSecond)
 								sleepRemainderBase++;
-							else if (this->framesPerSecond < 1000)
+							else if (this->framesPerSecond < this->targetFramesPerSecond)
 								sleepRemainderBase--;
 						}
 					} else

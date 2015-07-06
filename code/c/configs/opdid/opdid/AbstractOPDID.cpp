@@ -62,6 +62,7 @@ AbstractOPDID::AbstractOPDID(void) {
 
 	this->monSecondPos = 0;
 	this->totalMicroseconds = 0;
+	this->targetFramesPerSecond = 200;
 
 	// map result codes
 	opdiCodeTexts[0] = "STATUS_OK";
@@ -419,6 +420,7 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 	this->logVerbose("Setting up general configuration");
 
 	this->heartbeatFile = this->getConfigString(general, "HeartbeatFile", "", false);
+	this->targetFramesPerSecond = general->getInt("TargetFPS", this->targetFramesPerSecond);
 
 	std::string slaveName = this->getConfigString(general, "SlaveName", "", true);
 	int messageTimeout = general->getInt("MessageTimeout", OPDI_DEFAULT_MESSAGE_TIMEOUT);

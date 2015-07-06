@@ -78,6 +78,7 @@ protected:
 	long totalMicroseconds;
 	int waitingCallsPerSecond;
 	double framesPerSecond;			// average number of doWork iterations processed per second
+	int targetFramesPerSecond;		// target number of doWork iterations per second
 
 	std::string heartbeatFile;
 
