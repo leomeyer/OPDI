@@ -72,10 +72,10 @@ protected:
 
 	// internal status monitoring variables
 	static const int maxSecondStats = 1100;
-	int monSecondStats[maxSecondStats];
+	long monSecondStats[maxSecondStats];
 	int monSecondPos;
 	Poco::Stopwatch idleStopwatch;	// measures time until waiting() is called again
-	int totalMicroseconds;
+	long totalMicroseconds;
 	int waitingCallsPerSecond;
 
 	virtual uint8_t idleTimeoutReached(void) override;

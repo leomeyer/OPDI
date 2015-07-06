@@ -1144,14 +1144,16 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 		}
 		this->monSecondPos = 0;
 		double procAverageUsPerCall = sumProcTime / this->waitingCallsPerSecond;	// microseconds
-		// if a doWork invocation in this period took more than 1000 microseconds, emit a warning
-		if (maxProcTime > 1000)
-			this->logWarning("Processing the doWork loop of all ports took longer than one millisecond; this may lead to timing inaccuracies. Maximum was: " + this->to_string(maxProcTime) + " us");
+		double load = sumProcTime * 1.0 / this->totalMicroseconds * 100.0;
 
-		this->logDebug("Elapsed processing time: " + this->to_string(this->totalMicroseconds) + " us");
-		this->logDebug("Loop iterations per second: " + this->to_string(waitingCallsPerSecond * 1000000.0 / this->totalMicroseconds));
-		this->logDebug("Processing time average per iteration: " + this->to_string(procAverageUsPerCall) + " us");
-		this->logDebug("Processing load: " + this->to_string(sumProcTime * 1.0 / this->totalMicroseconds * 100.0) + "%");
+		if (this->logVerbosity >= DEBUG) {
+			this->logDebug("Elapsed processing time: " + this->to_string(this->totalMicroseconds) + " us");
+			this->logDebug("Loop iterations per second: " + this->to_string(waitingCallsPerSecond * 1000000.0 / this->totalMicroseconds));
+			this->logDebug("Processing time average per iteration: " + this->to_string(procAverageUsPerCall) + " us");
+			this->logDebug("Processing load: " + this->to_string(load) + "%");
+		}
+		if (load > 90.0)
+			this->logWarning("Processing the doWork loop takes very long; load = " + this->to_string(load) + "%");
 
 		// reset counters
 		this->totalMicroseconds = 0;
