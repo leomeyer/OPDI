@@ -257,6 +257,9 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 	// listen for an incoming connection
 	listen(sockfd, 1);
 
+	int sleepRemainderBase = 1000;
+	int sleepRemainderAdjustCount = 0;
+
 	while (true) {
         	if (Opdi->logVerbosity != QUIET)
 			this->log(std::string("Listening for a connection on TCP port ") + this->to_string(port));
@@ -267,12 +270,36 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 			newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
 			if (newsockfd < 0) {
 				if ((errno == EWOULDBLOCK) || (errno == EAGAIN)) {
-					// not yet connected; process housekeeping about every millisecond
+					// measure processing time
+					struct timeval tv;
+					gettimeofday(&tv, NULL);
+					long proctime = 1000000 * tv.tv_sec + tv.tv_usec;
+
+					// not yet connected; process housekeeping about once a millisecond
 					uint8_t waitResult = this->waiting(false);
 					if (waitResult != OPDI_STATUS_OK)
 						return waitResult;
 
-					usleep(1000);
+					gettimeofday(&tv, NULL);
+					long elapsed = 1000000 * tv.tv_sec + tv.tv_usec - proctime;
+
+					// sleep for remainder of the millisecond
+					//  usleep has some overhead that might be different on different systems
+					// calculate sleep remainder base to approximate 1000 fps
+					if (sleepRemainderAdjustCount > 100) {
+						sleepRemainderAdjustCount = 0;
+						if (this->framesPerSecond > 0) {
+							if (this->framesPerSecond > 1000)
+								sleepRemainderBase++;
+							else if (this->framesPerSecond < 1000)
+								sleepRemainderBase--;
+						}
+					} else
+						sleepRemainderAdjustCount++;
+
+					if (elapsed < sleepRemainderBase) {
+						usleep(sleepRemainderBase - elapsed);
+					}
 				} else
 					this->log(std::string("Error accepting connection: ") + this->to_string(errno));
 			} else {
