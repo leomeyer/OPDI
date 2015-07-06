@@ -77,6 +77,7 @@ protected:
 	Poco::Stopwatch idleStopwatch;	// measures time until waiting() is called again
 	long totalMicroseconds;
 	int waitingCallsPerSecond;
+	double framesPerSecond;			// average number of doWork iterations processed per second
 
 	virtual uint8_t idleTimeoutReached(void) override;
 
