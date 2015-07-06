@@ -6,6 +6,7 @@
 #include "Poco/Mutex.h"
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/Logger.h"
+#include "Poco/Stopwatch.h"
 
 #include "OPDIDConfigurationFile.h"
 
@@ -68,6 +69,17 @@ protected:
 
 	typedef std::map<std::string, std::string> LockedResources;
 	LockedResources lockedResources;
+
+	// internal status monitoring variables
+	static const int maxSecondStats = 1100;
+	long monSecondStats[maxSecondStats];
+	int monSecondPos;
+	Poco::Stopwatch idleStopwatch;	// measures time until waiting() is called again
+	long totalMicroseconds;
+	int waitingCallsPerSecond;
+	double framesPerSecond;			// average number of doWork iterations processed per second
+
+	std::string heartbeatFile;
 
 	virtual uint8_t idleTimeoutReached(void) override;
 

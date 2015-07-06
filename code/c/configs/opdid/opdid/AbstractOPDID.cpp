@@ -13,6 +13,8 @@
 #include "Poco/Mutex.h"
 #include "Poco/SimpleFileChannel.h"
 #include "Poco/UTF8String.h"
+#include "Poco/FileStream.h"
+#include "Poco/Process.h"
 
 #include "opdi_constants.h"
 
@@ -57,6 +59,9 @@ AbstractOPDID::AbstractOPDID(void) {
 
 	this->logger = NULL;
 	this->timestampFormat = "%Y-%m-%d %H:%M:%S.%i";
+
+	this->monSecondPos = 0;
+	this->totalMicroseconds = 0;
 
 	// map result codes
 	opdiCodeTexts[0] = "STATUS_OK";
@@ -109,8 +114,7 @@ uint8_t AbstractOPDID::idleTimeoutReached(void) {
 
 void AbstractOPDID::protocolCallback(uint8_t protState) {
 	if (protState == OPDI_PROTOCOL_START_HANDSHAKE) {
-		if (this->logVerbosity >= AbstractOPDID::VERBOSE)
-			this->log("Handshake started");
+		this->logVerbose("Handshake started");
 	} else
 	if (protState == OPDI_PROTOCOL_CONNECTED) {
 		this->connected();
@@ -121,8 +125,7 @@ void AbstractOPDID::protocolCallback(uint8_t protState) {
 }
 
 void AbstractOPDID::connected() {
-	if (this->logVerbosity != AbstractOPDID::QUIET)
-		this->log("Connected to: " + this->masterName);
+	this->logNormal("Connected to: " + this->masterName);
 
 	// notify registered listeners
 	ConnectionListenerList::iterator it = this->connectionListeners.begin();
@@ -133,8 +136,7 @@ void AbstractOPDID::connected() {
 }
 
 void AbstractOPDID::disconnected() {
-	if (this->logVerbosity != AbstractOPDID::QUIET)
-		this->log("Disconnected from: " + this->masterName);
+	this->logNormal("Disconnected from: " + this->masterName);
 
 	this->masterName = std::string();
 
@@ -161,11 +163,8 @@ void AbstractOPDID::sayHello(void) {
 	if (this->logVerbosity == QUIET)
 		return;
 
-	this->log("OPDID version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion) + " (c) Leo Meyer 2015");
-
-	if (this->logVerbosity >= VERBOSE) {
-		this->log("Build: " + std::string(__DATE__) + " " + std::string(__TIME__));
-	}
+	this->logNormal("OPDID version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion) + " (c) Leo Meyer 2015");
+	this->logVerbose("Build: " + std::string(__DATE__) + " " + std::string(__TIME__));
 }
 
 void AbstractOPDID::showHelp(void) {
@@ -369,8 +368,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 
 	this->setupRoot(this->configuration);
 
-	if (this->logVerbosity >= AbstractOPDID::VERBOSE)
-		this->log("Node setup complete, preparing ports");
+	this->logVerbose("Node setup complete, preparing ports");
 
 	this->sortPorts();
 	this->preparePorts();
@@ -382,8 +380,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 }
 
 void AbstractOPDID::lockResource(std::string resourceID, std::string lockerID) {
-	if (this->logVerbosity >= AbstractOPDID::DEBUG)
-		this->log("Trying to lock resource '" + resourceID + "' for " + lockerID);
+	this->logDebug("Trying to lock resource '" + resourceID + "' for " + lockerID);
 	// try to locate the resource ID
 	LockedResources::const_iterator it = this->lockedResources.find(resourceID);
 	// resource already used?
@@ -419,8 +416,9 @@ AbstractOPDID::LogVerbosity AbstractOPDID::getConfigLogVerbosity(Poco::Util::Abs
 }
 
 void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *general) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up general configuration");
+	this->logVerbose("Setting up general configuration");
+
+	this->heartbeatFile = this->getConfigString(general, "HeartbeatFile", "", false);
 
 	std::string slaveName = this->getConfigString(general, "SlaveName", "", true);
 	int messageTimeout = general->getInt("MessageTimeout", OPDI_DEFAULT_MESSAGE_TIMEOUT);
@@ -456,8 +454,7 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 }
 
 void AbstractOPDID::configureEncryption(Poco::Util::AbstractConfiguration *config) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Configuring encryption");
+	this->logVerbose("Configuring encryption");
 
 	std::string type = config->getString("Type", "");
 	if (type == "AES") {
@@ -472,8 +469,7 @@ void AbstractOPDID::configureEncryption(Poco::Util::AbstractConfiguration *confi
 }
 
 void AbstractOPDID::configureAuthentication(Poco::Util::AbstractConfiguration *config) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Configuring authentication");
+	this->logVerbose("Configuring authentication");
 
 	std::string type = config->getString("Type", "");
 	if (type == "Login") {
@@ -517,8 +513,7 @@ void AbstractOPDID::configureGroup(Poco::Util::AbstractConfiguration *groupConfi
 }
 
 void AbstractOPDID::setupGroup(Poco::Util::AbstractConfiguration *groupConfig, std::string group) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up group: " + group);
+	this->logVerbose("Setting up group: " + group);
 
 	OPDI_PortGroup *portGroup = new OPDI_PortGroup(group.c_str());
 	this->configureGroup(groupConfig, portGroup, 0);
@@ -527,8 +522,7 @@ void AbstractOPDID::setupGroup(Poco::Util::AbstractConfiguration *groupConfig, s
 }
 
 void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig, std::string node) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up include: " + node);
+	this->logVerbose("Setting up include: " + node);
 
 	// filename must be present
 	std::string filename = this->getConfigString(config, "Filename", "", true);
@@ -558,8 +552,7 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration *config, Poco
 	std::map<std::string, std::string> parameters = this->environment;
 
 	// the include node requires a section "<node>.Parameters"
-	if (this->logVerbosity >= VERBOSE)
-		this->log(node + ": Evaluating include parameters section: " + node + ".Parameters");
+	this->logVerbose(node + ": Evaluating include parameters section: " + node + ".Parameters");
 
 	Poco::Util::AbstractConfiguration *paramConfig = parentConfig->createView(node + ".Parameters");
 
@@ -574,11 +567,10 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration *config, Poco
 	}
 
 	// warn if no parameters
-	if ((parameters.size() == 0) && (this->logVerbosity >= NORMAL))
-		this->log(node + ": No parameters for include in section " + node + ".Parameters found, is this intended?");
+	if ((parameters.size() == 0))
+		this->logNormal(node + ": No parameters for include in section " + node + ".Parameters found, is this intended?");
 
-	if (this->logVerbosity >= VERBOSE)
-		this->log(node + ": Processing include file: " + filename);
+	this->logVerbose(node + ": Processing include file: " + filename);
 
 	Poco::Util::AbstractConfiguration *includeConfig = this->readConfiguration(filename, parameters);
 
@@ -586,10 +578,10 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration *config, Poco
 	this->setupRoot(includeConfig);
 
 	if (this->logVerbosity >= VERBOSE) {
-		this->log(node + ": Include file " + filename + " processed successfully.");
+		this->logVerbose(node + ": Include file " + filename + " processed successfully.");
 		std::string configFilePath = parentConfig->getString(OPDID_CONFIG_FILE_SETTING, "");
 		if (configFilePath != "")
-			this->log("Continuing with parent configuration file: " + configFilePath);
+			this->logVerbose("Continuing with parent configuration file: " + configFilePath);
 	}
 }
 
@@ -690,8 +682,7 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 }
 
 void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up emulated digital port: " + port);
+	this->logVerbose("Setting up emulated digital port: " + port);
 
 	OPDI_DigitalPort *digPort = new OPDI_DigitalPort(port.c_str());
 	this->configureDigitalPort(portConfig, digPort);
@@ -731,8 +722,7 @@ void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portC
 }
 
 void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up emulated analog port: " + port);
+	this->logVerbose("Setting up emulated analog port: " + port);
 
 	OPDI_AnalogPort *anaPort = new OPDI_AnalogPort(port.c_str());
 	this->configureAnalogPort(portConfig, anaPort);
@@ -796,8 +786,7 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 }
 
 void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up emulated select port: " + port);
+	this->logVerbose("Setting up emulated select port: " + port);
 
 	OPDI_SelectPort *selPort = new OPDI_SelectPort(port.c_str());
 	this->configureSelectPort(portConfig, parentConfig, selPort);
@@ -828,8 +817,7 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portCon
 }
 
 void AbstractOPDID::setupEmulatedDialPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up emulated dial port: " + port);
+	this->logVerbose("Setting up emulated dial port: " + port);
 
 	OPDI_DialPort *dialPort = new OPDI_DialPort(port.c_str());
 	this->configureDialPort(portConfig, dialPort);
@@ -842,8 +830,7 @@ void AbstractOPDID::configureStreamingPort(Poco::Util::AbstractConfiguration *po
 }
 
 void AbstractOPDID::setupSerialStreamingPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up serial streaming port: " + port);
+	this->logVerbose("Setting up serial streaming port: " + port);
 
 	OPDID_SerialStreamingPort *ssPort = new OPDID_SerialStreamingPort(this, port.c_str());
 	ssPort->configure(portConfig);
@@ -852,8 +839,7 @@ void AbstractOPDID::setupSerialStreamingPort(Poco::Util::AbstractConfiguration *
 }
 
 void AbstractOPDID::setupLoggerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up Logger port: " + port);
+	this->logVerbose("Setting up Logger port: " + port);
 
 	OPDID_LoggerPort *logPort = new OPDID_LoggerPort(this, port.c_str());
 	logPort->configure(portConfig);
@@ -862,8 +848,7 @@ void AbstractOPDID::setupLoggerPort(Poco::Util::AbstractConfiguration *portConfi
 }
 
 void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up LogicPort: " + port);
+	this->logVerbose("Setting up LogicPort: " + port);
 
 	OPDID_LogicPort *dlPort = new OPDID_LogicPort(this, port.c_str());
 	dlPort->configure(portConfig);
@@ -872,8 +857,7 @@ void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration *portConfig
 }
 
 void AbstractOPDID::setupFaderPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up FaderPort: " + port);
+	this->logVerbose("Setting up FaderPort: " + port);
 
 	OPDID_FaderPort *fPort = new OPDID_FaderPort(this, port.c_str());
 	fPort->configure(portConfig);
@@ -882,8 +866,7 @@ void AbstractOPDID::setupFaderPort(Poco::Util::AbstractConfiguration *portConfig
 }
 
 void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up PulsePort: " + port);
+	this->logVerbose("Setting up PulsePort: " + port);
 
 	OPDID_PulsePort *pulsePort = new OPDID_PulsePort(this, port.c_str());
 	pulsePort->configure(portConfig);
@@ -892,8 +875,7 @@ void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig
 }
 
 void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up SelectorPort: " + port);
+	this->logVerbose("Setting up SelectorPort: " + port);
 
 	OPDID_SelectorPort *selectorPort = new OPDID_SelectorPort(this, port.c_str());
 	selectorPort->configure(portConfig);
@@ -903,8 +885,7 @@ void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portCon
 
 #ifdef OPDID_USE_EXPRTK
 void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up Expression: " + port);
+	this->logVerbose("Setting up Expression: " + port);
 
 	OPDID_ExpressionPort *expressionPort = new OPDID_ExpressionPort(this, port.c_str());
 	expressionPort->configure(portConfig);
@@ -914,8 +895,7 @@ void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration *portC
 #endif	// def OPDID_USE_EXPRTK
 
 void AbstractOPDID::setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up Timer: " + port);
+	this->logVerbose("Setting up Timer: " + port);
 
 	OPDID_TimerPort *timerPort = new OPDID_TimerPort(this, port.c_str());
 	timerPort->configure(portConfig);
@@ -924,8 +904,7 @@ void AbstractOPDID::setupTimerPort(Poco::Util::AbstractConfiguration *portConfig
 }
 
 void AbstractOPDID::setupErrorDetectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up ErrorDetector: " + port);
+	this->logVerbose("Setting up ErrorDetector: " + port);
 
 	OPDID_ErrorDetectorPort *edPort = new OPDID_ErrorDetectorPort(this, port.c_str());
 	edPort->configure(portConfig);
@@ -934,8 +913,7 @@ void AbstractOPDID::setupErrorDetectorPort(Poco::Util::AbstractConfiguration *po
 }
 
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up node: " + node);
+	this->logVerbose("Setting up node: " + node);
 
 	// create node section view
 	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
@@ -945,8 +923,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 
 	// driver specified?
 	if (nodeDriver != "") {
-		if (this->logVerbosity >= VERBOSE)
-			this->log("Loading plugin driver: " + nodeDriver);
+		this->logVerbose("Loading plugin driver: " + nodeDriver);
 
 		// try to load the plugin; the driver name is the (platform dependent) library file name
 		IOPDIDPlugin *plugin = this->getPlugin(nodeDriver);
@@ -1013,8 +990,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 	// enumerate section "Root"
 	Poco::Util::AbstractConfiguration *nodes = config->createView("Root");
-	if (this->logVerbosity >= VERBOSE)
-		this->log("Setting up root nodes");
+	this->logVerbose("Setting up root nodes");
 
 	Poco::Util::AbstractConfiguration::Keys nodeKeys;
 	nodes->keys("", nodeKeys);
@@ -1047,7 +1023,7 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 		std::string filename = config->getString(OPDID_CONFIG_FILE_SETTING, "");
 		if (filename == "")
 			filename = "<unknown configuration file>";
-		this->log(filename + ": No nodes in section Root found, is this intended?");
+		this->logNormal(filename + ": No nodes in section Root found, is this intended?");
 	}
 
 	// go through ordered list, setup nodes by name
@@ -1062,8 +1038,7 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 
 int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {
 
-	if (this->logVerbosity >= VERBOSE)
-		this->log(std::string("Setting up connection for slave: ") + this->slaveName);
+	this->logVerbose(std::string("Setting up connection for slave: ") + this->slaveName);
 	std::string connectionType = this->getConfigString(config, "Type", "", true);
 
 	if (connectionType == "TCP") {
@@ -1085,34 +1060,94 @@ void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
 	int tzd;
 
 	if (!Poco::DateTimeParser::tryParse("%b %e %Y %H:%M:%s", compiled.str(), buildTime, tzd)) {
-		if (this->logVerbosity >= AbstractOPDID::NORMAL)
-			this->log("Warning: Could not parse build date and time to check possible ABI violation of driver " + driver + ": " + __DATE__ + " " + __TIME__);
+		this->logNormal("Warning: Could not parse build date and time to check possible ABI violation of driver " + driver + ": " + __DATE__ + " " + __TIME__);
 	} else {
 		// check whether the plugin driver file is more recent
 		Poco::File driverFile(driver);
 		// convert build time to UTC
 		buildTime.makeUTC(Poco::Timezone::tzd());
 		// assume both files have been built in the same time zone (getLastModified also returns UTC)
-		if ((driverFile.getLastModified() < buildTime.timestamp()) && (this->logVerbosity >= AbstractOPDID::NORMAL))
-			this->log("Warning: Plugin module " + driver + " is older than the main binary; possible ABI conflict! In case of strange errors please recompile the plugin!");
+		if ((driverFile.getLastModified() < buildTime.timestamp()))
+			this->logNormal("Warning: Plugin module " + driver + " is older than the main binary; possible ABI conflict! In case of strange errors please recompile the plugin!");
 	}
 }
 
 uint8_t AbstractOPDID::waiting(uint8_t canSend) {
+	uint8_t result;
+
+	// add up microseconds of idle time
+	this->totalMicroseconds += this->idleStopwatch.elapsed();
+	this->waitingCallsPerSecond++;
+
+	// start local stopwatch
+	Poco::Stopwatch stopwatch;
+	stopwatch.start();
+
 	// exception-safe processing
 	try {
-		return OPDI::waiting(canSend);
+		result = OPDI::waiting(canSend);
 	} catch (Poco::Exception &pe) {
-		this->log(std::string("Unhandled exception while housekeeping: ") + pe.message());
+		this->logError(std::string("Unhandled exception while housekeeping: ") + pe.message());
 	} catch (std::exception &e) {
-		this->log(std::string("Unhandled exception while housekeeping: ") + e.what());
+		this->logError(std::string("Unhandled exception while housekeeping: ") + e.what());
 	} catch (...) {
-		this->log(std::string("Unknown error while housekeeping: "));
+		this->logError(std::string("Unknown error while housekeeping"));
 	}
-
 	// TODO decide: ignore errors or abort?
 
-	return OPDI_STATUS_OK;
+	// add runtime statistics to monitor buffer
+	this->monSecondStats[this->monSecondPos] = stopwatch.elapsed();		// microseconds
+	// add up microseconds of processing time
+	this->totalMicroseconds += this->monSecondStats[this->monSecondPos];
+	this->monSecondPos++;
+	// buffer rollover?
+	if (this->monSecondPos >= maxSecondStats) {
+		this->monSecondPos = 0;
+	}
+	// collect statistics until a second has elapsed
+	if (this->totalMicroseconds >= 1000000) {
+		int maxProcTime = -1;
+		int sumProcTime = 0;
+		for (int i = 0; i < this->monSecondPos; i++) {
+			sumProcTime += this->monSecondStats[i];
+			if (this->monSecondStats[i] > maxProcTime)
+				maxProcTime = this->monSecondStats[i];
+		}
+		this->monSecondPos = 0;
+		this->framesPerSecond = waitingCallsPerSecond * 1000000.0 / this->totalMicroseconds;
+		double procAverageUsPerCall = sumProcTime / this->waitingCallsPerSecond;	// microseconds
+		double load = sumProcTime * 1.0 / this->totalMicroseconds * 100.0;
+
+		// ignore first calculation results
+		if (this->framesPerSecond > 0) {
+			if (this->logVerbosity >= EXTREME) {
+				this->logExtreme("Elapsed processing time: " + this->to_string(this->totalMicroseconds) + " us");
+				this->logExtreme("Loop iterations per second: " + this->to_string(this->framesPerSecond));
+				this->logExtreme("Processing time average per iteration: " + this->to_string(procAverageUsPerCall) + " us");
+				this->logExtreme("Processing load: " + this->to_string(load) + "%");
+			}
+			if (load > 90.0)
+				this->logWarning("Processing the doWork loop takes very long; load = " + this->to_string(load) + "%");
+		}
+
+		// reset counters
+		this->totalMicroseconds = 0;
+		this->waitingCallsPerSecond = 0;
+
+		// write status file if specified
+		if (this->heartbeatFile != "") {
+			this->logExtreme("Writing heartbeat file: " + this->heartbeatFile);
+			std::string output = this->getTimestampStr() + ": pid=" + this->to_string(Poco::Process::id()) + "; fps=" + this->to_string(this->framesPerSecond) + "; load=" + this->to_string(load) + "%";
+			Poco::FileOutputStream fos(this->heartbeatFile);
+			fos.write(output.c_str(), output.length());
+			fos.close();
+		}
+	}
+
+	// restart idle stopwatch to measure time until waiting() is called again
+	this->idleStopwatch.restart();
+
+	return result;
 }
 
 bool icompare_pred(unsigned char a, unsigned char b)
@@ -1153,7 +1188,7 @@ uint8_t AbstractOPDID::refresh(OPDI_Port **ports) {
 		OPDI_Port *port = ports[0];
 		uint8_t i = 0;
 		while (port != NULL) {
-			this->log("Sent refresh for port: " + port->ID());
+			this->logVerbose("Sent refresh for port: " + port->ID());
 			port = ports[++i];
 		}
 	}
