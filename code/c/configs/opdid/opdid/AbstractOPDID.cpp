@@ -13,6 +13,8 @@
 #include "Poco/Mutex.h"
 #include "Poco/SimpleFileChannel.h"
 #include "Poco/UTF8String.h"
+#include "Poco/FileStream.h"
+#include "Poco/Process.h"
 
 #include "opdi_constants.h"
 
@@ -424,6 +426,8 @@ AbstractOPDID::LogVerbosity AbstractOPDID::getConfigLogVerbosity(Poco::Util::Abs
 void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *general) {
 	if (this->logVerbosity >= VERBOSE)
 		this->log("Setting up general configuration");
+
+	this->heartbeatFile = this->getConfigString(general, "HeartbeatFile", "", false);
 
 	std::string slaveName = this->getConfigString(general, "SlaveName", "", true);
 	int messageTimeout = general->getInt("MessageTimeout", OPDI_DEFAULT_MESSAGE_TIMEOUT);
@@ -1149,11 +1153,11 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 
 		// ignore first calculation results
 		if (this->framesPerSecond > 0) {
-			if (this->logVerbosity >= DEBUG) {
-				this->logDebug("Elapsed processing time: " + this->to_string(this->totalMicroseconds) + " us");
-				this->logDebug("Loop iterations per second: " + this->to_string(this->framesPerSecond));
-				this->logDebug("Processing time average per iteration: " + this->to_string(procAverageUsPerCall) + " us");
-				this->logDebug("Processing load: " + this->to_string(load) + "%");
+			if (this->logVerbosity >= EXTREME) {
+				this->logExtreme("Elapsed processing time: " + this->to_string(this->totalMicroseconds) + " us");
+				this->logExtreme("Loop iterations per second: " + this->to_string(this->framesPerSecond));
+				this->logExtreme("Processing time average per iteration: " + this->to_string(procAverageUsPerCall) + " us");
+				this->logExtreme("Processing load: " + this->to_string(load) + "%");
 			}
 			if (load > 90.0)
 				this->logWarning("Processing the doWork loop takes very long; load = " + this->to_string(load) + "%");
@@ -1164,6 +1168,12 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 		this->waitingCallsPerSecond = 0;
 
 		// write status file if specified
+		if (this->heartbeatFile != "") {
+			std::string output = this->getTimestampStr() + ": pid=" + this->to_string(Poco::Process::id()) + "; fps=" + this->to_string(this->framesPerSecond) + "; load=" + this->to_string(load) + "%";
+			Poco::FileOutputStream fos(this->heartbeatFile);
+			fos.write(output.c_str(), output.length());
+			fos.close();
+		}
 	}
 
 	// restart idle stopwatch to measure time until waiting() is called again

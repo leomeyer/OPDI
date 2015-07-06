@@ -79,6 +79,8 @@ protected:
 	int waitingCallsPerSecond;
 	double framesPerSecond;			// average number of doWork iterations processed per second
 
+	std::string heartbeatFile;
+
 	virtual uint8_t idleTimeoutReached(void) override;
 
 	virtual Poco::Util::AbstractConfiguration *readConfiguration(std::string fileName, std::map<std::string, std::string> parameters);
