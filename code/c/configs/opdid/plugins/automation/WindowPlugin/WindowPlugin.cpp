@@ -70,8 +70,8 @@ protected:
 	std::string errorPortStr;
 	std::string resetPortStr;
 	ResetTo resetTo;
-	uint16_t positionAfterClose;
-	uint16_t positionAfterOpen;
+	int16_t positionAfterClose;
+	int16_t positionAfterOpen;
 
 	// processed configuration
 	OPDI_DigitalPort *sensorPort;
@@ -426,9 +426,9 @@ void WindowPort::setCurrentState(WindowState state) {
 			(state == OPEN) || 
 			(state == ERR)) {
 
-			if ((state == CLOSED) && (this->positionAfterClose >= 0) && (this->position != POSITION_OFF))
+			if ((this->targetState != UNKNOWN) && (state == CLOSED) && (this->positionAfterClose >= 0) && (this->position != POSITION_OFF))
 				this->setPosition(this->positionAfterClose);
-			if ((state == OPEN) && (this->positionAfterOpen >= 0) && (this->position != POSITION_OFF))
+			if ((this->targetState != UNKNOWN) && (state == OPEN) && (this->positionAfterOpen >= 0) && (this->position != POSITION_OFF))
 				this->setPosition(this->positionAfterOpen);
 
 			this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
