@@ -252,11 +252,11 @@ void AbstractOPDID::logWarning(std::string text) {
 	// an exception. The calling thread should deal with this exception.
 	Poco::Mutex::ScopedLock(this->mutex);
 
-	std::string msg = "WARNING: " + text;
+	std::string msg = "[" + this->getTimestampStr() + "] WARNING: " + text;
 	if (this->logger != NULL) {
 		this->logger->warning(msg);
 	}
-	this->printlne("[" + this->getTimestampStr() + "] " + msg);
+	this->printlne(msg);
 }
 
 void AbstractOPDID::logError(std::string text) {
