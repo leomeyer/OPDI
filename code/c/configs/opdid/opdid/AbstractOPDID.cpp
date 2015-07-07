@@ -15,6 +15,7 @@
 #include "Poco/UTF8String.h"
 #include "Poco/FileStream.h"
 #include "Poco/Process.h"
+#include "Poco/Util/LayeredConfiguration.h"
 
 #include "opdi_constants.h"
 
@@ -55,7 +56,7 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->patchVersion = OPDID_PATCH_VERSION;
 
 	this->logVerbosity = UNKNOWN;
-	this->configuration = NULL;
+	this->persistentConfig = NULL;
 
 	this->logger = NULL;
 	this->timestampFormat = "%Y-%m-%d %H:%M:%S.%i";
@@ -210,9 +211,9 @@ std::string AbstractOPDID::getConfigString(Poco::Util::AbstractConfiguration *co
 	return config->getString(key, defaultValue);
 }
 
-Poco::Util::AbstractConfiguration *AbstractOPDID::getConfiguration() {
-	return this->configuration;
-}
+//Poco::Util::AbstractConfiguration *AbstractOPDID::getConfiguration() {
+//	return this->configuration;
+//}
 
 void AbstractOPDID::println(std::string text) {
 	this->println(text.c_str());
@@ -301,6 +302,7 @@ void AbstractOPDID::logExtreme(std::string message) {
 int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
 
 	this->environment = environment;
+	Poco::Util::AbstractConfiguration *configuration = NULL;
 
 	// add default environment parameters
 	this->environment["$DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), this->timestampFormat);
@@ -337,7 +339,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 				throw Poco::SyntaxException("Expected configuration file name after argument -c");
 			} else {
 				// load configuration, substituting environment parameters
-				this->configuration = this->readConfiguration(args.at(i), this->environment);
+				configuration = this->readConfiguration(args.at(i), this->environment);
 			}
 		} else
 		if (args.at(i) == "-l") {
@@ -358,16 +360,16 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 	}
 
 	// no configuration?
-	if (this->configuration == NULL)
+	if (configuration == NULL)
 		throw Poco::SyntaxException("Expected argument: -c <config_file>");
 
 	this->sayHello();
 
 	// create view to "General" section
-	Poco::Util::AbstractConfiguration *general = this->configuration->createView("General");
+	Poco::Util::AbstractConfiguration *general = configuration->createView("General");
 	this->setGeneralConfiguration(general);
 
-	this->setupRoot(this->configuration);
+	this->setupRoot(configuration);
 
 	this->logVerbose("Node setup complete, preparing ports");
 
@@ -375,7 +377,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 	this->preparePorts();
 
 	// create view to "Connection" section
-	Poco::Util::AbstractConfiguration *connection = this->configuration->createView("Connection");
+	Poco::Util::AbstractConfiguration *connection = configuration->createView("Connection");
 
 	return this->setupConnection(connection);
 }
@@ -416,8 +418,55 @@ AbstractOPDID::LogVerbosity AbstractOPDID::getConfigLogVerbosity(Poco::Util::Abs
 	return defaultVerbosity;
 }
 
+Poco::Util::AbstractConfiguration *AbstractOPDID::getConfigForState(Poco::Util::AbstractConfiguration *baseConfig, std::string viewName) {
+	// replace configuration with a layered configuration that uses the persistent
+	// configuration with higher priority
+	// thus, port states will be pulled from the persistent configuration if they are present
+	Poco::Util::LayeredConfiguration *newConfig = new Poco::Util::LayeredConfiguration();
+	// persistent configuration specified?
+	if (this->persistentConfig != NULL) {
+		// persistent config has high priority
+		if (viewName == "")
+			newConfig->add(this->persistentConfig, 0);
+		else
+			newConfig->add(this->persistentConfig->createView(viewName));
+	}
+	// standard config has low priority
+	newConfig->add(baseConfig, 10);
+
+	return newConfig;
+}
+
+
 void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *general) {
 	this->logVerbose("Setting up general configuration");
+
+	// initialize persistent configuration if specified
+	std::string persistentFile = this->getConfigString(general, "PersistentConfig", "", false);
+	if (persistentFile != "") {
+		// determine application-relative path depending on location of config file
+		std::string configFilePath = general->getString(OPDID_CONFIG_FILE_SETTING, "");
+		if (configFilePath == "")
+			throw Poco::DataException("Programming error: Configuration file path not specified in config settings");
+
+		Poco::Path filePath(configFilePath);
+		Poco::Path absPath(filePath.absolute());
+		Poco::Path parentPath = absPath.parent();
+		// append or replace new config file path to path of previous config file
+		Poco::Path finalPath = parentPath.resolve(persistentFile);
+		persistentFile = finalPath.toString();
+		Poco::File file(finalPath);
+
+		// the persistent configuration is not an INI file (because POCO can't write INI files)
+		// but a "properties-format" file
+		if (file.exists())
+			// load existing file
+			this->persistentConfig = new Poco::Util::PropertyFileConfiguration(persistentFile);
+		else
+			// file does not yet exist; will be created when persisting state
+			this->persistentConfig = new Poco::Util::PropertyFileConfiguration();
+		this->persistentConfigFile = persistentFile;
+	}
 
 	this->heartbeatFile = this->getConfigString(general, "HeartbeatFile", "", false);
 	this->targetFramesPerSecond = general->getInt("TargetFPS", this->targetFramesPerSecond);
@@ -595,6 +644,9 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 	// ports can be readonly
 	port->setReadonly(portConfig->getBool("Readonly", false));
 
+	// ports can be persistent
+	port->setPersistent(portConfig->getBool("Persistent", false));
+
 	// the default label is the port ID
 	std::string portLabel = this->getConfigString(portConfig, "Label", port->getID(), false);
 	port->setLabel(portLabel.c_str());
@@ -662,19 +714,21 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port) {
 	this->configurePort(portConfig, port, 0);
 
-	std::string portMode = this->getConfigString(portConfig, "Mode", "", false);
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
+
+	std::string portMode = this->getConfigString(stateConfig, "Mode", "", false);
 	if (portMode == "Input") {
 		port->setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
 	} else if (portMode == "Input with pullup") {
-		port->setMode(1);
+		port->setMode(OPDI_DIGITAL_MODE_INPUT_PULLUP);
 	} else if (portMode == "Input with pulldown") {
-		port->setMode(2);
+		port->setMode(OPDI_DIGITAL_MODE_INPUT_PULLDOWN);
 	} else if (portMode == "Output") {
-		port->setMode(3);
+		port->setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	} else if (portMode != "")
 		throw Poco::DataException("Unknown Mode specified; expected 'Input', 'Input with pullup', 'Input with pulldown', or 'Output'", portMode);
 
-	std::string portLine = this->getConfigString(portConfig, "Line", "", false);
+	std::string portLine = this->getConfigString(stateConfig, "Line", "", false);
 	if (portLine == "High") {
 		port->setLine(1);
 	} else if (portLine == "Low") {
@@ -705,7 +759,9 @@ void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portC
 		OPDI_ANALOG_PORT_REFERENCE_INT |
 		OPDI_ANALOG_PORT_REFERENCE_EXT);
 
-	std::string mode = this->getConfigString(portConfig, "Mode", "", false);
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
+
+	std::string mode = this->getConfigString(stateConfig, "Mode", "", false);
 	if (mode == "Input")
 		port->setMode(0);
 	else if (mode == "Output")
@@ -713,12 +769,14 @@ void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portC
 	else if (mode != "")
 		throw Poco::ApplicationException("Unknown mode specified; expected 'Input' or 'Output'", mode);
 
-	if (portConfig->hasProperty("Resolution")) {
-		uint8_t resolution = portConfig->getInt("Resolution", OPDI_ANALOG_PORT_RESOLUTION_12);
+	// TODO reference
+
+	if (stateConfig->hasProperty("Resolution")) {
+		uint8_t resolution = stateConfig->getInt("Resolution", OPDI_ANALOG_PORT_RESOLUTION_12);
 		port->setResolution(resolution);
 	}
-	if (portConfig->hasProperty("Value")) {
-		uint32_t value = portConfig->getInt("Value", 0);
+	if (stateConfig->hasProperty("Value")) {
+		uint32_t value = stateConfig->getInt("Value", 0);
 		port->setValue(value);
 	}
 }
@@ -779,8 +837,10 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 	// set port items
 	port->setItems(&charItems[0]);
 
-	if (portConfig->getString("Position", "") != "") {
-		uint16_t position = portConfig->getInt("Position", 0);
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
+
+	if (stateConfig->getString("Position", "") != "") {
+		uint16_t position = stateConfig->getInt("Position", 0);
 		if ((position < 0) || (position >= charItems.size()))
 			throw Poco::DataException("Wrong select port setting: Position is out of range: " + to_string(position));
 		port->setPosition(position);
@@ -808,7 +868,10 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portCon
 	int64_t step = portConfig->getInt64("Step", 1);
 	if (step > (max - min))
 		throw Poco::DataException("Wrong dial port setting: Step is too large: " + to_string(step));
-	int64_t position = portConfig->getInt64("Position", min);
+
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
+
+	int64_t position = stateConfig->getInt64("Position", min);
 	if ((position < min) || (position > max))
 		throw Poco::DataException("Wrong dial port setting: Position is out of range: " + to_string(position));
 
@@ -896,11 +959,11 @@ void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration *portC
 }
 #endif	// def OPDID_USE_EXPRTK
 
-void AbstractOPDID::setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port) {
 	this->logVerbose("Setting up Timer: " + port);
 
 	OPDID_TimerPort *timerPort = new OPDID_TimerPort(this, port.c_str());
-	timerPort->configure(portConfig);
+	timerPort->configure(portConfig, parentConfig);
 
 	this->addPort(timerPort);
 }
@@ -977,7 +1040,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 #endif	// def OPDID_USE_EXPRTK
 		} else
 		if (nodeType == "Timer") {
-			this->setupTimerPort(nodeConfig, node);
+			this->setupTimerPort(nodeConfig, config, node);
 		} else
 		if (nodeType == "ErrorDetector") {
 			this->setupErrorDetectorPort(nodeConfig, node);
@@ -1196,6 +1259,92 @@ uint8_t AbstractOPDID::refresh(OPDI_Port **ports) {
 	}
 
 	return result;
+}
+
+void AbstractOPDID::persist(OPDI_Port *port) {
+	if (this->persistentConfig == NULL) {
+		this->logWarning(std::string("Unable to persist state for port ") + port->getID() + ": No configuration file specified; use 'PersistentConfig' in the General configuration section");
+		return;
+	}
+
+	this->logDebug("Trying to persist port state for: " + port->ID());
+
+	try {
+		// evaluation depends on port type
+		if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
+			uint8_t mode;
+			uint8_t line;
+			((OPDI_DigitalPort *)port)->getState(&mode, &line);
+			std::string modeStr = "";
+			if (mode == OPDI_DIGITAL_MODE_INPUT_FLOATING)
+				modeStr = "Input";
+			else if (mode == OPDI_DIGITAL_MODE_INPUT_PULLUP)
+				modeStr = "Input with pullup";
+			else if (mode == OPDI_DIGITAL_MODE_INPUT_PULLDOWN)
+				modeStr = "Input with pulldown";
+			else if (mode == OPDI_DIGITAL_MODE_OUTPUT)
+				modeStr = "Output";
+			std::string lineStr = "";
+			if (line == 0)
+				lineStr = "Low";
+			else if (line == 1)
+				lineStr = "High";
+
+			if (modeStr != "") {
+				this->logDebug("Writing port state for: " + port->ID() + "; mode = " + modeStr);
+				this->persistentConfig->setString(port->ID() + ".Mode", modeStr);
+			}
+			if (lineStr != "") {
+				this->logDebug("Writing port state for: " + port->ID() + "; line = " + lineStr);
+				this->persistentConfig->setString(port->ID() + ".Line", lineStr);
+			}
+		} else
+		if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+			uint8_t mode;
+			uint8_t resolution;
+			uint8_t reference;
+			int32_t value;
+			((OPDI_AnalogPort *)port)->getState(&mode, &resolution, &reference, &value);
+			std::string modeStr = "";
+			if (mode == OPDI_ANALOG_MODE_INPUT)
+				modeStr = "Input";
+			else if (mode == OPDI_ANALOG_MODE_OUTPUT)
+				modeStr = "Output";
+			// TODO reference
+			std::string refStr = "";
+
+			if (modeStr != "") {
+				this->logDebug("Writing port state for: " + port->ID() + "; mode = " + modeStr);
+				this->persistentConfig->setString(port->ID() + ".Mode", modeStr);
+			}
+			this->logDebug("Writing port state for: " + port->ID() + "; resolution = " + this->to_string(resolution));
+			this->persistentConfig->setInt(port->ID() + ".Resolution", resolution);
+			this->logDebug("Writing port state for: " + port->ID() + "; value = " + this->to_string(value));
+			this->persistentConfig->setInt(port->ID() + ".Value", value);
+		} else
+		if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+			int64_t position;
+			((OPDI_DialPort *)port)->getState(&position);
+
+			this->logDebug("Writing port state for: " + port->ID() + "; position = " + this->to_string(position));
+			this->persistentConfig->setInt64(port->ID() + ".Position", position);
+		} else
+		if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+			uint16_t position;
+			((OPDI_SelectPort *)port)->getState(&position);
+
+			this->logDebug("Writing port state for: " + port->ID() + "; position = " + this->to_string(position));
+			this->persistentConfig->setInt(port->ID() + ".Position", position);
+		} else {
+			this->logDebug("Unable to persist port state for: " + port->ID() + "; unknown port type: " + port->getType());
+			return;
+		}
+	} catch (Poco::Exception &e) {
+		this->logWarning("Unable to persist state of port " + port->ID() + ": " + e.message());
+		return;
+	}
+	this->persistentConfig->setString("LastChange", this->getTimestampStr());
+	this->persistentConfig->save(this->persistentConfigFile);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -5,6 +5,7 @@
 
 #include "Poco/Mutex.h"
 #include "Poco/Util/AbstractConfiguration.h"
+#include "Poco/Util/PropertyFileConfiguration.h"
 #include "Poco/Logger.h"
 #include "Poco/Stopwatch.h"
 
@@ -56,7 +57,9 @@ protected:
 
 	// environment variables for config file substitution (keys prefixed with $)
 	std::map<std::string, std::string> environment;
-	Poco::Util::AbstractConfiguration *configuration;
+	// represents a configuration file for port state persistence
+	Poco::Util::PropertyFileConfiguration *persistentConfig;
+	std::string persistentConfigFile;
 
 	Poco::Mutex mutex;
 	Poco::Logger* logger;
@@ -156,8 +159,6 @@ public:
 
 	virtual void logExtreme(std::string message);
 
-	virtual Poco::Util::AbstractConfiguration *getConfiguration(void);
-
 	/** Starts processing the supplied arguments. */
 	virtual int startup(std::vector<std::string> args, std::map<std::string, std::string> environment);
 
@@ -167,6 +168,11 @@ public:
 	virtual void lockResource(std::string resourceID, std::string lockerID);
 
 	virtual LogVerbosity getConfigLogVerbosity(Poco::Util::AbstractConfiguration *config, LogVerbosity defaultVerbosity);
+
+	/** Returns the configuration that should be used for querying a port's state. This is the baseConfig if no 
+	 *  persistent configuration has been specified, or a layered configuration otherwise. 
+	 *	This configuration must be freed after use. The view name is optional. */
+	virtual Poco::Util::AbstractConfiguration *getConfigForState(Poco::Util::AbstractConfiguration *baseConfig, std::string viewName);
 
 	virtual void setGeneralConfiguration(Poco::Util::AbstractConfiguration *general);
 
@@ -221,7 +227,7 @@ public:
 	virtual void setupExpressionPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 #endif	// def OPDID_USE_EXPRTK
 
-	virtual void setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+	virtual void setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port);
 
 	virtual void setupErrorDetectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
@@ -254,6 +260,9 @@ public:
 
 	// log the refreshed ports
 	virtual uint8_t refresh(OPDI_Port **ports) override;
+
+	// implements a persistence mechanism for port states
+	virtual void persist(OPDI_Port *port) override;
 };
 
 

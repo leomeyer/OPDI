@@ -402,3 +402,7 @@ void OPDI::shutdown(void) {
 	// set flag to indicate that the message processing should stop
 	this->shutdownRequested = true;
 }
+
+void OPDI::persist(OPDI_Port *port) {
+	throw new Poco::NotImplementedException("This implementation does not support port state persistance");
+}

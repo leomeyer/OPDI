@@ -131,7 +131,7 @@ OPDID_TimerPort::OPDID_TimerPort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 OPDID_TimerPort::~OPDID_TimerPort() {
 }
 
-void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
+void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
 	this->opdid->configureDigitalPort(config, this);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -186,7 +186,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config) {
 		this->logVerbose("Setting up timer schedule for node: " + nodeName);
 
 		// get schedule section from the configuration
-		Poco::Util::AbstractConfiguration *scheduleConfig = this->opdid->getConfiguration()->createView(nodeName);
+		Poco::Util::AbstractConfiguration *scheduleConfig = parentConfig->createView(nodeName);
 
 		Schedule schedule;
 		schedule.nodeName = nodeName;
@@ -299,7 +299,8 @@ void OPDID_TimerPort::setDirCaps(const char *dirCaps) {
 }
 
 void OPDID_TimerPort::setMode(uint8_t mode) {
-	throw PortError(std::string(this->getID()) + ": The mode of a TimerPort cannot be changed");
+	if (mode != OPDI_DIGITAL_MODE_OUTPUT)
+		throw PortError(std::string(this->getID()) + ": The mode of a TimerPort cannot be set to anything other than 'Output'");
 }
 
 void OPDID_TimerPort::prepare() {

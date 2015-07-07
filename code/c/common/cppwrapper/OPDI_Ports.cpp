@@ -38,6 +38,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->selfRefreshTime = 0;
 	this->lastRefreshTime = 0;
 	this->orderID = -1;
+	this->persistent = false;
 
 	this->id = (char*)malloc(strlen(id) + 1);
 	strcpy(this->id, id);
@@ -57,6 +58,8 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->refreshRequired = false;
 	this->selfRefreshTime = 0;
 	this->lastRefreshTime = 0;
+	this->orderID = -1;
+	this->persistent = false;
 
 	this->id = (char*)malloc(strlen(id) + 1);
 	strcpy(this->id, id);
@@ -120,6 +123,14 @@ void OPDI_Port::setReadonly(bool readonly) {
 
 bool OPDI_Port::isReadonly(void) {
 	return this->readonly;
+}
+
+void OPDI_Port::setPersistent(bool persistent) {
+	this->persistent = persistent;
+}
+
+bool OPDI_Port::isPersistent(void) {
+	return this->persistent;
 }
 
 void OPDI_Port::setLabel(const char *label) {
@@ -453,6 +464,8 @@ void OPDI_DigitalPort::setMode(uint8_t mode) {
 		if (newMode != this->mode)
 			this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 		this->mode = newMode;
+		if (persistent && (this->opdi != NULL))
+			this->opdi->persist(this);
 	}
 }
 
@@ -462,6 +475,8 @@ void OPDI_DigitalPort::setLine(uint8_t line) {
 	if (line != this->line)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->line = line;
+	if (persistent && (this->opdi != NULL))
+		this->opdi->persist(this);
 }
 
 // function that fills in the current port state
@@ -520,6 +535,8 @@ void OPDI_AnalogPort::setMode(uint8_t mode) {
 	if (mode != this->mode)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->mode = mode;
+	if (persistent && (this->opdi != NULL))
+		this->opdi->persist(this);
 }
 
 int32_t OPDI_AnalogPort::validateValue(int32_t value) {
@@ -546,6 +563,9 @@ void OPDI_AnalogPort::setResolution(uint8_t resolution) {
 
 	if (this->mode != 0)
 		this->setValue(this->value);
+	else
+		if (persistent && (this->opdi != NULL))
+			this->opdi->persist(this);
 }
 
 void OPDI_AnalogPort::setReference(uint8_t reference) {
@@ -554,6 +574,8 @@ void OPDI_AnalogPort::setReference(uint8_t reference) {
 	if (reference != this->reference)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->reference = reference;
+	if (persistent && (this->opdi != NULL))
+		this->opdi->persist(this);
 }
 
 void OPDI_AnalogPort::setValue(int32_t value) {
@@ -566,6 +588,8 @@ void OPDI_AnalogPort::setValue(int32_t value) {
 	if (newValue != this->value)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->value = newValue;
+	if (persistent && (this->opdi != NULL))
+		this->opdi->persist(this);
 }
 
 // function that fills in the current port state
@@ -687,6 +711,8 @@ void OPDI_SelectPort::setPosition(uint16_t position) {
 	if (position != this->position)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->position = position;
+	if (persistent && (this->opdi != NULL))
+		this->opdi->persist(this);
 }
 
 void OPDI_SelectPort::getState(uint16_t *position) {
@@ -759,6 +785,8 @@ void OPDI_DialPort::setPosition(int64_t position) {
 	if (newPosition != this->position)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->position = position;
+	if (persistent && (this->opdi != NULL))
+		this->opdi->persist(this);
 }
 
 // function that fills in the current port state

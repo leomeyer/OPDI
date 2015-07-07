@@ -95,6 +95,9 @@ protected:
 	uint32_t selfRefreshTime;
 	uint64_t lastRefreshTime;
 
+	// indicates whether port state should be written to a persistent storage
+	bool persistent;
+
 	// Called when a periodic self-refresh is due. If a refresh is necessary, implementations
 	// should set this->refreshRequired = true.
 	virtual void doSelfRefresh(void) = 0;
@@ -153,6 +156,10 @@ public:
 	virtual void setReadonly(bool readonly);
 
 	virtual bool isReadonly(void);
+
+	virtual void setPersistent(bool persistent);
+
+	virtual bool isPersistent(void);
 
 	/** Sets the label of the port. */
 	virtual void setLabel(const char *label);

@@ -178,6 +178,8 @@ public:
 	/** Disconnects a master if connected and releases resources. Frees all ports and stops message processing. */
 	virtual void shutdown(void);
 
+	/** Makes the port state persistent if the implementation supports it. */
+	virtual void persist(OPDI_Port *port);
 };
 
 #endif
