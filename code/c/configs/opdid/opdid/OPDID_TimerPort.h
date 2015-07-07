@@ -170,7 +170,7 @@ public:
 
 	virtual ~OPDID_TimerPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *config);
+	virtual void configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig);
 
 	virtual void setDirCaps(const char *dirCaps) override;
 
