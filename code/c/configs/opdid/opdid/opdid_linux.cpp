@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include "opdi_constants.h"
+
 #include "LinuxOPDID.h"
 
 // the main OPDI instance is declared here
@@ -82,15 +84,15 @@ int main(int argc, char *argv[], char *envp[])
 	catch (Poco::Exception& e) {
 		Opdi->logError(e.displayText());
 		// signal error
-		exitcode = 1;
+		exitcode = OPDI_DEVICE_ERROR;
 	}
 	catch (std::exception& e) {
 		Opdi->logError(e.what());
-		exitcode = 1;
+		exitcode = OPDI_DEVICE_ERROR;
 	}
 	catch (...) {
 		Opdi->logError("An unknown error occurred. Exiting.");
-		exitcode = 1;
+		exitcode = OPDI_DEVICE_ERROR;
 	}
 
 	Opdi->logNormal("OPDID exited with code " + Opdi->to_string(exitcode));
