@@ -81,7 +81,6 @@ public:
 	virtual void prepare() override;
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Pulse Port
 ///////////////////////////////////////////////////////////////////////////////
@@ -165,8 +164,6 @@ public:
 	virtual void prepare();
 };
 
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // Error Detector Port
 ///////////////////////////////////////////////////////////////////////////////
@@ -205,11 +202,9 @@ public:
 /** Defines a serial streaming port that supports streaming from and to a serial port device.
  */
 class OPDID_SerialStreamingPort : public OPDI_StreamingPort, protected OPDID_PortFunctions {
-
 friend class OPDI;
 
 protected:
-
 	// a serial streaming port may pass the bytes through or return them in the doWork method (loopback)
 	enum Mode {
 		PASS_THROUGH,
@@ -246,11 +241,9 @@ public:
 /** Defines a streaming port that can log port states and optionally write them to a log file.
  */
 class OPDID_LoggerPort : public OPDI_StreamingPort, protected OPDID_PortFunctions {
-
 friend class OPDI;
 
 protected:
-
 	enum Format {
 		CSV
 	};
@@ -299,7 +292,6 @@ public:
 */
 class OPDID_FaderPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
-
 	enum FaderMode {
 		LINEAR,
 		EXPONENTIAL

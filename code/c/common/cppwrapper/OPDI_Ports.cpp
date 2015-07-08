@@ -638,7 +638,6 @@ bool OPDI_AnalogPort::hasError(void) {
 
 #endif		// NO_ANALOG_PORTS
 
-
 #ifndef OPDI_NO_SELECT_PORTS
 
 OPDI_SelectPort::OPDI_SelectPort(const char *id) : OPDI_Port(id, NULL, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, NULL) {

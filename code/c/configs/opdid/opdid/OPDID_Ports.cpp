@@ -164,7 +164,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 
 	// change detected?
 	if (newLine != this->line) {
-		this->logDebug(ID() + ": Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High)");
+		this->logDebug(this->ID() + ": Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High)");
 
 		OPDI_DigitalPort::setLine(newLine);
 
@@ -178,7 +178,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 				(*it)->getState(&mode, &line);
 				// changed?
 				if (line != newLine) {
-					this->logDebug(ID() + ": Changing line of port " + (*it)->getID() + " to " + (newLine == 0 ? "Low" : "High"));
+					this->logDebug(this->ID() + ": Changing line of port " + (*it)->getID() + " to " + (newLine == 0 ? "Low" : "High"));
 					(*it)->setLine(newLine);
 				}
 			} catch (Poco::Exception &e) {
@@ -196,7 +196,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 				(*it)->getState(&mode, &line);
 				// changed?
 				if (line == newLine) {
-					this->logDebug(ID() + ": Changing line of inverse port " + (*it)->getID() + " to " + (newLine == 0 ? "High" : "Low"));
+					this->logDebug(this->ID() + ": Changing line of inverse port " + (*it)->getID() + " to " + (newLine == 0 ? "High" : "Low"));
 					(*it)->setLine((newLine == 0 ? 1 : 0));
 				}
 			} catch (Poco::Exception &e) {
@@ -353,7 +353,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 
 	// change detected?
 	if (newState != this->pulseState) {
-		this->logDebug(ID() + ": Changing pulse to " + (newState == 1 ? "High" : "Low") + " (dTime: " + to_string(opdi_get_time_ms() - this->lastStateChangeTime) + " ms)");
+		this->logDebug(this->ID() + ": Changing pulse to " + (newState == 1 ? "High" : "Low") + " (dTime: " + to_string(opdi_get_time_ms() - this->lastStateChangeTime) + " ms)");
 
 		this->lastStateChangeTime = opdi_get_time_ms();
 
@@ -451,12 +451,12 @@ uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
 	this->selectPort->getState(&pos);
 	if (pos == this->position) {
 		if (this->line != 1) {
-			this->logDebug(ID() + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to High");
+			this->logDebug(this->ID() + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to High");
 			OPDI_DigitalPort::setLine(1);
 		}
 	} else {
 		if (this->line != 0) {
-			this->logDebug(ID() + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to Low");
+			this->logDebug(this->ID() + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to Low");
 			OPDI_DigitalPort::setLine(0);
 		}
 	}
@@ -512,7 +512,7 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 	PortList::iterator it = this->inputPorts.begin();
 	while (it != this->inputPorts.end()) {
 		if ((*it)->hasError()) {
-			this->logExtreme(ID() + ": Detected error on port: " + (*it)->getID());
+			this->logExtreme(this->ID() + ": Detected error on port: " + (*it)->getID());
 			newState = 1;
 			break;
 		}
@@ -524,7 +524,7 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 
 	// change?
 	if (this->line != newState) {
-		this->logDebug(ID() + ": Changing line state to: " + (newState == 1 ? "High" : "Low"));
+		this->logDebug(this->ID() + ": Changing line state to: " + (newState == 1 ? "High" : "Low"));
 		this->line = newState;
 		this->doSelfRefresh();
 	}
@@ -557,7 +557,7 @@ uint8_t OPDID_SerialStreamingPort::doWork(uint8_t canSend)  {
 		if (this->available(0) > 0) {
 			char result;
 			if (this->read(&result) > 0) {
-				this->logDebug(ID() + ": Looping back received serial data byte: " + this->opdid->to_string((int)result));
+				this->logDebug(this->ID() + ": Looping back received serial data byte: " + this->opdid->to_string((int)result));
 
 				// echo
 				this->write(&result, 1);
@@ -577,7 +577,7 @@ void OPDID_SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *con
 	std::string protocol = config->getString("Protocol", "8N1");
 	// int timeout = config->getInt("Timeout", 100);
 
-	this->logVerbose(ID() + ": Opening serial port " + serialPortName + " with " + this->opdid->to_string(baudRate) + " baud and protocol " + protocol);
+	this->logVerbose(this->ID() + ": Opening serial port " + serialPortName + " with " + this->opdid->to_string(baudRate) + " baud and protocol " + protocol);
 
 	// try to lock the port name as a resource
 	this->opdid->lockResource(serialPortName, this->getID());
@@ -590,7 +590,7 @@ void OPDID_SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *con
 		throw Poco::ApplicationException(std::string(this->getID()) + ": Unable to open serial port: " + serialPortName);
 	}
 
-	this->logVerbose(ID() + ": Serial port " + serialPortName + " opened successfully");
+	this->logVerbose(this->ID() + ": Serial port " + serialPortName + " opened successfully");
 
 	std::string modeStr = config->getString("Mode", "");
 	if (modeStr == "Loopback") {
@@ -642,7 +642,6 @@ int OPDID_SerialStreamingPort::read(char *result) {
 bool OPDID_SerialStreamingPort::hasError(void) {
 	return false;
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Logger Streaming Port
@@ -758,14 +757,14 @@ void OPDID_LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 
 	std::string formatStr = config->getString("Format", "CSV");
 	if (formatStr != "CSV")
-		throw Poco::DataException(std::string(this->getID()) + ": Other formats than CSV are currently not supported");
+		throw Poco::DataException(std::string(this->getID()) + ": Formats other than CSV are currently not supported");
 
 	std::string outFileStr = config->getString("OutputFile", "");
 	if (outFileStr != "") {
 		// try to lock the output file name as a resource
 		this->opdid->lockResource(outFileStr, this->getID());
 
-		this->logVerbose(ID() + ": Opening output log file " + outFileStr);
+		this->logVerbose(this->ID() + ": Opening output log file " + outFileStr);
 
 		// open the stream in append mode
 		this->outFile.open(outFileStr, std::ios_base::app);
@@ -793,7 +792,6 @@ int OPDID_LoggerPort::read(char *result) {
 bool OPDID_LoggerPort::hasError(void) {
 	return false;
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Fader Port

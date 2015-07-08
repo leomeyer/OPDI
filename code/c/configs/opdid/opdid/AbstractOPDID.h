@@ -39,10 +39,8 @@ struct IOPDIDConnectionListener {
 };
 
 /** The abstract base class for OPDID implementations. */
-class AbstractOPDID: public OPDI
-{
+class AbstractOPDID: public OPDI {
 protected:
-
 	int majorVersion;
 	int minorVersion;
 	int patchVersion;
@@ -57,9 +55,10 @@ protected:
 
 	// environment variables for config file substitution (keys prefixed with $)
 	std::map<std::string, std::string> environment;
-	// represents a configuration file for port state persistence
-	Poco::Util::PropertyFileConfiguration *persistentConfig;
+
+	// configuration file for port state persistence
 	std::string persistentConfigFile;
+	Poco::Util::PropertyFileConfiguration *persistentConfig;
 
 	Poco::Mutex mutex;
 	Poco::Logger* logger;
@@ -75,13 +74,13 @@ protected:
 
 	// internal status monitoring variables
 	static const int maxSecondStats = 1100;
-	long monSecondStats[maxSecondStats];
-	int monSecondPos;
-	Poco::Stopwatch idleStopwatch;	// measures time until waiting() is called again
-	long totalMicroseconds;
-	int waitingCallsPerSecond;
-	double framesPerSecond;			// average number of doWork iterations processed per second
-	int targetFramesPerSecond;		// target number of doWork iterations per second
+	long monSecondStats[maxSecondStats];	// doWork performance statistics buffer
+	int monSecondPos;						// current position in buffer
+	Poco::Stopwatch idleStopwatch;			// measures time until waiting() is called again
+	long totalMicroseconds;					// total time (doWork + idle)
+	int waitingCallsPerSecond;				// number of calls to waiting()
+	double framesPerSecond;					// average number of doWork iterations ("frames") processed per second
+	int targetFramesPerSecond;				// target number of doWork iterations per second
 
 	std::string heartbeatFile;
 

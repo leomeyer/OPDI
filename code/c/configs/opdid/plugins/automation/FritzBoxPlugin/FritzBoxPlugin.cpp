@@ -41,7 +41,6 @@ public:
 };
 
 class ActionNotification : public Poco::Notification {
-
 public:
 	typedef Poco::AutoPtr<ActionNotification> Ptr;
 

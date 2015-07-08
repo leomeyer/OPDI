@@ -17,7 +17,6 @@
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /** OPDI C++ wrapper implementation
- * Uses serial port communication.
  */
 
 // #include <iostream>

@@ -333,7 +333,7 @@ void OPDID_TimerPort::prepare() {
 				// add with the specified occurrence time
 				this->addNotification(new ScheduleNotification(schedule, false), nextOccurrence);
 			} else {
-				this->logVerbose(ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
+				this->logVerbose(this->ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
 			}
 		}
 	}
@@ -500,14 +500,14 @@ void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Po
 	if (timestamp > now) {
 		std::string timeText = Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat);
 		if (!notification->deactivate)
-			this->logVerbose(ID() + ": Next scheduled time for node " + 
+			this->logVerbose(this->ID() + ": Next scheduled time for node " + 
 					notification->schedule->nodeName + " is: " + timeText);
 		// add with the specified activation time
 		this->queue.enqueueNotification(notification, timestamp);
 		if (!notification->deactivate)
 			notification->schedule->nextEvent = timestamp;
 	} else {
-		this->logNormal(ID() + ": Warning: Scheduled time for node " + 
+		this->logNormal(this->ID() + ": Warning: Scheduled time for node " + 
 				notification->schedule->nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat));
 /*
 		this->opdid->log(std::string(this->getID()) + ": Timestamp is: " + Poco::DateTimeFormatter::format(timestamp, "%Y-%m-%d %H:%M:%S"));
@@ -530,7 +530,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 		try {
 			ScheduleNotification::Ptr workNf = notification.cast<ScheduleNotification>();
 
-			this->logVerbose(ID() + ": Timer reached scheduled " + (workNf->deactivate ? "deactivation " : "") 
+			this->logVerbose(this->ID() + ": Timer reached scheduled " + (workNf->deactivate ? "deactivation " : "") 
 				+ "time for node: " + workNf->schedule->nodeName);
 
 			workNf->schedule->occurrences++;
@@ -547,7 +547,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 					// add with the specified occurrence time
 					this->addNotification(workNf, nextOccurrence);
 				} else {
-					this->logNormal(ID() + ": Warning: Next scheduled time for " + workNf->schedule->nodeName + " could not be determined");
+					this->logNormal(this->ID() + ": Warning: Next scheduled time for " + workNf->schedule->nodeName + " could not be determined");
 				}
 			}
 
@@ -561,7 +561,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 				deacTime += timediff;
 				Poco::DateTime deacLocal(deacTime);
 				deacLocal.makeLocal(Poco::Timezone::tzd());
-				this->logVerbose(ID() + ": Scheduled deactivation time for node " + deacSchedule->nodeName + " is at: " + 
+				this->logVerbose(this->ID() + ": Scheduled deactivation time for node " + deacSchedule->nodeName + " is at: " + 
 						Poco::DateTimeFormatter::format(deacLocal, this->opdid->timestampFormat)
 						+ "; in " + this->to_string(timediff / 1000000) + " second(s)");
 				// add with the specified deactivation time
@@ -651,7 +651,7 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 					// add with the specified occurrence time
 					this->addNotification(new ScheduleNotification(schedule, false), nextOccurrence);
 				} else {
-					this->logVerbose(ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
+					this->logVerbose(this->ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
 				}
 			}
 		}

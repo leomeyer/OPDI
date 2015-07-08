@@ -139,7 +139,6 @@ protected:
 
 	void checkCloseHBridge(void);
 
-
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
@@ -982,7 +981,6 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 
 	return OPDI_STATUS_OK;
 }
-
 
 ////////////////////////////////////////////////////////////////////////
 // Plugin main class

@@ -211,10 +211,6 @@ std::string AbstractOPDID::getConfigString(Poco::Util::AbstractConfiguration *co
 	return config->getString(key, defaultValue);
 }
 
-//Poco::Util::AbstractConfiguration *AbstractOPDID::getConfiguration() {
-//	return this->configuration;
-//}
-
 void AbstractOPDID::println(std::string text) {
 	this->println(text.c_str());
 }
@@ -224,15 +220,10 @@ void AbstractOPDID::printlne(std::string text) {
 }
 
 void AbstractOPDID::log(std::string text) {
-
-	// important: log must be thread-safe.
-	// encapsulate in a mutex
-
-	// Try to lock the mutex. If this does not work in time, it will throw
-	// an exception. The calling thread should deal with this exception.
+	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
-	std::string msg = "[" + this->getTimestampStr() + "] " + (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text;
 
+	std::string msg = "[" + this->getTimestampStr() + "] " + (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text;
 	if (this->logger != NULL) {
 		this->logger->information(msg);
 	} else {
@@ -245,11 +236,7 @@ void AbstractOPDID::logWarning(std::string text) {
 	if (this->logVerbosity == QUIET)
 		return;
 
-	// important: log must be thread-safe.
-	// encapsulate in a mutex
-
-	// Try to lock the mutex. If this does not work in time, it will throw
-	// an exception. The calling thread should deal with this exception.
+	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
 
 	std::string msg = "[" + this->getTimestampStr() + "] WARNING: " + text;
@@ -260,12 +247,7 @@ void AbstractOPDID::logWarning(std::string text) {
 }
 
 void AbstractOPDID::logError(std::string text) {
-
-	// important: log must be thread-safe.
-	// encapsulate in a mutex
-
-	// Try to lock the mutex. If this does not work in time, it will throw
-	// an exception. The calling thread should deal with this exception.
+	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
 
 	std::string msg = "ERROR: " + text;
@@ -300,7 +282,6 @@ void AbstractOPDID::logExtreme(std::string message) {
 }
 
 int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
-
 	this->environment = environment;
 	Poco::Util::AbstractConfiguration *configuration = NULL;
 
@@ -436,7 +417,6 @@ Poco::Util::AbstractConfiguration *AbstractOPDID::getConfigForState(Poco::Util::
 
 	return newConfig;
 }
-
 
 void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *general) {
 	this->logVerbose("Setting up general configuration");
@@ -769,7 +749,7 @@ void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portC
 	else if (mode != "")
 		throw Poco::ApplicationException("Unknown mode specified; expected 'Input' or 'Output'", mode);
 
-	// TODO reference
+	// TODO reference?
 
 	if (stateConfig->hasProperty("Resolution")) {
 		uint8_t resolution = stateConfig->getInt("Resolution", OPDI_ANALOG_PORT_RESOLUTION_12);
@@ -1036,7 +1016,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		if (nodeType == "Expression") {
 			this->setupExpressionPort(nodeConfig, node);
 #else
-#pragma message( "Expression library not included, cannot use the ExpressionPort node type" )
+#pragma message( "Expression library not included, cannot use the Expression node type" )
 #endif	// def OPDID_USE_EXPRTK
 		} else
 		if (nodeType == "Timer") {
@@ -1102,7 +1082,6 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 }
 
 int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {
-
 	this->logVerbose(std::string("Setting up connection for slave: ") + this->slaveName);
 	std::string connectionType = this->getConfigString(config, "Type", "", true);
 
@@ -1238,11 +1217,9 @@ uint8_t AbstractOPDID::setPassword(std::string password) {
 	return OPDI_STATUS_OK;
 }
 
-
 std::string AbstractOPDID::getExtendedDeviceInfo(void) {
 	return this->deviceInfo;
 }
-
 
 uint8_t AbstractOPDID::refresh(OPDI_Port **ports) {
 	uint8_t result = OPDI::refresh(ports);
@@ -1437,7 +1414,6 @@ uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
-
 	return OPDI_STATUS_OK;
 }
 

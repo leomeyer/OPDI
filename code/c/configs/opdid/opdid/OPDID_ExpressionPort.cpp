@@ -91,7 +91,7 @@ bool OPDID_ExpressionPort::prepareVariables(void) {
 				// port type not supported
 				return false;
 		} catch (Poco::Exception &pe) {
-			this->logExtreme(ID() + ": Unable to get state of port " + port->getID() + ": " + pe.message());
+			this->logExtreme(this->ID() + ": Unable to get state of port " + port->getID() + ": " + pe.message());
 			value = 0;
 		}
 
@@ -145,7 +145,7 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 
 			double value = expression.value();
 
-			this->logExtreme(ID() + ": Expression result: " + to_string(value));
+			this->logExtreme(this->ID() + ": Expression result: " + to_string(value));
 
 			// go through list of output ports
 			PortList::iterator it = this->outputPorts.begin();

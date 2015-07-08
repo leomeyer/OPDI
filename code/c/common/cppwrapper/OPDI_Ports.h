@@ -27,7 +27,6 @@ public:
 		;
 
 protected:
-
 	// protected constructor - for use by friend classes only
 	OPDI_Port(const char *id, const char *type);
 
@@ -215,11 +214,9 @@ template <class T> inline std::string OPDI_Port::to_string(const T& t) {
 }
 
 class OPDI_PortGroup {
-
 friend class OPDI;
 
 protected:
-
 	char *id;
 	char *label;
 	char *parent;
@@ -263,7 +260,6 @@ public:
 	virtual void setIcon(std::string icon);
 };
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Port definitions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -271,7 +267,6 @@ public:
 /** Defines a digital port.
  */
 class OPDI_DigitalPort : public OPDI_Port {
-
 friend class OPDI;
 
 protected:
@@ -313,7 +308,6 @@ public:
 /** Defines an analog port.
  */
 class OPDI_AnalogPort : public OPDI_Port {
-
 friend class OPDI;
 
 protected:
@@ -362,7 +356,6 @@ public:
  *
  */
 class OPDI_SelectPort : public OPDI_Port {
-
 friend class OPDI;
 
 protected:
@@ -404,7 +397,6 @@ public:
  *
  */
 class OPDI_DialPort : public OPDI_Port {
-
 friend class OPDI;
 
 protected:
@@ -437,7 +429,6 @@ public:
 	virtual bool hasError(void) override;
 };
 
-
 /** Defines a streaming port.
  * A streaming port represents a serial data connection on the device. It can send and receive bytes.
  * Examples are RS232 or I2C ports.
@@ -449,7 +440,6 @@ public:
  * to the master. How exactly this is done depends on the concrete implementation.
  */
 class OPDI_StreamingPort : public OPDI_Port {
-
 friend class OPDI;
 
 protected:

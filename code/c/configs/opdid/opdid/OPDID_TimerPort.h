@@ -51,8 +51,8 @@
 *   The schedule types Periodic and Random are not yet implemented.
 */
 class OPDID_TimerPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
-protected:
 
+protected:
 	// helper class
 	class ScheduleComponent {
 	private:
@@ -111,7 +111,7 @@ protected:
 			} time;
 			struct random {		// for random-based schedules
 				int jitter;
-
+				// TODO
 			} random;
 		} data;
 		// schedule components for PERIODIC
@@ -159,7 +159,6 @@ protected:
 	std::string notScheduledText;
 	std::string timestampFormat;
 	std::string nextOccurrenceStr;
-
 
 	void addNotification(ScheduleNotification::Ptr notification, Poco::Timestamp timestamp);
 

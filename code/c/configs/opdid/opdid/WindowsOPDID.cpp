@@ -50,7 +50,6 @@ std::wstring utf8_decode(const std::string &str)
     return wstrTo;
 }
 
-
 /** For TCP connections, receives a byte from the socket specified in info and places the result in byte.
 *   For COM connections, reads a byte from the file handle specified in info and places the result in byte.
 *   Blocks until data is available or the timeout expires. 
@@ -229,10 +228,9 @@ int WindowsOPDID::HandleTCPConnection(int *csock) {
 }
 
 int WindowsOPDID::setupTCP(std::string interface_, int port) {
-
 	int err = 0;
 
-    // Initialize socket support WINDOWS ONLY!
+    // Initialize socket support
     unsigned short wVersionRequested;
     WSADATA wsaData;
     wVersionRequested = MAKEWORD(2, 2);
@@ -270,7 +268,7 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
     my_addr.sin_port = htons(port);
     
     memset(&(my_addr.sin_zero), 0, 8);
-    my_addr.sin_addr.s_addr = INADDR_ANY;	// TODO
+    my_addr.sin_addr.s_addr = INADDR_ANY;	// TODO use specified interface(s)
     
     if (bind(hsock, (struct sockaddr*)&my_addr, sizeof(my_addr)) == -1) {
         throw Poco::ApplicationException("Error binding to socket, make sure nothing else is listening on this port", WSAGetLastError());
@@ -299,8 +297,12 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 					if (waitResult != OPDI_STATUS_OK)
 						return waitResult;
 
-					// the minimum time to sleep in Windows is one millisecond. However, the actual time
+					// The minimum time to sleep in Windows is one millisecond. However, the actual time
 					// that the thread spends sleeping may be much higher.
+					// On Linux there's a rather intricate mechanism to adjust sleep time to achieve a
+					// certain configured number of "frames" per second. On Windows, as there is no
+					// sub-millisecond sleep function and granularity would be far too coarse, we just
+					// sleep for a ms and ignore the specified fps setting (at least for now).
 					Sleep(1);
 				} else 
 					this->logError(std::string("Error accepting connection: ") + this->to_string(lastError));
@@ -324,7 +326,6 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 }
 
 IOPDIDPlugin *WindowsOPDID::getPlugin(std::string driver) {
-
 	this->warnIfPluginMoreRecent(driver);
 
 	// attempt to load the specified DLL

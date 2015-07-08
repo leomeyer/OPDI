@@ -1,5 +1,5 @@
 
-//
+// OPDID main program entry point on Windows
 
 #include <iostream>
 #include <stdio.h>
@@ -9,8 +9,10 @@
 #include <algorithm>
 
 #include "Windows.h"
-
 #include "stdafx.h"
+
+#include "opdi_constants.h"
+
 #include "WindowsOPDID.h"
 
 // the main OPDI instance is declared here
@@ -78,15 +80,15 @@ int _tmain(int argc, _TCHAR* argv[], _TCHAR* envp[])
 	catch (Poco::Exception& e) {
 		Opdi->logError(e.displayText());
 		// signal error
-		exitcode = 1;
+		exitcode = OPDI_DEVICE_ERROR;
 	}
 	catch (std::exception& e) {
 		Opdi->logError(e.what());
-		exitcode = 1;
+		exitcode = OPDI_DEVICE_ERROR;
 	}
 	catch (...) {
 		Opdi->logError("An unknown error occurred. Exiting.");
-		exitcode = 1;
+		exitcode = OPDI_DEVICE_ERROR;
 	}
 
 	Opdi->logNormal("OPDID exited with code " + Opdi->to_string(exitcode));

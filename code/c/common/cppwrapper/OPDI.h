@@ -16,7 +16,7 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/** Defines the OPDI classes that wrap the functions of the OPDI C implementation.
+/** Defines the OPDI class that wraps the functions of the OPDI C implementation.
  */
 
 #ifndef __OPDI_H__
@@ -27,16 +27,13 @@
 #include "opdi_config.h"
 #include "opdi_port.h"
 
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Main class for OPDI functionality
+// All public methods should be virtual.
 //////////////////////////////////////////////////////////////////////////////////////////
 
-// All methods should be virtual (for the OPDID plugins to work)
 class OPDI {
-
 protected:
-
 	std::string slaveName;
 	std::string encoding;
 
