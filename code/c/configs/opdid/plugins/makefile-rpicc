@@ -1,5 +1,4 @@
-SUBDIRS = linux_test automation/WindowPlugin automation/FritzBoxPlugin automation/WeatherPlugin
-SUBDIRS += rpi/gertboard rpi/RemoteSwitch
+SUBDIRS = linux_test automation/WindowPlugin automation/FritzBoxPlugin automation/WeatherPlugin rpi/gertboard rpi/RemoteSwitch
 
 .PHONY: subdirs $(SUBDIRS)
 

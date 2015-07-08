@@ -64,7 +64,7 @@ RemoteSwitchPort::RemoteSwitchPort(AbstractOPDID *opdid, const char *ID, RCSwitc
 	this->unitCode = unitCode;
 	this->setLabel((this->ID() + "@" + systemCode + "/" + to_string(unitCode)).c_str());
 
-	opdid->log("Setup complete: RemoteSwitchPort " + to_string(this->getLabel()));
+	opdid->logVerbose("Setup complete: RemoteSwitchPort " + to_string(this->getLabel()));
 }
 
 RemoteSwitchPort::~RemoteSwitchPort(void) {
@@ -117,8 +117,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 	// the remote switch plugin node expects a list of node names that determine the ports that this plugin provides
 
 	// enumerate keys of the plugin's nodes (in specified order)
-	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-		this->opdid->log("Enumerating RemoteSwitch nodes: " + node + ".Nodes");
+	this->opdid->logVerbose("Enumerating RemoteSwitch nodes: " + node + ".Nodes");
 
 	Poco::Util::AbstractConfiguration *nodes = config->createView(node + ".Nodes");
 
@@ -152,7 +151,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 	}
 
 	if (orderedItems.size() == 0) {
-		this->opdid->log("Warning: No ports configured in node " + node + ".Nodes; is this intended?");
+		this->opdid->logNormal("Warning: No ports configured in node " + node + ".Nodes; is this intended?");
 	}
 
 	// go through items, create ports in specified order
@@ -161,8 +160,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 
 		std::string nodeName = nli->get<1>();
 
-		if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-			this->opdid->log("Setting up RemoteSwitchPlugin port for node: " + nodeName);
+		this->opdid->logVerbose("Setting up RemoteSwitchPlugin port for node: " + nodeName);
 
 		// get port section from the configuration
 		Poco::Util::AbstractConfiguration *portConfig = config->createView(nodeName);
@@ -195,8 +193,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 		nli++;
 	}
 
-	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
-		this->opdid->log("RemoteSwitchPlugin setup completed successfully as node " + node);
+	this->opdid->logVerbose("RemoteSwitchPlugin setup completed successfully as node " + node);
 }
 
 void RemoteSwitchPlugin::masterConnected() {

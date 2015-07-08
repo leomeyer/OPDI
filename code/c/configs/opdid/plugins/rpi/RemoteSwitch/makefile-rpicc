@@ -52,7 +52,7 @@ POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation
 LIBS = -lpthread -lwiringPi
 
 # Additional library paths
-LIBPATHS = $(OPDIDPATH)/../../../libraries/rpi/wiringPi
+LIBPATHS = $(OPDIDPATH)/../../../libraries/rpi/wiringPi $(OPDIDPATH)/../../../libraries/rpi/wiringPi/lib
 
 # The compiler to be used.
 CC = arm-linux-gnueabihf-g++
