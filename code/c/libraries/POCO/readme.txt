@@ -50,20 +50,23 @@ If you want to cross-compile for the Raspberry Pi, follow these steps:
 
 1. Install a cross-compiler toolchain on your compile system and make sure that it works. For example: https://github.com/raspberrypi/tools
 Note: Currently it is not recommended to use the popular crosstools-ng for this because of problems downloading library dependencies (eglibc.org SVN server is unreliable).
+
 2. Create a build configuration for POCO:
 > cd build/config
 > cp ARM-Linux RaspberryPi
 Edit the file RaspberryPi:
-In general settings, remove the lines starting with "STLPORT and OPENSSL"
+In general settings, remove the lines starting with "STLPORT" and "OPENSSL"
 In general settings, change the tool (Note: this assumes that you are using the RaspberryPi cross compiler from Github mentioned above):
 TOOL = arm-linux-gnueabihf 
 In System Specific Flags, remove the following flags:
 -I$(STLPORT_INCLUDE) -I$(OPENSSL_INCLUDE)
-In System Specific Libraries, remove the following defines:
+In System Specific Libraries, remove the following libraries:
 -L$(STLPORT_LIB) -L$(OPENSSL_LIB) -lstlport_arm-linux-gcc
 Save and return to POCO root:
 > cd ../..
+
 3. Configure POCO to use the new build configuration:
 > ./configure --config=RaspberryPi --no-samples --no-tests --omit=CppUnit,CppUnit/WinTestRunner,Crypto,NetSSL_OpenSSL,Data,Data/SQLite,Data/ODBCData/MySQL,MongoDB,PageCompiler,PageCompiler/File2Page
+
 4. Build:
 > make -s
