@@ -154,7 +154,6 @@ LinuxOPDID::LinuxOPDID(void)
 {
 }
 
-
 LinuxOPDID::~LinuxOPDID(void)
 {
 }
@@ -330,7 +329,6 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 
 	return 0;
 }
-
 
 IOPDIDPlugin *LinuxOPDID::getPlugin(std::string driver) {
 

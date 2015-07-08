@@ -1,0 +1,94 @@
+# Target file name (without extension).
+TARGET = rpi_remoteswitch
+
+# OPDI platform specifier
+PLATFORM = linux
+
+# Relative path to the opdid application directory.
+# All other paths are calculated relative to this path, so if you create a plugin anywhere it should be enough
+# just to adjust this path.
+OPDIDPATH = ../../../opdid
+
+# Relative path to common directory (without trailing slash)
+# This also becomes an additional include directory.
+CPATH = $(OPDIDPATH)/../../../common
+
+# Relative path to platform directory (without trailing slash)
+# This also becomes an additional include directory.
+PPATHBASE = $(OPDIDPATH)/../../../platforms
+PPATH = $(PPATHBASE)/$(PLATFORM)
+
+# List source files of the plugin here.
+SRC = $(TARGET).cpp ../../../opdid/OPDID_PortFunctions.cpp
+
+# C++ wrapper
+CPPPATH = $(CPATH)/cppwrapper
+
+# C++ wrapper files
+SRC += $(CPPPATH)/OPDI_Ports.cpp
+
+# additional source files (WiringPi)
+SRC += $(OPDIDPATH)/../../../libraries/rpi/wiringPi/wiringPi.c
+# $(OPDIDPATH)/../../../libraries/rpi/wiringPi/gb_spi.c $(OPDIDPATH)/../../../libraries/rpi/wiringPi/gb_pwm.c
+
+# additional source files (raspberry-remote)
+SRC += $(OPDIDPATH)/../../../libraries/rpi/raspberry-remote/RCSwitch.cpp
+
+SRC += $(OPDIDPATH)/../../../platforms/linux/opdi_platformfuncs.c
+
+# library include paths
+LIBINCPATH = $(OPDIDPATH)/../../../libraries/rpi/wiringPi $(OPDIDPATH)/../../../libraries/rpi/raspberry-remote
+
+# POCO include path
+POCOINCPATH = $(OPDIDPATH)/../../../libraries/POCO/Util/include $(OPDIDPATH)/../../../libraries/POCO/Foundation/include $(OPDIDPATH)/../../../libraries/POCO/Net/include
+
+# POCO library path
+POCOLIBPATH = $(OPDIDPATH)/../../../libraries/POCO/lib/Linux/ARM
+
+# POCO libraries
+POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
+
+# Additional libraries
+LIBS = -lpthread -lwiringPi
+
+# Additional library paths
+LIBPATHS = $(OPDIDPATH)/../../../libraries/rpi/wiringPi
+
+# The compiler to be used.
+CC = arm-linux-gnueabihf-g++
+
+# List any extra directories to look for include files here.
+# Each directory must be separated by a space.
+EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(OPDIDPATH) $(LIBINCPATH) .
+
+# Place -I options here
+CINCS =
+
+# Defines
+CDEFINES = -Dlinux
+
+# Compiler flags.
+CFLAGS = -Wall -fpermissive $(CDEFS) $(CINCS) $(patsubst %,-L%,$(LIBPATHS)) -L $(POCOLIBPATH) $(CDEFINES) -Wno-narrowing
+CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -O3 -std=c++11 -static-libstdc++
+
+OBJECTS = $(SRC)
+
+all: $(SRC) $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(CFLAGS) $(OBJECTS) -shared -fPIC -O3 -o $@.so $(POCOLIBS) $(LIBS)
+
+.cpp.o:
+	@echo
+	@echo Compiling: $<
+	$(CC) -c $(CFLAGS) $< -o $@
+
+.c.o:
+	$(CC) -c $(CFLAGS) $< -o $@
+
+clean:
+	rm -f $(PPATH)/*.o
+	rm -f $(CPATH)/*.o
+	rm -f $(MPATH)/*.o
+	rm $(TARGET)
+
