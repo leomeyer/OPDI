@@ -341,7 +341,8 @@ void OPDID_TimerPort::prepare() {
 				// add with the specified occurrence time
 				this->addNotification(new ScheduleNotification(schedule, false), nextOccurrence);
 			} else {
-				this->logVerbose(this->ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
+				if ((schedule->type != ONLOGIN) && (schedule->type != ONLOGOUT))
+					this->logVerbose(this->ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
 			}
 		}
 	}
@@ -685,7 +686,8 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 					// add with the specified occurrence time
 					this->addNotification(new ScheduleNotification(schedule, false), nextOccurrence);
 				} else {
-					this->logVerbose(this->ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
+					if ((schedule->type != ONLOGIN) && (schedule->type != ONLOGOUT))
+						this->logVerbose(this->ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
 				}
 			}
 		}
