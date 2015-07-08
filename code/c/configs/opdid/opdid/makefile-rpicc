@@ -85,7 +85,9 @@ CFLAGS += -ggdb -O0 -fbuiltin
 
 OBJECTS = $(SRC)
 
-all: $(SRC) $(TARGET)
+TARFOLDER = $(TARGET)-release
+
+all: $(SRC) $(TARGET) plugins tar
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(POCOLIBS) $(LIBS)
@@ -97,6 +99,17 @@ $(TARGET): $(OBJECTS)
 
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
+
+plugins:
+	$(MAKE) -C ../plugins
+
+tar:
+	mkdir $(TARFOLDER)
+	cp $(TARGET) $(TARFOLDER)
+	mkdir $(TARFOLDER)/plugins
+	find ../plugins/ -name '*.so' -exec cp {} $(TARFOLDER)/plugins \;
+	tar czf $(TARFOLDER).tar.gz $(TARFOLDER)
+	rm -r $(TARFOLDER)
 
 clean:
 	rm -f $(PPATH)/*.o
