@@ -15,7 +15,6 @@
 // Timer Port
 ///////////////////////////////////////////////////////////////////////////////
 
-
 OPDID_TimerPort::ScheduleComponent* OPDID_TimerPort::ScheduleComponent::Parse(Type type, std::string def) {
 	ScheduleComponent* result = new ScheduleComponent();
 	result->type = type;
@@ -118,6 +117,7 @@ OPDID_TimerPort::OPDID_TimerPort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 
 	// default: enabled
 	this->line = 1;
+	this->masterLoggedIn = false;
 
 	// set default icon
 	this->icon = "alarmclock";
@@ -193,7 +193,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 
 		schedule.maxOccurrences = scheduleConfig->getInt("MaxOccurrences", -1);
 		schedule.duration = scheduleConfig->getInt("Duration", 1000);	// default duration: 1 second
-		schedule.action = SET_HIGH;									// default action
+		schedule.action = SET_HIGH;										// default action
 
 		std::string action = this->opdid->getConfigString(scheduleConfig, "Action", "", false);
 		if (action == "SetHigh") {
@@ -281,10 +281,18 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 			if ((schedule.astroLat < -90) || (schedule.astroLat > 90))
 				throw Poco::DataException(nodeName + ": Parameter Latitude must be specified and within -90..90");
 			if ((schedule.astroLat < -65) || (schedule.astroLat > 65))
-				throw Poco::DataException(nodeName + ": Sorry. Latitudes outside -65..65 are currently not supported (library crash). You may either relocate or try and fix the bug.");
+				throw Poco::DataException(nodeName + ": Sorry. Latitudes outside -65..65 are currently not supported (library crash). You can either relocate or try and fix the bug.");
 		} else
+		/*
 		if (scheduleType == "Random") {
 			schedule.type = RANDOM;
+		} else
+		*/
+		if (scheduleType == "OnLogin") {
+			schedule.type = ONLOGIN;
+		} else
+		if (scheduleType == "OnLogout") {
+			schedule.type = ONLOGOUT;
 		} else
 			throw Poco::DataException(nodeName + ": Schedule type is not supported: " + scheduleType);
 
@@ -519,12 +527,36 @@ void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Po
 uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 	OPDI_DigitalPort::doWork(canSend);
 
+	// detect connection status change
+	bool connected = this->opdid->isConnected() != 0;
+	bool connectionStateChanged = connected != this->masterLoggedIn;
+	this->masterLoggedIn = connected;
+
 	// timer not active?
 	if (this->line != 1)
 		return OPDI_STATUS_OK;
 
-	// get next object from the priority queue
-	Poco::Notification::Ptr notification = this->queue.dequeueNotification();
+	Poco::Notification::Ptr notification = NULL;
+
+	if (connectionStateChanged) {
+		// check whether a schedule is specified for this event
+		ScheduleList::iterator it = this->schedules.begin();
+		while (it != this->schedules.end()) {
+			if ((*it).type == (connected ? ScheduleType::ONLOGIN : ScheduleType::ONLOGOUT)) {
+				logDebug(this->ID() + ": Connection status change detected; executing schedule " + (*it).nodeName + ((*it).type == ONLOGIN ? " (OnLogin)" : " (OnLogout)"));
+				// schedule found; create event notification
+				notification = new ScheduleNotification(&*it, false);
+				break;
+			}
+			it++;
+		}
+	}
+	
+	// notification created due to status change?
+	if (notification.isNull())
+		// no, get next object from the priority queue
+		notification = this->queue.dequeueNotification();
+
 	// notification will only be a valid object if a schedule is due
 	if (notification) {
 		try {
@@ -547,7 +579,9 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 					// add with the specified occurrence time
 					this->addNotification(workNf, nextOccurrence);
 				} else {
-					this->logNormal(this->ID() + ": Warning: Next scheduled time for " + workNf->schedule->nodeName + " could not be determined");
+					// warn if unable to calculate next ocucurrence; except if login or logout event
+					if ((workNf->schedule->type != ONLOGIN) && (workNf->schedule->type != ONLOGOUT))
+						this->logNormal(this->ID() + ": Warning: Next scheduled time for " + workNf->schedule->nodeName + " could not be determined");
 				}
 			}
 

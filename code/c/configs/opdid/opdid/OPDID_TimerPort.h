@@ -12,8 +12,8 @@
 // Timer Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A TimerPort is a DigitalPort that switches other ports according to one or more
-*   timing schedules. A TimerPort is output only.
+/** A TimerPort is a DigitalPort that switches other DigitalPorts on or off 
+*   according to one or more scheduled events. A TimerPort is output only.
 *   In its doWork method the TimerPort checks whether a timestamp defined
 *   by a schedule has been reached. If a schedule is due the line
 *   of the output port(s) is set according to the schedule specification.
@@ -81,7 +81,9 @@ protected:
 		INTERVAL,
 		PERIODIC,
 		ASTRONOMICAL,
-		RANDOM
+		RANDOM,
+		ONLOGIN,
+		ONLOGOUT
 	};
 
 	enum AstroEvent {
@@ -114,12 +116,14 @@ protected:
 				// TODO
 			} random;
 		} data;
+
 		// schedule components for PERIODIC
 		ScheduleComponent* monthComponent;
 		ScheduleComponent* dayComponent;
 		ScheduleComponent* hourComponent;
 		ScheduleComponent* minuteComponent;
 		ScheduleComponent* secondComponent;
+
 		// parameters for ASTRONOMICAL
 		AstroEvent astroEvent;
 		int64_t astroOffset;
@@ -127,7 +131,7 @@ protected:
 		double astroLat;
 
 		int occurrences;		// occurrence counter
-		int maxOccurrences;		// maximum number of occurrences that this schedule is active
+		int maxOccurrences;		// maximum number of occurrences that this schedule is active (counted from application start)
 		uint64_t duration;		// duration in milliseconds until the timer is deactivated (0 = no deactivation)
 
 		Poco::Timestamp nextEvent;
@@ -159,6 +163,8 @@ protected:
 	std::string notScheduledText;
 	std::string timestampFormat;
 	std::string nextOccurrenceStr;
+
+	bool masterLoggedIn;
 
 	void addNotification(ScheduleNotification::Ptr notification, Poco::Timestamp timestamp);
 
