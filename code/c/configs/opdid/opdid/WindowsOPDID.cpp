@@ -242,7 +242,6 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 
     // Initialize sockets and set any options
     int hsock;
-    int *p_int ;
     hsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (hsock == -1) {
         throw Poco::ApplicationException("Error initializing socket", WSAGetLastError());
@@ -252,10 +251,11 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 	u_long iMode = 1;
 	ioctlsocket(hsock, FIONBIO, &iMode);
 
-    p_int = (int*)malloc(sizeof(int));
+    int *p_int = (int*)malloc(sizeof(int));
     *p_int = 1;
     if ((setsockopt(hsock, SOL_SOCKET, SO_REUSEADDR, (char*)p_int, sizeof(int)) == -1)||
-        (setsockopt(hsock, SOL_SOCKET, SO_KEEPALIVE, (char*)p_int, sizeof(int)) == -1)) {
+        (setsockopt(hsock, SOL_SOCKET, SO_KEEPALIVE, (char*)p_int, sizeof(int)) == -1) ||
+		(setsockopt(hsock, SOL_SOCKET, TCP_NODELAY, (char*)p_int, sizeof(int)) == -1)) {
         free(p_int);
         throw Poco::ApplicationException("Error setting socket options", WSAGetLastError());
     }
@@ -308,6 +308,12 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 					this->logError(std::string("Error accepting connection: ") + this->to_string(lastError));
 			} else {
 				this->logNormal((std::string("Connection attempt from ") + std::string(inet_ntoa(sadr.sin_addr))).c_str());
+
+				// set TCP_NODELAY flag
+				int flag = 1;
+				if (setsockopt(hsock, SOL_SOCKET, TCP_NODELAY, (char*)&flag, sizeof(flag)) < 0) {
+					throw Poco::ApplicationException("Error setting socket options", WSAGetLastError());
+				}
 
 				err = HandleTCPConnection(&csock);
 			
