@@ -177,7 +177,7 @@ class OPDID_ErrorDetectorPort : public OPDI_DigitalPort, protected OPDID_PortFun
 protected:
 	bool negate;
 	std::string inputPortStr;
-	PortList inputPorts;
+	OPDI::PortList inputPorts;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
@@ -252,7 +252,7 @@ protected:
 	Format format;
 	std::string separator;
 	std::string portsToLogStr;
-	PortList portsToLog;
+	OPDI::PortList portsToLog;
 
 	uint64_t lastEntryTime;
 	std::ofstream outFile;

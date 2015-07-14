@@ -81,6 +81,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="exectest.bat" />
     <None Include="test_include.ini" />
     <None Include="win_opdid.ini" />
     <None Include="ReadMe.txt" />
@@ -115,6 +116,7 @@
     <ClInclude Include="..\..\..\platforms\win32\opdi_platformtypes.h" />
     <ClInclude Include="AbstractOPDID.h" />
     <ClInclude Include="OPDIDConfigurationFile.h" />
+    <ClInclude Include="OPDID_ExecPort.h" />
     <ClInclude Include="OPDID_ExpressionPort.h" />
     <ClInclude Include="OPDID_PortFunctions.h" />
     <ClInclude Include="OPDID_Ports.h" />
@@ -146,6 +148,7 @@
     <ClCompile Include="..\..\..\platforms\win32\opdi_platformfuncs.c" />
     <ClCompile Include="AbstractOPDID.cpp" />
     <ClCompile Include="OPDIDConfigurationFile.cpp" />
+    <ClCompile Include="OPDID_ExecPort.cpp" />
     <ClCompile Include="OPDID_ExpressionPort.cpp" />
     <ClCompile Include="OPDID_PortFunctions.cpp" />
     <ClCompile Include="OPDID_Ports.cpp" />

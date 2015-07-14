@@ -148,7 +148,7 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 			this->logExtreme(this->ID() + ": Expression result: " + to_string(value));
 
 			// go through list of output ports
-			PortList::iterator it = this->outputPorts.begin();
+			OPDI::PortList::iterator it = this->outputPorts.begin();
 			while (it != this->outputPorts.end()) {
 				try {
 					if ((*it)->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {

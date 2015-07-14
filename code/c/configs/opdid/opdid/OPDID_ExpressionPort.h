@@ -45,7 +45,7 @@ protected:
 	std::vector<double> portValues;	// holds the values of the ports for the expression evaluation
 
 	std::string outputPortStr;
-	PortList outputPorts;
+	OPDI::PortList outputPorts;
 
 	typedef exprtk::symbol_table<double> symbol_table_t;
 	typedef exprtk::expression<double> expression_t;

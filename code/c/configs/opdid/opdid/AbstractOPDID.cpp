@@ -24,6 +24,7 @@
 #include "OPDID_Ports.h"
 #include "OPDID_TimerPort.h"
 #include "OPDID_ExpressionPort.h"
+#include "OPDID_ExecPort.h"
 
 #define DEFAULT_IDLETIMEOUT_MS	180000
 #define DEFAULT_TCP_PORT		13110
@@ -910,6 +911,15 @@ void AbstractOPDID::setupFaderPort(Poco::Util::AbstractConfiguration *portConfig
 	this->addPort(fPort);
 }
 
+void AbstractOPDID::setupExecPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	this->logVerbose("Setting up ExecPort: " + port);
+
+	OPDID_ExecPort *ePort = new OPDID_ExecPort(this, port.c_str());
+	ePort->configure(portConfig);
+
+	this->addPort(ePort);
+}
+
 void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
 	this->logVerbose("Setting up PulsePort: " + port);
 
@@ -1028,6 +1038,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		if (nodeType == "Fader") {
 			this->setupFaderPort(nodeConfig, node);
 		} else
+		if (nodeType == "Exec") {
+			this->setupExecPort(nodeConfig, node);
+		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}
 }
@@ -1117,7 +1130,7 @@ void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
 }
 
 uint8_t AbstractOPDID::waiting(uint8_t canSend) {
-	uint8_t result;
+	uint8_t result = OPDI_STATUS_OK;	// default: assume everything ok
 
 	// add up microseconds of idle time
 	this->totalMicroseconds += this->idleStopwatch.elapsed();
@@ -1322,6 +1335,38 @@ void AbstractOPDID::persist(OPDI_Port *port) {
 	}
 	this->persistentConfig->setString("LastChange", this->getTimestampStr());
 	this->persistentConfig->save(this->persistentConfigFile);
+}
+
+std::string AbstractOPDID::getPortStateStr(OPDI_Port* port) {
+	try {
+		if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
+			uint8_t line;
+			uint8_t mode;
+			((OPDI_DigitalPort*)port)->getState(&mode, &line);
+			char c[] = " ";
+			c[0] = line + '0';
+			return std::string(c);
+		}
+		if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+			double value = ((OPDI_AnalogPort *)port)->getRelativeValue();
+			return this->to_string(value);
+		}
+		if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+			uint16_t position;
+			((OPDI_SelectPort *)port)->getState(&position);
+			return this->to_string(position);
+		}
+		if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+			int64_t position;
+			((OPDI_DialPort *)port)->getState(&position);
+			return this->to_string(position);
+		}
+		// unknown port type
+		return "";
+	} catch (...) {
+		// in case of error return an empty string
+		return "";
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////

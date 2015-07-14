@@ -6,7 +6,6 @@ class OPDID_PortFunctions {
 friend class AbstractOPDID;
 
 protected:
-	typedef std::vector<OPDI_Port *> PortList;
 	typedef std::vector<OPDI_DigitalPort *> DigitalPortList;
 	typedef std::vector<OPDI_AnalogPort *> AnalogPortList;
 
@@ -17,7 +16,7 @@ protected:
 
 	virtual OPDI_Port *findPort(std::string configPort, std::string setting, std::string portID, bool required);
 
-	virtual void findPorts(std::string configPort, std::string setting, std::string portIDs, PortList &portList);
+	virtual void findPorts(std::string configPort, std::string setting, std::string portIDs, OPDI::PortList &portList);
 
 	virtual OPDI_DigitalPort *findDigitalPort(std::string configPort, std::string setting, std::string portID, bool required);
 
