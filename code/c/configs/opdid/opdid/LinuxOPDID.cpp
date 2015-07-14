@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include <sys/param.h>
@@ -209,6 +210,13 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 		return OPDI_DEVICE_ERROR;
 	}
 
+	// set TCP_NODELAY
+	int flag = 1;
+	if (setsockopt(csock, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int)) < 0) {
+		this->log("setsockopt failed");
+		return OPDI_DEVICE_ERROR;
+	}
+
 	// info value is the socket handle
 	result = opdi_message_setup(&io_receive, &io_send, (void *)(long)csock);
 	if (result != 0)
@@ -237,9 +245,16 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 	struct sockaddr_in serv_addr, cli_addr;
 
 	// create socket (non-blocking)
-	sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | TCP_NODELAY, 0);
 	if (sockfd < 0) {
 		throw Poco::ApplicationException("ERROR opening socket", errno);
+	}
+
+	// set TCP_NODELAY
+	int flag = 1;
+	if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int)) < 0) {
+		this->log("setsockopt failed");
+		return OPDI_DEVICE_ERROR;
 	}
 
 	// prepare address
