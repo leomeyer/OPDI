@@ -115,13 +115,12 @@ uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
 				if (item != "")
 					argList.push_back(item);
 			}
-			Poco::Process::Args args(argList);
 
 			// execute program
 			this->lastTriggerTime = Poco::Timestamp();
 
 			try {
-				Poco::ProcessHandle ph(Poco::Process::launch(this->programName, args));
+				Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList));
 				this->processPID = ph.id();
 				this->logVerbose(this->ID() + ": Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
 			} catch (Poco::Exception &e) {
