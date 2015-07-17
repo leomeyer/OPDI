@@ -416,6 +416,10 @@ public:
 	OPDI_DialPort(const char *id, const char *label, int64_t minValue, int64_t maxValue, uint64_t step);
 	virtual ~OPDI_DialPort();
 
+	virtual int64_t getMin(void);
+	virtual int64_t getMax(void);
+	virtual int64_t getStep(void);
+
 	virtual void setMin(int64_t min);
 	virtual void setMax(int64_t max);
 	virtual void setStep(uint64_t step);

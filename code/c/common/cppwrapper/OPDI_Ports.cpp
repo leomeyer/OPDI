@@ -761,6 +761,18 @@ void OPDI_DialPort::doSelfRefresh(void) {
 	this->refreshRequired = true;
 }
 
+int64_t OPDI_DialPort::getMin(void) {
+	return this->minValue;
+}
+
+int64_t OPDI_DialPort::getMax(void) {
+	return this->maxValue;
+}
+
+int64_t OPDI_DialPort::getStep(void) {
+	return this->step;
+}
+
 void OPDI_DialPort::setMin(int64_t min) {
 	this->minValue = min;
 }
