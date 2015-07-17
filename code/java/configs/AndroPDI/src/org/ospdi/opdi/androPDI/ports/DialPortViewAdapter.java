@@ -184,7 +184,7 @@ class DialPortViewAdapter implements IPortViewAdapter {
 		if (ivPortIcon != null) {
 			// default icon
 			Drawable drawable = context.getResources().getDrawable(R.drawable.dial_port);
-			String iconName = dPort.getUnitFormat().getProperty("icon", "");
+			String iconName = dPort.getUnitFormat().getProperty("icon", dPort.getExtendedInfo("icon", ""));
 			if (!iconName.equals("")) {
 				// get icon identifier
 				int iconID = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
