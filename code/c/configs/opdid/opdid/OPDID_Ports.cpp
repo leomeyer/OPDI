@@ -509,7 +509,7 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 	int8_t newState = 0;
 
 	// if any port has an error, set the line state to 1
-	PortList::iterator it = this->inputPorts.begin();
+	OPDI::PortList::iterator it = this->inputPorts.begin();
 	while (it != this->inputPorts.end()) {
 		if ((*it)->hasError()) {
 			this->logExtreme(this->ID() + ": Detected error on port: " + (*it)->getID());
@@ -659,35 +659,7 @@ OPDID_LoggerPort::~OPDID_LoggerPort() {
 }
 
 std::string OPDID_LoggerPort::getPortStateStr(OPDI_Port* port) {
-	try {
-		if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
-			uint8_t line;
-			uint8_t mode;
-			((OPDI_DigitalPort*)port)->getState(&mode, &line);
-			char c[] = " ";
-			c[0] = line + '0';
-			return std::string(c);
-		}
-		if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
-			double value = ((OPDI_AnalogPort *)port)->getRelativeValue();
-			return this->opdid->to_string(value);
-		}
-		if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
-			uint16_t position;
-			((OPDI_SelectPort *)port)->getState(&position);
-			return this->opdid->to_string(position);
-		}
-		if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
-			int64_t position;
-			((OPDI_DialPort *)port)->getState(&position);
-			return this->opdid->to_string(position);
-		}
-		// unknown port type
-		return "";
-	} catch (...) {
-		// in case of error return an empty string
-		return "";
-	}
+	return this->opdid->getPortStateStr(port);
 }
 
 void OPDID_LoggerPort::prepare() {
@@ -717,7 +689,7 @@ uint8_t OPDID_LoggerPort::doWork(uint8_t canSend)  {
 		if (writeHeader) {
 			entry = "Timestamp" + this->separator;
 			// go through port list, build header
-			PortList::iterator it = this->portsToLog.begin();
+			OPDI::PortList::iterator it = this->portsToLog.begin();
 			while (it != this->portsToLog.end()) {
 				entry += (*it)->getID();
 				// separator necessary?
@@ -729,7 +701,7 @@ uint8_t OPDID_LoggerPort::doWork(uint8_t canSend)  {
 		}
 		entry = this->opdid->getTimestampStr() + this->separator;
 		// go through port list
-		PortList::iterator it = this->portsToLog.begin();
+		OPDI::PortList::iterator it = this->portsToLog.begin();
 		while (it != this->portsToLog.end()) {
 			entry += this->getPortStateStr(*it);
 			// separator necessary?

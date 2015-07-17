@@ -232,6 +232,8 @@ public:
 
 	virtual void setupFaderPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
+	virtual void setupExecPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);
 
@@ -252,16 +254,19 @@ public:
 
 	virtual uint8_t waiting(uint8_t canSend) override;
 
-	// authenticate comparing the login data with the configuration login data
+	/* Authenticate comparing the login data with the configuration login data. */
 	virtual uint8_t setPassword(std::string password) override;
 
 	virtual std::string getExtendedDeviceInfo(void) override;
 
-	// log the refreshed ports
+	/** This implementation also logs the refreshed ports. */
 	virtual uint8_t refresh(OPDI_Port **ports) override;
 
-	// implements a persistence mechanism for port states
+	/** Implements a persistence mechanism for port states. */
 	virtual void persist(OPDI_Port *port) override;
+
+	/** Returns a string representing the port state; empty ini case of errors. */
+	virtual std::string getPortStateStr(OPDI_Port* port);
 };
 
 

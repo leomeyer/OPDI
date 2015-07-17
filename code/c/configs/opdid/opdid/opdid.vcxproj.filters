@@ -58,6 +58,9 @@
     <None Include="test_include.ini">
       <Filter>Ressourcendateien</Filter>
     </None>
+    <None Include="exectest.bat">
+      <Filter>Ressourcendateien</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -174,6 +177,9 @@
     <ClInclude Include="OPDID_ExpressionPort.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="OPDID_ExecPort.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -258,6 +264,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="OPDID_ExpressionPort.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="OPDID_ExecPort.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

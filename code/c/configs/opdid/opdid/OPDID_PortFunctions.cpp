@@ -22,7 +22,7 @@ OPDI_Port *OPDID_PortFunctions::findPort(std::string configPort, std::string set
 	return port;
 }
 
-void OPDID_PortFunctions::findPorts(std::string configPort, std::string setting, std::string portIDs, PortList &portList) {
+void OPDID_PortFunctions::findPorts(std::string configPort, std::string setting, std::string portIDs, OPDI::PortList &portList) {
 	// split list at blanks
 	std::stringstream ss(portIDs);
 	std::string item;

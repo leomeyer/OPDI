@@ -33,6 +33,9 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 
 class OPDI {
+public:
+	typedef std::vector<OPDI_Port *> PortList;
+
 protected:
 	std::string slaveName;
 	std::string encoding;
@@ -48,7 +51,6 @@ protected:
 	int currentOrderID;
 
 	// list pointers
-	typedef std::vector<OPDI_Port *> PortList;
 	PortList ports;
 
 	OPDI_PortGroup *first_portGroup;
