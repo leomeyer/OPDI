@@ -6,6 +6,7 @@ class OPDID_PortFunctions {
 friend class AbstractOPDID;
 
 protected:
+	typedef std::vector<OPDI_Port *> PortList;
 	typedef std::vector<OPDI_DigitalPort *> DigitalPortList;
 	typedef std::vector<OPDI_AnalogPort *> AnalogPortList;
 
