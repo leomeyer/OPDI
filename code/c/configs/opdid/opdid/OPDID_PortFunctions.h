@@ -7,6 +7,7 @@
 
 #include "AbstractOPDID.h"
 
+class ValueResolver;
 
 class OPDID_PortFunctions {
 friend class AbstractOPDID;
