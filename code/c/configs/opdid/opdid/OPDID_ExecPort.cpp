@@ -1,5 +1,6 @@
 
 #include "Poco/Process.h"
+#include "Poco/Thread.h"
 
 #include "OPDID_ExecPort.h"
 
