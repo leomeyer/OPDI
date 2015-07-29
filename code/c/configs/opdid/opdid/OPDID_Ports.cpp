@@ -19,7 +19,7 @@
 // Logic Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_LogicPort::OPDID_LogicPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+OPDID_LogicPort::OPDID_LogicPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
 
 	this->opdid = opdid;
 	this->function = UNKNOWN;
@@ -213,7 +213,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 // Pulse Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_PulsePort::OPDID_PulsePort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+OPDID_PulsePort::OPDID_PulsePort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
 
 	this->opdid = opdid;
 	this->negate = false;
@@ -256,14 +256,14 @@ void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->outputPortStr = config->getString("OutputPorts", "");
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
 
-	this->period = config->getInt("Period", -1);
-	if (this->period <= 0)
+	this->period.initialize(this, "Period", config->getString("Period", "-1"));
+	if (!this->period.validateAsInt(0, INT_MAX))
 		throw Poco::DataException("Specify a positive integer value for the Period setting of a PulsePort: " + this->to_string(this->period));
-	this->periodPortStr = config->getString("PeriodPort", "");
 
 	// duty cycle is specified in percent
-	this->dutyCycle = config->getDouble("DutyCycle", 50) / 100.0;
-	this->dutyCyclePortStr = config->getString("DutyCyclePort", "");
+	this->dutyCycle.initialize(this, "DutyCycle", config->getString("DutyCycle", "50"));
+	if (!this->dutyCycle.validate(0, 100))
+		throw Poco::DataException("Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + this->to_string(this->dutyCycle));
 }
 
 void OPDID_PulsePort::setDirCaps(const char *dirCaps) {
@@ -281,9 +281,6 @@ void OPDID_PulsePort::prepare() {
 	this->findDigitalPorts(this->getID(), "EnablePorts", this->enablePortStr, this->enablePorts);
 	this->findDigitalPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
 	this->findDigitalPorts(this->getID(), "InverseOutputPorts", this->inverseOutputPortStr, this->inverseOutputPorts);
-
-	this->periodPort = this->findAnalogPort(this->getID(), "PeriodPort", this->periodPortStr, false);
-	this->dutyCyclePort = this->findAnalogPort(this->getID(), "DutyCyclePort", this->dutyCyclePortStr, false);
 }
 
 uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
@@ -312,17 +309,20 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 		enabled |= highCount > 0;
 	}
 
-	int32_t period = this->period;
-	// period port specified?
-	if (this->periodPort != NULL) {
-		// query period port for the current relative value
-		period = static_cast<int32_t>((double)this->period * this->periodPort->getRelativeValue());
+	int32_t period = static_cast<int32_t>(this->period);
+	if (period < 0) {
+		this->logWarning(this->ID() + ": Period may not be negative: " + to_string(period));
+		return OPDI_STATUS_OK;
 	}
 
-	// duty cycle port specified?
-	if (this->dutyCyclePort != NULL) {
-		// query duty cycle port for the current relative value
-		this->dutyCycle = this->dutyCyclePort->getRelativeValue();
+	double dutyCycle = this->dutyCycle;
+	if (dutyCycle < 0) {
+		this->logWarning(this->ID() + ": DutyCycle may not be negative: " + to_string(dutyCycle));
+		return OPDI_STATUS_OK;
+	}
+	if (dutyCycle > 100) {
+		this->logWarning(this->ID() + ": DutyCycle may not exceed 100%: " + to_string(dutyCycle));
+		return OPDI_STATUS_OK;
 	}
 
 	// determine new line level
@@ -334,12 +334,12 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 		// current state (logical) Low?
 		if (this->pulseState == (this->negate ? 1 : 0)) {
 			// time up to High reached?
-			if (timeDiff > period * (1.0 - this->dutyCycle)) 
+			if (timeDiff > period * (1.0 - dutyCycle / 100.0)) 
 				// switch to (logical) High
 				newState = (this->negate ? 0 : 1);
 		} else {
 			// time up to Low reached?
-			if (timeDiff > period * this->dutyCycle)
+			if (timeDiff > period * dutyCycle / 100.0)
 				// switch to (logical) Low
 				newState = (this->negate ? 1 : 0);
 		}
@@ -389,7 +389,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 // Selector Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_SelectorPort::OPDID_SelectorPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+OPDID_SelectorPort::OPDID_SelectorPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
 
 	this->opdid = opdid;
 
@@ -468,7 +468,7 @@ uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
 // Error Detector Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_ErrorDetectorPort::OPDID_ErrorDetectorPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_INPUT, 0) {
+OPDID_ErrorDetectorPort::OPDID_ErrorDetectorPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_INPUT, 0), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 
 	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
@@ -536,7 +536,7 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 // Serial Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_SerialStreamingPort::OPDID_SerialStreamingPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id) {
+OPDID_SerialStreamingPort::OPDID_SerialStreamingPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 	this->mode = PASS_THROUGH;
 	this->device = NULL;
@@ -647,7 +647,7 @@ bool OPDID_SerialStreamingPort::hasError(void) {
 // Logger Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_LoggerPort::OPDID_LoggerPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id) {
+OPDID_LoggerPort::OPDID_LoggerPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 	this->logPeriod = 10000;		// default: 10 seconds
 	this->lastEntryTime = 0;
@@ -769,12 +769,9 @@ bool OPDID_LoggerPort::hasError(void) {
 // Fader Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_FaderPort::OPDID_FaderPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+OPDID_FaderPort::OPDID_FaderPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 	this->mode = LINEAR;
-	this->left = 0;
-	this->right = 0;
-	this->durationMs = 0;
 	this->lastValue = -1;
 	this->invert = false;
 
@@ -796,14 +793,14 @@ void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 	else if (modeStr != "")
 		throw Poco::DataException(this->ID() + ": Invalid Mode setting specified; expected 'Linear' or 'Exponential': " + modeStr);
 
-	this->left = config->getDouble("Left", -1);
-	if ((this->left < 0.0) || (this->left > 100.0))
+	this->left.initialize(this, "Left", config->getString("Left", "-1"));
+	if (!this->left.validate(0.0, 100.0))
 		throw Poco::DataException(this->ID() + ": Value for 'Left' must be between 0 and 100 percent");
-	this->right = config->getDouble("Right", -1);
-	if ((this->right < 0.0) || (this->right > 100.0))
+	this->right.initialize(this, "Right", config->getString("Right", "-1"));
+	if (!this->right.validate(0.0, 100.0))
 		throw Poco::DataException(this->ID() + ": Value for 'Right' must be between 0 and 100 percent");
-	this->durationMs = config->getInt("Duration", -1);
-	if (this->durationMs < 0)
+	this->durationMs.initialize(this, "Duration", config->getString("Duration", "-1"));
+	if (!this->durationMs.validateAsInt(0, INT_MAX))
 		throw Poco::DataException(this->ID() + ": 'Duration' must be a positive non-zero value (in milliseconds)");
 
 	if (this->mode == EXPONENTIAL) {
@@ -831,14 +828,20 @@ void OPDID_FaderPort::setMode(uint8_t mode) {
 }
 
 void OPDID_FaderPort::setLine(uint8_t line) {
-	OPDI_DigitalPort::setLine(line);
 	if (line == 1) {
-		this->startTime = Poco::Timestamp();
-		// cause correct log output
-		this->lastValue = -1;
-		this->logDebug(this->ID() + ": Start fading at " + to_string(this->left) + "%");
+		// don't fade if the duration is impracticably low
+		if (this->durationMs < 5) {
+			this->logVerbose(this->ID() + ": Refusing to fade because duration is impracticably low: " + to_string(this->durationMs));
+		} else {
+			OPDI_DigitalPort::setLine(line);
+			this->startTime = Poco::Timestamp();
+			// cause correct log output
+			this->lastValue = -1;
+			this->logVerbose(this->ID() + ": Start fading at " + to_string(this->left) + "% with a duration of " + to_string(this->durationMs) + " ms");
+		}
 	} else {
-		this->logDebug(this->ID() + ": Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
+		OPDI_DigitalPort::setLine(line);
+		this->logVerbose(this->ID() + ": Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
 	}
 }
 
@@ -846,7 +849,7 @@ void OPDID_FaderPort::prepare() {
 	OPDI_DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
-	this->findAnalogPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
+	this->findPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
 }
 
 uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
@@ -875,7 +878,7 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 		if (this->mode == EXPONENTIAL) {
 			// calculate exponential value; start with value relative to the range
 			if (this->invert)
-				value = 1-0 - (double)elapsedMs / (double)this->durationMs;
+				value = 1.0 - (double)elapsedMs / (double)this->durationMs;
 			else
 				value = (double)elapsedMs / (double)this->durationMs;
 
@@ -892,12 +895,20 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 		this->logExtreme(this->ID() + ": Setting current fader value to " + to_string(value * 100.0) + "%");
 
 		// regular output ports
-		AnalogPortList::iterator it = this->outputPorts.begin();
+		PortList::iterator it = this->outputPorts.begin();
 		while (it != this->outputPorts.end()) {
 			try {
-				(*it)->setRelativeValue(value);
+				if (!strcmp((*it)->getType(), OPDI_PORTTYPE_ANALOG)) {
+					((OPDI_AnalogPort*)(*it))->setRelativeValue(value);
+				} else
+				if (!strcmp((*it)->getType(), OPDI_PORTTYPE_DIAL)) {
+					OPDI_DialPort* port = (OPDI_DialPort*)(*it);
+					double pos = port->getMin() + (port->getMax() - port->getMin()) * value;
+					port->setPosition((int64_t)pos);
+				} else
+					throw Poco::Exception("The port " + (*it)->ID() + " is neither an AnalogPort nor a DialPort");
 			} catch (Poco::Exception &e) {
-				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
+				this->opdid->logNormal(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
 			}
 			it++;
 		}

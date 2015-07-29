@@ -265,8 +265,11 @@ public:
 	/** Implements a persistence mechanism for port states. */
 	virtual void persist(OPDI_Port *port) override;
 
-	/** Returns a string representing the port state; empty ini case of errors. */
+	/** Returns a string representing the port state; empty in case of errors. */
 	virtual std::string getPortStateStr(OPDI_Port* port);
+
+	/** Returns a double representing the port value; throws errors if they occur. */
+	virtual double getPortValue(OPDI_Port* port);
 };
 
 

@@ -97,11 +97,9 @@ public:
 class OPDID_PulsePort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
 	bool negate;
-	int32_t period;
-	double dutyCycle;
+	ValueResolver period;
+	ValueResolver dutyCycle;
 	int8_t disabledState;
-	std::string periodPortStr;
-	std::string dutyCyclePortStr;
 	std::string enablePortStr;
 	std::string outputPortStr;
 	std::string inverseOutputPortStr;
@@ -109,8 +107,6 @@ protected:
 	DigitalPortList enablePorts;
 	DigitalPortList outputPorts;
 	DigitalPortList inverseOutputPorts;
-	OPDI_AnalogPort *periodPort;
-	OPDI_AnalogPort *dutyCyclePort;
 
 	// state
 	uint8_t pulseState;
@@ -298,16 +294,16 @@ protected:
 	};
 
 	FaderMode mode;
-	double left;
-	double right;
-	int durationMs;
+	ValueResolver left;
+	ValueResolver right;
+	ValueResolver durationMs;
 	double expA;
 	double expB;
 	double expMax;
 	bool invert;
 
 	std::string outputPortStr;
-	AnalogPortList outputPorts;
+	PortList outputPorts;
 
 	Poco::Timestamp startTime;
 	double lastValue;

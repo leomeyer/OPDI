@@ -10,7 +10,7 @@
 // Exec Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_ExecPort::OPDID_ExecPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+OPDID_ExecPort::OPDID_ExecPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 
 	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -116,13 +116,12 @@ uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
 				if (item != "")
 					argList.push_back(item);
 			}
-			Poco::Process::Args args(argList);
 
 			// execute program
 			this->lastTriggerTime = Poco::Timestamp();
 
 			try {
-				Poco::ProcessHandle ph(Poco::Process::launch(this->programName, args));
+				Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList));
 				this->processPID = ph.id();
 				this->logVerbose(this->ID() + ": Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
 			} catch (Poco::Exception &e) {
