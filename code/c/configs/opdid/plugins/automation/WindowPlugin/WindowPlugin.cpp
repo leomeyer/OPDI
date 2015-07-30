@@ -149,7 +149,7 @@ public:
 	virtual void getState(uint16_t *position) override;
 };
 
-WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(id) {
+WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(id), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 
 	this->targetState = UNKNOWN;

@@ -37,6 +37,8 @@ class FritzBoxPlugin;
 
 class FritzPort : protected OPDID_PortFunctions {
 public:
+	FritzPort(std::string id) : OPDID_PortFunctions(id) {};
+
 	virtual void query(FritzBoxPlugin *plugin) = 0;
 };
 
@@ -202,7 +204,7 @@ public:
 };
 
 
-FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin *plugin, const char *id) : OPDI_DigitalPort(id) {
+FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin *plugin, const char *id) : OPDI_DigitalPort(id), FritzPort(id) {
 	this->plugin = plugin;
 	this->switchState = -1;	// unknown
 	this->refreshMode = REFRESH_PERIODIC;
@@ -257,7 +259,7 @@ void FritzDECT200Switch::setSwitchState(int8_t line) {
 		this->refreshRequired = true;
 }
 
-FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin *plugin, const char *id) : OPDI_DialPort(id) {
+FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin *plugin, const char *id) : OPDI_DialPort(id), FritzPort(id) {
 	this->plugin = plugin;
 	this->power = -1;	// unknown
 	this->refreshMode = REFRESH_PERIODIC;
@@ -332,7 +334,7 @@ void FritzDECT200Power::doSelfRefresh(void) {
 
 
 
-FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin *plugin, const char *id) : OPDI_DialPort(id) {
+FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin *plugin, const char *id) : OPDI_DialPort(id), FritzPort(id) {
 	this->plugin = plugin;
 	this->energy = -1;	// unknown
 	this->refreshMode = REFRESH_PERIODIC;

@@ -7,7 +7,7 @@
 // Expression Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_ExpressionPort::OPDID_ExpressionPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+OPDID_ExpressionPort::OPDID_ExpressionPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 
 	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -62,38 +62,7 @@ bool OPDID_ExpressionPort::prepareVariables(void) {
 		}
 
 		// calculate port value
-		double value = 0;
-		try {
-			// evaluation depends on port type
-			if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
-				// digital port: Low = 0; High = 1
-				uint8_t mode;
-				uint8_t line;
-				((OPDI_DigitalPort *)port)->getState(&mode, &line);
-				value = line;
-			} else
-			if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
-				// analog port: relative value (0..1)
-				value = ((OPDI_AnalogPort *)port)->getRelativeValue();
-			} else
-			if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
-				// dial port: absolute value
-				int64_t position;
-				((OPDI_DialPort *)port)->getState(&position);
-				value = (double)position;
-			} else
-			if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
-				// select port: current position number
-				uint16_t position;
-				((OPDI_SelectPort *)port)->getState(&position);
-				value = position;
-			} else
-				// port type not supported
-				return false;
-		} catch (Poco::Exception &pe) {
-			this->logExtreme(this->ID() + ": Unable to get state of port " + port->getID() + ": " + pe.message());
-			value = 0;
-		}
+		double value = opdid->getPortValue(port);
 
 		this->portValues.push_back(value);
 

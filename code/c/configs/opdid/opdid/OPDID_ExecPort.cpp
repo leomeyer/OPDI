@@ -9,7 +9,7 @@
 // Exec Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_ExecPort::OPDID_ExecPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+OPDID_ExecPort::OPDID_ExecPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 
 	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);

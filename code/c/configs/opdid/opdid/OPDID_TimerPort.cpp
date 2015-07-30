@@ -110,7 +110,7 @@ bool OPDID_TimerPort::ScheduleComponent::getFirstPossibleValue(int* currentValue
 	return false;
 }
 
-OPDID_TimerPort::OPDID_TimerPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+OPDID_TimerPort::OPDID_TimerPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 
 	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -543,7 +543,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 		// check whether a schedule is specified for this event
 		ScheduleList::iterator it = this->schedules.begin();
 		while (it != this->schedules.end()) {
-			if ((*it).type == (connected ? ScheduleType::ONLOGIN : ScheduleType::ONLOGOUT)) {
+			if ((*it).type == (connected ? ONLOGIN : ONLOGOUT)) {
 				logDebug(this->ID() + ": Connection status change detected; executing schedule " + (*it).nodeName + ((*it).type == ONLOGIN ? " (OnLogin)" : " (OnLogout)"));
 				// schedule found; create event notification
 				notification = new ScheduleNotification(&*it, false);

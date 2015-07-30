@@ -16,6 +16,8 @@
 #include "Poco/FileStream.h"
 #include "Poco/Process.h"
 #include "Poco/Util/LayeredConfiguration.h"
+#include "Poco/NumberParser.h"
+#include "Poco/RegularExpression.h"
 
 #include "opdi_constants.h"
 
@@ -970,6 +972,19 @@ void AbstractOPDID::setupErrorDetectorPort(Poco::Util::AbstractConfiguration *po
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
 	this->logVerbose("Setting up node: " + node);
 
+	// emit warnings if node IDs deviate from best practices
+
+	// check whether node name is all numeric
+	double value = 0;
+	if (Poco::NumberParser::tryParseFloat(node, value)) {
+		this->logWarning("Node ID can be confused with a number: " + node);
+	}
+	// check whether there are special characters
+	Poco::RegularExpression re(".*\\W.*");
+	if (re.match(node)) {
+		this->logWarning("Node ID should not contain special characters: " + node);
+	}
+
 	// create node section view
 	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
 
@@ -1367,6 +1382,39 @@ std::string AbstractOPDID::getPortStateStr(OPDI_Port* port) {
 		// in case of error return an empty string
 		return "";
 	}
+}
+
+double AbstractOPDID::getPortValue(OPDI_Port* port) {
+	double value = 0;
+
+	// evaluation depends on port type
+	if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
+		// digital port: Low = 0; High = 1
+		uint8_t mode;
+		uint8_t line;
+		((OPDI_DigitalPort *)port)->getState(&mode, &line);
+		value = line;
+	} else
+	if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+		// analog port: relative value (0..1)
+		value = ((OPDI_AnalogPort *)port)->getRelativeValue();
+	} else
+	if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+		// dial port: absolute value
+		int64_t position;
+		((OPDI_DialPort *)port)->getState(&position);
+		value = (double)position;
+	} else
+	if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+		// select port: current position number
+		uint16_t position;
+		((OPDI_SelectPort *)port)->getState(&position);
+		value = position;
+	} else
+		// port type not supported
+		throw Poco::Exception("Port type not supported");
+
+	return value;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////

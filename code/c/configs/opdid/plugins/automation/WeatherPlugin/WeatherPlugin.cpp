@@ -41,6 +41,8 @@
 /** Interface for weather ports */
 class WeatherPort : protected OPDID_PortFunctions {
 public:
+	WeatherPort(std::string id) : OPDID_PortFunctions(id) {};
+
 	virtual std::string getDataElement(void) = 0;
 
 	virtual void invalidate(void) = 0;
@@ -96,7 +98,7 @@ public:
 	virtual bool hasError(void) override;
 };
 
-WeatherGaugePort::WeatherGaugePort(AbstractOPDID *opdid, const char *id) : OPDI_DialPort(id) {
+WeatherGaugePort::WeatherGaugePort(AbstractOPDID *opdid, const char *id) : OPDI_DialPort(id), WeatherPort(id) {
 	this->opdid = opdid;
 	this->numerator = 1;
 	this->denominator = 1;
