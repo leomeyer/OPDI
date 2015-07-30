@@ -14,6 +14,7 @@ friend class ValueResolver;
 friend std::ostream& operator<<(std::ostream& os, const ValueResolver& vr);
 
 protected:
+	typedef std::vector<OPDI_Port *> PortList;
 	typedef std::vector<OPDI_DigitalPort *> DigitalPortList;
 	typedef std::vector<OPDI_AnalogPort *> AnalogPortList;
 

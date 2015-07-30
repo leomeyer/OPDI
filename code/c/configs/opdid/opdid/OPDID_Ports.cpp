@@ -849,7 +849,7 @@ void OPDID_FaderPort::prepare() {
 	OPDI_DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
-	this->findAnalogPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
+	this->findPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
 }
 
 uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
@@ -878,7 +878,7 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 		if (this->mode == EXPONENTIAL) {
 			// calculate exponential value; start with value relative to the range
 			if (this->invert)
-				value = 1-0 - (double)elapsedMs / (double)this->durationMs;
+				value = 1.0 - (double)elapsedMs / (double)this->durationMs;
 			else
 				value = (double)elapsedMs / (double)this->durationMs;
 
@@ -895,12 +895,20 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 		this->logExtreme(this->ID() + ": Setting current fader value to " + to_string(value * 100.0) + "%");
 
 		// regular output ports
-		AnalogPortList::iterator it = this->outputPorts.begin();
+		PortList::iterator it = this->outputPorts.begin();
 		while (it != this->outputPorts.end()) {
 			try {
-				(*it)->setRelativeValue(value);
+				if (!strcmp((*it)->getType(), OPDI_PORTTYPE_ANALOG)) {
+					((OPDI_AnalogPort*)(*it))->setRelativeValue(value);
+				} else
+				if (!strcmp((*it)->getType(), OPDI_PORTTYPE_DIAL)) {
+					OPDI_DialPort* port = (OPDI_DialPort*)(*it);
+					double pos = port->getMin() + (port->getMax() - port->getMin()) * value;
+					port->setPosition((int64_t)pos);
+				} else
+					throw Poco::Exception("The port " + (*it)->ID() + " is neither an AnalogPort nor a DialPort");
 			} catch (Poco::Exception &e) {
-				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
+				this->opdid->logNormal(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
 			}
 			it++;
 		}

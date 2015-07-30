@@ -303,7 +303,7 @@ protected:
 	bool invert;
 
 	std::string outputPortStr;
-	AnalogPortList outputPorts;
+	PortList outputPorts;
 
 	Poco::Timestamp startTime;
 	double lastValue;

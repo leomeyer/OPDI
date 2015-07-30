@@ -195,6 +195,7 @@ public class TCPIPDevice extends AndroPDIDevice {
     	// make a socket
 		SocketAddress addr = new InetSocketAddress(address, port);
 		Socket tmp = new Socket();
+		tmp.setTcpNoDelay(true);
 
 		// construct the socket
 	    tmp.connect(addr, TIMEOUT);

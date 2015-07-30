@@ -190,4 +190,7 @@
     <string name="unixTime">clocktime_unixseconds=0</string>
     <string name="clocktime_unixseconds">layout=dial_port_row_noslider;conversion=unixSecondsLocal;icon=clock;formatString=yyyy-MM-dd\\nHH:mm:ss</string>
     
+    <string name="percent">percent_integer=0</string>
+    <string name="percent_integer">layout=dial_port_row_slider_only;</string>
+    
 </resources>
