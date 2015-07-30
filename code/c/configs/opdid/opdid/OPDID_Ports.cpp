@@ -856,6 +856,15 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 	OPDI_DigitalPort::doWork(canSend);
 
 	if (this->line == 1) {
+
+		if (this->durationMs < 0) {
+			this->logWarning(this->ID() + ": Duration may not be negative; disabling fader: " + to_string(this->durationMs));
+			// disable the fader immediately
+			OPDI_DigitalPort::setLine(0);
+			this->refreshRequired = true;
+			return OPDI_STATUS_OK;
+		}
+
 		// calculate time difference
 		Poco::Timestamp now;
 		Poco::Timestamp::TimeVal elapsedMs = (now.epochMicroseconds() - this->startTime.epochMicroseconds()) / 1000;
