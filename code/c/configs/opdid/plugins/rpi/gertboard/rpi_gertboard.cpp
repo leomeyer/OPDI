@@ -87,7 +87,7 @@ public:
 DigitalGertboardPort::DigitalGertboardPort(AbstractOPDID *opdid, const char *ID, int pin) : OPDI_DigitalPort(ID,
 	(std::string("Digital Gertboard Port ") + to_string(pin)).c_str(), // default label - can be changed by configuration
 	OPDI_PORTDIRCAP_BIDI,	// default: input
-	0) {
+	0), OPDID_PortFunctions(ID) {
 	this->opdid = opdid;
 	this->pin = pin;
 }
@@ -184,7 +184,8 @@ AnalogGertboardOutput::AnalogGertboardOutput(AbstractOPDID *opdid, const char *i
 	(std::string("Analog Gertboard Output ") + to_string(output)).c_str(), // default label - can be changed by configuration
 	OPDI_PORTDIRCAP_OUTPUT, 
 	// possible resolutions - hardware decides which one is actually used; set value in configuration
-	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12) {
+	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12),
+		OPDID_PortFunctions(id) {
 
 	this->opdid = opdid;
 	this->mode = 1;
@@ -265,7 +266,8 @@ AnalogGertboardInput::AnalogGertboardInput(AbstractOPDID *opdid, const char *id,
 	(std::string("Analog Gertboard Input ") + to_string(input)).c_str(), // default label - can be changed by configuration
 	OPDI_PORTDIRCAP_INPUT, 
 	// possible resolutions - hardware decides which one is actually used; set value in configuration
-	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12) {
+	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12),
+		OPDID_PortFunctions(id) {
 
 	this->opdid = opdid;
 	this->mode = 0;
@@ -350,7 +352,8 @@ public:
 GertboardButton::GertboardButton(AbstractOPDID *opdid, const char *ID, int pin) : OPDI_DigitalPort(ID, 
 	(std::string("Gertboard Button on pin ") + to_string(pin)).c_str(), // default label - can be changed by configuration
 	OPDI_PORTDIRCAP_INPUT,	// default: input with pullup always on
-	OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) {
+	OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS),
+		OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 	this->pin = pin;
 	this->mode = OPDI_DIGITAL_MODE_INPUT_PULLUP;
@@ -456,7 +459,8 @@ public:
 	virtual void setPosition(int64_t position) override;
 };
 
-GertboardPWM::GertboardPWM(AbstractOPDID *opdid, const int pin, const char *ID, bool inverse) : OPDI_DialPort(ID) {
+GertboardPWM::GertboardPWM(AbstractOPDID *opdid, const int pin, const char *ID, bool inverse) : OPDI_DialPort(ID),
+	OPDID_PortFunctions(ID) {
 	if (pin != 18)
 		throw Poco::ApplicationException("GertboardPWM only supports pin 18");
 	this->opdid = opdid;
@@ -554,7 +558,7 @@ public:
 DigitalExpansionPort::DigitalExpansionPort(AbstractOPDID *opdid, GertboardPlugin *gbPlugin, const char *ID, int pin) : OPDI_DigitalPort(ID, 
 	(std::string("Digital Expansion Port ") + to_string(pin)).c_str(), // default label - can be changed by configuration
 	OPDI_PORTDIRCAP_BIDI,	// default: bidirectional
-	0) {
+	0), OPDID_PortFunctions(ID) {
 	this->opdid = opdid;
 	this->gbPlugin = gbPlugin;
 	this->pin = pin;
