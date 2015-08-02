@@ -1178,8 +1178,8 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 	}
 	// collect statistics until a second has elapsed
 	if (this->totalMicroseconds >= 1000000) {
-		int maxProcTime = -1;
-		int sumProcTime = 0;
+		uint64_t maxProcTime = -1;
+		uint64_t sumProcTime = 0;
 		for (int i = 0; i < this->monSecondPos; i++) {
 			sumProcTime += this->monSecondStats[i];
 			if (this->monSecondStats[i] > maxProcTime)
@@ -1187,7 +1187,7 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 		}
 		this->monSecondPos = 0;
 		this->framesPerSecond = waitingCallsPerSecond * 1000000.0 / this->totalMicroseconds;
-		double procAverageUsPerCall = sumProcTime / this->waitingCallsPerSecond;	// microseconds
+		double procAverageUsPerCall = (double)sumProcTime / this->waitingCallsPerSecond;	// microseconds
 		double load = sumProcTime * 1.0 / this->totalMicroseconds * 100.0;
 
 		// ignore first calculation results

@@ -35,11 +35,11 @@ void OPDID_ExecPort::configure(Poco::Util::AbstractConfiguration *config) {
 
 	this->waitTimeMs = config->getInt64("WaitTime", 0);
 	if (this->waitTimeMs < 0)
-		throw Poco::DataException("Please specify a positive value for WaitTime", this->waitTimeMs);
+		throw Poco::DataException("Please specify a positive value for WaitTime: ", this->to_string(this->waitTimeMs));
 
 	this->resetTimeMs = config->getInt64("ResetTime", 0);
 	if (this->resetTimeMs < 0)
-		throw Poco::DataException("Please specify a positive value for ResetTime", this->resetTimeMs);
+		throw Poco::DataException("Please specify a positive value for ResetTime: ", this->to_string(this->resetTimeMs));
 
 	this->forceKill = config->getBool("ForceKill", false);
 }

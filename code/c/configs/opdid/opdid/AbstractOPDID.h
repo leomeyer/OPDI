@@ -74,10 +74,10 @@ protected:
 
 	// internal status monitoring variables
 	static const int maxSecondStats = 1100;
-	long monSecondStats[maxSecondStats];	// doWork performance statistics buffer
+	uint64_t monSecondStats[maxSecondStats];	// doWork performance statistics buffer
 	int monSecondPos;						// current position in buffer
 	Poco::Stopwatch idleStopwatch;			// measures time until waiting() is called again
-	long totalMicroseconds;					// total time (doWork + idle)
+	uint64_t totalMicroseconds;				// total time (doWork + idle)
 	int waitingCallsPerSecond;				// number of calls to waiting()
 	double framesPerSecond;					// average number of doWork iterations ("frames") processed per second
 	int targetFramesPerSecond;				// target number of doWork iterations per second
