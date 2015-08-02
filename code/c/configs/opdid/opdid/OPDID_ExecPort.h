@@ -28,8 +28,8 @@ class OPDID_ExecPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
 	std::string programName;
 	std::string parameters;
-	uint64_t waitTimeMs;
-	uint64_t resetTimeMs;
+	int64_t waitTimeMs;
+	int64_t resetTimeMs;
 	bool forceKill;
 
 	bool wasLow;
