@@ -15,7 +15,7 @@
 //
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
+   
 // Implements the messaging layer. Synchronous sending and receiving of messages.
 
 #include <stdlib.h>
@@ -65,7 +65,7 @@ static uint8_t encryption;
 static uint16_t compare_checksum(uint16_t cs, uint8_t bytes[], uint16_t pos) {
 	uint16_t value = 0;
 	uint8_t byte;
-	uint16_t i; 
+	uint16_t i;
 	for (i = 0; i < 4; i++) {
 		byte = bytes[pos + 3 - i];
 		if ((byte >= '0') && (byte <= '9')) value |= (byte - '0') << i * 4;
@@ -160,7 +160,7 @@ static uint8_t encode(opdi_Message *message, uint16_t *length) {
 	uint8_t err;
 	uint16_t bytelen = 0;
 	uint8_t nibble;
-	
+
 	// write the channel number
 #if (channel_bits == 8)
 	pos += opdi_uint8_to_str(message->channel, channelBuf);
@@ -207,7 +207,7 @@ static uint8_t encode(opdi_Message *message, uint16_t *length) {
 	// add the checksum characters
 	for (i = 4; i > 0; i--) {
 		nibble = (checksum >> (4 * (i - 1))) & 0x0f;
-		if (nibble >= 10) 
+		if (nibble >= 10)
 			msgBuf[pos++] = 'a' + nibble - 10;
 		else
 			msgBuf[pos++] = '0' + nibble;
@@ -275,7 +275,7 @@ static uint8_t get_encrypted(opdi_Message *message, uint8_t can_send) {
 		if (blockpos >= opdi_encryption_blocksize) {
 			// decrypt the block
 			result = opdi_decrypt_block(msgBuf + pos,  buf);
-			if (result != OPDI_STATUS_OK) 
+			if (result != OPDI_STATUS_OK)
 				// encryption error; can't notify the master because it expects an encrypted message which can't be sent
 				// this is sort of a dilemma here
 				return result;

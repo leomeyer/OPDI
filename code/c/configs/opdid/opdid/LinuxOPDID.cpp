@@ -166,7 +166,7 @@ void LinuxOPDID::print(const char *text) {
 
 void LinuxOPDID::println(const char *text) {
 	// text is treated as UTF8.
-	std::cout << text << std::endl;	
+	std::cout << text << std::endl;
 }
 
 void LinuxOPDID::printe(const char *text) {
@@ -176,7 +176,7 @@ void LinuxOPDID::printe(const char *text) {
 
 void LinuxOPDID::printlne(const char *text) {
 	// text is treated as UTF8.
-	std::cerr << text << std::endl;	
+	std::cerr << text << std::endl;
 }
 
 /** This method handles an incoming TCP connection. It blocks until the connection is closed.
@@ -355,7 +355,11 @@ IOPDIDPlugin *LinuxOPDID::getPlugin(std::string driver) {
 	}
 
 	dlerror();
-	void *getPluginInstance = dlsym(hndl, "GetOPDIDPluginInstance");
+	// getPluginInstance can't be declared as void* because this emits a -pedantic warning:
+	// "ISO C++ forbids casting between pointer-to-function and pointer-to-object"
+	// This trick is described here: https://github.com/christopherpoole/cppplugin/wiki/Plugins-in-CPP%3A-Dynamically-Linking-Shared-Objects
+	IOPDIDPlugin* (*getPluginInstance)(int, int, int);
+	*(void **)(&getPluginInstance) = dlsym(hndl, "GetOPDIDPluginInstance");
 
 	char *lasterror = dlerror();
 	if (lasterror != NULL) {
