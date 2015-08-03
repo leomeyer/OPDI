@@ -214,7 +214,7 @@ void ValueResolver::initialize(OPDID_PortFunctions *origin, std::string paramNam
 
 		this->portID = portName;
 	}
-};
+}
 
 bool ValueResolver::validate(double min, double max) {
 	// no fixed value? assume it's valid
