@@ -71,7 +71,7 @@ uint8_t opdi_set_encryption(uint8_t enabled);
 
 /** Specifies the block size of the encryption. Must be specified if encryption is used.
 */
-extern uint16_t opdi_encryption_blocksize;
+extern const uint16_t opdi_encryption_blocksize;
 
 /** Specifies the key information for the encryption. Must match the selected encryption method.
 */
