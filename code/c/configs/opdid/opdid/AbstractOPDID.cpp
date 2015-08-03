@@ -41,7 +41,7 @@ uint16_t opdi_device_flags = 0;
 char opdi_encryption_method[16] = "";
 char opdi_encryption_key[16] = "";
 #define OPDI_ENCRYPTION_BLOCKSIZE	16
-const uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
+uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
 
 #ifdef _MSC_VER
 unsigned char opdi_encryption_buffer[OPDI_ENCRYPTION_BLOCKSIZE];
