@@ -818,14 +818,16 @@ void FritzBoxPlugin::run(void) {
 
 #ifdef _WINDOWS
 
-extern "C" __declspec(dllexport) IOPDIDPlugin* __cdecl GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
+extern "C" __declspec(dllexport) IOPDIDPlugin* __cdecl GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion)
 
 #elif linux
 
-extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
+extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion)
 
+#else
+#error "Unable to compile plugin instance factory function: Compiler not supported"
 #endif
-
+{
 	// check whether the version is supported
 	if ((majorVersion > OPDID_MAJOR_VERSION) || (minorVersion > OPDID_MINOR_VERSION))
 		throw Poco::Exception("This plugin supports only OPDID versions up to "
