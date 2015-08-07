@@ -299,6 +299,8 @@ OPDI_PortGroup::~OPDI_PortGroup() {
 		free(this->id);
 	if (this->label != NULL)
 		free(this->label);
+	if (this->parent != NULL)
+		free(this->parent);
 	if (this->data != NULL)
 		free(this->data);
 }
