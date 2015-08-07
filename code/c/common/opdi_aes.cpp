@@ -27,7 +27,7 @@ static CRijndael *rijndael = NULL;
 
 static CRijndael *get_rijndael() {
 	if (rijndael != NULL) {
-		delete rijndael;
+		return rijndael;
 	}
 	if (strlen(opdi_encryption_key) != OPDI_ENCRYPTION_BLOCKSIZE)
 		throw runtime_error("AES encryption key length does not match the block size");
