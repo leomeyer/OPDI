@@ -1145,7 +1145,7 @@ void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
 }
 
 uint8_t AbstractOPDID::waiting(uint8_t canSend) {
-	uint8_t result = OPDI_STATUS_OK;	// default: assume everything ok
+	uint8_t result;
 
 	// add up microseconds of idle time
 	this->totalMicroseconds += this->idleStopwatch.elapsed();
@@ -1166,6 +1166,9 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 		this->logError(std::string("Unknown error while housekeeping"));
 	}
 	// TODO decide: ignore errors or abort?
+
+	if (result != OPDI_STATUS_OK)
+		return result;
 
 	// add runtime statistics to monitor buffer
 	this->monSecondStats[this->monSecondPos] = stopwatch.elapsed();		// microseconds
