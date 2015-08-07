@@ -40,7 +40,7 @@ void OPDID_ExpressionPort::setMode(uint8_t mode) {
 	throw PortError(std::string(this->getID()) + ": The mode of an ExpressionPort cannot be changed");
 }
 
-bool OPDID_ExpressionPort::prepareVariables(void) {
+bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 	// clear symbol table and values
 	this->symbol_table.clear();
 	this->portValues.clear();
@@ -62,9 +62,23 @@ bool OPDID_ExpressionPort::prepareVariables(void) {
 		}
 
 		// calculate port value
-		double value = opdid->getPortValue(port);
-
-		this->portValues.push_back(value);
+		try {
+			double value = opdid->getPortValue(port);
+			this->portValues.push_back(value);
+		} catch (Poco::Exception& e) {
+			// error handling during setup is different; to avoid too many warnings (in the doWork method)
+			// we make a difference here
+			if (duringSetup) {
+				// emit a warning
+				this->logWarning(this->ID() + ": Failed to resolve value of port " + port->ID() + ": " + e.message());
+				this->portValues.push_back(0.0f);
+			} else {
+				// warn in extreme logging mode only
+				this->logExtreme(this->ID() + ": Failed to resolve value of port " + port->ID() + ": " + e.message());
+				// the expression cannot be evaluated if there is an error
+				return false;
+			}
+		}
 
 		// add reference to the port value (by port ID)
 		if (!this->symbol_table.add_variable(port->getID(), this->portValues[i]))
@@ -75,7 +89,7 @@ bool OPDID_ExpressionPort::prepareVariables(void) {
 }
 
 void OPDID_ExpressionPort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+//	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -97,7 +111,7 @@ void OPDID_ExpressionPort::prepare() {
 	// store symbol list (input variables)
 	parser.dec().symbols(this->symbol_list);
 
-	if (!this->prepareVariables()) {
+	if (!this->prepareVariables(true)) {
 		throw Poco::Exception(std::string(this->getID()) + ": Unable to resolve variables");
 	}
 	parser.disable_unknown_symbol_resolver();
@@ -111,7 +125,7 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 
 	if (this->line == 1) {
 		// prepareVariables will return false in case of errors
-		if (this->prepareVariables()) {
+		if (this->prepareVariables(false)) {
 
 			double value = expression.value();
 

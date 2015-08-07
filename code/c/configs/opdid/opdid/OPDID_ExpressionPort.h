@@ -56,7 +56,7 @@ protected:
 	symbol_table_t symbol_table;
 	expression_t expression;
 
-	virtual bool prepareVariables(void);
+	virtual bool prepareVariables(bool duringSetup);
 
 	virtual uint8_t doWork(uint8_t canSend);
 
