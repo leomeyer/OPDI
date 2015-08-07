@@ -838,7 +838,7 @@ void OPDID_FaderPort::setLine(uint8_t line) {
 		// use current values (might be resolved by ValueResolvers)
 		this->left = this->leftValue;
 		this->right = this->rightValue;
-		this->durationMs = this->durationMs;
+		this->durationMs = this->durationMsValue;
 
 		// don't fade if the duration is impracticably low
 		if (this->durationMs < 5) {
