@@ -787,25 +787,24 @@ OPDID_FaderPort::~OPDID_FaderPort() {
 }
 
 void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
-	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
-	std::string modeStr = config->getString("Mode", "");
+	std::string modeStr = config->getString("FadeMode", "");
 	if (modeStr == "Linear") 
 		this->mode = LINEAR;
 	else if (modeStr == "Exponential")
 		this->mode = EXPONENTIAL;
 	else if (modeStr != "")
-		throw Poco::DataException(this->ID() + ": Invalid Mode setting specified; expected 'Linear' or 'Exponential': " + modeStr);
+		throw Poco::DataException(this->ID() + ": Invalid FadeMode setting specified; expected 'Linear' or 'Exponential': " + modeStr);
 
-	this->left.initialize(this, "Left", config->getString("Left", "-1"));
-	if (!this->left.validate(0.0, 100.0))
+	this->leftValue.initialize(this, "Left", config->getString("Left", "-1"));
+	if (!this->leftValue.validate(0.0, 100.0))
 		throw Poco::DataException(this->ID() + ": Value for 'Left' must be between 0 and 100 percent");
-	this->right.initialize(this, "Right", config->getString("Right", "-1"));
-	if (!this->right.validate(0.0, 100.0))
+	this->rightValue.initialize(this, "Right", config->getString("Right", "-1"));
+	if (!this->rightValue.validate(0.0, 100.0))
 		throw Poco::DataException(this->ID() + ": Value for 'Right' must be between 0 and 100 percent");
-	this->durationMs.initialize(this, "Duration", config->getString("Duration", "-1"));
-	if (!this->durationMs.validateAsInt(0, INT_MAX))
+	this->durationMsValue.initialize(this, "Duration", config->getString("Duration", "-1"));
+	if (!this->durationMsValue.validateAsInt(0, INT_MAX))
 		throw Poco::DataException(this->ID() + ": 'Duration' must be a positive non-zero value (in milliseconds)");
 
 	if (this->mode == EXPONENTIAL) {
@@ -822,6 +821,8 @@ void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->invert = config->getBool("Invert", this->invert);
 
 	this->outputPortStr = opdid->getConfigString(config, "OutputPorts", "", true);
+
+	this->opdid->configurePort(config, this, 0);
 }
 
 void OPDID_FaderPort::setDirCaps(const char *dirCaps) {
@@ -834,6 +835,11 @@ void OPDID_FaderPort::setMode(uint8_t mode) {
 
 void OPDID_FaderPort::setLine(uint8_t line) {
 	if (line == 1) {
+		// use current values (might be resolved by ValueResolvers)
+		this->left = this->leftValue;
+		this->right = this->rightValue;
+		this->durationMs = this->durationMs;
+
 		// don't fade if the duration is impracticably low
 		if (this->durationMs < 5) {
 			this->logVerbose(this->ID() + ": Refusing to fade because duration is impracticably low: " + to_string(this->durationMs));

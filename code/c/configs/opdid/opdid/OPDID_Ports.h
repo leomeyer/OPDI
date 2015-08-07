@@ -294,9 +294,12 @@ protected:
 	};
 
 	FaderMode mode;
-	ValueResolver left;
-	ValueResolver right;
-	ValueResolver durationMs;
+	ValueResolver leftValue;
+	ValueResolver rightValue;
+	ValueResolver durationMsValue;
+	double left;
+	double right;
+	double durationMs;
 	double expA;
 	double expB;
 	double expMax;
