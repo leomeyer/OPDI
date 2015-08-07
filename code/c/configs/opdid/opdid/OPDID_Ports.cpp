@@ -835,7 +835,8 @@ void OPDID_FaderPort::setMode(uint8_t mode) {
 
 void OPDID_FaderPort::setLine(uint8_t line) {
 	if (line == 1) {
-		// use current values (might be resolved by ValueResolvers)
+		// store current values on start (might be resolved by ValueResolvers, and we don't want them to change during fading
+		// because each value might again refer to the output port - not an uncommon scenario for e.g. dimmers)
 		this->left = this->leftValue;
 		this->right = this->rightValue;
 		this->durationMs = this->durationMsValue;
@@ -889,7 +890,7 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 		}
 
 		// calculate current value (linear first) within the range [0, 1]
-		double value;
+		double value = 0.0;
 		if (this->mode == LINEAR) {
 			if (this->invert)
 				value = (this->right - (double)elapsedMs / (double)this->durationMs * (this->right - this->left)) / 100.0;
