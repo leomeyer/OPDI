@@ -106,6 +106,7 @@ void OPDID_LogicPort::setLine(uint8_t line) {
 }
 
 void OPDID_LogicPort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_DigitalPort::prepare();
 
 	if (this->function == UNKNOWN)
@@ -275,6 +276,7 @@ void OPDID_PulsePort::setMode(uint8_t mode) {
 }
 
 void OPDID_PulsePort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -433,6 +435,7 @@ void OPDID_SelectorPort::setLine(uint8_t line) {
 }
 
 void OPDID_SelectorPort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_DigitalPort::prepare();
 
 	// find port; throws errors if something required is missing
@@ -497,6 +500,7 @@ void OPDID_ErrorDetectorPort::setMode(uint8_t mode) {
 }
 
 void OPDID_ErrorDetectorPort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -663,6 +667,7 @@ std::string OPDID_LoggerPort::getPortStateStr(OPDI_Port* port) {
 }
 
 void OPDID_LoggerPort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_StreamingPort::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -846,6 +851,7 @@ void OPDID_FaderPort::setLine(uint8_t line) {
 }
 
 void OPDID_FaderPort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing

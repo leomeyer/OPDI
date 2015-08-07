@@ -253,6 +253,7 @@ void WindowPort::findDigitalPorts(std::string setting, std::string portIDs, Digi
 }
 
 void WindowPort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_Port::prepare();
 
 	// find ports; throws errors if something required is missing

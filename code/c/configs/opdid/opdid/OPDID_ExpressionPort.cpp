@@ -75,6 +75,7 @@ bool OPDID_ExpressionPort::prepareVariables(void) {
 }
 
 void OPDID_ExpressionPort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing

@@ -312,6 +312,7 @@ void OPDID_TimerPort::setMode(uint8_t mode) {
 }
 
 void OPDID_TimerPort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing

@@ -53,6 +53,7 @@ void OPDID_ExecPort::setMode(uint8_t mode) {
 }
 
 void OPDID_ExecPort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_DigitalPort::prepare();
 }
 
