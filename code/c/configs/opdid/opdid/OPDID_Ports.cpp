@@ -905,7 +905,8 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 
 			// map back to the target range
 			value = (this->left + value * (this->right - this->left)) / 100.0;
-		}
+		} else
+			value = 0.0;
 
 		this->logExtreme(this->ID() + ": Setting current fader value to " + to_string(value * 100.0) + "%");
 
