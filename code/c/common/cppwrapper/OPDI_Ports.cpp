@@ -271,8 +271,6 @@ OPDI_Port::~OPDI_Port() {
 		free(this->id);
 	if (this->label != NULL)
 		free(this->label);
-	if (this->data != NULL)
-		free(this->data);
 }
 
 
@@ -654,7 +652,9 @@ OPDI_SelectPort::OPDI_SelectPort(const char *id, const char *label, const char *
 	this->position = 0;
 }
 
-OPDI_SelectPort::~OPDI_SelectPort() {}
+OPDI_SelectPort::~OPDI_SelectPort() {
+	this->freeItems();
+}
 
 void OPDI_SelectPort::doSelfRefresh(void) {
 	this->refreshRequired = true;

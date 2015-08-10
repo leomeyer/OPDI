@@ -27,6 +27,9 @@ extern void protocol_callback(uint8_t state);
 struct IOPDIDPlugin {
 	// config is the parent configuration. Implementations should use createView to get the node configuration.
 	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string nodeName, Poco::Util::AbstractConfiguration *config) = 0;
+
+	// virtual destructor (called when the plugin is deleted)
+	virtual ~IOPDIDPlugin() {}
 };
 
 /** The listener interface for plugin registrations. */
@@ -71,6 +74,9 @@ protected:
 
 	typedef std::map<std::string, std::string> LockedResources;
 	LockedResources lockedResources;
+
+	typedef std::list<Poco::SharedPtr<IOPDIDPlugin>> PluginList;
+	PluginList pluginList;
 
 	// internal status monitoring variables
 	static const int maxSecondStats = 1100;

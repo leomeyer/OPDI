@@ -69,7 +69,7 @@ protected:
 		};
 		Type type;
 
-		static ScheduleComponent* Parse(Type type, std::string def);
+		static ScheduleComponent Parse(Type type, std::string def);
 
 		bool getNextPossibleValue(int* currentValue, bool* rollover, bool* changed, int month, int year);
 
@@ -118,11 +118,11 @@ protected:
 		} data;
 
 		// schedule components for PERIODIC
-		ScheduleComponent* monthComponent;
-		ScheduleComponent* dayComponent;
-		ScheduleComponent* hourComponent;
-		ScheduleComponent* minuteComponent;
-		ScheduleComponent* secondComponent;
+		ScheduleComponent monthComponent;
+		ScheduleComponent dayComponent;
+		ScheduleComponent hourComponent;
+		ScheduleComponent minuteComponent;
+		ScheduleComponent secondComponent;
 
 		// parameters for ASTRONOMICAL
 		AstroEvent astroEvent;

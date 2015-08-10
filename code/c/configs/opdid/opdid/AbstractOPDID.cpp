@@ -38,8 +38,11 @@
 // global device flags
 uint16_t opdi_device_flags = 0;
 
-char opdi_encryption_method[16] = "";
-char opdi_encryption_key[16] = "";
+#define ENCRYPTION_METHOD_MAXLENGTH		16
+char opdi_encryption_method[(ENCRYPTION_METHOD_MAXLENGTH + 1)];
+#define ENCRYPTION_KEY_MAXLENGTH		16
+char opdi_encryption_key[(ENCRYPTION_KEY_MAXLENGTH + 1)];
+
 #define OPDI_ENCRYPTION_BLOCKSIZE	16
 uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
 
@@ -67,6 +70,7 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->monSecondPos = 0;
 	this->totalMicroseconds = 0;
 	this->targetFramesPerSecond = 200;
+	this->waitingCallsPerSecond = 0;
 
 	// map result codes
 	opdiCodeTexts[0] = "STATUS_OK";
@@ -286,7 +290,7 @@ void AbstractOPDID::logExtreme(std::string message) {
 
 int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
 	this->environment = environment;
-	Poco::Util::AbstractConfiguration *configuration = NULL;
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> configuration = NULL;
 
 	// add default environment parameters
 	this->environment["$DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), this->timestampFormat);
@@ -344,13 +348,13 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 	}
 
 	// no configuration?
-	if (configuration == NULL)
+	if (configuration.isNull())
 		throw Poco::SyntaxException("Expected argument: -c <config_file>");
 
 	this->sayHello();
 
 	// create view to "General" section
-	Poco::Util::AbstractConfiguration *general = configuration->createView("General");
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> general = configuration->createView("General");
 	this->setGeneralConfiguration(general);
 
 	this->setupRoot(configuration);
@@ -361,7 +365,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 	this->preparePorts();
 
 	// create view to "Connection" section
-	Poco::Util::AbstractConfiguration *connection = configuration->createView("Connection");
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> connection = configuration->createView("Connection");
 
 	return this->setupConnection(connection);
 }
@@ -412,8 +416,10 @@ Poco::Util::AbstractConfiguration *AbstractOPDID::getConfigForState(Poco::Util::
 		// persistent config has high priority
 		if (viewName == "")
 			newConfig->add(this->persistentConfig, 0);
-		else
-			newConfig->add(this->persistentConfig->createView(viewName));
+		else {
+			Poco::AutoPtr<Poco::Util::AbstractConfiguration> configView = this->persistentConfig->createView(viewName);
+			newConfig->add(configView);
+		}
 	}
 	// standard config has low priority
 	newConfig->add(baseConfig, 10);
@@ -474,13 +480,15 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 	// encryption defined?
 	std::string encryptionNode = general->getString("Encryption", "");
 	if (encryptionNode != "") {
-		this->configureEncryption(general->createView(encryptionNode));
+		Poco::AutoPtr<Poco::Util::AbstractConfiguration> encryptionConfig = general->createView(encryptionNode);
+		this->configureEncryption(encryptionConfig);
 	}
 
 	// authentication defined?
 	std::string authenticationNode = general->getString("Authentication", "");
 	if (authenticationNode != "") {
-		this->configureAuthentication(general->createView(authenticationNode));
+		Poco::AutoPtr<Poco::Util::AbstractConfiguration> authenticationConfig = general->createView(authenticationNode);
+		this->configureAuthentication(authenticationConfig);
 	}
 
 	// initialize OPDI slave
@@ -496,8 +504,8 @@ void AbstractOPDID::configureEncryption(Poco::Util::AbstractConfiguration *confi
 		if (key.length() != 16)
 			throw Poco::DataException("AES encryption setting 'Key' must be specified and 16 characters long");
 
-		strcpy(opdi_encryption_method, "AES");
-		strcpy(opdi_encryption_key, key.c_str());
+		strncpy(opdi_encryption_method, "AES", ENCRYPTION_METHOD_MAXLENGTH);
+		strncpy(opdi_encryption_key, key.c_str(), ENCRYPTION_KEY_MAXLENGTH);
 	} else
 		throw Poco::DataException("Encryption type not supported, expected 'AES': " + type);
 }
@@ -588,7 +596,7 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration *config, Poco
 	// the include node requires a section "<node>.Parameters"
 	this->logVerbose(node + ": Evaluating include parameters section: " + node + ".Parameters");
 
-	Poco::Util::AbstractConfiguration *paramConfig = parentConfig->createView(node + ".Parameters");
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> paramConfig = parentConfig->createView(node + ".Parameters");
 
 	// get list of parameters
 	Poco::Util::AbstractConfiguration::Keys paramKeys;
@@ -777,7 +785,7 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 	this->configurePort(portConfig, port, 0);
 
 	// the select port requires a prefix or section "<portID>.Items"
-	Poco::Util::AbstractConfiguration *portItems = parentConfig->createView(std::string(port->getID()) + ".Items");
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> portItems = parentConfig->createView(std::string(port->getID()) + ".Items");
 
 	// get ordered list of items
 	Poco::Util::AbstractConfiguration::Keys itemKeys;
@@ -986,7 +994,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 	}
 
 	// create node section view
-	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
 
 	// get node information
 	std::string nodeDriver = this->getConfigString(nodeConfig, "Driver", "", false);
@@ -997,6 +1005,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 
 		// try to load the plugin; the driver name is the (platform dependent) library file name
 		IOPDIDPlugin *plugin = this->getPlugin(nodeDriver);
+
+		// add plugin to internal list (avoids memory leaks)
+		this->pluginList.push_back(plugin);
 
 		// init the plugin
 		plugin->setupPlugin(this, node, config);
@@ -1062,7 +1073,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 
 void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 	// enumerate section "Root"
-	Poco::Util::AbstractConfiguration *nodes = config->createView("Root");
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodes = config->createView("Root");
 	this->logVerbose("Setting up root nodes");
 
 	Poco::Util::AbstractConfiguration::Keys nodeKeys;
@@ -1189,7 +1200,7 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 				maxProcTime = this->monSecondStats[i];
 		}
 		this->monSecondPos = 0;
-		this->framesPerSecond = waitingCallsPerSecond * 1000000.0 / this->totalMicroseconds;
+		this->framesPerSecond = this->waitingCallsPerSecond * 1000000.0 / this->totalMicroseconds;
 		double procAverageUsPerCall = (double)sumProcTime / this->waitingCallsPerSecond;	// microseconds
 		double load = sumProcTime * 1.0 / this->totalMicroseconds * 100.0;
 
