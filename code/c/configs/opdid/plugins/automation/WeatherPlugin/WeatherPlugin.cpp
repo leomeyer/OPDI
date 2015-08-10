@@ -292,7 +292,7 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, 
 	this->refreshTimeMs = 30 * 1000;	// default: 30 seconds
 	this->dataValiditySeconds = 120;	// default: two minutes (JSON skin time resolution does not include seconds, allow extra time)
 
-	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
 
 	this->logVerbosity = opdid->getConfigLogVerbosity(nodeConfig, AbstractOPDID::UNKNOWN);
 
@@ -324,7 +324,7 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, 
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::VERBOSE))
 		this->opdid->logVerbose("Enumerating Weather nodes: " + node + ".Nodes");
 
-	Poco::Util::AbstractConfiguration *nodes = config->createView(node + ".Nodes");
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodes = config->createView(node + ".Nodes");
 
 	// get ordered list of ports
 	Poco::Util::AbstractConfiguration::Keys portKeys;

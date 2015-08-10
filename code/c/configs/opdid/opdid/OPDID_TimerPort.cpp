@@ -15,17 +15,17 @@
 // Timer Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_TimerPort::ScheduleComponent* OPDID_TimerPort::ScheduleComponent::Parse(Type type, std::string def) {
-	ScheduleComponent* result = new ScheduleComponent();
-	result->type = type;
+OPDID_TimerPort::ScheduleComponent OPDID_TimerPort::ScheduleComponent::Parse(Type type, std::string def) {
+	ScheduleComponent result;
+	result.type = type;
 
 	std::string compName;
 	switch (type) {
-	case MONTH: result->values.resize(13); compName = "Month"; break;
-	case DAY: result->values.resize(32); compName = "Day"; break;
-	case HOUR: result->values.resize(24); compName = "Hour"; break;
-	case MINUTE: result->values.resize(60); compName = "Minute"; break;
-	case SECOND: result->values.resize(60); compName = "Second"; break;
+	case MONTH: result.values.resize(13); compName = "Month"; break;
+	case DAY: result.values.resize(32); compName = "Day"; break;
+	case HOUR: result.values.resize(24); compName = "Hour"; break;
+	case MINUTE: result.values.resize(60); compName = "Minute"; break;
+	case SECOND: result.values.resize(60); compName = "Second"; break;
 	case WEEKDAY:
 		throw Poco::ApplicationException("Weekday is currently not supported");
 	}
@@ -42,8 +42,8 @@ OPDID_TimerPort::ScheduleComponent* OPDID_TimerPort::ScheduleComponent::Parse(Ty
 		}
 		if (item == "*") {
 			// set all values
-			for (size_t i = 0; i < result->values.size(); i++)
-				result->values[i] = val;
+			for (size_t i = 0; i < result.values.size(); i++)
+				result.values[i] = val;
 		} else {
 			// parse as integer
 			int number = Poco::NumberParser::parse(item);
@@ -59,7 +59,7 @@ OPDID_TimerPort::ScheduleComponent* OPDID_TimerPort::ScheduleComponent::Parse(Ty
 			}
 			if (!valid)
 				throw Poco::DataException("The specification '" + item + "' is not valid for the date/time component " + compName);
-			result->values[number] = val;
+			result.values[number] = val;
 		}
 	}
 
@@ -144,7 +144,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 	// enumerate schedules of the <timer>.Schedules node
 	this->logVerbose(std::string("Enumerating Timer schedules: ") + this->getID() + ".Schedules");
 
-	Poco::Util::AbstractConfiguration *nodes = config->createView("Schedules");
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodes = config->createView("Schedules");
 
 	// get ordered list of schedules
 	Poco::Util::AbstractConfiguration::Keys scheduleKeys;
@@ -186,7 +186,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 		this->logVerbose("Setting up timer schedule for node: " + nodeName);
 
 		// get schedule section from the configuration
-		Poco::Util::AbstractConfiguration *scheduleConfig = parentConfig->createView(nodeName);
+		Poco::AutoPtr<Poco::Util::AbstractConfiguration> scheduleConfig = parentConfig->createView(nodeName);
 
 		Schedule schedule;
 		schedule.nodeName = nodeName;
@@ -399,7 +399,7 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 		bool rollover = false;
 		bool changed = false;
 		// calculate next possible seconds
-		if (!schedule->secondComponent->getNextPossibleValue(&second, &rollover, &changed, month, year))
+		if (!schedule->secondComponent.getNextPossibleValue(&second, &rollover, &changed, month, year))
 			return Poco::Timestamp();
 		// rolled over into next minute?
 		if (rollover) {
@@ -407,7 +407,7 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 			correctValues;
 		}
 		// get next possible minute
-		if (!schedule->minuteComponent->getNextPossibleValue(&minute, &rollover, &changed, month, year))
+		if (!schedule->minuteComponent.getNextPossibleValue(&minute, &rollover, &changed, month, year))
 			return Poco::Timestamp();
 		// rolled over into next hour?
 		if (rollover) {
@@ -417,10 +417,10 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 		// if the minute was changed the second value is now invalid; set it to the first
 		// possible value (because the sub-component range starts again with every new value)
 		if (rollover || changed) {
-			schedule->secondComponent->getFirstPossibleValue(&second, month, year);
+			schedule->secondComponent.getFirstPossibleValue(&second, month, year);
 		}
 		// get next possible hour
-		if (!schedule->hourComponent->getNextPossibleValue(&hour, &rollover, &changed, month, year))
+		if (!schedule->hourComponent.getNextPossibleValue(&hour, &rollover, &changed, month, year))
 			return Poco::Timestamp();
 		// rolled over into next day?
 		if (rollover) {
@@ -428,11 +428,11 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 			correctValues;
 		}
 		if (rollover || changed) {
-			schedule->secondComponent->getFirstPossibleValue(&second, month, year);
-			schedule->minuteComponent->getFirstPossibleValue(&minute, month, year);
+			schedule->secondComponent.getFirstPossibleValue(&second, month, year);
+			schedule->minuteComponent.getFirstPossibleValue(&minute, month, year);
 		}
 		// get next possible day
-		if (!schedule->dayComponent->getNextPossibleValue(&day, &rollover, &changed, month, year))
+		if (!schedule->dayComponent.getNextPossibleValue(&day, &rollover, &changed, month, year))
 			return Poco::Timestamp();
 		// rolled over into next month?
 		if (rollover) {
@@ -440,12 +440,12 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 			correctValues;
 		}
 		if (rollover || changed) {
-			schedule->secondComponent->getFirstPossibleValue(&second, month, year);
-			schedule->minuteComponent->getFirstPossibleValue(&minute, month, year);
-			schedule->hourComponent->getFirstPossibleValue(&hour, month, year);
+			schedule->secondComponent.getFirstPossibleValue(&second, month, year);
+			schedule->minuteComponent.getFirstPossibleValue(&minute, month, year);
+			schedule->hourComponent.getFirstPossibleValue(&hour, month, year);
 		}
 		// get next possible month
-		if (!schedule->monthComponent->getNextPossibleValue(&month, &rollover, &changed, month, year))
+		if (!schedule->monthComponent.getNextPossibleValue(&month, &rollover, &changed, month, year))
 			return Poco::Timestamp();
 		// rolled over into next year?
 		if (rollover) {
@@ -453,10 +453,10 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 			correctValues;
 		}
 		if (rollover || changed) {
-			schedule->secondComponent->getFirstPossibleValue(&second, month, year);
-			schedule->minuteComponent->getFirstPossibleValue(&minute, month, year);
-			schedule->hourComponent->getFirstPossibleValue(&hour, month, year);
-			schedule->dayComponent->getFirstPossibleValue(&day, month, year);
+			schedule->secondComponent.getFirstPossibleValue(&second, month, year);
+			schedule->minuteComponent.getFirstPossibleValue(&minute, month, year);
+			schedule->hourComponent.getFirstPossibleValue(&hour, month, year);
+			schedule->dayComponent.getFirstPossibleValue(&day, month, year);
 		}
 		Poco::DateTime result = Poco::DateTime(year, month, day, hour, minute, second);
 		// values are specified in local time; convert to UTC

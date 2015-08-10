@@ -43,7 +43,7 @@ protected:
 	// If a port is hidden it is not included in the device capabilities as queried by the master.
 	bool hidden;
 
-	// If a port is readonly its state cannot be changed from the master.
+	// If a port is readonly its state cannot be changed by the master.
 	bool readonly;
 
 	// extended info variables
@@ -75,6 +75,7 @@ protected:
 	OPDI *opdi;
 
 	// OPDI implementation management structure
+	// this pointer is managed by the OPDI class
 	void* data;
 
 	// A list of ports that should automatically refresh when the port state changes.

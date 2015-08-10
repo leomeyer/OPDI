@@ -42,6 +42,15 @@ uint8_t OPDI::shutdownInternal(void) {
 	// free all ports
 	PortList::iterator it = this->ports.begin();
 	while (it != this->ports.end()) {
+		// free internal port memory
+		opdi_Port *oPort = (opdi_Port *)(*it)->data;
+		// release additional data structure memory
+		if (strcmp((*it)->type, OPDI_PORTTYPE_DIAL) == 0) {
+			if (oPort->info.ptr != NULL)
+				free(oPort->info.ptr);
+		}
+		if (oPort != NULL)
+			free(oPort);
 		delete *it;
 		it++;
 	}
@@ -153,7 +162,7 @@ void OPDI::addPort(OPDI_Port *port) {
 }
 
 // possible race conditions here, if one thread updates port data while the other retrieves it
-// generally not a problem because slaves are usually single-threaded
+// - generally not a problem because slaves are usually single-threaded
 void OPDI::updatePortData(OPDI_Port *port) {
 	// allocate port data structure if necessary
 	opdi_Port *oPort = (opdi_Port *)port->data;

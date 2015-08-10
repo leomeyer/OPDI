@@ -241,9 +241,8 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
     }
 
     // Initialize sockets and set any options
-    int hsock;
-    hsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (hsock == -1) {
+    int hsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (hsock < 0) {
         throw Poco::ApplicationException("Error initializing socket", WSAGetLastError());
     }
 
@@ -270,10 +269,10 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
     memset(&(my_addr.sin_zero), 0, 8);
     my_addr.sin_addr.s_addr = INADDR_ANY;	// TODO use specified interface(s)
     
-    if (bind(hsock, (struct sockaddr*)&my_addr, sizeof(my_addr)) == -1) {
+    if (bind(hsock, (struct sockaddr*)&my_addr, sizeof(my_addr)) < 0) {
         throw Poco::ApplicationException("Error binding to socket, make sure nothing else is listening on this port", WSAGetLastError());
     }
-    if (listen(hsock, 10) == -1) {
+    if (listen(hsock, 10) < 0) {
         throw Poco::ApplicationException("Error listening on socket", WSAGetLastError());
     }
     
@@ -286,6 +285,7 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 		this->logNormal(std::string("Listening for a connection on TCP port ") + this->to_string(port));
 
 		while (true) {
+			memset(&sadr, 0, addr_size);
 			int csock = accept(hsock, (SOCKADDR *)&sadr, &addr_size);
 
 			// error condition?

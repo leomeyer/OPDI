@@ -22,6 +22,7 @@ protected:
 #define POSITION_AUTO	3
 
 	enum WindowMode {
+		NOT_SET,
 		H_BRIDGE,
 		SERIAL_RELAY
 	};
@@ -154,6 +155,7 @@ WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(i
 
 	this->targetState = UNKNOWN;
 	this->currentState = UNKNOWN;
+	this->mode = NOT_SET;
 	this->positionNewlySet = false;
 	this->isMotorEnabled = false;
 	this->isMotorOn = false;
@@ -1002,7 +1004,7 @@ public:
 void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
 
-	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
 
 	// get port type
 	std::string portType = nodeConfig->getString("Type", "");
