@@ -153,6 +153,7 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 
 LinuxOPDID::LinuxOPDID(void)
 {
+	this->framesPerSecond = 0;
 }
 
 LinuxOPDID::~LinuxOPDID(void)
