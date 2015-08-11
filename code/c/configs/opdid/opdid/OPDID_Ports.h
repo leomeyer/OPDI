@@ -328,3 +328,30 @@ public:
 
 	virtual void prepare() override;
 };
+
+
+/** A SceneSelectPort is a select port with n scene settings. Each scene setting corresponds
+* with a settings file. If a scene is selected the port opens the settings file and sets all
+* ports defined in the settings file to the specified values.
+*/
+class OPDID_SceneSelectPort : public OPDI_SelectPort, protected OPDID_PortFunctions {
+protected:
+	typedef std::vector<std::string> FileList;
+	FileList fileList;
+	std::string configFilePath;
+
+	bool positionSet;
+
+	virtual uint8_t doWork(uint8_t canSend);
+
+public:
+	OPDID_SceneSelectPort(AbstractOPDID *opdid, const char *id);
+
+	virtual ~OPDID_SceneSelectPort();
+
+	virtual void configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig);
+
+	virtual void setPosition(uint16_t position) override;
+
+	virtual void prepare() override;
+};

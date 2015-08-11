@@ -82,6 +82,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="exectest.bat" />
+    <None Include="scene0.ini" />
+    <None Include="scene1.ini" />
     <None Include="test_include.ini" />
     <None Include="win_opdid.ini" />
     <None Include="ReadMe.txt" />

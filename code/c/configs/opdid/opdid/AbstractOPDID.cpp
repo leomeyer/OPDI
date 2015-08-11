@@ -31,8 +31,6 @@
 #define DEFAULT_IDLETIMEOUT_MS	180000
 #define DEFAULT_TCP_PORT		13110
 
-#define OPDID_CONFIG_FILE_SETTING	"__OPDID_CONFIG_FILE_PATH"
-
 #define OPDID_SUPPORTED_PROTOCOLS	"EP,BP"
 
 // global device flags
@@ -702,8 +700,9 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration *portConfig,
 	port->orderID = portConfig->getInt("OrderID", -1);
 }
 
-void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port) {
-	this->configurePort(portConfig, port, 0);
+void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port, bool stateOnly) {
+	if (!stateOnly)
+		this->configurePort(portConfig, port, 0);
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
 
@@ -737,18 +736,19 @@ void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *
 	this->addPort(digPort);
 }
 
-void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_AnalogPort *port) {
-	this->configurePort(portConfig, port,
-		// default flags: assume everything is supported
-		OPDI_ANALOG_PORT_CAN_CHANGE_RES |
-		OPDI_ANALOG_PORT_RESOLUTION_8 |
-		OPDI_ANALOG_PORT_RESOLUTION_9 |
-		OPDI_ANALOG_PORT_RESOLUTION_10 |
-		OPDI_ANALOG_PORT_RESOLUTION_11 |
-		OPDI_ANALOG_PORT_RESOLUTION_12 |
-		OPDI_ANALOG_PORT_CAN_CHANGE_REF |
-		OPDI_ANALOG_PORT_REFERENCE_INT |
-		OPDI_ANALOG_PORT_REFERENCE_EXT);
+void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_AnalogPort *port, bool stateOnly) {
+	if (!stateOnly)
+		this->configurePort(portConfig, port,
+			// default flags: assume everything is supported
+			OPDI_ANALOG_PORT_CAN_CHANGE_RES |
+			OPDI_ANALOG_PORT_RESOLUTION_8 |
+			OPDI_ANALOG_PORT_RESOLUTION_9 |
+			OPDI_ANALOG_PORT_RESOLUTION_10 |
+			OPDI_ANALOG_PORT_RESOLUTION_11 |
+			OPDI_ANALOG_PORT_RESOLUTION_12 |
+			OPDI_ANALOG_PORT_CAN_CHANGE_REF |
+			OPDI_ANALOG_PORT_REFERENCE_INT |
+			OPDI_ANALOG_PORT_REFERENCE_EXT);
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
 
@@ -781,58 +781,60 @@ void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *p
 	this->addPort(anaPort);
 }
 
-void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, OPDI_SelectPort *port) {
-	this->configurePort(portConfig, port, 0);
+void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, OPDI_SelectPort *port, bool stateOnly) {
+	if (!stateOnly) {
+		this->configurePort(portConfig, port, 0);
 
-	// the select port requires a prefix or section "<portID>.Items"
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> portItems = parentConfig->createView(std::string(port->getID()) + ".Items");
+		// the select port requires a prefix or section "<portID>.Items"
+		Poco::AutoPtr<Poco::Util::AbstractConfiguration> portItems = parentConfig->createView(std::string(port->getID()) + ".Items");
 
-	// get ordered list of items
-	Poco::Util::AbstractConfiguration::Keys itemKeys;
-	portItems->keys("", itemKeys);
+		// get ordered list of items
+		Poco::Util::AbstractConfiguration::Keys itemKeys;
+		portItems->keys("", itemKeys);
 
-	typedef Poco::Tuple<int, std::string> Item;
-	typedef std::vector<Item> ItemList;
-	ItemList orderedItems;
+		typedef Poco::Tuple<int, std::string> Item;
+		typedef std::vector<Item> ItemList;
+		ItemList orderedItems;
 
-	// create ordered list of items (by priority)
-	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = itemKeys.begin(); it != itemKeys.end(); ++it) {
-		int itemNumber = portItems->getInt(*it, 0);
-		// check whether the item is active
-		if (itemNumber < 0)
-			continue;
+		// create ordered list of items (by priority)
+		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = itemKeys.begin(); it != itemKeys.end(); ++it) {
+			int itemNumber = portItems->getInt(*it, 0);
+			// check whether the item is active
+			if (itemNumber < 0)
+				continue;
 
-		// insert at the correct position to create a sorted list of items
-		ItemList::iterator nli = orderedItems.begin();
+			// insert at the correct position to create a sorted list of items
+			ItemList::iterator nli = orderedItems.begin();
+			while (nli != orderedItems.end()) {
+				if (nli->get<0>() > itemNumber)
+					break;
+				nli++;
+			}
+			Item item(itemNumber, *it);
+			orderedItems.insert(nli, item);
+		}
+
+		if (orderedItems.size() == 0)
+			throw Poco::DataException("The select port " + std::string(port->getID()) + " requires at least one item in its config section", std::string(port->getID()) + ".Items");
+
+		// go through items, create ordered list of char* items
+		std::vector<const char*> charItems;
+		ItemList::const_iterator nli = orderedItems.begin();
 		while (nli != orderedItems.end()) {
-			if (nli->get<0>() > itemNumber)
-				break;
+			charItems.push_back(nli->get<1>().c_str());
 			nli++;
 		}
-		Item item(itemNumber, *it);
-		orderedItems.insert(nli, item);
+		charItems.push_back(NULL);
+
+		// set port items
+		port->setItems(&charItems[0]);
 	}
-
-	if (orderedItems.size() == 0)
-		throw Poco::DataException("The select port " + std::string(port->getID()) + " requires at least one item in its config section", std::string(port->getID()) + ".Items");
-
-	// go through items, create ordered list of char* items
-	std::vector<const char*> charItems;
-	ItemList::const_iterator nli = orderedItems.begin();
-	while (nli != orderedItems.end()) {
-		charItems.push_back(nli->get<1>().c_str());
-		nli++;
-	}
-	charItems.push_back(NULL);
-
-	// set port items
-	port->setItems(&charItems[0]);
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
 
 	if (stateConfig->getString("Position", "") != "") {
 		uint16_t position = stateConfig->getInt("Position", 0);
-		if ((position < 0) || (position >= charItems.size()))
+		if ((position < 0) || (position > port->getMaxPosition()))
 			throw Poco::DataException("Wrong select port setting: Position is out of range: " + to_string(position));
 		port->setPosition(position);
 	}
@@ -847,8 +849,9 @@ void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *p
 	this->addPort(selPort);
 }
 
-void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DialPort *port) {
-	this->configurePort(portConfig, port, 0);
+void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DialPort *port, bool stateOnly) {
+	if (!stateOnly)
+		this->configurePort(portConfig, port, 0);
 
 	int64_t min = portConfig->getInt64("Min", 0);
 	if (!portConfig->hasProperty("Max"))
@@ -977,6 +980,15 @@ void AbstractOPDID::setupErrorDetectorPort(Poco::Util::AbstractConfiguration *po
 	this->addPort(edPort);
 }
 
+void AbstractOPDID::setupSceneSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port) {
+	this->logVerbose("Setting up SceneSelect: " + port);
+
+	OPDID_SceneSelectPort *ssPort = new OPDID_SceneSelectPort(this, port.c_str());
+	ssPort->configure(portConfig, parentConfig);
+
+	this->addPort(ssPort);
+}
+
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
 	this->logVerbose("Setting up node: " + node);
 
@@ -1066,6 +1078,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else
 		if (nodeType == "Exec") {
 			this->setupExecPort(nodeConfig, node);
+		} else
+		if (nodeType == "SceneSelect") {
+			this->setupSceneSelectPort(nodeConfig, config, node);
 		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}
@@ -1336,7 +1351,7 @@ void AbstractOPDID::persist(OPDI_Port *port) {
 				this->logDebug("Writing port state for: " + port->ID() + "; mode = " + modeStr);
 				this->persistentConfig->setString(port->ID() + ".Mode", modeStr);
 			}
-			this->logDebug("Writing port state for: " + port->ID() + "; resolution = " + this->to_string(resolution));
+			this->logDebug("Writing port state for: " + port->ID() + "; resolution = " + this->to_string((int)resolution));
 			this->persistentConfig->setInt(port->ID() + ".Resolution", resolution);
 			this->logDebug("Writing port state for: " + port->ID() + "; value = " + this->to_string(value));
 			this->persistentConfig->setInt(port->ID() + ".Value", value);

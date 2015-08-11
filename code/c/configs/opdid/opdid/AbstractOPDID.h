@@ -14,6 +14,8 @@
 #include "opdi_configspecs.h"
 #include "OPDI.h"
 
+#define OPDID_CONFIG_FILE_SETTING	"__OPDID_CONFIG_FILE_PATH"
+
 class AbstractOPDID;
 
 #define OPDID_MAJOR_VERSION		0
@@ -196,22 +198,22 @@ public:
 	virtual void configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags);
 
 	/** Reads special properties from the configuration and configures the digital port. */
-	virtual void configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port);
+	virtual void configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port, bool stateOnly = false);
 
 	virtual void setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	/** Reads special properties from the configuration and configures the analog port. */
-	virtual void configureAnalogPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_AnalogPort *port);
+	virtual void configureAnalogPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_AnalogPort *port, bool stateOnly = false);
 
 	virtual void setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	/** Reads special properties from the configuration and configures the select port. */
-	virtual void configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, OPDI_SelectPort *port);
+	virtual void configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, OPDI_SelectPort *port, bool stateOnly = false);
 
 	virtual void setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port);
 
 	/** Reads special properties from the configuration and configures the dial port. */
-	virtual void configureDialPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DialPort *port);
+	virtual void configureDialPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DialPort *port, bool stateOnly = false);
 
 	virtual void setupEmulatedDialPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
@@ -239,6 +241,8 @@ public:
 	virtual void setupFaderPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
 
 	virtual void setupExecPort(Poco::Util::AbstractConfiguration *portConfig, std::string port);
+
+	virtual void setupSceneSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port);
 
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);

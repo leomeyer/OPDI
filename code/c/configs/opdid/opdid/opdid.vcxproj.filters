@@ -61,6 +61,12 @@
     <None Include="exectest.bat">
       <Filter>Ressourcendateien</Filter>
     </None>
+    <None Include="scene0.ini">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="scene1.ini">
+      <Filter>Ressourcendateien</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

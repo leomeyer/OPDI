@@ -102,12 +102,6 @@ protected:
 	bool isMotorEnabled;
 	bool isMotorOn;
 
-	OPDI_SelectPort *findSelectPort(std::string setting, std::string portID, bool required);
-
-	OPDI_DigitalPort *findDigitalPort(std::string setting, std::string portID, bool required);
-
-	void findDigitalPorts(std::string setting, std::string portIDs, DigitalPortList &portList);
-
 	void prepare() override;
 
 	// gets the line status from the digital port
@@ -206,85 +200,37 @@ void WindowPort::getState(uint16_t *position) {
 	OPDI_SelectPort::getState(position);
 }
 
-OPDI_SelectPort *WindowPort::findSelectPort(std::string setting, std::string portID, bool required) {
-	// locate port by ID
-	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
-	// no found but required?
-	if (port == NULL) { 
-		if (required)
-			throw Poco::DataException(std::string(this->getID()) + ": Port required by Setting " + setting + " not found: " + portID);
-		return NULL;
-	}
-
-	// port type must be Digital
-	if (port->getType()[0] != OPDI_PORTTYPE_SELECT[0])
-		throw Poco::DataException(std::string(this->getID()) + ": Port required by Setting " + setting + " is not a select port: " + portID);
-
-	return (OPDI_SelectPort *)port;
-}
-
-OPDI_DigitalPort *WindowPort::findDigitalPort(std::string setting, std::string portID, bool required) {
-	// locate port by ID
-	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
-	// no found but required?
-	if (port == NULL) { 
-		if (required)
-			throw Poco::DataException(std::string(this->getID()) + ": Port required by Setting " + setting + " not found: " + portID);
-		return NULL;
-	}
-
-	// port type must be Digital
-	if (port->getType()[0] != OPDI_PORTTYPE_DIGITAL[0])
-		throw Poco::DataException(std::string(this->getID()) + ": Port required by Setting " + setting + " is not a digital port: " + portID);
-
-	return (OPDI_DigitalPort *)port;
-}
-
-void WindowPort::findDigitalPorts(std::string setting, std::string portIDs, DigitalPortList &portList) {
-	// split list at blanks
-	std::stringstream ss(portIDs);
-	std::string item;
-	while (std::getline(ss, item, ' ')) {
-		// ignore empty items
-		if (item != "") {
-			OPDI_DigitalPort *port = this->findDigitalPort(setting, item, true);
-			if (port != NULL)
-				portList.push_back(port);
-		}
-	}
-}
-
 void WindowPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_Port::prepare();
 
 	// find ports; throws errors if something required is missing
 	if (this->sensor != "")
-		this->sensorPort = this->findDigitalPort("Sensor", this->sensor, true);
+		this->sensorPort = this->findDigitalPort(this->ID(), "Sensor", this->sensor, true);
 	if (this->mode == H_BRIDGE) {
-		this->motorAPort = this->findDigitalPort("MotorA", this->motorA, true);
-		this->motorBPort = this->findDigitalPort("MotorB", this->motorB, true);
+		this->motorAPort = this->findDigitalPort(this->ID(), "MotorA", this->motorA, true);
+		this->motorBPort = this->findDigitalPort(this->ID(), "MotorB", this->motorB, true);
 		if (this->enable != "")
-			this->enablePort = this->findDigitalPort("Enable", this->enable, true);
+			this->enablePort = this->findDigitalPort(this->ID(), "Enable", this->enable, true);
 		// no enable port? assume always enabled
 		if (this->enablePort == NULL)
 			this->isMotorEnabled = true;
 
 	} else if (this->mode == SERIAL_RELAY) {
-		this->directionPort = this->findDigitalPort("Direction", this->direction, true);
-		this->enablePort = this->findDigitalPort("Enable", this->enable, true);
+		this->directionPort = this->findDigitalPort(this->ID(), "Direction", this->direction, true);
+		this->enablePort = this->findDigitalPort(this->ID(), "Enable", this->enable, true);
 	} else
 		throw Poco::DataException(std::string(this->getID()) + ": Unknown window mode; only H-Bridge and SerialRelay are supported");
 
 	if (this->statusPortStr != "")
-		this->statusPort = this->findSelectPort("StatusPort", this->statusPortStr, true);
+		this->statusPort = this->findSelectPort(this->ID(), "StatusPort", this->statusPortStr, true);
 
-	this->findDigitalPorts("AutoOpen", this->autoOpen, this->autoOpenPorts);
-	this->findDigitalPorts("AutoClose", this->autoClose, this->autoClosePorts);
-	this->findDigitalPorts("ForceOpen", this->forceOpen, this->forceOpenPorts);
-	this->findDigitalPorts("ForceClose", this->forceClose, this->forceClosePorts);
-	this->findDigitalPorts("ErrorPorts", this->errorPortStr, this->errorPorts);
-	this->findDigitalPorts("ResetPorts", this->resetPortStr, this->resetPorts);
+	this->findDigitalPorts(this->ID(), "AutoOpen", this->autoOpen, this->autoOpenPorts);
+	this->findDigitalPorts(this->ID(), "AutoClose", this->autoClose, this->autoClosePorts);
+	this->findDigitalPorts(this->ID(), "ForceOpen", this->forceOpen, this->forceOpenPorts);
+	this->findDigitalPorts(this->ID(), "ForceClose", this->forceClose, this->forceClosePorts);
+	this->findDigitalPorts(this->ID(), "ErrorPorts", this->errorPortStr, this->errorPorts);
+	this->findDigitalPorts(this->ID(), "ResetPorts", this->resetPortStr, this->resetPorts);
 	
 	// a window port normally refreshes itself automatically unless specified otherwise
 	if (this->refreshMode == REFRESH_NOT_SET)

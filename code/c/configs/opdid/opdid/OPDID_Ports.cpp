@@ -7,6 +7,8 @@
 #include "Poco/DateTimeFormatter.h"
 #include "Poco/NumberParser.h"
 #include "Poco/Format.h"
+#include "Poco/Path.h"
+#include "Poco/File.h"
 
 #include "ctb-0.16/ctb.h"
 
@@ -834,7 +836,8 @@ void OPDID_FaderPort::setMode(uint8_t mode) {
 }
 
 void OPDID_FaderPort::setLine(uint8_t line) {
-	if (line == 1) {
+	uint8_t oldline = this->line;
+	if ((this->line == 0) && (line == 1)) {
 		// store current values on start (might be resolved by ValueResolvers, and we don't want them to change during fading
 		// because each value might again refer to the output port - not an uncommon scenario for e.g. dimmers)
 		this->left = this->leftValue;
@@ -853,7 +856,8 @@ void OPDID_FaderPort::setLine(uint8_t line) {
 		}
 	} else {
 		OPDI_DigitalPort::setLine(line);
-		this->logVerbose(this->ID() + ": Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
+		if (oldline != this->line)
+			this->logVerbose(this->ID() + ": Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
 	}
 }
 
@@ -940,4 +944,161 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 	}
 
 	return OPDI_STATUS_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// SceneSelectPort
+///////////////////////////////////////////////////////////////////////////////
+
+OPDID_SceneSelectPort::OPDID_SceneSelectPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(id), OPDID_PortFunctions(id) {
+	this->opdid = opdid;
+	this->positionSet = false;
+}
+
+OPDID_SceneSelectPort::~OPDID_SceneSelectPort() {
+}
+
+void OPDID_SceneSelectPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+
+	// remember configuration file path (scene files are always relative to the configuration file)
+	this->configFilePath = config->getString(OPDID_CONFIG_FILE_SETTING);
+
+	// the scene select port requires a prefix or section "<portID>.Scenes"
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> portItems = parentConfig->createView(this->ID() + ".Scenes");
+
+	// get ordered list of items
+	Poco::Util::AbstractConfiguration::Keys itemKeys;
+	portItems->keys("", itemKeys);
+
+	typedef Poco::Tuple<int, std::string> Item;
+	typedef std::vector<Item> ItemList;
+	ItemList orderedItems;
+
+	// create ordered list of items (by priority)
+	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = itemKeys.begin(); it != itemKeys.end(); ++it) {
+		int itemNumber;
+		if (!Poco::NumberParser::tryParse(*it, itemNumber) || (itemNumber < 0)) {
+			throw Poco::DataException(this->ID() + ": Scene identifiers must be numeric integer values greater or equal than 0; got: " + this->to_string(itemNumber));
+		}
+		// insert at the correct position to create a sorted list of items
+		ItemList::iterator nli = orderedItems.begin();
+		while (nli != orderedItems.end()) {
+			if (nli->get<0>() > itemNumber)
+				break;
+			nli++;
+		}
+		Item item(itemNumber, portItems->getString(*it));
+		orderedItems.insert(nli, item);
+	}
+
+	if (orderedItems.size() == 0)
+		throw Poco::DataException(this->ID() + ": A scene select port requires at least one scene in its config section", this->ID() + ".Scenes");
+
+	// go through items, create ordered list of char* items
+	ItemList::const_iterator nli = orderedItems.begin();
+	while (nli != orderedItems.end()) {
+		this->fileList.push_back(nli->get<1>());
+		nli++;
+	}
+
+	this->opdid->configureSelectPort(config, parentConfig, this, 0);
+
+	// check whether port items and file match in numbers
+	if (this->getMaxPosition() + 1 != this->fileList.size()) 
+		throw Poco::DataException(this->ID() + ": The number of scenes (" + this->to_string(this->fileList.size()) + ")"
+			+ " must match the number of items (" + this->to_string(this->getMaxPosition() + 1) + ")");
+}
+
+void OPDID_SceneSelectPort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
+	OPDI_SelectPort::prepare();
+
+	// check files
+	FileList::iterator fi = this->fileList.begin();
+	while (fi != this->fileList.end()) {
+		std::string sceneFile = *fi;
+
+		this->logDebug(this->ID() + ": Checking scene file "+ sceneFile + " relative to configuration file: " + this->configFilePath);
+
+		Poco::Path filePath(this->configFilePath);
+		Poco::Path absPath(filePath.absolute());
+		Poco::Path parentPath = absPath.parent();
+		// append or replace scene file path to path of config file
+		Poco::Path finalPath = parentPath.resolve(sceneFile);
+		sceneFile = finalPath.toString();
+		Poco::File file(finalPath);
+
+		if (!file.exists())
+			throw Poco::ApplicationException(this->ID() + ": The scene file does not exist: " + sceneFile);
+
+		// store absolute scene file path
+		*fi = sceneFile;
+
+		fi++;
+	}
+}
+
+uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
+	OPDI_SelectPort::doWork(canSend);
+
+	// position changed?
+	if (this->positionSet) {
+		std::string sceneFile = this->fileList[this->position];
+
+		// open the config file
+		OPDIDConfigurationFile config(sceneFile, std::map<std::string, std::string>());
+
+		// go through sections of the scene file
+		Poco::Util::AbstractConfiguration::Keys sectionKeys;
+		config.keys("", sectionKeys);
+
+		if (sectionKeys.size() == 0)
+			this->logWarning(this->ID() + ": Scene file " + sceneFile + " does not contain any scene information, is this intended?");
+
+		this->logDebug(this->ID() + ": Applying settings from scene file: " + sceneFile);
+
+		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = sectionKeys.begin(); it != sectionKeys.end(); ++it) {
+			// find port corresponding to this section
+			OPDI_Port *port = this->opdid->findPortByID((*it).c_str());
+			if (port == NULL)
+				this->logWarning(this->ID() + ": In scene file " + sceneFile + ": Port with ID " + (*it) + " not present in current configuration");
+			else {
+				this->logDebug(this->ID() + ": Applying settings to port: " + *it);
+
+				// configure port according to settings 
+				Poco::AutoPtr<Poco::Util::AbstractConfiguration> portConfig = config.createView(*it);
+
+				// configure only state - not the general setup
+				try {
+					if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
+						this->opdid->configureDigitalPort(portConfig, (OPDI_DigitalPort*)port, true);
+					} else
+					if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+						this->opdid->configureAnalogPort(portConfig, (OPDI_AnalogPort*)port, true);
+					} else
+					if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+						this->opdid->configureSelectPort(portConfig, &config, (OPDI_SelectPort*)port, true);
+					} else
+					if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+						this->opdid->configureDialPort(portConfig, (OPDI_DialPort*)port, true);
+					} else
+						this->logWarning(this->ID() + ": In scene file " + sceneFile + ": Port with ID " + (*it) + " has an unknown type");
+				} catch (Poco::Exception &e) {
+					this->logWarning(this->ID() + ": In scene file " + sceneFile + ": Error configuring port " + (*it) + ": " + e.message());
+				}
+			}
+		}
+
+		this->positionSet = false;
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+
+void OPDID_SceneSelectPort::setPosition(uint16_t position) {
+	OPDI_SelectPort::setPosition(position);
+
+	this->positionSet = true;
 }
