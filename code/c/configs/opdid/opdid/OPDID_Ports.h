@@ -279,12 +279,13 @@ public:
 // Fader Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A FaderPort can fade AnalogPorts in or out. You can set a left and right value
+/** A FaderPort can fade AnalogPorts or DialPorts in or out. You can set a left and right value
 * as well as a duration time in milliseconds. If the FaderPort is inactive (line = Low),
 * it will not act on the output ports. If it is set to High it will start at the
 * left value and count to the right value within the specified time. The values have 
 * to be specified as percentages. Once the duration is up the port sets itself to 
-* inactive (line = Low).
+* inactive (line = Low). When the fader is done it can set optionally specified DigitalPorts
+* (end switches) to High.
 */
 class OPDID_FaderPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
@@ -307,6 +308,9 @@ protected:
 
 	std::string outputPortStr;
 	PortList outputPorts;
+
+	std::string endSwitchesStr;
+	DigitalPortList endSwitches;
 
 	Poco::Timestamp startTime;
 	double lastValue;

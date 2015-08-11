@@ -823,6 +823,7 @@ void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->invert = config->getBool("Invert", this->invert);
 
 	this->outputPortStr = opdid->getConfigString(config, "OutputPorts", "", true);
+	this->endSwitchesStr = opdid->getConfigString(config, "EndSwitches", "", false);
 
 	this->opdid->configurePort(config, this, 0);
 }
@@ -866,7 +867,8 @@ void OPDID_FaderPort::prepare() {
 	OPDI_DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
-	this->findPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
+	this->findPorts(this->ID(), "OutputPorts", this->outputPortStr, this->outputPorts);
+	this->findDigitalPorts(this->ID(), "EndSwitches", this->endSwitchesStr, this->endSwitches);
 }
 
 uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
@@ -890,6 +892,19 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 		if (elapsedMs > this->durationMs) {
 			this->setLine(0);
 			this->refreshRequired = true;
+
+			// set end switches if specified
+			DigitalPortList::iterator it = this->endSwitches.begin();
+			while (it != this->endSwitches.end()) {
+				try {
+					this->logDebug(this->ID() + ": Setting line of end switch port " + (*it)->ID() + " to High");
+					(*it)->setLine(1);
+				} catch (Poco::Exception &e) {
+					this->opdid->logWarning(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
+				}
+				it++;
+			}
+
 			return OPDI_STATUS_OK;
 		}
 
