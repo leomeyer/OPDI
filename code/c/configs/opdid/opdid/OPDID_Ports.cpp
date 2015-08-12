@@ -1025,7 +1025,7 @@ void OPDID_SceneSelectPort::configure(Poco::Util::AbstractConfiguration *config,
 	this->opdid->configureSelectPort(config, parentConfig, this, 0);
 
 	// check whether port items and file match in numbers
-	if (this->getMaxPosition() + 1 != this->fileList.size()) 
+	if ((uint32_t)(this->getMaxPosition() + 1) != this->fileList.size()) 
 		throw Poco::DataException(this->ID() + ": The number of scenes (" + this->to_string(this->fileList.size()) + ")"
 			+ " must match the number of items (" + this->to_string(this->getMaxPosition() + 1) + ")");
 }
@@ -1138,7 +1138,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 		return OPDI_STATUS_OK;
 
 	// if a delay is specified, ignore reloads until it's up
-	if ((this->reloadDelayMs > 0) && (opdi_get_time_ms() - lastReloadTime < this->reloadDelayMs))
+	if ((this->reloadDelayMs > 0) && (opdi_get_time_ms() - lastReloadTime < (uint64_t)this->reloadDelayMs))
 		return OPDI_STATUS_OK;
 
 	Poco::Mutex::ScopedLock(this->mutex);
@@ -1294,14 +1294,18 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 		throw Poco::DataException(this->ID() + ": If ReloadDelay is specified it must be greater than 0 (ms): " + this->to_string(this->reloadDelayMs));
 	}
 
-	this->logDebug(this->ID() + ": Preparing DirectoryWatcher for folder '" + this->directory.path() + "'");
-
 	// determine directory and filename
-	Poco::Path filePath(filePath);
-	Poco::Path absPath(filePath.absolute());
+	Poco::Path path(filePath);
+	Poco::Path absPath(path.absolute());
+	// std::cout << absPath << std::endl;
+	
 	this->filePath = absPath.toString();
 	this->directory = absPath.parent();
 
+	this->logDebug(this->ID() + ": Preparing DirectoryWatcher for folder '" + this->directory.path() + "'");
+
 	this->directoryWatcher = new Poco::DirectoryWatcher(this->directory, Poco::DirectoryWatcher::DW_ITEM_MODIFIED, Poco::DirectoryWatcher::DW_DEFAULT_SCAN_INTERVAL);
 	this->directoryWatcher->itemModified += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
+	this->directoryWatcher->itemAdded += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
+	this->directoryWatcher->itemMovedTo += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
 }
