@@ -64,7 +64,7 @@ protected:
 	DigitalPortList outputPorts;
 	DigitalPortList inverseOutputPorts;
 
-	virtual uint8_t doWork(uint8_t canSend);
+	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
 	OPDID_LogicPort(AbstractOPDID *opdid, const char *id);
@@ -113,7 +113,7 @@ protected:
 	uint8_t pulseState;
 	uint64_t lastStateChangeTime;
 
-	virtual uint8_t doWork(uint8_t canSend);
+	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
 	OPDID_PulsePort(AbstractOPDID *opdid, const char *id);
@@ -143,7 +143,7 @@ protected:
 	OPDI_SelectPort *selectPort;
 	uint16_t position;
 
-	virtual uint8_t doWork(uint8_t canSend);
+	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
 	OPDID_SelectorPort(AbstractOPDID *opdid, const char *id);
@@ -316,7 +316,7 @@ protected:
 	Poco::Timestamp startTime;
 	double lastValue;
 
-	virtual uint8_t doWork(uint8_t canSend);
+	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
 	OPDID_FaderPort(AbstractOPDID *opdid, const char *id);
@@ -352,7 +352,7 @@ protected:
 
 	bool positionSet;
 
-	virtual uint8_t doWork(uint8_t canSend);
+	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
 	OPDID_SceneSelectPort(AbstractOPDID *opdid, const char *id);
@@ -372,10 +372,13 @@ public:
 
 /** A FileInputPort is a port that reads its state from a file. It is represented by
 * a DigitalPort; as such it can be either active (line = High) or inactive (line = Low).
+* The FileInputPort actually consists of two ports: 1.) one DigitalPort which handles
+* the actual file monitoring; it can be enabled and disabled, and 2.) one more port with
+* a specified type that reflects the file content.
 * You have to specify a PortNode setting which provides information about the actual
 * input port that should reflect the file content. This node's configuration is
 * evaluated just as if it was a standard port node, except that you cannot set
-* the Mode setting to anything other than Input.
+* the Mode setting to anything other than Input (if available).
 * The port monitors the file and reads its contents when it changes. The content is
 * parsed according to the port type:
 *  - DigitalPort: content must be either 0 or 1
@@ -409,7 +412,7 @@ protected:
 	Poco::Mutex mutex;
 	bool needsReload;
 
-	virtual uint8_t doWork(uint8_t canSend);
+	virtual uint8_t doWork(uint8_t canSend) override;
 
 	void fileChangedEvent(const void*, const Poco::DirectoryWatcher::DirectoryEvent&);
 

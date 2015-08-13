@@ -1134,14 +1134,17 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 	if (result != OPDI_STATUS_OK)
 		return result;
 
-	if (this->line == 0)
+	Poco::Mutex::ScopedLock(this->mutex);
+
+	if (this->line == 0) {
+		// always clear flag if not active (to avoid reloading when set to High)
+		this->needsReload = false;
 		return OPDI_STATUS_OK;
+	}
 
 	// if a delay is specified, ignore reloads until it's up
 	if ((this->reloadDelayMs > 0) && (opdi_get_time_ms() - lastReloadTime < (uint64_t)this->reloadDelayMs))
 		return OPDI_STATUS_OK;
-
-	Poco::Mutex::ScopedLock(this->mutex);
 
 	if (this->needsReload) {
 		this->logDebug(this->ID() + ": Reloading file: " + this->filePath);
@@ -1304,7 +1307,9 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 
 	this->logDebug(this->ID() + ": Preparing DirectoryWatcher for folder '" + this->directory.path() + "'");
 
-	this->directoryWatcher = new Poco::DirectoryWatcher(this->directory, Poco::DirectoryWatcher::DW_ITEM_MODIFIED, Poco::DirectoryWatcher::DW_DEFAULT_SCAN_INTERVAL);
+	this->directoryWatcher = new Poco::DirectoryWatcher(this->directory, 
+			Poco::DirectoryWatcher::DW_ITEM_MODIFIED | Poco::DirectoryWatcher::DW_ITEM_ADDED | Poco::DirectoryWatcher::DW_ITEM_MOVED_TO, 
+			Poco::DirectoryWatcher::DW_DEFAULT_SCAN_INTERVAL);
 	this->directoryWatcher->itemModified += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
 	this->directoryWatcher->itemAdded += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
 	this->directoryWatcher->itemMovedTo += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
