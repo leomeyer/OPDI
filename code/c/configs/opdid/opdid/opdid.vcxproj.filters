@@ -67,6 +67,9 @@
     <None Include="scene1.ini">
       <Filter>Ressourcendateien</Filter>
     </None>
+    <None Include="fileinputtest.txt">
+      <Filter>Ressourcendateien</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

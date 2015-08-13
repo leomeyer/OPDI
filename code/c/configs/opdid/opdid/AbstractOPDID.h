@@ -244,6 +244,8 @@ public:
 
 	virtual void setupSceneSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port);
 
+	virtual void setupFileInputPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port);
+
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration *config, std::string node);
 

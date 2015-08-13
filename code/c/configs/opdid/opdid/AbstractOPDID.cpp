@@ -991,6 +991,15 @@ void AbstractOPDID::setupSceneSelectPort(Poco::Util::AbstractConfiguration *port
 	this->addPort(ssPort);
 }
 
+void AbstractOPDID::setupFileInputPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port) {
+	this->logVerbose("Setting up FileInput: " + port);
+
+	OPDID_FileInputPort* fiPort = new OPDID_FileInputPort(this, port.c_str());
+	fiPort->configure(portConfig, parentConfig);
+
+	this->addPort(fiPort);
+}
+
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
 	this->logVerbose("Setting up node: " + node);
 
@@ -1083,6 +1092,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else
 		if (nodeType == "SceneSelect") {
 			this->setupSceneSelectPort(nodeConfig, config, node);
+		} else
+		if (nodeType == "FileInput") {
+			this->setupFileInputPort(nodeConfig, config, node);
 		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}

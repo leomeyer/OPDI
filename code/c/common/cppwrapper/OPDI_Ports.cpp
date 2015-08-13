@@ -420,7 +420,6 @@ void OPDI_DigitalPort::setDirCaps(const char *dirCaps) {
 		mode = 3;
 }
 
-// function that handles the set direction command (opdi_set_digital_port_mode)
 void OPDI_DigitalPort::setMode(uint8_t mode) {
 	if (mode > 3)
 		throw PortError(std::string(this->getID()) + ": Digital port mode not supported: " + this->to_string((int)mode));
@@ -479,10 +478,13 @@ void OPDI_DigitalPort::setLine(uint8_t line) {
 		this->opdi->persist(this);
 }
 
-// function that fills in the current port state
 void OPDI_DigitalPort::getState(uint8_t *mode, uint8_t *line) {
 	*mode = this->mode;
 	*line = this->line;
+}
+
+uint8_t OPDI_DigitalPort::getMode() {
+	return this->mode;
 }
 
 bool OPDI_DigitalPort::hasError(void) {
@@ -528,7 +530,6 @@ void OPDI_AnalogPort::doSelfRefresh(void) {
 	this->refreshRequired = true;
 }
 
-// function that handles the set direction command (opdi_set_digital_port_mode)
 void OPDI_AnalogPort::setMode(uint8_t mode) {
 	if (mode > 2)
 		throw PortError(std::string(this->getID()) + ": Analog port mode not supported: " + this->to_string((int)mode));
@@ -579,10 +580,6 @@ void OPDI_AnalogPort::setReference(uint8_t reference) {
 }
 
 void OPDI_AnalogPort::setValue(int32_t value) {
-	// not for inputs
-	if (this->mode == 0)
-		throw PortError(std::string(this->getID()) + ": Cannot set analog value on port configured as input");
-
 	// restrict value to possible range
 	int32_t newValue = this->validateValue(value);
 	if (newValue != this->value)
@@ -592,7 +589,6 @@ void OPDI_AnalogPort::setValue(int32_t value) {
 		this->opdi->persist(this);
 }
 
-// function that fills in the current port state
 void OPDI_AnalogPort::getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) {
 	*mode = this->mode;
 	*resolution = this->resolution;
@@ -621,6 +617,10 @@ double OPDI_AnalogPort::getRelativeValue(void) {
 
 void OPDI_AnalogPort::setRelativeValue(double value) {
 	this->setValue(static_cast<int32_t>(value * ((1 << this->resolution) - 1)));
+}
+
+uint8_t OPDI_AnalogPort::getMode() {
+	return this->mode;
 }
 
 bool OPDI_AnalogPort::hasError(void) {
@@ -720,7 +720,6 @@ void OPDI_SelectPort::getState(uint16_t *position) {
 	*position = this->position;
 }
 
-
 uint16_t OPDI_SelectPort::getMaxPosition(void) {
 	return this->count;
 }
@@ -787,7 +786,6 @@ void OPDI_DialPort::setStep(uint64_t step) {
 	this->step = step;
 }
 
-// function that handles position setting; position may be in the range of minValue..maxValue
 void OPDI_DialPort::setPosition(int64_t position) {
 	if (position < this->minValue)
 		throw PortError(std::string(this->getID()) + ": Position must not be less than the minimum: " + to_string(this->minValue));
@@ -802,7 +800,6 @@ void OPDI_DialPort::setPosition(int64_t position) {
 		this->opdi->persist(this);
 }
 
-// function that fills in the current port state
 void OPDI_DialPort::getState(int64_t *position) {
 	*position = this->position;
 }

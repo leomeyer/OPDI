@@ -2,6 +2,7 @@
 #define _USE_MATH_DEFINES // for C++
 #include <math.h>
 
+#include <Poco/String.h>
 #include "Poco/Tuple.h"
 #include "Poco/Timezone.h"
 #include "Poco/DateTimeFormatter.h"
@@ -9,6 +10,10 @@
 #include "Poco/Format.h"
 #include "Poco/Path.h"
 #include "Poco/File.h"
+#include "Poco/BasicEvent.h"
+#include "Poco/Delegate.h"
+#include "Poco/ScopedLock.h"
+#include "Poco/FileStream.h"
 
 #include "ctb-0.16/ctb.h"
 
@@ -1105,15 +1110,198 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 			}
 		}
 
+		// refresh all ports of a connected master
+		this->opdid->refresh(NULL);
+
 		this->positionSet = false;
 	}
 
 	return OPDI_STATUS_OK;
 }
 
-
 void OPDID_SceneSelectPort::setPosition(uint16_t position) {
 	OPDI_SelectPort::setPosition(position);
 
 	this->positionSet = true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// FileInputPort
+///////////////////////////////////////////////////////////////////////////////
+
+uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
+	uint8_t result = OPDI_DigitalPort::doWork(canSend);
+	if (result != OPDI_STATUS_OK)
+		return result;
+
+	if (this->line == 0)
+		return OPDI_STATUS_OK;
+
+	// if a delay is specified, ignore reloads until it's up
+	if ((this->reloadDelayMs > 0) && (opdi_get_time_ms() - lastReloadTime < this->reloadDelayMs))
+		return OPDI_STATUS_OK;
+
+	Poco::Mutex::ScopedLock(this->mutex);
+
+	if (this->needsReload) {
+		this->logDebug(this->ID() + ": Reloading file: " + this->filePath);
+
+		this->lastReloadTime = opdi_get_time_ms();
+
+		// read file and parse content
+		try {
+			std::string content;
+			Poco::FileInputStream fis(this->filePath);
+			fis >> content;
+			fis.close();
+
+			content = Poco::trim(content);
+			if (content == "")
+				throw Poco::DataFormatException("File is empty");
+			switch (this->portType) {
+			case DIGITAL_PORT: {
+				uint8_t line;
+				if (content == "0")
+					line = 0;
+				else
+				if (content == "1")
+					line = 1;
+				else {
+					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
+					throw Poco::DataFormatException("Expected '0' or '1' but got: " + errorContent);
+				}
+				this->logDebug(ID() + ": Setting line of digital port '" + this->port->ID() + " to " + this->to_string((int)line));
+				((OPDI_DigitalPort*)this->port)->setLine(line);
+				break;
+			}
+			case ANALOG_PORT: {
+				double value;
+				if (!Poco::NumberParser::tryParseFloat(content, value) || (value < 0) || (value > 1)) {
+					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
+					throw Poco::DataFormatException("Expected decimal value between 0 and 1 but got: " + errorContent);
+				}
+				this->logDebug(ID() + ": Setting value of analog port '" + this->port->ID() + " to " + this->to_string(value));
+				((OPDI_AnalogPort*)this->port)->setRelativeValue(value);
+				break;
+			}
+			case DIAL_PORT: {
+				int64_t value;
+				int64_t min = ((OPDI_DialPort*)this->port)->getMin();
+				int64_t max = ((OPDI_DialPort*)this->port)->getMax();
+				if (!Poco::NumberParser::tryParse64(content, value) || (value < min) || (value > max)) {
+					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
+					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
+				}
+				this->logDebug(ID() + ": Setting position of dial port '" + this->port->ID() + " to " + this->to_string(value));
+				((OPDI_DialPort*)this->port)->setPosition(value);
+				break;
+			}
+			case SELECT_PORT: {
+				int32_t value;
+				uint16_t min = 0;
+				uint16_t max = ((OPDI_SelectPort*)this->port)->getMaxPosition();
+				if (!Poco::NumberParser::tryParse(content, value) || (value < min) || (value > max)) {
+					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
+					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
+				}
+				this->logDebug(ID() + ": Setting position of select port '" + this->port->ID() + " to " + this->to_string(value));
+				((OPDI_SelectPort*)this->port)->setPosition(value);
+				break;
+			}
+			default:
+				throw Poco::ApplicationException("Port type is unknown or not supported");
+			}
+		} catch (Poco::Exception &e) {
+			this->logWarning(this->ID() + ": Error setting port state from file '" + this->filePath + "': " + e.message());
+		}
+
+		this->needsReload = false;
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+void OPDID_FileInputPort::fileChangedEvent(const void*, const Poco::DirectoryWatcher::DirectoryEvent& evt) {
+	if (evt.item.path() == this->filePath) {
+		this->logExtreme(this->ID() + ": Detected file modification: " + this->filePath);
+		
+		Poco::Mutex::ScopedLock(this->mutex);
+		this->needsReload = true;
+	}
+}
+
+OPDID_FileInputPort::OPDID_FileInputPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id), OPDID_PortFunctions(id) {
+	this->opdid = opdid;
+	this->directoryWatcher = NULL;
+	this->reloadDelayMs = 0;
+	this->lastReloadTime = 0;
+	this->needsReload = false;
+
+	// file input is active by default
+	this->setLine(1);
+}
+
+OPDID_FileInputPort::~OPDID_FileInputPort() {
+	if (this->directoryWatcher != NULL)
+		delete this->directoryWatcher;
+}
+
+void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
+	this->opdid->configureDigitalPort(config, this);
+
+	this->filePath = opdid->getConfigString(config, "File", "", true);
+
+	// read port node, create configuration view and setup the port according to the specified type
+	std::string portNode = opdid->getConfigString(config, "PortNode", "", true);
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = parentConfig->createView(portNode);
+	std::string portType = opdid->getConfigString(nodeConfig, "Type", "", true);
+	if (portType == "DigitalPort") {
+		this->portType = DIGITAL_PORT;
+		this->port = new OPDI_DigitalPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
+		this->opdid->configureDigitalPort(nodeConfig, (OPDI_DigitalPort*)port);
+		// validate setup
+		if (((OPDI_DigitalPort*)port)->getMode() != OPDI_DIGITAL_MODE_INPUT_FLOATING)
+			throw Poco::DataException(this->ID() + ": Modes other than 'Input' are not supported for a digital file input port: " + portNode);
+	} else
+	if (portType == "AnalogPort") {
+		this->portType = ANALOG_PORT;
+		this->port = new OPDI_AnalogPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
+		this->opdid->configureAnalogPort(nodeConfig, (OPDI_AnalogPort*)port);
+		// validate setup
+		if (((OPDI_AnalogPort*)port)->getMode() != OPDI_ANALOG_MODE_INPUT)
+			throw Poco::DataException(this->ID() + ": Modes other than 'Input' are not supported for a analog file input port: " + portNode);
+	} else
+	if (portType == "DialPort") {
+		this->portType = DIAL_PORT;
+		this->port = new OPDI_DialPort(portNode.c_str());
+		this->opdid->configureDialPort(nodeConfig, (OPDI_DialPort*)port);
+	} else
+	if (portType == "SelectPort") {
+		this->portType = SELECT_PORT;
+		this->port = new OPDI_SelectPort(portNode.c_str());
+		this->opdid->configureSelectPort(nodeConfig, parentConfig, (OPDI_SelectPort*)port);
+	} else
+	if (portType == "StreamingPort") {
+		this->portType = STREAMING_PORT;
+		throw Poco::NotImplementedException("Streaming port support not yet implemented");
+	} else
+		throw Poco::DataException(this->ID() + ": Node " + portNode + ": Type unsupported, expected 'DigitalPort', 'AnalogPort', 'DialPort', 'SelectPort', or 'StreamingPort': " + portType);
+
+	this->opdid->addPort(port);
+
+	this->reloadDelayMs = config->getInt("ReloadDelay", 0);
+	if (this->reloadDelayMs < 0) {
+		throw Poco::DataException(this->ID() + ": If ReloadDelay is specified it must be greater than 0 (ms): " + this->to_string(this->reloadDelayMs));
+	}
+
+	this->logDebug(this->ID() + ": Preparing DirectoryWatcher for folder '" + this->directory.path() + "'");
+
+	// determine directory and filename
+	Poco::Path filePath(filePath);
+	Poco::Path absPath(filePath.absolute());
+	this->filePath = absPath.toString();
+	this->directory = absPath.parent();
+
+	this->directoryWatcher = new Poco::DirectoryWatcher(this->directory, Poco::DirectoryWatcher::DW_ITEM_MODIFIED, Poco::DirectoryWatcher::DW_DEFAULT_SCAN_INTERVAL);
+	this->directoryWatcher->itemModified += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
 }

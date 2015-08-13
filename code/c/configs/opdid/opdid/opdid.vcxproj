@@ -82,6 +82,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="exectest.bat" />
+    <None Include="fileinputtest.txt" />
     <None Include="scene0.ini" />
     <None Include="scene1.ini" />
     <None Include="test_include.ini" />

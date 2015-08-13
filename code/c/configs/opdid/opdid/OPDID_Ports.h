@@ -12,6 +12,7 @@
 
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/TimedNotificationQueue.h"
+#include "Poco/DirectoryWatcher.h"
 
 #include "opdi_constants.h"
 
@@ -333,10 +334,15 @@ public:
 	virtual void prepare() override;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Scene Select Port
+///////////////////////////////////////////////////////////////////////////////
 
 /** A SceneSelectPort is a select port with n scene settings. Each scene setting corresponds
 * with a settings file. If a scene is selected the port opens the settings file and sets all
 * ports defined in the settings file to the specified values.
+* The SceneSelectPort automatically sends a "Refresh all" message to a connected master when
+* a scene has been selected.
 */
 class OPDID_SceneSelectPort : public OPDI_SelectPort, protected OPDID_PortFunctions {
 protected:
@@ -358,4 +364,59 @@ public:
 	virtual void setPosition(uint16_t position) override;
 
 	virtual void prepare() override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// File Input Port
+///////////////////////////////////////////////////////////////////////////////
+
+/** A FileInputPort is a port that reads its state from a file. It is represented by
+* a DigitalPort; as such it can be either active (line = High) or inactive (line = Low).
+* You have to specify a PortNode setting which provides information about the actual
+* input port that should reflect the file content. This node's configuration is
+* evaluated just as if it was a standard port node, except that you cannot set
+* the Mode setting to anything other than Input.
+* The port monitors the file and reads its contents when it changes. The content is
+* parsed according to the port type:
+*  - DigitalPort: content must be either 0 or 1
+*  - AnalogPort: content must be a decimal number (separator '.') in range [0..1]
+*  - DialPort: content must be a number in range [min..max] (it's automatically adjusted
+*    to fit the step setting)
+*  - SelectPort: content must be a positive integer or 0 specifying the select port position
+*  - StreamingPort: content is injected into the streaming port as raw bytes
+* Additionally you can specify a delay that signals how long to wait until the file is
+* being re-read. This can help avoid too many refreshes.
+*/
+class OPDID_FileInputPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+protected:
+
+	enum PortType {
+		DIGITAL_PORT,
+		ANALOG_PORT,
+		DIAL_PORT,
+		SELECT_PORT,
+		STREAMING_PORT
+	};
+
+	std::string filePath;
+	Poco::File directory;
+	OPDI_Port *port;
+	PortType portType;
+	int reloadDelayMs;
+
+	Poco::DirectoryWatcher *directoryWatcher;
+	uint64_t lastReloadTime;
+	Poco::Mutex mutex;
+	bool needsReload;
+
+	virtual uint8_t doWork(uint8_t canSend);
+
+	void fileChangedEvent(const void*, const Poco::DirectoryWatcher::DirectoryEvent&);
+
+public:
+	OPDID_FileInputPort(AbstractOPDID *opdid, const char *id);
+
+	virtual ~OPDID_FileInputPort();
+
+	virtual void configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig);
 };

@@ -303,6 +303,8 @@ public:
 	// function that fills in the current port state
 	virtual void getState(uint8_t *mode, uint8_t *line);
 
+	virtual uint8_t getMode(void);
+
 	virtual bool hasError(void) override;
 };
 
@@ -349,6 +351,8 @@ public:
 
 	// sets the value from a factor between 0 and 1
 	virtual void setRelativeValue(double value);
+
+	virtual uint8_t getMode(void);
 
 	virtual bool hasError(void) override;
 };
