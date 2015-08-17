@@ -253,7 +253,7 @@ public:
 	virtual void setupRoot(Poco::Util::AbstractConfiguration *config);
 
 	/** Sets up the connection from the specified configuration. */
-	virtual int setupConnection(Poco::Util::AbstractConfiguration *config);
+	virtual int setupConnection(Poco::Util::AbstractConfiguration *config, bool testMode);
 
 	/** Sets up a TCP listener and listens for incoming requests. This method does not return unless the program should exit. */
 	virtual int setupTCP(std::string interface_, int port) = 0;

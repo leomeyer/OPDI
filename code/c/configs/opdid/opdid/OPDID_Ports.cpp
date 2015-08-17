@@ -1064,6 +1064,8 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 
 	// position changed?
 	if (this->positionSet) {
+		this->logDebug(this->ID() + ": Scene selected: " + this->getPositionLabel(this->position));
+		
 		std::string sceneFile = this->fileList[this->position];
 
 		// open the config file
@@ -1075,8 +1077,8 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 
 		if (sectionKeys.size() == 0)
 			this->logWarning(this->ID() + ": Scene file " + sceneFile + " does not contain any scene information, is this intended?");
-
-		this->logDebug(this->ID() + ": Applying settings from scene file: " + sceneFile);
+		else
+			this->logDebug(this->ID() + ": Applying settings from scene file: " + sceneFile);
 
 		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = sectionKeys.begin(); it != sectionKeys.end(); ++it) {
 			// find port corresponding to this section

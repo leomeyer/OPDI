@@ -289,6 +289,8 @@ void AbstractOPDID::logExtreme(std::string message) {
 int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
 	this->environment = environment;
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> configuration = NULL;
+	
+	bool testMode = false;
 
 	// add default environment parameters
 	this->environment["$DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), this->timestampFormat);
@@ -319,6 +321,9 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 		if (args.at(i) == "-q") {
 			this->logVerbosity = QUIET;
 		} else
+		if (args.at(i) == "-t") {
+			testMode = true;
+		} else		
 		if (args.at(i) == "-c") {
 			i++;
 			if (args.size() == i) {
@@ -361,11 +366,11 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 
 	this->sortPorts();
 	this->preparePorts();
-
+	
 	// create view to "Connection" section
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> connection = configuration->createView("Connection");
 
-	return this->setupConnection(connection);
+	return this->setupConnection(connection, testMode);
 }
 
 void AbstractOPDID::lockResource(std::string resourceID, std::string lockerID) {
@@ -1149,13 +1154,16 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 	// TODO check group hierarchy
 }
 
-int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config) {
+int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config, bool testMode) {
 	this->logVerbose(std::string("Setting up connection for slave: ") + this->slaveName);
 	std::string connectionType = this->getConfigString(config, "Type", "", true);
 
 	if (connectionType == "TCP") {
 		std::string interface_ = this->getConfigString(config, "Interface", "*", false);
 		int port = config->getInt("Port", DEFAULT_TCP_PORT);
+		
+		if (testMode)
+			return OPDI_STATUS_OK;
 
 		return this->setupTCP(interface_, port);
 	}
