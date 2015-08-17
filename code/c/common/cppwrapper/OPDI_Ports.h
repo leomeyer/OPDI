@@ -393,6 +393,8 @@ public:
 	// function that fills in the current port state
 	virtual void getState(uint16_t *position);
 
+	virtual const char *getPositionLabel(uint16_t position);
+
 	virtual uint16_t getMaxPosition(void);
 
 	virtual bool hasError(void) override;
