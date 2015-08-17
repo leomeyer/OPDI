@@ -1064,9 +1064,11 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 
 	// position changed?
 	if (this->positionSet) {
-		this->logDebug(this->ID() + ": Scene selected: " + this->getPositionLabel(this->position));
-		
+		this->logVerbose(this->ID() + ": Scene selected: " + this->getPositionLabel(this->position));
+
 		std::string sceneFile = this->fileList[this->position];
+
+		// TODO prepare scene file parameters (environment, ports, ...)
 
 		// open the config file
 		OPDIDConfigurationFile config(sceneFile, std::map<std::string, std::string>());
@@ -1080,7 +1082,7 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 		else
 			this->logDebug(this->ID() + ": Applying settings from scene file: " + sceneFile);
 
-		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = sectionKeys.begin(); it != sectionKeys.end(); ++it) {
+		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = sectionKeys.begin(); it != sectionKeys.end(); it++) {
 			// find port corresponding to this section
 			OPDI_Port *port = this->opdid->findPortByID((*it).c_str());
 			if (port == NULL)
@@ -1113,7 +1115,7 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 		}
 
 		// refresh all ports of a connected master
-		this->opdid->refresh(NULL);
+//		this->opdid->refresh(NULL);
 
 		this->positionSet = false;
 	}
