@@ -34,7 +34,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.PowerManager.WakeLock;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -77,8 +76,6 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
 		}
 	};
 
-	private static final String LOGTEXT = "LogText";
-
     public static final int ADD_BLUETOOTH_DEVICE = 1;
     public static final int ADD_TCPIP_DEVICE = 2;
     public static final int EDIT_BLUETOOTH_DEVICE = 3;
@@ -106,7 +103,7 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
         
     private Handler handler = new Handler();
     
-    private WakeLock wakeLock; 		// the WakeLock is acquired while devices are connected
+//    private WakeLock wakeLock; 		// the WakeLock is acquired while devices are connected
     
 	private DeviceListAdapter deviceAdapter;
 	private ListView lvDevices;

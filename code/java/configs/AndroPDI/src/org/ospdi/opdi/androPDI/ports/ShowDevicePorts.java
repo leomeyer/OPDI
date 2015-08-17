@@ -14,8 +14,9 @@ import org.ospdi.opdi.androPDI.portdetails.ShowPortDetails;
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.interfaces.IBasicProtocol;
 import org.ospdi.opdi.interfaces.IDevice;
+import org.ospdi.opdi.interfaces.IDeviceCapabilities;
 import org.ospdi.opdi.interfaces.IDeviceListener;
-import org.ospdi.opdi.ports.BasicDeviceCapabilities;
+import org.ospdi.opdi.interfaces.IProtocol;
 import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.ports.Port.PortType;
 import org.ospdi.opdi.ports.PortGroup;
@@ -130,23 +131,24 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 		
 		@Override
 		void perform() throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException {
-            IBasicProtocol protocol = device.getProtocol();
-            final BasicDeviceCapabilities bdc;
+            IProtocol protocol = device.getProtocol();
+            final IDeviceCapabilities dc;
             
         	// query device capabilities
-			bdc = protocol.getDeviceCapabilities();
+			dc = protocol.getDeviceCapabilities();
 				
 	        // get the state of all ports
             // this avoids too much flickering of the GUI
-	        for (Port port: bdc.getPorts()) {
-				try {
-					port.getPortState();
-				} catch (PortAccessDeniedException e) {
-				}
+	        for (Port port: dc.getPorts()) {
 				// clear previous view adapter
 				port.setViewAdapter(null);
 	        }
-	        
+
+			try {
+				dc.getPortStates();
+			} catch (PortAccessDeniedException e) {
+			}
+
 	        // set group initially?
 	        if (setInitialGroup)
 	        	// set current group from device info, if present
@@ -154,7 +156,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 	        		currentGroup = device.getDeviceInfo().getStartGroup();
 	        
 	        // build group list
-	    	portGroups = bdc.getPortGroups(currentGroup);
+	    	portGroups = dc.getPortGroups(currentGroup);
 	    	// insert "All groups" item
 	    	portGroups.add(0, new PortGroup("" /* empty ID means all ports */, "All ports", "", 0));
 	    	
@@ -195,7 +197,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 			    		}
 			    	});
 
-			    	portList = bdc.getPorts(currentGroup);
+			    	portList = dc.getPorts(currentGroup);
 			        portListAdapter = new PortListAdapter(ShowDevicePorts.this, ShowDevicePorts.this, android.R.layout.simple_list_item_1, portList);
 			        ports_listview.setAdapter(portListAdapter);
 				}
@@ -209,7 +211,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 		@Override
         public void run() {
             try {
-                while(!Thread.currentThread().isInterrupted()) {
+                while (!Thread.currentThread().isInterrupted()) {
                     // attempt to take the next work item off the queue
                     // if we consume quicker than the producer then take
                     // will block until there is work to do.

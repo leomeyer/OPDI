@@ -106,6 +106,7 @@ public class DigitalPort extends Port {
 	public void setPortState(IBasicProtocol protocol, PortMode mode) throws ProtocolException {
 		if (protocol != getProtocol())
 			throw new IllegalAccessError("Setting the port state is only allowed from its protocol implementation");
+		clearError();
 		try {
 			checkMode(mode);
 		} catch (Exception e) {

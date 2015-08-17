@@ -10,11 +10,10 @@ import java.util.UUID;
 
 import org.ospdi.opdi.androPDI.AndroPDI;
 import org.ospdi.opdi.androPDI.AndroPDIDevice;
+import org.ospdi.opdi.androPDI.R;
 import org.ospdi.opdi.androPDI.utils.ResourceFactory;
 import org.ospdi.opdi.utils.Strings;
-import org.ospdi.opdi.androPDI.R;
 
-import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
@@ -59,7 +58,7 @@ public class BluetoothDevice extends AndroPDIDevice {
 		final int NAME = 2;
 		final int ADDRESS = 3;
 		final int SECURE = 4;
-		final int RESERVED = 5;
+//		final int RESERVED = 5;
 		final int FLAGS = 6;
 //		final int ENCRYPTION_METHOD = 7;
 		final int ENCRYPTION_KEY = 8;

@@ -1,13 +1,12 @@
 package org.ospdi.opdi.interfaces;
 
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.ports.AnalogPort;
-import org.ospdi.opdi.ports.BasicDeviceCapabilities;
 import org.ospdi.opdi.ports.DialPort;
 import org.ospdi.opdi.ports.DigitalPort;
-import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.ports.SelectPort;
 import org.ospdi.opdi.ports.StreamingPort;
 import org.ospdi.opdi.protocol.DisconnectedException;
@@ -58,30 +57,7 @@ public interface IBasicProtocol {
 	 * @throws PortErrorException 
 	 * @throws PortAccessDeniedException 
 	 */
-	public BasicDeviceCapabilities getDeviceCapabilities() throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException;
-	
-	/** Returns the port with the given ID. null if the port is not there.
-	 * 
-	 * @param portID
-	 * @return
-	 * @throws DisconnectedException 
-	 * @throws InterruptedException 
-	 * @throws DeviceException 
-	 * @throws ProtocolException 
-	 * @throws TimeoutException 
-	 * @throws PortErrorException 
-	 * @throws PortAccessDeniedException 
-	 */
-	public Port findPortByID(String portID) throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException, PortAccessDeniedException, PortErrorException;
-	
-	/** Returns the information about the port with the given ID.
-	 * Requires the channel from the initiating protocol.
-	 * 
-	 * @return
-	 * @throws PortErrorException 
-	 * @throws PortAccessDeniedException 
-	 */
-	public Port getPortInfo(String id, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
+	public IDeviceCapabilities getDeviceCapabilities() throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException;
 
 	/** Sets the mode for the given digital port and returns the new mode.
 	 * 
@@ -224,7 +200,19 @@ public interface IBasicProtocol {
 	 * @throws PortAccessDeniedException 
 	 */
 	public String getLabel(SelectPort selectPort, int pos) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException;
-	
+
+	/** Returns the labels for the specified select port.
+	 * 
+	 * @param selectPort
+	 * @return
+	 * @throws TimeoutException
+	 * @throws InterruptedException
+	 * @throws DisconnectedException
+	 * @throws DeviceException
+	 * @throws ProtocolException
+	 */
+	public List<String> getSelectPortLabels(SelectPort selectPort) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException;
+
 	/** Retrieves the current position setting of a select port as a zero-based integer value.
 	 * 
 	 * @param selectPort
@@ -320,5 +308,6 @@ public interface IBasicProtocol {
 	 * @throws DisconnectedException
 	 */
 	public void sendStreamingData(StreamingPort streamingPort, String data) throws DisconnectedException;
+
 
 }

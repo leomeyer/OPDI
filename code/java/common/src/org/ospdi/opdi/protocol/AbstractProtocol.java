@@ -5,6 +5,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.interfaces.IDevice;
+import org.ospdi.opdi.interfaces.IProtocol;
 import org.ospdi.opdi.utils.ResourceFactory;
 import org.ospdi.opdi.utils.Strings;
 
@@ -14,7 +15,7 @@ import org.ospdi.opdi.utils.Strings;
  * @author Leo
  *
  */
-public abstract class AbstractProtocol {
+public abstract class AbstractProtocol implements IProtocol {
 	
 	public interface IAbortable {
 		public boolean isAborted();

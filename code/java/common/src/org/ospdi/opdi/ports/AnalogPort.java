@@ -120,6 +120,7 @@ public class AnalogPort extends Port {
 	public void setPortState(IBasicProtocol protocol, PortMode mode, Reference ref, Resolution res) {
 		if (protocol != getProtocol())
 			throw new IllegalAccessError("Setting the port state is only allowed from its protocol implementation");
+		clearError();
 		this.mode = mode;
 		resolution = res;
 		reference = ref;

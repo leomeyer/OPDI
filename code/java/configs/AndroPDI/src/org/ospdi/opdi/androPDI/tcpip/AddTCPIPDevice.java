@@ -1,8 +1,7 @@
 package org.ospdi.opdi.androPDI.tcpip;
 
-import org.ospdi.opdi.androPDI.R;
 import org.ospdi.opdi.androPDI.AndroPDI;
-import org.ospdi.opdi.androPDI.bluetooth.BluetoothDevice;
+import org.ospdi.opdi.androPDI.R;
 
 import android.app.Activity;
 import android.content.Intent;

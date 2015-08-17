@@ -1,5 +1,7 @@
 package org.ospdi.opdi.androPDI.bluetooth;
 
+import java.util.Locale;
+
 import org.ospdi.opdi.androPDI.R;
 import org.ospdi.opdi.androPDI.AndroPDI;
 
@@ -88,17 +90,13 @@ public class EditBluetoothDevice extends Activity {
 			public void onClick(View v) {
 				
 				// validate
-				String address = etAddress.getText().toString().trim().toUpperCase();
+				String address = etAddress.getText().toString().trim().toUpperCase(Locale.getDefault());
 				// check bluetooth address
 				if (!BluetoothAdapter.checkBluetoothAddress(address)) {
 					// invalid address
 					Toast.makeText(EditBluetoothDevice.this, R.string.bluetooth_invalid_address, Toast.LENGTH_SHORT).show();
 					return;
 				}
-				
-				// make a new device object
-				BluetoothDevice resultDevice = new BluetoothDevice(mBluetoothAdapter, etName.getText().toString(), address, 
-						etPSK.getText().toString(), etPIN.getText().toString(), cbSecure.isChecked());
 				
 				// create the device
 				BluetoothDevice device = new BluetoothDevice(mBluetoothAdapter, etName.getText().toString(), address, etPSK.getText().toString().trim(), etPIN.getText().toString(), cbSecure.isChecked());

@@ -122,7 +122,7 @@ public interface IDevice {
 	 * 
 	 * @return
 	 */
-	public IBasicProtocol getProtocol();
+	public IProtocol getProtocol();
 
 	/** Adds a listener for connection events.
 	 * 

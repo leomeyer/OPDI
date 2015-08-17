@@ -1,14 +1,17 @@
 package org.ospdi.opdi.protocol;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.TimeoutException;
 
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.interfaces.IBasicProtocol;
 import org.ospdi.opdi.interfaces.IDevice;
+import org.ospdi.opdi.interfaces.IDeviceCapabilities;
 import org.ospdi.opdi.ports.AnalogPort;
 import org.ospdi.opdi.ports.AnalogPort.Resolution;
 import org.ospdi.opdi.ports.BasicDeviceCapabilities;
@@ -45,15 +48,10 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	protected static int CHANNEL_LOWEST_SYNCHRONOUS = CHANNEL_HIGHEST_STREAMING + 1;
 	protected static int CHANNEL_ROLLOVER = 100;
 	
-	protected BasicDeviceCapabilities deviceCaps;
+	protected IDeviceCapabilities deviceCaps;
 	
 	protected Integer currentChannel = CHANNEL_LOWEST_SYNCHRONOUS - 1;
 	protected Hashtable<Integer, StreamingPort> boundStreamingPorts = new Hashtable<Integer, StreamingPort>();
-	
-	enum ExpectationMode {
-		NORMAL,
-		IGNORE_REFRESHES
-	};
 	
 	protected volatile boolean expectingMessage;
 	protected Queue<Message> messagesToDispatch = new ArrayDeque<Message>();
@@ -168,7 +166,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		}).start();
 	}
 
-	protected Message expect(long channel, int timeout, IAbortable abortable, ExpectationMode mode) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException, PortErrorException {
+	public Message expect(long channel, int timeout, IAbortable abortable, ExpectationMode mode) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, PortAccessDeniedException, PortErrorException {
 		try {
 			// set flag: expecting a message
 			expectingMessage = true;
@@ -285,7 +283,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	}
 
 	@Override
-	public BasicDeviceCapabilities getDeviceCapabilities() throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException {
+	public IDeviceCapabilities getDeviceCapabilities() throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException {
 		// has cached device capabilities?
 		if (deviceCaps != null)
 			return deviceCaps;
@@ -306,9 +304,15 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		
 		// decode the serial form
 		// this may issue callbacks on the protocol which do not have to be threaded
-		deviceCaps = new BasicDeviceCapabilities(this, channel, capResult.getPayload());
+		deviceCaps = parseDeviceCapabilities(channel, capResult);
 
 		return deviceCaps;		
+	}
+
+	protected BasicDeviceCapabilities parseDeviceCapabilities(int channel,
+			Message capResult) throws ProtocolException, TimeoutException,
+			InterruptedException, DisconnectedException, DeviceException {
+		return new BasicDeviceCapabilities(this, channel, capResult.getPayload());
 	}	
 	
 	@Override
@@ -323,6 +327,12 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 			throw new IllegalStateException("Programming error on device: getPortInfo should never signal a port error", e);
 		}
 		
+		return parsePortInfo(message);
+	}
+
+	protected Port parsePortInfo(Message message) throws ProtocolException,
+			TimeoutException, InterruptedException, DisconnectedException,
+			DeviceException {
 		// check the port magic
 		String[] parts = Strings.split(message.getPayload(), SEPARATOR);
 
@@ -333,6 +343,11 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	protected void expectDigitalPortState(DigitalPort port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		Message m = expect(channel, DEFAULT_TIMEOUT);
 		
+		parseDigitalPortState(port, m);
+	}
+
+	protected void parseDigitalPortState(DigitalPort port, Message m)
+			throws ProtocolException {
 		final int PREFIX = 0;
 		final int ID = 1;
 		final int MODE = 2;
@@ -382,6 +397,12 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	protected void expectAnalogPortState(AnalogPort port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		Message m = expect(channel, DEFAULT_TIMEOUT);
 		
+		parseAnalogPortState(port, m);
+	}
+
+	protected void parseAnalogPortState(AnalogPort port, Message m)
+			throws ProtocolException, TimeoutException, InterruptedException,
+			DisconnectedException, DeviceException, PortAccessDeniedException {
 		final int PREFIX = 0;
 		final int ID = 1;
 		final int MODE = 2;
@@ -455,6 +476,11 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		
 		Message m = expect(channel, DEFAULT_TIMEOUT);
 		
+		return parseSelectPortLabel(port, pos, m);
+	}
+
+	protected String parseSelectPortLabel(SelectPort port, int pos, Message m)
+			throws ProtocolException {
 		final int PREFIX = 0;
 		final int ID = 1;
 		final int POS = 2;
@@ -477,6 +503,11 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	protected void expectSelectPortPosition(SelectPort port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		Message m = expect(channel, DEFAULT_TIMEOUT);
 		
+		parseSelectPortPosition(port, m);
+	}
+
+	protected void parseSelectPortPosition(SelectPort port, Message m)
+			throws ProtocolException {
 		final int PREFIX = 0;
 		final int ID = 1;
 		final int POS = 2;
@@ -520,6 +551,11 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	protected void expectDialPortPosition(DialPort port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException, PortAccessDeniedException, PortErrorException {
 		Message m = expect(channel, DEFAULT_TIMEOUT);
 		
+		parseDialPortPosition(port, m);
+	}
+
+	protected void parseDialPortPosition(DialPort port, Message m)
+			throws ProtocolException {
 		final int PREFIX = 0;
 		final int ID = 1;
 		final int POS = 2;
@@ -634,6 +670,24 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	}
 
 	@Override
+	public List<String> getSelectPortLabels(SelectPort port) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
+		List<String> result = new ArrayList<String>();
+		// query port labels
+		for (int i = 0; i < port.getPosCount(); i++)
+			try {
+				result.add(this.getLabel(port, i));
+			} catch (PortAccessDeniedException e) {
+				// makes no sense
+				e.printStackTrace();
+			} catch (PortErrorException e) {
+				// makes no sense
+				e.printStackTrace();
+			}
+		
+		return result;
+	}
+	
+	@Override
 	public void sendStreamingData(StreamingPort streamingPort, String data)
 			throws DisconnectedException {
 
@@ -650,7 +704,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 
 	@Override
 	public Port findPortByID(String portID) throws TimeoutException, ProtocolException, DeviceException, InterruptedException, DisconnectedException, PortAccessDeniedException, PortErrorException {
-		BasicDeviceCapabilities bdc = getDeviceCapabilities();
+		IDeviceCapabilities bdc = getDeviceCapabilities();
 		if (bdc == null) return null;
 		return bdc.findPortByID(portID);
 	}

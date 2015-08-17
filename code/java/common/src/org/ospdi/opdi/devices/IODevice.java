@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeoutException;
 
-import org.ospdi.opdi.interfaces.IBasicProtocol;
-import org.ospdi.opdi.interfaces.IDeviceListener;
 import org.ospdi.opdi.interfaces.IDevice;
+import org.ospdi.opdi.interfaces.IDeviceListener;
+import org.ospdi.opdi.interfaces.IProtocol;
 import org.ospdi.opdi.protocol.AbstractProtocol;
 import org.ospdi.opdi.protocol.AbstractProtocol.IAbortable;
 import org.ospdi.opdi.protocol.DisconnectedException;
@@ -55,7 +55,7 @@ public abstract class IODevice extends MessageQueueDevice {
 	@SuppressWarnings("serial")
 	class AuthenticationException extends Exception {}
 	
-	private IBasicProtocol protocol;
+	private IProtocol protocol;
 	private ConnectThread connThread;
 	
 	private String user;
@@ -245,7 +245,7 @@ public abstract class IODevice extends MessageQueueDevice {
 		super.disconnect(onError);
 	}
 	
-	public synchronized IBasicProtocol getProtocol() {
+	public synchronized IProtocol getProtocol() {
 		return protocol;
 	}
 	
@@ -336,7 +336,7 @@ public abstract class IODevice extends MessageQueueDevice {
 	 * @throws AuthenticationException 
 	 * @throws MessageException 
 	 */
-	protected IBasicProtocol handshake(ICredentialsCallback credCallback) throws IOException, InterruptedException, TimeoutException, ProtocolException, DisconnectedException, DeviceException, CancelledException, AuthenticationException, MessageException {
+	protected IProtocol handshake(ICredentialsCallback credCallback) throws IOException, InterruptedException, TimeoutException, ProtocolException, DisconnectedException, DeviceException, CancelledException, AuthenticationException, MessageException {
 
 		String supportedEncryptions = (this.tryToUseEncryption() ? Strings.join(',', Encryption.AES.toString()) : "");
 		// send handshake message
@@ -428,10 +428,10 @@ public abstract class IODevice extends MessageQueueDevice {
 		// determine the protocol
 		String[] protos = Strings.split(parts[PROTOCOLS], ',');
 		
-		IBasicProtocol prot = null;		
+		IProtocol prot = null;		
 		// try each protocol indicator (preferred protocols should come first)
 		for (String proto: protos) {
-			IBasicProtocol protocol = ProtocolFactory.getProtocol(this, proto);
+			IProtocol protocol = ProtocolFactory.getProtocol(this, proto);
 			if (protocol != null) {
 				prot = protocol;
 				break;

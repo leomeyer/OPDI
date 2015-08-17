@@ -386,6 +386,7 @@ static uint8_t set_digital_port_mode(channel_t channel, opdi_Port *port, const c
 /// select port functions
 
 #ifndef OPDI_NO_SELECT_PORTS
+
 static uint8_t send_select_port_label(channel_t channel, opdi_Port *port, const char *position) {
 	uint8_t result;
 	uint16_t pos;
@@ -616,85 +617,6 @@ static uint8_t unbind_streaming_port(channel_t channel, opdi_Port *port) {
 
 #ifdef OPDI_EXTENDED_PROTOCOL
 
-/*
-// send all port states in one message
-static uint8_t send_all_port_states(channel_t channel) {
-	opdi_Message message;
-	opdi_Port *port;
-	uint8_t result;
-	char buffer[OPDI_MESSAGE_PAYLOAD_LENGTH];
-	char *current = buffer;
-	uint16_t remaining_length = OPDI_MESSAGE_PAYLOAD_LENGTH;
-	uint16_t cur_length = 0;
-	uint16_t length;
-	buffer[cur_length] = '\0';
-
-	// go through list of device ports
-	port = opdi_get_ports();
-	while (port != NULL) {
-		opdi_msg_payload[0] = '\0';
-
-		// write port state to opdi_msg_payload global variable
-#ifndef OPDI_NO_DIGITAL_PORTS
-		if (strcmp(port->type, OPDI_PORTTYPE_DIGITAL) == 0) {
-			result = get_digital_port_state(port);
-			if (result != OPDI_STATUS_OK)
-				return result;
-		}
-		else
-#endif
-#ifndef OPDI_NO_ANALOG_PORTS
-		if (strcmp(port->type, OPDI_PORTTYPE_ANALOG) == 0) {
-			result = get_analog_port_state(port);
-			if (result != OPDI_STATUS_OK)
-				return result;
-		}
-		else
-#endif
-#ifndef OPDI_NO_SELECT_PORTS
-		if (strcmp(port->type, OPDI_PORTTYPE_SELECT) == 0) {
-			result = get_select_port_state(port);
-			if (result != OPDI_STATUS_OK)
-				return result;
-		}
-		else
-#endif
-#ifndef OPDI_NO_DIAL_PORTS
-		if (strcmp(port->type, OPDI_PORTTYPE_DIAL) == 0) {
-			result = get_dial_port_state(port);
-			if (result != OPDI_STATUS_OK)
-				return result;
-		}
-#endif
-		// check payload length
-		length = strlen(opdi_msg_payload);
-		if (length > remaining_length)
-			return OPDI_ERROR_MSGBUF_OVERFLOW;
-		// copy payload to current buffer
-		strcpy(current, opdi_msg_payload);
-
-		port = port->next;
-
-		if ((port != NULL) && (length > 0)) {
-			current[length] = OPDI_MULTIMESSAGE_SEPARATOR;
-			length++;
-			current += length;
-			remaining_length -= length;
-		}
-	}
-
-	// send on the same channel
-	message.channel = channel;
-	message.payload = buffer;
-
-	result = opdi_put_message(&message);
-	if (result != OPDI_STATUS_OK)
-		return result;
-	
-	return OPDI_STATUS_OK;
-}
-*/
-
 static uint8_t send_extended_port_info(channel_t channel, const char *portID, char *portInfo) {
 	// join payload
 	opdi_msg_parts[0] = OPDI_extendedPortInfo;
@@ -713,6 +635,115 @@ static uint8_t send_extended_port_state(channel_t channel, const char *portID, c
 	opdi_msg_parts[3] = NULL;
 
 	return send_parts(channel);
+}
+
+static uint8_t send_all_port_infos(channel_t channel) {
+	opdi_Port *port;
+	uint8_t result;
+	char buffer[OPDI_EXTENDED_INFO_LENGTH];
+
+	port = opdi_get_ports();
+	// go through list of device ports
+	while (port != NULL) {
+#ifndef OPDI_NO_DIGITAL_PORTS
+		if (strcmp(port->type, OPDI_PORTTYPE_DIGITAL) == 0) {
+			result = send_digital_port_info(channel, port);
+			if (result != OPDI_STATUS_OK)
+				return result;
+		}
+		else
+#endif
+#ifndef OPDI_NO_ANALOG_PORTS
+		if (strcmp(port->type, OPDI_PORTTYPE_ANALOG) == 0) {
+			result = send_analog_port_info(channel, port);
+			if (result != OPDI_STATUS_OK)
+				return result;
+		}
+		else
+#endif
+#ifndef OPDI_NO_SELECT_PORTS
+		if (strcmp(port->type, OPDI_PORTTYPE_SELECT) == 0) {
+			result = send_select_port_info(channel, port);
+			if (result != OPDI_STATUS_OK)
+				return result;
+		}
+		else
+#endif
+#ifndef OPDI_NO_DIAL_PORTS
+		if (strcmp(port->type, OPDI_PORTTYPE_DIAL) == 0) {
+			result = send_dial_port_info(channel, port);
+			if (result != OPDI_STATUS_OK)
+				return result;
+		}
+#endif
+		// send extended port info
+		// copy port ID to the buffer
+		strncpy(buffer, opdi_msg_parts[1], OPDI_EXTENDED_INFO_LENGTH);
+		result = opdi_slave_callback(OPDI_FUNCTION_GET_EXTENDED_PORTINFO, buffer, OPDI_EXTENDED_INFO_LENGTH);
+		if (result != OPDI_STATUS_OK)
+			return result;
+		result = send_extended_port_info(channel, opdi_msg_parts[1], buffer);
+		if (result != OPDI_STATUS_OK)
+			return result;
+
+		port = port->next;
+	}
+	return OPDI_STATUS_OK;
+}
+
+static uint8_t send_all_port_states(channel_t channel) {
+	uint8_t result;
+	opdi_Port *port;
+	char buffer[OPDI_EXTENDED_INFO_LENGTH];
+
+	// go through list of device ports
+	port = opdi_get_ports();
+	while (port != NULL) {
+
+#ifndef OPDI_NO_DIGITAL_PORTS
+		if (strcmp(port->type, OPDI_PORTTYPE_DIGITAL) == 0) {
+			result = send_digital_port_state(channel, port);
+			if (result != OPDI_STATUS_OK)
+				return result;
+		}
+		else
+#endif
+#ifndef OPDI_NO_ANALOG_PORTS
+		if (strcmp(port->type, OPDI_PORTTYPE_ANALOG) == 0) {
+			result = send_analog_port_state(channel, port);
+			if (result != OPDI_STATUS_OK)
+				return result;
+		}
+		else
+#endif
+#ifndef OPDI_NO_SELECT_PORTS
+		if (strcmp(port->type, OPDI_PORTTYPE_SELECT) == 0) {
+			result = send_select_port_state(channel, port);
+			if (result != OPDI_STATUS_OK)
+				return result;
+		}
+		else
+#endif
+#ifndef OPDI_NO_DIAL_PORTS
+		if (strcmp(port->type, OPDI_PORTTYPE_DIAL) == 0) {
+			result = send_dial_port_state(channel, port);
+			if (result != OPDI_STATUS_OK)
+				return result;
+		}
+#endif
+		// copy port ID to the buffer
+		strncpy(buffer, opdi_msg_parts[1], OPDI_EXTENDED_INFO_LENGTH);
+		result = opdi_slave_callback(OPDI_FUNCTION_GET_EXTENDED_PORTSTATE, buffer, OPDI_EXTENDED_INFO_LENGTH);
+		if (result != OPDI_STATUS_OK)
+			return result;
+		result = send_extended_port_state(channel, opdi_msg_parts[1], buffer);
+		if (result != OPDI_STATUS_OK)
+			return result;
+
+		port = port->next;
+	}
+
+	return OPDI_STATUS_OK;
 }
 
 static uint8_t send_group_info(channel_t channel, opdi_PortGroup *group) {
@@ -749,6 +780,36 @@ static uint8_t send_extended_device_info(channel_t channel, char *deviceInfo) {
 	opdi_msg_parts[2] = NULL;
 
 	return send_parts(channel);
+}
+
+static uint8_t send_all_select_port_labels(channel_t channel, opdi_Port *port) {
+	uint8_t result;
+	uint16_t pos = 0;
+	char position[BUFSIZE_16BIT];
+	char **labels;
+
+	if (strcmp(port->type, OPDI_PORTTYPE_SELECT)) {
+		return OPDI_WRONG_PORT_TYPE;
+	}
+
+	// port info is an array of char*
+	labels = (char**)port->info.ptr;
+
+	// join payload
+	opdi_msg_parts[0] = OPDI_selectPortLabel;
+	opdi_msg_parts[1] = port->id;
+	opdi_msg_parts[2] = position;
+	opdi_msg_parts[4] = NULL;
+	while (labels[pos]) {
+		opdi_uint16_to_str(pos, position);
+		opdi_msg_parts[3] = labels[pos];
+
+		result = send_parts(channel);
+		if (result != OPDI_STATUS_OK)
+			return result;
+		pos++;
+	}
+	return OPDI_STATUS_OK;
 }
 
 #endif		// OPDI_EXTENDED_PROTOCOL
@@ -976,16 +1037,19 @@ static uint8_t basic_protocol_message(channel_t channel) {
 */
 static uint8_t extended_protocol_message(channel_t channel) {
 	uint8_t result;
+	opdi_Port *port;
 	opdi_PortGroup *group;
 	char buffer[OPDI_EXTENDED_INFO_LENGTH];
 
 	// only handle messages of the extended protocol here
-/*
+	if (!strcmp(opdi_msg_parts[0], OPDI_getAllPortInfos)) {
+		return send_all_port_infos(channel);
+	} 
+	else 
 	if (!strcmp(opdi_msg_parts[0], OPDI_getAllPortStates)) {
 		return send_all_port_states(channel);
 	} 
 	else 
-*/
 	if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedPortInfo)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
@@ -1031,6 +1095,17 @@ static uint8_t extended_protocol_message(channel_t channel) {
 		return send_extended_device_info(channel, buffer);
 	} 
 	else
+	// only handle messages of the extended protocol here
+	if (!strcmp(opdi_msg_parts[0], OPDI_getAllSelectPortLabels)) {
+		if (opdi_msg_parts[1] == NULL)
+			return OPDI_PROTOCOL_ERROR;
+		// find port
+		port = opdi_find_port_by_id(opdi_msg_parts[1]);
+		if (port == NULL)
+			return OPDI_PORT_UNKNOWN;
+		return send_all_select_port_labels(channel, port);
+	} 
+	else 
 		// for all other messages, fall back to the basic protocol
 		return basic_protocol_message(channel);
 }

@@ -2,6 +2,7 @@ package org.ospdi.opdi.androPDI.ports;
 
 import java.util.concurrent.TimeoutException;
 
+import org.ospdi.opdi.androPDI.R;
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.drivers.Text_Driver;
 import org.ospdi.opdi.ports.Port;
@@ -10,15 +11,12 @@ import org.ospdi.opdi.ports.StreamingPort.IStreamingPortListener;
 import org.ospdi.opdi.protocol.DisconnectedException;
 import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.ProtocolException;
-import org.ospdi.opdi.androPDI.R;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -171,14 +169,14 @@ class StreamingPortViewAdapter implements IPortViewAdapter, IStreamingPortListen
 	@Override
 	public void createContextMenu(ContextMenu menu,
 			ContextMenuInfo menuInfo) {
-		MenuInflater inflater = this.showDevicePorts.getMenuInflater();
+		// MenuInflater inflater = this.showDevicePorts.getMenuInflater();
 		
 		try {
 			// inflate the context menu 
 //			inflater.inflate(R.menu.streaming_port_menu, menu);
 
 			// add menu items dynamically
-			MenuItem item;
+			//MenuItem item;
 			
 		} catch (Exception e) {
 			this.showDevicePorts.showError("Can't show the context menu");

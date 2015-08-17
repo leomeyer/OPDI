@@ -2,15 +2,14 @@ package org.ospdi.opdi.androPDI.ports;
 
 import java.util.List;
 
+import org.ospdi.opdi.androPDI.R;
+import org.ospdi.opdi.androPDI.units.Units;
 import org.ospdi.opdi.ports.AnalogPort;
 import org.ospdi.opdi.ports.DialPort;
 import org.ospdi.opdi.ports.DigitalPort;
 import org.ospdi.opdi.ports.Port;
-import org.ospdi.opdi.ports.Port.PortType;
 import org.ospdi.opdi.ports.SelectPort;
 import org.ospdi.opdi.ports.StreamingPort;
-import org.ospdi.opdi.androPDI.R;
-import org.ospdi.opdi.androPDI.units.Units;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -113,7 +112,7 @@ class PortListAdapter extends ArrayAdapter<Port> {
             	// no matching adapter found - create a simple default view
 	            if (result == null) {
 	                LayoutInflater vi = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-	                result = vi.inflate(R.layout.default_port_row, null);
+	                result = vi.inflate(R.layout.default_port_row, parent);
 	            }
 	            
 	            TextView tt = (TextView) result.findViewById(R.id.toptext);

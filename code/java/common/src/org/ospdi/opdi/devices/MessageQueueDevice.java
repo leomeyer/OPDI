@@ -18,9 +18,9 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.ospdi.opdi.interfaces.IBasicProtocol;
-import org.ospdi.opdi.interfaces.IDeviceListener;
 import org.ospdi.opdi.interfaces.IDevice;
+import org.ospdi.opdi.interfaces.IDeviceListener;
+import org.ospdi.opdi.interfaces.IProtocol;
 import org.ospdi.opdi.protocol.AbstractProtocol.IAbortable;
 import org.ospdi.opdi.protocol.Message;
 import org.ospdi.opdi.protocol.MessageException;
@@ -57,13 +57,13 @@ public abstract class MessageQueueDevice implements IDevice {
      */
     private class MessageProcessor extends Thread {
 
-    	private IBasicProtocol protocol;
+    	private IProtocol protocol;
         private boolean stop = false;
         private boolean done = false;
         // flag to ensure that remaining messages are sent before stopping
         public volatile boolean hasMessagesToSend = false;        
 
-        protected MessageProcessor(IBasicProtocol protocol) {
+        protected MessageProcessor(IProtocol protocol) {
 			super();
 			this.protocol = protocol;
 		}
@@ -267,7 +267,7 @@ public abstract class MessageQueueDevice implements IDevice {
 
 	/** Start processing the messages.
 	 */
-	protected void startMessageProcessing(IBasicProtocol protocol) {		
+	protected void startMessageProcessing(IProtocol protocol) {		
 		// Start the thread that handles message IO with the connected device
 		msgThread = new MessageProcessor(protocol);
 		msgThread.start();

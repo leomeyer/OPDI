@@ -106,6 +106,7 @@ public class DialPort extends Port {
 	public void setPortPosition(IBasicProtocol protocol, long position) {
 		if (protocol != getProtocol())
 			throw new IllegalAccessError("Setting the port state is only allowed from its protocol implementation");
+		clearError();
 		this.position = position;
 		this.posUnknown = false;
 	}

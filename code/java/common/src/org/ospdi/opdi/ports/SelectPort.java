@@ -6,6 +6,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.interfaces.IBasicProtocol;
+import org.ospdi.opdi.interfaces.IProtocol;
 import org.ospdi.opdi.protocol.DisconnectedException;
 import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.PortErrorException;
@@ -58,17 +59,7 @@ public class SelectPort extends Port {
 		posCount = Strings.parseInt(parts[POS_PART], "position count", 0, Integer.MAX_VALUE);
 		flags = Strings.parseInt(parts[FLAGS_PART], "flags", 0, Integer.MAX_VALUE);
 		
-		// query port labels
-		for (int i = 0; i < posCount; i++)
-			try {
-				labels.add(protocol.getLabel(this, i));
-			} catch (PortAccessDeniedException e) {
-				// makes no sense
-				e.printStackTrace();
-			} catch (PortErrorException e) {
-				// makes no sense
-				e.printStackTrace();
-			}
+		labels = protocol.getSelectPortLabels(this);
 	}
 	
 	public String serialize() {
@@ -88,6 +79,7 @@ public class SelectPort extends Port {
 	public void setPortPosition(IBasicProtocol protocol, int position) {
 		if (protocol != getProtocol())
 			throw new IllegalAccessError("Setting the port state is only allowed from its protocol implementation");
+		clearError();
 		this.position = position;
 	}
 	
