@@ -351,8 +351,11 @@ uint8_t OPDI::reconfigure() {
 uint8_t OPDI::refresh(OPDI_Port **ports) {
 	if (!this->isConnected() || !this->canSend)
 		return OPDI_DISCONNECTED;
-	// target array of internal ports to refresh
 	opdi_Port *iPorts[OPDI_MAX_MESSAGE_PARTS + 1];
+	iPorts[0] = NULL;
+	if (ports == NULL)
+		return opdi_refresh(iPorts);
+	// target array of internal ports to refresh
 	OPDI_Port *port = ports[0];
 	uint8_t i = 0;
 	while (port != NULL) {

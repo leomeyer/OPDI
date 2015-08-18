@@ -1115,7 +1115,7 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 		}
 
 		// refresh all ports of a connected master
-//		this->opdid->refresh(NULL);
+		this->opdid->refresh(NULL);
 
 		this->positionSet = false;
 	}

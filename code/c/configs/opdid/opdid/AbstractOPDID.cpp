@@ -1306,6 +1306,11 @@ uint8_t AbstractOPDID::refresh(OPDI_Port **ports) {
 		return result;
 
 	if (this->logVerbosity >= VERBOSE) {
+		if (ports == NULL) {
+			this->logVerbose("Sent refresh for all ports");
+			return OPDI_STATUS_OK;
+		}
+
 		OPDI_Port *port = ports[0];
 		uint8_t i = 0;
 		while (port != NULL) {
