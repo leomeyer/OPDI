@@ -47,6 +47,8 @@ bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 	this->symbol_table.clear();
 	this->portValues.clear();
 
+	this->portValues.reserve(this->symbol_list.size());
+
 	// go through dependent entities (variables) of the expression
 	for (std::size_t i = 0; i < this->symbol_list.size(); ++i)
 	{
@@ -66,6 +68,7 @@ bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 		// calculate port value
 		try {
 			double value = opdid->getPortValue(port);
+			this->logExtreme(this->ID() + ": Resolved value of port " + port->ID() + " to: " + to_string(value));
 			this->portValues.push_back(value);
 		} catch (Poco::Exception& e) {
 			// error handling during setup is different; to avoid too many warnings (in the doWork method)
@@ -83,7 +86,7 @@ bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 		}
 
 		// add reference to the port value (by port ID)
-		if (!this->symbol_table.add_variable(port->getID(), this->portValues[i]))
+		if (!this->symbol_table.add_variable(port->getID(), *&this->portValues[i]))
 			return false;
 	}
 
