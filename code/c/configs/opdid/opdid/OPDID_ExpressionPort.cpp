@@ -86,7 +86,7 @@ bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 		}
 
 		// add reference to the port value (by port ID)
-		if (!this->symbol_table.add_variable(port->getID(), *&this->portValues[i]))
+		if (!this->symbol_table.add_variable(port->getID(), this->portValues[i]))
 			return false;
 	}
 
