@@ -30,7 +30,11 @@ public class Settings {
 			// return the deserialized settings
 			return (Settings)xstream.fromXML(fis);
 		} catch (FileNotFoundException e) {
-			// The file is not there - don't read the settings
+			// the file is not there - don't read the settings
+			return new Settings();
+		} catch (Exception e) {
+			// error opening the file
+			Log.e(AndroPDI.MASTER_NAME, "Error opening settings file: " + filename, e);
 			return new Settings();
 		}
 	}

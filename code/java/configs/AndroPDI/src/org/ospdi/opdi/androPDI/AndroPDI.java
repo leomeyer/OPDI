@@ -58,7 +58,7 @@ import android.widget.Toast;
  */
 public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceStatusListener {
 	
-	/** This client's name as it is sent to slave devices. */
+	/** This client's name as it is sent to slave devices. Also, the Log tag. */
 	public static final String MASTER_NAME = "AndroPDI";
 	/** This client's version number. */
 	public static final String VERSION = "0.1";	// must be a number
