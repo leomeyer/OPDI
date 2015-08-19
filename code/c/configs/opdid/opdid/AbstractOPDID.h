@@ -282,6 +282,8 @@ public:
 
 	/** Returns a double representing the port value; throws errors if they occur. */
 	virtual double getPortValue(OPDI_Port* port);
+
+	virtual void getEnvironment(std::map<std::string, std::string>& mapToFill);
 };
 
 

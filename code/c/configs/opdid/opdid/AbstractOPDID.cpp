@@ -59,7 +59,7 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->minorVersion = OPDID_MINOR_VERSION;
 	this->patchVersion = OPDID_PATCH_VERSION;
 
-	this->logVerbosity = UNKNOWN;
+	this->logVerbosity = NORMAL;
 	this->persistentConfig = NULL;
 
 	this->logger = NULL;
@@ -176,14 +176,19 @@ void AbstractOPDID::sayHello(void) {
 
 void AbstractOPDID::showHelp(void) {
 	this->sayHello();
-	this->println("OPDI (Open Protocol for Device Interaction) service");
+	this->println("Open Protocol for Device Interaction Daemon");
 	this->println("Mandatory command line parameters:");
 	this->println("  -c <config_file>: use the specified configuration file");
 	this->println("Optional command line parameters:");
 	this->println("  --version: print version number and exit");
 	this->println("  -h or -?: print help text and exit");
-	this->println("  -q: quiet mode (print errors only)");
-	this->println("  -v: verbose mode");
+	this->println("  -q: quiet logging mode: log errors only");
+	this->println("  -v: verbose logging mode: explicit logging (recommended for testing)");
+	this->println("  -d: debug logging mode: more explicit; log message details");
+	this->println("  -x: extreme logging mode: produces a lot of output");
+	this->println("  -l <filename>: write log to the specified file");
+	this->println("  -t: test mode; validate config, prepare ports and exit");
+	this->println("  -p <name=value>: set config parameter $name to value");
 }
 
 std::string AbstractOPDID::getTimestampStr(void) {
@@ -297,6 +302,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 	this->environment["$LOG_DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y%m%d_%H%M%S");
 
 	this->shutdownRequested = false;
+	std::string configFile;
 
 	// evaluate arguments
 	for (unsigned int i = 1; i < args.size(); i++) {
@@ -329,8 +335,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 			if (args.size() == i) {
 				throw Poco::SyntaxException("Expected configuration file name after argument -c");
 			} else {
-				// load configuration, substituting environment parameters
-				configuration = this->readConfiguration(args.at(i), this->environment);
+				configFile = args.at(i);
 			}
 		} else
 		if (args.at(i) == "-l") {
@@ -345,16 +350,43 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 				Poco::Logger::root().setChannel(pChannel);
 				this->logger = Poco::Logger::has("");
 			}
+		} else		
+		if (args.at(i) == "-p") {
+			i++;
+			if (args.size() == i) {
+				throw Poco::SyntaxException("Expected parameter name=value after argument -p");
+			} else {
+				std::string param = args.at(i);
+				// detect position of "="
+				int pos = param.find_first_of("=");
+				if ((pos == std::string::npos) || (pos == 0))
+					throw Poco::SyntaxException("Illegal parameter syntax; expected name=value: " + param);
+				std::string name = param.substr(0, pos);
+				std::string value = param.substr(pos + 1);
+				this->environment["$" + name] = value;
+			}
 		} else {
 			throw Poco::SyntaxException("Invalid argument", args.at(i));
 		} 
 	}
 
 	// no configuration?
-	if (configuration.isNull())
+	if (configFile == "")
 		throw Poco::SyntaxException("Expected argument: -c <config_file>");
 
 	this->sayHello();
+
+	if (this->logVerbosity >= AbstractOPDID::DEBUG) {
+		this->logDebug("Using configuration file '" + configFile + "' with the following parameters:");
+		std::map<std::string, std::string>::const_iterator it = this->environment.begin();
+		while (it != this->environment.end()) {
+			this->logDebug("  " + (*it).first + " = " + (*it).second);
+			it++;
+		}
+	}
+
+	// load configuration, substituting environment parameters
+	configuration = this->readConfiguration(configFile, this->environment);
 
 	// create view to "General" section
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> general = configuration->createView("General");
@@ -474,7 +506,7 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration *g
 	this->deviceInfo = general->getString("DeviceInfo", "");
 
 	// set log verbosity only if it's not already set
-	if (this->logVerbosity == UNKNOWN) {
+	if (this->logVerbosity == NORMAL) {
 		this->logVerbosity = this->getConfigLogVerbosity(general, NORMAL);
 	}
 
@@ -594,7 +626,8 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration *config, Poco
 		throw Poco::DataException("Unknown RelativeTo property specified; expected 'Application' or 'Config'", relativeTo);
 
 	// read parameters and build a map, based on the environment parameters
-	std::map<std::string, std::string> parameters = this->environment;
+	std::map<std::string, std::string> parameters;
+	this->getEnvironment(parameters);
 
 	// the include node requires a section "<node>.Parameters"
 	this->logVerbose(node + ": Evaluating include parameters section: " + node + ".Parameters");
@@ -616,7 +649,15 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration *config, Poco
 		this->logNormal(node + ": No parameters for include in section " + node + ".Parameters found, is this intended?");
 
 	this->logVerbose(node + ": Processing include file: " + filename);
-
+	
+	if (this->logVerbosity >= AbstractOPDID::DEBUG) {
+		this->logDebug(node + ": Include file parameters:");
+		std::map<std::string, std::string>::const_iterator it = parameters.begin();
+		while (it != parameters.end()) {
+			this->logDebug(node + ":   " + (*it).first + " = " + (*it).second);
+			it++;
+		}
+	}
 	Poco::Util::AbstractConfiguration *includeConfig = this->readConfiguration(filename, parameters);
 
 	// setup the root node of the included configuration
@@ -1471,6 +1512,10 @@ double AbstractOPDID::getPortValue(OPDI_Port* port) {
 		throw Poco::Exception("Port type not supported");
 
 	return value;
+}
+
+void AbstractOPDID::getEnvironment(std::map<std::string, std::string>& mapToFill) {
+	mapToFill.insert(this->environment.begin(), this->environment.end());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////

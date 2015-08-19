@@ -1068,10 +1068,21 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 
 		std::string sceneFile = this->fileList[this->position];
 
-		// TODO prepare scene file parameters (environment, ports, ...)
+		// prepare scene file parameters (environment, ports, ...)
+		std::map<std::string, std::string> parameters;
+		this->opdid->getEnvironment(parameters);
+
+		if (this->logVerbosity >= AbstractOPDID::DEBUG) {
+			this->logDebug(this->ID() + ": Scene file parameters:");
+			std::map<std::string, std::string>::const_iterator it = parameters.begin();
+			while (it != parameters.end()) {
+				this->logDebug(this->ID() + ":   " + (*it).first + " = " + (*it).second);
+				it++;
+			}
+		}
 
 		// open the config file
-		OPDIDConfigurationFile config(sceneFile, std::map<std::string, std::string>());
+		OPDIDConfigurationFile config(sceneFile, parameters);
 
 		// go through sections of the scene file
 		Poco::Util::AbstractConfiguration::Keys sectionKeys;
