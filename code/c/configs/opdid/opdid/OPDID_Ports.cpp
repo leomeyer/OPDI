@@ -27,7 +27,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 OPDID_LogicPort::OPDID_LogicPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
-
 	this->opdid = opdid;
 	this->function = UNKNOWN;
 	this->funcN = -1;
@@ -222,7 +221,6 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 ///////////////////////////////////////////////////////////////////////////////
 
 OPDID_PulsePort::OPDID_PulsePort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
-
 	this->opdid = opdid;
 	this->negate = false;
 
@@ -399,7 +397,6 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 ///////////////////////////////////////////////////////////////////////////////
 
 OPDID_SelectorPort::OPDID_SelectorPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
-
 	this->opdid = opdid;
 
 	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -1305,6 +1302,8 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 	} else
 		throw Poco::DataException(this->ID() + ": Node " + portNode + ": Type unsupported, expected 'DigitalPort', 'AnalogPort', 'DialPort', 'SelectPort', or 'StreamingPort': " + portType);
 
+	// a file input port is always readonly
+	this->port->setReadonly(true);
 	this->opdid->addPort(port);
 
 	this->reloadDelayMs = config->getInt("ReloadDelay", 0);
