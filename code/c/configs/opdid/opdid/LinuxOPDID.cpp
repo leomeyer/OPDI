@@ -35,6 +35,8 @@
 static int connection_mode = 0;
 static char first_com_byte = 0;
 
+static LinuxOPDID *linuxOPDID;
+
 /** For TCP connections, receives a byte from the socket specified in info and places the result in byte.
 *   For serial connections, reads a byte from the file handle specified in info and places the result in byte.
 *   Blocks until data is available or the timeout expires.
@@ -134,8 +136,8 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 
 		int newsockfd = (long)info;
 
-		if (write(newsockfd, c, count) < 0) {
-			printf("ERROR writing to socket");
+		if (send(newsockfd, c, count, MSG_DONTWAIT) < 0) {
+			linuxOPDID->logError(std::string("Socket send failed: " ) + strerror(errno));
 			return OPDI_DEVICE_ERROR;
 		}
 	}
@@ -237,6 +239,9 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 
 int LinuxOPDID::setupTCP(std::string interface_, int port) {
 
+	// store instance reference
+	linuxOPDID = this;
+
 	// adapted from: http://www.linuxhowtos.org/C_C++/socket.htm
 
 	int err = 0;
@@ -257,11 +262,15 @@ int LinuxOPDID::setupTCP(std::string interface_, int port) {
 		this->log("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *) &flag, sizeof(int)) < 0) {
+		this->log("setsockopt failed");
+		return OPDI_DEVICE_ERROR;
+	}
 
 	// prepare address
 	bzero((char *) &serv_addr, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_port = htons(port);
 
 	// bind to specified port
