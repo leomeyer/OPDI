@@ -62,7 +62,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 			result = read(newsockfd, &c, 1);
 			if (result < 0) {
 				// timed out?
-				if (errno == EAGAIN || errno == EWOULDBLOCK) {
+				if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
 					// possible timeout
 					// "real" timeout condition
 					if (opdi_get_time_ms() - ticks >= timeout)
@@ -135,17 +135,39 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 	if (connection_mode == MODE_TCP) {
 
 		int newsockfd = (long)info;
-
-		if (send(newsockfd, c, count, MSG_DONTWAIT) < 0) {
+sendloop:
+		int result = send(newsockfd, c, count, MSG_DONTWAIT);
+		if (result < 0) {
+			// send buffer full?
+			if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+				// wait for some time
+				usleep(10000);
+				goto sendloop;
+			} else
+			// perhaps Ctrl+C
+			if (errno == EINTR) {
+				Opdi->shutdown();
+			}
+			else {
 			linuxOPDID->logError(std::string("Socket send failed: " ) + strerror(errno));
 			return OPDI_DEVICE_ERROR;
+			}
+		} else
+		// incomplete send?
+		if (result < count) {
+			// advance pointer, decrease remaining count and send again
+			bytes += result;
+			count -= result;
+			goto sendloop;
 		}
+		// send ok
 	}
 	else
 	if (connection_mode == MODE_SERIAL) {
 		int fd = (long)info;
 
 		if (write(fd, c, count) != count) {
+			linuxOPDID->logError(std::string("Serial write failed: " ) + strerror(errno));
 			return OPDI_DEVICE_ERROR;
 		}
 	}
