@@ -159,9 +159,15 @@
     <string name="electricPower_mW">electricPower_mW_in_W=0;electricPower_mW_in_mW=1</string>
     <string name="electricPower_mW_in_W">layout=dial_port_row_noslider;icon=powermeter;label=Electric Power (W);formatString=%.1f W;denominator=1000</string>
     <string name="electricPower_mW_in_mW">layout=dial_port_row_noslider;icon=powermeter;label=Electric Power (mW);formatString=%.0f mW</string>
+
+    <string name="electricPower_10mW">electricPower_10mW_in_W=0</string>
+    <string name="electricPower_10mW_in_W">layout=dial_port_row_noslider;icon=powermeter;label=Electric Power (W);formatString=%.2f W;denominator=100</string>
     
     <string name="electricEnergy_Wh">electricEnergy_Wh_in_Wh=0</string>
     <string name="electricEnergy_Wh_in_Wh">layout=dial_port_row_noslider;icon=energymeter;formatString=%.0f Wh</string>
+
+    <string name="electricEnergy_100nWh">electricEnergy_100nWh_in_kWh=0</string>
+    <string name="electricEnergy_100nWh_in_kWh">layout=dial_port_row_noslider;icon=energymeter;formatString=%.7f kWh;denominator=10000000</string>
     
     <string name="temperature_centiDegreesCelsius">temperature_cDegC_in_DegC=0</string>
     <string name="temperature_cDegC_in_DegC">layout=dial_port_row_noslider;icon=thermometer_celsius;label=Temperature (°C);formatString=%.1f °C;denominator=10</string>
