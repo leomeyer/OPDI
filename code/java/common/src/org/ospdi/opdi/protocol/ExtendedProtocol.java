@@ -417,8 +417,14 @@ public class ExtendedProtocol extends BasicProtocol {
 				message = expect(channel, DEFAULT_TIMEOUT);
 				parseExtendedPortState(port, message);
 			
-			} catch (PortAccessDeniedException | PortErrorException e) {
-				// ???
+			} catch (PortAccessDeniedException pade) {
+				// check port ID
+				if (!pade.getPortID().equals(port.getID()))
+					throw new ProtocolException("Received Access Denied for port " + pade.getPortID() + " while expecting state for port " + port.getID());
+				// do not set the state of the port (after all, it's Access Denied)
+			} catch (PortErrorException pee) {
+				// the port itself handles port errors
+				port.handlePortError(pee);
 			}
 			counter++;
 		}

@@ -3,29 +3,18 @@ package org.ospdi.opdi.protocol;
 @SuppressWarnings("serial")
 public class PortErrorException extends Exception {
 
+	protected String portID = "";	// avoid null
+	
 	public PortErrorException() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public PortErrorException(String message) {
+	public PortErrorException(String portID, String message) {
 		super(message);
-		// TODO Auto-generated constructor stub
+		this.portID = portID;
 	}
 
-	public PortErrorException(Throwable cause) {
-		super(cause);
-		// TODO Auto-generated constructor stub
+	public String getPortID() {
+		return portID;
 	}
-
-	public PortErrorException(String message, Throwable cause) {
-		super(message, cause);
-		// TODO Auto-generated constructor stub
-	}
-
-	public PortErrorException(String message, Throwable cause,
-			boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-		// TODO Auto-generated constructor stub
-	}
-
 }

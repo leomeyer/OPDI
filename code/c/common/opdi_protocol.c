@@ -97,14 +97,18 @@ uint8_t send_error(uint8_t code, const char *part1, const char *part2) {
 
 uint8_t send_disagreement(channel_t channel, uint8_t code, const char *part1, const char *part2) {
 	// send a disagreement message on the specified channel
+	char buf[BUFSIZE_8BIT];
 	opdi_Message message;
 	uint8_t result;
 
+	opdi_uint8_to_str(code, buf);
+
 	// join payload
 	opdi_msg_parts[0] = OPDI_Disagreement;
-	opdi_msg_parts[1] = part1;
-	opdi_msg_parts[2] = part2;
-	opdi_msg_parts[3] = NULL;
+	opdi_msg_parts[1] = buf;
+	opdi_msg_parts[2] = part1;
+	opdi_msg_parts[3] = part2;
+	opdi_msg_parts[4] = NULL;
 
 	result = strings_join(opdi_msg_parts, OPDI_PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
 	if (result != OPDI_STATUS_OK)
@@ -120,16 +124,17 @@ uint8_t send_disagreement(channel_t channel, uint8_t code, const char *part1, co
 	return OPDI_STATUS_OK;
 }
 
-uint8_t send_port_error(channel_t channel, const char *part1, const char *part2) {
+uint8_t send_port_error(channel_t channel, const char *portID, const char *part1, const char *part2) {
 	// send a port error message on the specified channel
 	opdi_Message message;
 	uint8_t result;
 
 	// join payload
 	opdi_msg_parts[0] = OPDI_Error;
-	opdi_msg_parts[1] = part1;
-	opdi_msg_parts[2] = part2;
-	opdi_msg_parts[3] = NULL;
+	opdi_msg_parts[1] = portID;
+	opdi_msg_parts[2] = part1;
+	opdi_msg_parts[3] = part2;
+	opdi_msg_parts[4] = NULL;
 
 	result = strings_join(opdi_msg_parts, OPDI_PARTS_SEPARATOR, opdi_msg_payload, OPDI_MESSAGE_PAYLOAD_LENGTH);
 	if (result != OPDI_STATUS_OK)

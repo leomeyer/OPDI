@@ -2,30 +2,19 @@ package org.ospdi.opdi.protocol;
 
 @SuppressWarnings("serial")
 public class PortAccessDeniedException extends Exception {
-
+	
+	protected String portID = "";	// avoid null
+	
 	public PortAccessDeniedException() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public PortAccessDeniedException(String message) {
+	public PortAccessDeniedException(String portID, String message) {
 		super(message);
-		// TODO Auto-generated constructor stub
+		this.portID = portID;
 	}
 
-	public PortAccessDeniedException(Throwable cause) {
-		super(cause);
-		// TODO Auto-generated constructor stub
+	public String getPortID() {
+		return portID;
 	}
-
-	public PortAccessDeniedException(String message, Throwable cause) {
-		super(message, cause);
-		// TODO Auto-generated constructor stub
-	}
-
-	public PortAccessDeniedException(String message, Throwable cause,
-			boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-		// TODO Auto-generated constructor stub
-	}
-
 }

@@ -703,34 +703,39 @@ static uint8_t send_all_port_states(channel_t channel) {
 #ifndef OPDI_NO_DIGITAL_PORTS
 		if (strcmp(port->type, OPDI_PORTTYPE_DIGITAL) == 0) {
 			result = send_digital_port_state(channel, port);
-			if (result != OPDI_STATUS_OK)
-				return result;
 		}
 		else
 #endif
 #ifndef OPDI_NO_ANALOG_PORTS
 		if (strcmp(port->type, OPDI_PORTTYPE_ANALOG) == 0) {
 			result = send_analog_port_state(channel, port);
-			if (result != OPDI_STATUS_OK)
-				return result;
 		}
 		else
 #endif
 #ifndef OPDI_NO_SELECT_PORTS
 		if (strcmp(port->type, OPDI_PORTTYPE_SELECT) == 0) {
 			result = send_select_port_state(channel, port);
-			if (result != OPDI_STATUS_OK)
-				return result;
 		}
 		else
 #endif
 #ifndef OPDI_NO_DIAL_PORTS
 		if (strcmp(port->type, OPDI_PORTTYPE_DIAL) == 0) {
 			result = send_dial_port_state(channel, port);
-			if (result != OPDI_STATUS_OK)
-				return result;
 		}
 #endif
+		if (result != OPDI_STATUS_OK) {
+			// special case: port access denied
+			if (result == OPDI_PORT_ACCESS_DENIED) {
+				send_disagreement(channel, OPDI_PORT_ACCESS_DENIED, port->id, opdi_get_port_message());
+				result = OPDI_STATUS_OK;
+			} else
+			// special case: port error
+			if (result == OPDI_PORT_ERROR) {
+				send_port_error(channel, port->id, opdi_get_port_message(), NULL);
+				result = OPDI_STATUS_OK;
+			} else
+				return result;
+		}
 		// copy port ID to the buffer
 		strncpy(buffer, opdi_msg_parts[1], OPDI_EXTENDED_INFO_LENGTH);
 		result = opdi_slave_callback(OPDI_FUNCTION_GET_EXTENDED_PORTSTATE, buffer, OPDI_EXTENDED_INFO_LENGTH);
@@ -1151,9 +1156,9 @@ static uint8_t handle_message_result(opdi_Message *m, uint8_t result) {
 			send_disagreement(m->channel, OPDI_PORT_ACCESS_DENIED, opdi_get_port_message(), NULL);
 			result = OPDI_STATUS_OK;
 		} else
-		// special case: port error
+		// special case: unhandled port error
 		if (result == OPDI_PORT_ERROR) {
-			send_port_error(m->channel, opdi_get_port_message(), NULL);
+			send_port_error(m->channel, "", opdi_get_port_message(), NULL);	// no port ID here
 			result = OPDI_STATUS_OK;
 		} else
 		// special case: message unknown

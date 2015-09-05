@@ -229,9 +229,13 @@ public abstract class Port {
 		errorMessage = null;
 	}
 	
-	protected void handlePortError(PortErrorException e) {
+	public void handlePortError(PortErrorException pee) throws ProtocolException {
+		// check port ID
+		if (!pee.getPortID().equals(id))
+			throw new ProtocolException("Port " + id + ": Received Port Error for port " + pee.getPortID());
+
 		hasError = true;
-		errorMessage = e.getMessage();
+		errorMessage = pee.getMessage();
 	}
 
 	/** Returns true if the port cannot be written.

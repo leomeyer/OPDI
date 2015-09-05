@@ -44,7 +44,7 @@ uint8_t send_error(uint8_t code, const char *part1, const char *part2);
 uint8_t send_disagreement(channel_t channel, uint8_t code, const char *part1, const char *part2);
 
 // sends a port error message with optional additional information
-uint8_t send_port_error(channel_t channel, const char *part1, const char *part2);
+uint8_t send_port_error(channel_t channel, const char *portID, const char *part1, const char *part2);
 
 // sends an agreement message
 uint8_t send_agreement(channel_t channel);

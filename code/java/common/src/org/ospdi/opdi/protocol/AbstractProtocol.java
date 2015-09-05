@@ -99,16 +99,26 @@ public abstract class AbstractProtocol implements IProtocol {
 					String[] parts = Strings.split(message.getPayload(), SEPARATOR);
 					if (parts[0].equals(DISAGREEMENT))
 					{
-						if (parts.length > 1)
-							throw new PortAccessDeniedException(Strings.join(1, Strings.NO_SEPARATOR, (Object[])parts));
+						// the first part is the port ID
+						if (parts.length > 2)
+							// the remaining parts are the message
+							throw new PortAccessDeniedException(parts[1], Strings.join(2, Strings.NO_SEPARATOR, (Object[])parts));
+						else
+						if (parts.length == 2)
+							throw new PortAccessDeniedException(parts[1], "");
 						else
 							throw new PortAccessDeniedException();
 					}
 					else
 					if (parts[0].equals(ERROR))
 					{
-						if (parts.length > 1)
-							throw new PortErrorException(Strings.join(1, Strings.NO_SEPARATOR, (Object[])parts));
+						// the first part is the port ID
+						if (parts.length > 2)
+							// the remaining parts are the message
+							throw new PortErrorException(parts[1], Strings.join(1, Strings.NO_SEPARATOR, (Object[])parts));
+						else
+						if (parts.length == 2)
+							throw new PortErrorException(parts[1], "");
 						else
 							throw new PortErrorException();
 					}
