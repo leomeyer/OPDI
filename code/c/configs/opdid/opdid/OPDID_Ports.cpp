@@ -1148,6 +1148,15 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 
 	Poco::Mutex::ScopedLock(this->mutex);
 
+	// expiry time over?
+	if ((this->expiryMs > 0) && (this->lastReloadTime > 0) && (opdi_get_time_ms() - lastReloadTime > (uint64_t)this->expiryMs)) {
+		// only if the port's value is ok
+		if (this->port->getError() == VALUE_OK) {
+			this->logDebug(ID() + ": Value of port '" + this->port->ID() + "' has expired");
+			this->port->setError(OPDI_Port::VALUE_EXPIRED);
+		}
+	}
+
 	if (this->line == 0) {
 		// always clear flag if not active (to avoid reloading when set to High)
 		this->needsReload = false;
@@ -1155,7 +1164,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 	}
 
 	// if a delay is specified, ignore reloads until it's up
-	if ((this->reloadDelayMs > 0) && (opdi_get_time_ms() - lastReloadTime < (uint64_t)this->reloadDelayMs))
+	if ((this->reloadDelayMs > 0) && (this->lastReloadTime > 0) && (opdi_get_time_ms() - lastReloadTime < (uint64_t)this->reloadDelayMs))
 		return OPDI_STATUS_OK;
 
 	if (this->needsReload) {
@@ -1185,7 +1194,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected '0' or '1' but got: " + errorContent);
 				}
-				this->logDebug(ID() + ": Setting line of digital port '" + this->port->ID() + " to " + this->to_string((int)line));
+				this->logDebug(ID() + ": Setting line of digital port '" + this->port->ID() + "' to " + this->to_string((int)line));
 				((OPDI_DigitalPort*)this->port)->setLine(line);
 				break;
 			}
@@ -1195,7 +1204,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected decimal value between 0 and 1 but got: " + errorContent);
 				}
-				this->logDebug(ID() + ": Setting value of analog port '" + this->port->ID() + " to " + this->to_string(value));
+				this->logDebug(ID() + ": Setting value of analog port '" + this->port->ID() + "' to " + this->to_string(value));
 				((OPDI_AnalogPort*)this->port)->setRelativeValue(value);
 				break;
 			}
@@ -1207,7 +1216,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
 				}
-				this->logDebug(ID() + ": Setting position of dial port '" + this->port->ID() + " to " + this->to_string(value));
+				this->logDebug(ID() + ": Setting position of dial port '" + this->port->ID() + "' to " + this->to_string(value));
 				((OPDI_DialPort*)this->port)->setPosition(value);
 				break;
 			}
@@ -1219,7 +1228,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
 				}
-				this->logDebug(ID() + ": Setting position of select port '" + this->port->ID() + " to " + this->to_string(value));
+				this->logDebug(ID() + ": Setting position of select port '" + this->port->ID() + "' to " + this->to_string(value));
 				((OPDI_SelectPort*)this->port)->setPosition(value);
 				break;
 			}
@@ -1249,6 +1258,7 @@ OPDID_FileInputPort::OPDID_FileInputPort(AbstractOPDID *opdid, const char *id) :
 	this->opdid = opdid;
 	this->directoryWatcher = NULL;
 	this->reloadDelayMs = 0;
+	this->expiryMs = 0;
 	this->lastReloadTime = 0;
 	this->needsReload = false;
 
@@ -1311,6 +1321,11 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 		throw Poco::DataException(this->ID() + ": If ReloadDelay is specified it must be greater than 0 (ms): " + this->to_string(this->reloadDelayMs));
 	}
 
+	this->expiryMs = config->getInt("Expiry", 0);
+	if (this->expiryMs < 0) {
+		throw Poco::DataException(this->ID() + ": If Expiry is specified it must be greater than 0 (ms): " + this->to_string(this->expiryMs));
+	}
+
 	// determine directory and filename
 	Poco::Path path(filePath);
 	Poco::Path absPath(path.absolute());
@@ -1327,4 +1342,11 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 	this->directoryWatcher->itemModified += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
 	this->directoryWatcher->itemAdded += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
 	this->directoryWatcher->itemMovedTo += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
+
+	// can the file be loaded initially?
+	Poco::File file(this->filePath);
+	if (file.exists())
+		this->needsReload = true;
+	else
+		this->port->setError(VALUE_NOT_AVAILABLE);
 }

@@ -266,6 +266,23 @@ void OPDI_Port::prepare() {
 	this->updateExtendedInfo();
 }
 
+void OPDI_Port::checkError() {
+	if (this->error == VALUE_EXPIRED)
+		throw ValueExpired();
+	if (this->error == VALUE_NOT_AVAILABLE)
+		throw ValueUnavailable();
+}
+
+void OPDI_Port::setError(Error error) {
+	if (this->error != error)
+		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+	this->error = error;
+}
+
+OPDI_Port::Error OPDI_Port::getError() {
+	return this->error;
+}
+
 OPDI_Port::~OPDI_Port() {
 	if (this->id != NULL)
 		free(this->id);
@@ -471,14 +488,19 @@ void OPDI_DigitalPort::setMode(uint8_t mode) {
 void OPDI_DigitalPort::setLine(uint8_t line) {
 	if (line > 1)
 		throw PortError(std::string(this->getID()) + ": Digital port line not supported: " + this->to_string((int)line));
-	if (line != this->line)
+	if (this->error != VALUE_OK)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+	if (line != this->line)
+		this->refreshRequired |= (this->refreshMode == REFRESH_AUTO);
 	this->line = line;
+	this->error = VALUE_OK;
 	if (persistent && (this->opdi != NULL))
 		this->opdi->persist(this);
 }
 
 void OPDI_DigitalPort::getState(uint8_t *mode, uint8_t *line) {
+	this->checkError();
+
 	*mode = this->mode;
 	*line = this->line;
 }
@@ -582,14 +604,19 @@ void OPDI_AnalogPort::setReference(uint8_t reference) {
 void OPDI_AnalogPort::setValue(int32_t value) {
 	// restrict value to possible range
 	int32_t newValue = this->validateValue(value);
-	if (newValue != this->value)
+	if (this->error != VALUE_OK)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+	if (newValue != this->value)
+		this->refreshRequired |= (this->refreshMode == REFRESH_AUTO);
 	this->value = newValue;
+	this->error = VALUE_OK;
 	if (persistent && (this->opdi != NULL))
 		this->opdi->persist(this);
 }
 
 void OPDI_AnalogPort::getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) {
+	this->checkError();
+
 	*mode = this->mode;
 	*resolution = this->resolution;
 	*reference = this->reference;
@@ -708,15 +735,19 @@ void OPDI_SelectPort::setItems(const char **items) {
 void OPDI_SelectPort::setPosition(uint16_t position) {
 	if (position > count)
 		throw PortError(std::string(this->getID()) + ": Position must not exceed the number of items: " + to_string((int)this->count));
-
-	if (position != this->position)
+	if (this->error != VALUE_OK)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+	if (position != this->position)
+		this->refreshRequired |= (this->refreshMode == REFRESH_AUTO);
 	this->position = position;
+	this->error = VALUE_OK;
 	if (persistent && (this->opdi != NULL))
 		this->opdi->persist(this);
 }
 
 void OPDI_SelectPort::getState(uint16_t *position) {
+	this->checkError();
+
 	*position = this->position;
 }
 
@@ -797,14 +828,19 @@ void OPDI_DialPort::setPosition(int64_t position) {
 		throw PortError(std::string(this->getID()) + ": Position must not be greater than the maximum: " + to_string(this->maxValue));
 	// correct position to next possible step
 	int64_t newPosition = ((position - this->minValue) / this->step) * this->step + this->minValue;
-	if (newPosition != this->position)
+	if (this->error != VALUE_OK)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+	if (newPosition != this->position)
+		this->refreshRequired |= (this->refreshMode == REFRESH_AUTO);
 	this->position = position;
+	this->error = VALUE_OK;
 	if (persistent && (this->opdi != NULL))
 		this->opdi->persist(this);
 }
 
 void OPDI_DialPort::getState(int64_t *position) {
+	this->checkError();
+
 	*position = this->position;
 }
 

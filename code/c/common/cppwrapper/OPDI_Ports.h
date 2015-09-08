@@ -19,12 +19,21 @@ class OPDI_Port {
 friend class OPDI;
 
 public:
-	enum RefreshMode
-#ifdef __GNUG__
-// required by GCC for the forward declaration of the enum
-		: unsigned int
-#endif
-		;
+	enum RefreshMode : unsigned int {
+		REFRESH_NOT_SET,
+		// no automatic refresh
+		REFRESH_OFF,
+		// time based refresh
+		REFRESH_PERIODIC,
+		// automatic refresh on state changes
+		REFRESH_AUTO
+	};
+
+	enum Error {
+		VALUE_OK,
+		VALUE_EXPIRED,
+		VALUE_NOT_AVAILABLE
+	};
 
 protected:
 	// protected constructor - for use by friend classes only
@@ -45,6 +54,8 @@ protected:
 
 	// If a port is readonly its state cannot be changed by the master.
 	bool readonly;
+
+	Error error;
 
 	// extended info variables
 	std::string unit;
@@ -106,17 +117,11 @@ protected:
 
 	std::string escapeKeyValueText(std::string str);
 
-public:
+	// checks the error state and throws an exception
+	// should be used by subclasses in getState() methods
+	virtual void checkError(void);
 
-	enum RefreshMode : unsigned int {
-		REFRESH_NOT_SET,
-		// no automatic refresh
-		REFRESH_OFF,
-		// time based refresh
-		REFRESH_PERIODIC,
-		// automatic refresh on state changes
-		REFRESH_AUTO
-	};
+public:
 
 	/** This exception can be used by implementations to indicate an error during a port operation.
 	 *  Its message will be transferred to the master. */
@@ -124,6 +129,20 @@ public:
 	{
 	public:
 		PortError(std::string message): Poco::Exception(message) {};
+	};
+
+	/** This exception can be used by implementations to indicate that the value has expired. */
+	class ValueExpired : public PortError
+	{
+	public:
+		ValueExpired(): PortError("") {};
+	};
+
+	/** This exception can be used by implementations to indicate that no value is available. */
+	class ValueUnavailable : public PortError
+	{
+	public:
+		ValueUnavailable(): PortError("") {};
 	};
 
 	/** This exception can be used by implementations to indicate that a port operation is not allowed.
@@ -201,6 +220,12 @@ public:
 	/** This method should be called just before the OPDI system is ready to start.
 	* It gives the port the chance to do necessary initializations. */
 	virtual void prepare(void);
+
+	/** Sets the error state of this port. */
+	virtual void setError(Error error);
+
+	/** Gets the error state of this port. */
+	virtual OPDI_Port::Error getError(void);
 
 	/** This method returns true if the port is in an error state. This will likely be the case
 	*   when the getState() method of the port throws an exception.

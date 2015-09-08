@@ -406,6 +406,7 @@ protected:
 	OPDI_Port *port;
 	PortType portType;
 	int reloadDelayMs;
+	int expiryMs;
 
 	Poco::DirectoryWatcher *directoryWatcher;
 	uint64_t lastReloadTime;

@@ -271,6 +271,15 @@ static uint8_t get_analog_port_state(opdi_Port *port) {
 
 static uint8_t send_analog_port_state(channel_t channel, opdi_Port *port) {
 	uint8_t result = get_analog_port_state(port);
+	if (result == OPDI_PORT_ERROR) {
+		send_port_error(channel, port->id, opdi_get_port_message(), NULL);
+		return OPDI_STATUS_OK;
+	}
+	else
+	if (result == OPDI_PORT_ACCESS_DENIED) {
+		send_disagreement(channel, OPDI_PORT_ACCESS_DENIED, opdi_get_port_message(), NULL);
+		return OPDI_STATUS_OK;
+	}
 	if (result != OPDI_STATUS_OK)
 		return result;
 
@@ -356,6 +365,15 @@ static uint8_t get_digital_port_state(opdi_Port *port) {
 
 static uint8_t send_digital_port_state(channel_t channel, opdi_Port *port) {
 	uint8_t result = get_digital_port_state(port);
+	if (result == OPDI_PORT_ERROR) {
+		send_port_error(channel, port->id, opdi_get_port_message(), NULL);
+		return OPDI_STATUS_OK;
+	}
+	else
+	if (result == OPDI_PORT_ACCESS_DENIED) {
+		send_disagreement(channel, OPDI_PORT_ACCESS_DENIED, opdi_get_port_message(), NULL);
+		return OPDI_STATUS_OK;
+	}
 	if (result != OPDI_STATUS_OK)
 		return result;
 
@@ -453,6 +471,15 @@ static uint8_t get_select_port_state(opdi_Port *port) {
 
 static uint8_t send_select_port_state(channel_t channel, opdi_Port *port) {
 	uint8_t result = get_select_port_state(port);
+	if (result == OPDI_PORT_ERROR) {
+		send_port_error(channel, port->id, opdi_get_port_message(), NULL);
+		return OPDI_STATUS_OK;
+	}
+	else
+	if (result == OPDI_PORT_ACCESS_DENIED) {
+		send_disagreement(channel, OPDI_PORT_ACCESS_DENIED, opdi_get_port_message(), NULL);
+		return OPDI_STATUS_OK;
+	}
 	if (result != OPDI_STATUS_OK)
 		return result;
 
@@ -526,6 +553,15 @@ static uint8_t get_dial_port_state(opdi_Port *port) {
 
 static uint8_t send_dial_port_state(channel_t channel, opdi_Port *port) {
 	uint8_t result = get_dial_port_state(port);
+	if (result == OPDI_PORT_ERROR) {
+		send_port_error(channel, port->id, opdi_get_port_message(), NULL);
+		return OPDI_STATUS_OK;
+	}
+	else
+	if (result == OPDI_PORT_ACCESS_DENIED) {
+		send_disagreement(channel, OPDI_PORT_ACCESS_DENIED, opdi_get_port_message(), NULL);
+		return OPDI_STATUS_OK;
+	}
 	if (result != OPDI_STATUS_OK)
 		return result;
 
@@ -723,27 +759,17 @@ static uint8_t send_all_port_states(channel_t channel) {
 			result = send_dial_port_state(channel, port);
 		}
 #endif
-		if (result != OPDI_STATUS_OK) {
-			// special case: port access denied
-			if (result == OPDI_PORT_ACCESS_DENIED) {
-				send_disagreement(channel, OPDI_PORT_ACCESS_DENIED, port->id, opdi_get_port_message());
-				result = OPDI_STATUS_OK;
-			} else
-			// special case: port error
-			if (result == OPDI_PORT_ERROR) {
-				send_port_error(channel, port->id, opdi_get_port_message(), NULL);
-				result = OPDI_STATUS_OK;
-			} else
+		if (result == OPDI_STATUS_OK) {
+			// state sent ok; send extended info
+			// copy port ID to the buffer
+			strncpy(buffer, opdi_msg_parts[1], OPDI_EXTENDED_INFO_LENGTH);
+			result = opdi_slave_callback(OPDI_FUNCTION_GET_EXTENDED_PORTSTATE, buffer, OPDI_EXTENDED_INFO_LENGTH);
+			if (result != OPDI_STATUS_OK)
+				return result;
+			result = send_extended_port_state(channel, opdi_msg_parts[1], buffer);
+			if (result != OPDI_STATUS_OK)
 				return result;
 		}
-		// copy port ID to the buffer
-		strncpy(buffer, opdi_msg_parts[1], OPDI_EXTENDED_INFO_LENGTH);
-		result = opdi_slave_callback(OPDI_FUNCTION_GET_EXTENDED_PORTSTATE, buffer, OPDI_EXTENDED_INFO_LENGTH);
-		if (result != OPDI_STATUS_OK)
-			return result;
-		result = send_extended_port_state(channel, opdi_msg_parts[1], buffer);
-		if (result != OPDI_STATUS_OK)
-			return result;
 
 		port = port->next;
 	}
@@ -1151,16 +1177,6 @@ uint8_t opdi_handle_basic_message(opdi_Message *m) {
 
 static uint8_t handle_message_result(opdi_Message *m, uint8_t result) {
 	if (result != OPDI_STATUS_OK) {
-		// special case: port access denied
-		if (result == OPDI_PORT_ACCESS_DENIED) {
-			send_disagreement(m->channel, OPDI_PORT_ACCESS_DENIED, opdi_get_port_message(), NULL);
-			result = OPDI_STATUS_OK;
-		} else
-		// special case: unhandled port error
-		if (result == OPDI_PORT_ERROR) {
-			send_port_error(m->channel, "", opdi_get_port_message(), NULL);	// no port ID here
-			result = OPDI_STATUS_OK;
-		} else
 		// special case: message unknown
 		if (result == OPDI_MESSAGE_UNKNOWN) {
 			opdi_debug_msg("Unknown message", OPDI_DIR_DEBUG);

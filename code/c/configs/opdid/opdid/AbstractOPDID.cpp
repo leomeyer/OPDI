@@ -1601,6 +1601,14 @@ uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 		dPort->getState(&dMode, &dLine);
 		mode[0] = '0' + dMode;
 		line[0] = '0' + dLine;
+	} catch (OPDI_Port::ValueUnavailable &vu) {
+		// TODO localize message
+		opdi_set_port_message("Value unavailable");
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::ValueExpired &ve) {
+		// TODO localize message
+		opdi_set_port_message("Value expired");
+		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -1679,6 +1687,14 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 
 	try {
 		aPort->getState(&aMode, &aRes, &aRef, value);
+	} catch (OPDI_Port::ValueUnavailable &vu) {
+		// TODO localize message
+		opdi_set_port_message("Value unavailable");
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::ValueExpired &ve) {
+		// TODO localize message
+		opdi_set_port_message("Value expired");
+		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -1800,6 +1816,14 @@ uint8_t opdi_get_select_port_state(opdi_Port *port, uint16_t *position) {
 
 	try {
 		sPort->getState(position);
+	} catch (OPDI_Port::ValueUnavailable &vu) {
+		// TODO localize message
+		opdi_set_port_message("Value unavailable");
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::ValueExpired &ve) {
+		// TODO localize message
+		opdi_set_port_message("Value expired");
+		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -1841,6 +1865,14 @@ uint8_t opdi_get_dial_port_state(opdi_Port *port, int64_t *position) {
 
 	try {
 		dPort->getState(position);
+	} catch (OPDI_Port::ValueUnavailable &vu) {
+		// TODO localize message
+		opdi_set_port_message("Value unavailable");
+		return OPDI_PORT_ERROR;
+	} catch (OPDI_Port::ValueExpired &ve) {
+		// TODO localize message
+		opdi_set_port_message("Value expired");
+		return OPDI_PORT_ERROR;
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;

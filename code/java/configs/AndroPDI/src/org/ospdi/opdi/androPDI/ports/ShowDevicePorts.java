@@ -188,7 +188,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 			    			currentGroup = groups.get(position).getID();
 			    			if (!currentGroup.equals(oldGroup))
 				    			// reconfigure to filter the ports
-				    	        queue.add(new ReconfigureOperation(false));
+				    	        queue.offer(new ReconfigureOperation(false));
 			    		}
 			    		
 			    		@Override
@@ -356,7 +356,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
         processorThread.start();
         
         // query the device capabilities
-        queue.add(new ReconfigureOperation(true));
+        queue.offer(new ReconfigureOperation(true));
     }
 
     @Override
@@ -436,7 +436,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
      * @return
      */
 	public synchronized boolean addPortAction(PortAction portAction) {
-		queue.add(portAction);
+		queue.offer(portAction);
 		
 		return true;
 	}
@@ -517,7 +517,7 @@ public class ShowDevicePorts extends LoggingActivity implements IDeviceListener 
 	@Override
 	public void receivedReconfigure(IDevice device) {
         // query the device capabilities
-        queue.add(new ReconfigureOperation(false));
+        queue.offer(new ReconfigureOperation(false));
 	}
 	
 	@Override

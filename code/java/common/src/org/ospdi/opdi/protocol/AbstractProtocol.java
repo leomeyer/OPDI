@@ -115,7 +115,7 @@ public abstract class AbstractProtocol implements IProtocol {
 						// the first part is the port ID
 						if (parts.length > 2)
 							// the remaining parts are the message
-							throw new PortErrorException(parts[1], Strings.join(1, Strings.NO_SEPARATOR, (Object[])parts));
+							throw new PortErrorException(parts[1], Strings.join(2, Strings.NO_SEPARATOR, (Object[])parts));
 						else
 						if (parts.length == 2)
 							throw new PortErrorException(parts[1], "");

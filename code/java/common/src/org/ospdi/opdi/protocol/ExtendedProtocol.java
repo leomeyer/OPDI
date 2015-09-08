@@ -412,10 +412,6 @@ public class ExtendedProtocol extends BasicProtocol {
 				else
 				if (port instanceof SelectPort)
 					parseSelectPortPosition((SelectPort)port, message);
-				
-				// the second message is the extended port state
-				message = expect(channel, DEFAULT_TIMEOUT);
-				parseExtendedPortState(port, message);
 			
 			} catch (PortAccessDeniedException pade) {
 				// check port ID
@@ -427,6 +423,12 @@ public class ExtendedProtocol extends BasicProtocol {
 				port.handlePortError(pee);
 			}
 			counter++;
+
+			try {
+				// the second message is the extended port state
+				message = expect(channel, DEFAULT_TIMEOUT);
+				parseExtendedPortState(port, message);
+			} catch (Exception e) {}
 		}
 	}
 
