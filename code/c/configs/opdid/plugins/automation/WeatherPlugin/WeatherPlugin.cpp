@@ -439,7 +439,7 @@ void WeatherPlugin::refreshData(void) {
 		WeatherPortList::iterator it = this->weatherPorts.begin();
 		while (it != this->weatherPorts.end()) {
 			(*it)->invalidate();
-			it++;
+			++it;
 		}
 
 		if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
@@ -500,7 +500,7 @@ void WeatherPlugin::refreshData(void) {
 							this->opdid->logDebug(this->nodeID + ": Evaluating XML weather data element: " + dataElement + " with data: " + dataNode->innerText());
 						(*it)->extract(dataNode->innerText());
 					}
-					it++;
+					++it;
 				}
 			}
 			children->release();
@@ -572,7 +572,7 @@ void WeatherPlugin::refreshData(void) {
 							this->opdid->logDebug(this->nodeID + ": Evaluating JSON weather data element: " + dataElement + " with data: " + data);
 						(*it)->extract(data);
 					}
-					it++;
+					++it;
 				}
 			}
 		}

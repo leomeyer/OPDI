@@ -91,12 +91,12 @@ uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
 				std::string id = "$" + (*pli)->ID();
 				portValues[id] = val;
 				allPorts += (*pli)->ID() + "=" + val + " ";
-				pli++;
+				++pli;
 			}
 			portValues["$ALL_PORTS"] = allPorts;
 
 			// replace parameters in content
-			for (PortValues::iterator iterator = portValues.begin(); iterator != portValues.end(); iterator++) {
+			for (PortValues::iterator iterator = portValues.begin(); iterator != portValues.end(); ++iterator) {
 				std::string key = iterator->first;
 				std::string value = iterator->second;
 

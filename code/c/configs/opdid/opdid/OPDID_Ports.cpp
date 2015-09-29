@@ -139,7 +139,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 			this->opdid->logNormal(std::string("Error querying port ") + (*it)->getID() + ": " + e.message());
 		}
 		highCount += line;
-		it++;
+		++it;
 	}
 
 	// evaluate function
@@ -191,7 +191,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 			} catch (Poco::Exception &e) {
 				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
 			}
-			it++;
+			++it;
 		}
 		// inverse output ports
 		it = this->inverseOutputPorts.begin();
@@ -209,7 +209,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 			} catch (Poco::Exception &e) {
 				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
 			}
-			it++;
+			++it;
 		}
 	}
 
@@ -308,7 +308,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 				this->opdid->logNormal(std::string(this->getID()) + ": Error querying port " + (*it)->getID() + ": " + e.message());
 			}
 			highCount += line;
-			it++;
+			++it;
 			if (highCount > 0)
 				break;
 		}
@@ -375,7 +375,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 			} catch (Poco::Exception &e) {
 				this->opdid->logNormal(std::string(this->getID()) + ": Error setting output port state: " + (*it)->getID() + ": " + e.message());
 			}
-			it++;
+			++it;
 		}
 		// inverse output ports
 		it = this->inverseOutputPorts.begin();
@@ -385,7 +385,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 			} catch (Poco::Exception &e) {
 				this->opdid->logNormal(std::string(this->getID()) + ": Error setting inverse output port state: " + (*it)->getID() + ": " + e.message());
 			}
-			it++;
+			++it;
 		}
 	}
 
@@ -524,7 +524,7 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 			newState = 1;
 			break;
 		}
-		it++;
+		++it;
 	}
 
 	if (negate)
@@ -704,7 +704,7 @@ uint8_t OPDID_LoggerPort::doWork(uint8_t canSend)  {
 				// separator necessary?
 				if (it != this->portsToLog.end() - 1) 
 					entry += this->separator;
-				it++;
+				++it;
 			}
 			this->outFile << entry << std::endl;
 		}
@@ -716,7 +716,7 @@ uint8_t OPDID_LoggerPort::doWork(uint8_t canSend)  {
 			// separator necessary?
 			if (it != this->portsToLog.end() - 1) 
 				entry += this->separator;
-			it++;
+			++it;
 		}
 	}
 
@@ -904,7 +904,7 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 				} catch (Poco::Exception &e) {
 					this->opdid->logWarning(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
 				}
-				it++;
+				++it;
 			}
 
 			return OPDI_STATUS_OK;
@@ -954,7 +954,7 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 			} catch (Poco::Exception &e) {
 				this->opdid->logNormal(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
 			}
-			it++;
+			++it;
 		}
 
 		this->lastValue = value;
@@ -1074,7 +1074,7 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 			std::map<std::string, std::string>::const_iterator it = parameters.begin();
 			while (it != parameters.end()) {
 				this->logDebug(this->ID() + ":   " + (*it).first + " = " + (*it).second);
-				it++;
+				++it;
 			}
 		}
 

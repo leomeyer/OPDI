@@ -550,7 +550,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 				notification = new ScheduleNotification(&*it, false);
 				break;
 			}
-			it++;
+			++it;
 		}
 	}
 	
@@ -629,7 +629,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 				} catch (Poco::Exception &e) {
 					this->opdid->logNormal(std::string(this->getID()) + ": Error setting output port state: " + (*it)->getID() + ": " + e.message());
 				}
-				it++;
+				++it;
 			}
 		} catch (Poco::Exception &e) {
 			this->opdid->logNormal(std::string(this->getID()) + ": Error processing timer schedule: " + e.message());
@@ -649,7 +649,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 			if (((*it).nextEvent > now) && ((*it).nextEvent < ts)) {
 				ts = (*it).nextEvent;
 			}
-			it++;
+			++it;
 		}
 
 		if (ts < Poco::Timestamp::TIMEVAL_MAX) {

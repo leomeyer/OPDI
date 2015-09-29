@@ -69,6 +69,7 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->totalMicroseconds = 0;
 	this->targetFramesPerSecond = 200;
 	this->waitingCallsPerSecond = 0;
+	this->framesPerSecond = 0;
 
 	// map result codes
 	opdiCodeTexts[0] = "STATUS_OK";
@@ -104,6 +105,8 @@ AbstractOPDID::AbstractOPDID(void) {
 	opdiCodeTexts[30] = "PORT_ERROR";
 	opdiCodeTexts[31] = "SHUTDOWN";
 	opdiCodeTexts[32] = "GROUP_UNKNOWN";
+	opdiCodeTexts[33] = "MESSAGE_UNKNOWN";
+	opdiCodeTexts[34] = "FUNCTION_UNKNOWN";
 }
 
 AbstractOPDID::~AbstractOPDID(void) {
@@ -138,7 +141,7 @@ void AbstractOPDID::connected() {
 	ConnectionListenerList::iterator it = this->connectionListeners.begin();
 	while (it != this->connectionListeners.end()) {
 		(*it)->masterConnected();
-		it++;
+		++it;
 	}
 }
 
@@ -151,7 +154,7 @@ void AbstractOPDID::disconnected() {
 	ConnectionListenerList::iterator it = this->connectionListeners.begin();
 	while (it != this->connectionListeners.end()) {
 		(*it)->masterDisconnected();
-		it++;
+		++it;
 	}
 }
 
@@ -381,7 +384,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 		std::map<std::string, std::string>::const_iterator it = this->environment.begin();
 		while (it != this->environment.end()) {
 			this->logDebug("  " + (*it).first + " = " + (*it).second);
-			it++;
+			++it;
 		}
 	}
 
@@ -655,7 +658,7 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration *config, Poco
 		std::map<std::string, std::string>::const_iterator it = parameters.begin();
 		while (it != parameters.end()) {
 			this->logDebug(node + ":   " + (*it).first + " = " + (*it).second);
-			it++;
+			++it;
 		}
 	}
 	Poco::Util::AbstractConfiguration *includeConfig = this->readConfiguration(filename, parameters);
@@ -1601,11 +1604,11 @@ uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 		dPort->getState(&dMode, &dLine);
 		mode[0] = '0' + dMode;
 		line[0] = '0' + dLine;
-	} catch (OPDI_Port::ValueUnavailable &vu) {
+	} catch (OPDI_Port::ValueUnavailable) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::ValueExpired &ve) {
+	} catch (OPDI_Port::ValueExpired) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
@@ -1687,11 +1690,11 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 
 	try {
 		aPort->getState(&aMode, &aRes, &aRef, value);
-	} catch (OPDI_Port::ValueUnavailable &vu) {
+	} catch (OPDI_Port::ValueUnavailable) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::ValueExpired &ve) {
+	} catch (OPDI_Port::ValueExpired) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
@@ -1816,11 +1819,11 @@ uint8_t opdi_get_select_port_state(opdi_Port *port, uint16_t *position) {
 
 	try {
 		sPort->getState(position);
-	} catch (OPDI_Port::ValueUnavailable &vu) {
+	} catch (OPDI_Port::ValueUnavailable) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::ValueExpired &ve) {
+	} catch (OPDI_Port::ValueExpired) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
@@ -1865,11 +1868,11 @@ uint8_t opdi_get_dial_port_state(opdi_Port *port, int64_t *position) {
 
 	try {
 		dPort->getState(position);
-	} catch (OPDI_Port::ValueUnavailable &vu) {
+	} catch (OPDI_Port::ValueUnavailable) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::ValueExpired &ve) {
+	} catch (OPDI_Port::ValueExpired) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;

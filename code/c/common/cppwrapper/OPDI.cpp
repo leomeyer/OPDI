@@ -52,7 +52,7 @@ uint8_t OPDI::shutdownInternal(void) {
 		if (oPort != NULL)
 			free(oPort);
 		delete *it;
-		it++;
+		++it;
 	}
 	this->disconnect();
 	return OPDI_SHUTDOWN;
@@ -184,7 +184,7 @@ void OPDI::updatePortData(OPDI_Port *port) {
 
 	// check port type
 	if (strcmp(port->type, OPDI_PORTTYPE_SELECT) == 0) {
-		oPort->info.ptr = ((OPDI_SelectPort*)port)->items;
+		oPort->info.ptr = static_cast<OPDI_SelectPort*>(port)->items;
 	} else
 	if (strcmp(port->type, OPDI_PORTTYPE_DIAL) == 0) {
 		// release additional data structure memory
@@ -193,9 +193,9 @@ void OPDI::updatePortData(OPDI_Port *port) {
 		// allocate additional data structure memory
 		struct opdi_DialPortInfo* dialPortInfo = (struct opdi_DialPortInfo*)malloc(sizeof(opdi_DialPortInfo));
 		oPort->info.ptr = dialPortInfo;
-		dialPortInfo->min = ((OPDI_DialPort*)port)->minValue;
-		dialPortInfo->max = ((OPDI_DialPort*)port)->maxValue;
-		dialPortInfo->step = ((OPDI_DialPort*)port)->step;
+		dialPortInfo->min = static_cast<OPDI_DialPort*>(port)->minValue;
+		dialPortInfo->max = static_cast<OPDI_DialPort*>(port)->maxValue;
+		dialPortInfo->step = static_cast<OPDI_DialPort*>(port)->step;
 	} else
 		oPort->info.ptr = port->ptr;
 }
@@ -207,7 +207,7 @@ OPDI_Port *OPDI::findPort(opdi_Port *port) {
 	while (it != this->ports.end()) {
 		if ((opdi_Port*)(*it)->data == port)
 			return *it;
-		it++;
+		++it;
 	}
 	// not found
 	return NULL;
@@ -232,7 +232,7 @@ OPDI_Port *OPDI::findPortByID(const char *portID, bool caseInsensitive) {
 			if (strcmp(oPort->id, portID) == 0)
 				return *it;
 		}
-		it++;
+		++it;
 	}
 	// not found
 	return NULL;
@@ -290,7 +290,7 @@ void OPDI::preparePorts(void) {
 			if (result != OPDI_STATUS_OK)
 				throw Poco::ApplicationException("Unable to add port: " + (*it)->ID() + "; code = " + (*it)->to_string(result));
 		}
-		it++;
+		++it;
 	}
 }
 
@@ -326,7 +326,7 @@ uint8_t OPDI::waiting(uint8_t canSend) {
 		uint8_t result = (*it)->doWork(canSend);
 		if (result != OPDI_STATUS_OK)
 			return result;
-		it++;
+		++it;
 	}
 	return OPDI_STATUS_OK;
 }

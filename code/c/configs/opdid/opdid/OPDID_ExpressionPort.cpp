@@ -163,7 +163,7 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 					this->opdid->logNormal(std::string(this->getID()) + ": Error setting output port value of port " + (*it)->getID() + ": " + e.message());
 				}
 
-				it++;
+				++it;
 			}
 		}
 	}

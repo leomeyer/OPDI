@@ -35,6 +35,10 @@ public:
 		VALUE_NOT_AVAILABLE
 	};
 
+private:
+	// disable copy constructor
+    OPDI_Port(const OPDI_Port& that);
+
 protected:
 	// protected constructor - for use by friend classes only
 	OPDI_Port(const char *id, const char *type);
@@ -128,7 +132,7 @@ public:
 	class PortError : public Poco::Exception
 	{
 	public:
-		PortError(std::string message): Poco::Exception(message) {};
+		explicit PortError(std::string message): Poco::Exception(message) {};
 	};
 
 	/** This exception can be used by implementations to indicate that the value has expired. */
@@ -150,7 +154,7 @@ public:
 	class AccessDenied : public Poco::Exception
 	{
 	public:
-		AccessDenied(std::string message): Poco::Exception(message) {};
+		explicit AccessDenied(std::string message): Poco::Exception(message) {};
 	};
 
 	// used to provide display ordering on ports
@@ -242,6 +246,10 @@ template <class T> inline std::string OPDI_Port::to_string(const T& t) {
 class OPDI_PortGroup {
 friend class OPDI;
 
+private:
+	// disable copy constructor
+    OPDI_PortGroup(const OPDI_PortGroup& that);
+
 protected:
 	char *id;
 	char *label;
@@ -263,7 +271,7 @@ protected:
 	virtual void updateExtendedInfo(void);
 
 public:
-	OPDI_PortGroup(const char *id);
+	explicit OPDI_PortGroup(const char *id);
 
 	/** Virtual destructor for the port. */
 	virtual ~OPDI_PortGroup();
@@ -303,7 +311,7 @@ protected:
 	virtual void doSelfRefresh(void) override;
 
 public:
-	OPDI_DigitalPort(const char *id);
+	explicit OPDI_DigitalPort(const char *id);
 
 	// Initialize a digital port. Specify one of the OPDI_PORTDIRCAPS_* values for dircaps.
 	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
@@ -350,7 +358,7 @@ protected:
 	virtual int32_t validateValue(int32_t value);
 
 public:
-	OPDI_AnalogPort(const char *id);
+	explicit OPDI_AnalogPort(const char *id);
 
 	OPDI_AnalogPort(const char *id, const char *label, const char * dircaps, const int32_t flags);
 
@@ -400,7 +408,7 @@ protected:
 	virtual void doSelfRefresh(void) override;
 
 public:
-	OPDI_SelectPort(const char *id);
+	explicit OPDI_SelectPort(const char *id);
 
 	// Initialize a select port. The direction of a select port is output only.
 	// You have to specify a list of items that are the labels of the different select positions. The last element must be NULL.
@@ -441,7 +449,7 @@ protected:
 	virtual void doSelfRefresh(void) override;
 
 public:
-	OPDI_DialPort(const char *id);
+	explicit OPDI_DialPort(const char *id);
 
 	// Initialize a dial port. The direction of a dial port is output only.
 	// You have to specify boundary values and a step size.
@@ -484,7 +492,7 @@ protected:
 
 public:
 	// Initialize a streaming port. A streaming port is always bidirectional.
-	OPDI_StreamingPort(const char *id);
+	explicit OPDI_StreamingPort(const char *id);
 
 	virtual ~OPDI_StreamingPort();
 

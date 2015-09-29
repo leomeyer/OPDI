@@ -532,7 +532,7 @@ void FritzBoxPlugin::login(void) {
 	FritzPorts::iterator it = this->fritzPorts.begin();
 	while (it != this->fritzPorts.end()) {
 		(*it)->query(this);
-		it++;
+		++it;
 	}
 }
 
