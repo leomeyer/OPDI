@@ -8,6 +8,7 @@
 #include "Poco/Format.h"
 
 #include "opdi_constants.h"
+#include "opdi_platformfuncs.h"
 
 #include "SunRiseSet.h"
 
@@ -126,6 +127,8 @@ OPDID_TimerPort::OPDID_TimerPort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 	this->deactivatedText = "Deactivated";
 	this->notScheduledText = "Not scheduled";
 	this->timestampFormat = "Next event: " + opdid->timestampFormat;
+
+	this->lastWorkTimestamp = 0;
 }
 
 OPDID_TimerPort::~OPDID_TimerPort() {
@@ -320,9 +323,10 @@ void OPDID_TimerPort::prepare() {
 
 	if (this->line == 1) {
 		// calculate all schedules
-		for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
-			Schedule *schedule = &*it;
-/*
+		this->recalculateSchedules();
+	}
+
+	/*
 			// test cases
 			if (schedule.type == ASTRONOMICAL) {
 				CSunRiseSet sunRiseSet;
@@ -335,18 +339,10 @@ void OPDID_TimerPort::prepare() {
 					this->opdid->println("Sunset: " + Poco::DateTimeFormatter::format(result, this->opdid->timestampFormat));
 				}
 			}
-*/
-			// calculate
-			Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(schedule);
-			if (nextOccurrence > Poco::Timestamp()) {
-				// add with the specified occurrence time
-				this->addNotification(new ScheduleNotification(schedule, false), nextOccurrence);
-			} else {
-				if ((schedule->type != ONLOGIN) && (schedule->type != ONLOGOUT))
-					this->logVerbose(this->ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
-			}
-		}
-	}
+	*/
+
+	// remember calculation timestamp
+	this->lastWorkTimestamp = Poco::Timestamp();
 }
 
 Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
@@ -545,7 +541,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 		ScheduleList::iterator it = this->schedules.begin();
 		while (it != this->schedules.end()) {
 			if ((*it).type == (connected ? ONLOGIN : ONLOGOUT)) {
-				logDebug(this->ID() + ": Connection status change detected; executing schedule " + (*it).nodeName + ((*it).type == ONLOGIN ? " (OnLogin)" : " (OnLogout)"));
+				this->logDebug(this->ID() + ": Connection status change detected; executing schedule " + (*it).nodeName + ((*it).type == ONLOGIN ? " (OnLogin)" : " (OnLogout)"));
 				// schedule found; create event notification
 				notification = new ScheduleNotification(&*it, false);
 				break;
@@ -553,6 +549,18 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 			++it;
 		}
 	}
+
+	// time correction since last calculation or doWork iteration?
+	// this may happen due to daylight saving time or timezone changes
+	// or due to system time corrections (user action, NTP etc)
+	if (abs(Poco::Timestamp() - this->lastWorkTimestamp) > Poco::Timestamp::resolution() * 5) {
+		this->logVerbose(this->ID() + ": Relevant system time change detected; recalculating schedules");
+		// clear all schedules
+		this->queue.clear();
+		this->recalculateSchedules();
+	}
+
+	this->lastWorkTimestamp = Poco::Timestamp();
 	
 	// notification created due to status change?
 	if (notification.isNull())
@@ -662,6 +670,22 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
+void OPDID_TimerPort::recalculateSchedules() {
+	// recalculate all schedules
+	for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
+		Schedule *schedule = &*it;
+		// calculate
+		Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(schedule);
+		if (nextOccurrence > Poco::Timestamp()) {
+			// add with the specified occurrence time
+			this->addNotification(new ScheduleNotification(schedule, false), nextOccurrence);
+		} else {
+			if ((schedule->type != ONLOGIN) && (schedule->type != ONLOGOUT))
+				this->logVerbose(this->ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
+		}
+	}
+}
+
 void OPDID_TimerPort::setLine(uint8_t line) {
 	bool wasLow = (this->line == 0);
 
@@ -677,21 +701,8 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 
 	// set to High?
 	if (this->line == 1) {
-		if (wasLow) {
-			// recalculate all schedules
-			for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
-				Schedule *schedule = &*it;
-				// calculate
-				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(schedule);
-				if (nextOccurrence > Poco::Timestamp()) {
-					// add with the specified occurrence time
-					this->addNotification(new ScheduleNotification(schedule, false), nextOccurrence);
-				} else {
-					if ((schedule->type != ONLOGIN) && (schedule->type != ONLOGOUT))
-						this->logVerbose(this->ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
-				}
-			}
-		}
+		if (wasLow)
+			this->recalculateSchedules();
 	}
 
 	this->refreshRequired = true;

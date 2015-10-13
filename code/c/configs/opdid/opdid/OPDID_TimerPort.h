@@ -166,7 +166,11 @@ protected:
 
 	bool masterLoggedIn;
 
+	Poco::Timestamp lastWorkTimestamp;
+
 	void addNotification(ScheduleNotification::Ptr notification, Poco::Timestamp timestamp);
+
+	void recalculateSchedules(void);
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
