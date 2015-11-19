@@ -1453,8 +1453,6 @@ OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id)
 	this->minDelta = LLONG_MIN;
 	this->maxDelta = LLONG_MAX;
 	this->lastQueryTime = 0;
-
-	this->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
 }
 
 void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config) {
@@ -1492,6 +1490,9 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config) 
 		throw Poco::DataException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean', or 'Average': " + algStr);
 
 	this->allowIncomplete = config->getBool("AllowIncomplete", this->allowIncomplete);
+
+	// initially there is no value available
+	this->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
 }
 
 void OPDID_AggregatorPort::prepare() {
