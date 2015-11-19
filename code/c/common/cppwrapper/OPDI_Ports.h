@@ -139,14 +139,14 @@ public:
 	class ValueExpired : public PortError
 	{
 	public:
-		ValueExpired(): PortError("") {};
+		ValueExpired(): PortError("The value has expired") {};
 	};
 
 	/** This exception can be used by implementations to indicate that no value is available. */
 	class ValueUnavailable : public PortError
 	{
 	public:
-		ValueUnavailable(): PortError("") {};
+		ValueUnavailable(): PortError("The value is unavailable") {};
 	};
 
 	/** This exception can be used by implementations to indicate that a port operation is not allowed.

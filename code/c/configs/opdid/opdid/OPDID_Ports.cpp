@@ -1389,7 +1389,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			// get the port's value
 			value = this->opdid->getPortValue(this->sourcePort);
 		} catch (Poco::Exception &e) {
-			this->logDebug(this->ID() + ": Error querying source port: " + e.message());
+			this->logDebug(this->ID() + ": Error querying source port " + this->sourcePort->ID() + ": " + e.message());
 			this->resetValues();
 			return OPDI_STATUS_OK;
 		}
@@ -1414,7 +1414,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 		}
 		this->values.push_back(longValue);
 
-		if (!this->allowIncomplete && this->values.size() < this->totalValues)
+		if ((this->values.size() < this->totalValues) && !this->allowIncomplete)
 			this->logVerbose(this->ID() + ": Cannot compute result because not all values have been collected and AllowIncomplete is false");
 		else {
 			switch (this->algorithm) {
