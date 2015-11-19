@@ -87,7 +87,7 @@ OBJECTS = $(SRC)
 
 TARFOLDER = $(TARGET)-release
 
-all: $(SRC) $(TARGET) plugins tar
+all: $(SRC) plugins $(TARGET) tar
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(POCOLIBS) $(LIBS)

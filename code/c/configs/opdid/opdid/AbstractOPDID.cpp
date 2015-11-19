@@ -361,7 +361,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 			} else {
 				std::string param = args.at(i);
 				// detect position of "="
-				int pos = param.find_first_of("=");
+				size_t pos = param.find_first_of("=");
 				if ((pos == std::string::npos) || (pos == 0))
 					throw Poco::SyntaxException("Illegal parameter syntax; expected name=value: " + param);
 				std::string name = param.substr(0, pos);
