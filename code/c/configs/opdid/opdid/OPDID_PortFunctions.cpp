@@ -174,7 +174,7 @@ void ValueResolver::initialize(OPDID_PortFunctions *origin, std::string paramNam
 		Poco::RegularExpression reFull("(.*)\\((.*)\\)\\/(.*)");
 		if (reFull.match(value, 0, matches) == 4) {
 			if (!allowErrorDefault)
-				throw new Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": Specifying an error default value is not allowed: " + value);
+				throw Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": Specifying an error default value is not allowed: " + value);
 			portName = value.substr(matches[1].offset, matches[1].length);
 			scaleStr = value.substr(matches[2].offset, matches[2].length);
 			defaultStr = value.substr(matches[3].offset, matches[3].length);
@@ -183,7 +183,7 @@ void ValueResolver::initialize(OPDID_PortFunctions *origin, std::string paramNam
 			Poco::RegularExpression reDefault("(.*)\\/(.*)");
 			if (reDefault.match(value, 0, matches) == 3) {
 				if (!allowErrorDefault)
-					throw new Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": Specifying an error default value is not allowed: " + value);
+					throw Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": Specifying an error default value is not allowed: " + value);
 				portName = value.substr(matches[1].offset, matches[1].length);
 				defaultStr = value.substr(matches[2].offset, matches[2].length);
 			} else {
@@ -203,13 +203,13 @@ void ValueResolver::initialize(OPDID_PortFunctions *origin, std::string paramNam
 			if (Poco::NumberParser::tryParseFloat(scaleStr, this->scaleValue)) {
 				this->useScaleValue = true;
 			} else
-				throw new Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": Invalid scale value specified; must be numeric: " + scaleStr);
+				throw Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": Invalid scale value specified; must be numeric: " + scaleStr);
 		}
 		if (defaultStr != "") {
 			if (Poco::NumberParser::tryParseFloat(defaultStr, this->errorDefault)) {
 				this->useErrorDefault = true;
 			} else
-				throw new Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": Invalid error default value specified; must be numeric: " + defaultStr);
+				throw Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": Invalid error default value specified; must be numeric: " + defaultStr);
 		}
 
 		this->portID = portName;
@@ -239,23 +239,22 @@ ValueResolver::operator double() {
 		// port not yet resolved?
 		if (this->port == NULL) {
 			if (this->portID == "")
-				throw new Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": ValueResolver not initialized (programming error)");
+				throw Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": ValueResolver not initialized (programming error)");
 			// try to resolve the port
 			this->port = this->origin->findPort(this->origin->portFunctionID, this->paramName, this->portID, true);
 		}
 		// resolve port value to a double
 		double result = 0;
 
-		if (this->useErrorDefault) {
-			try {
-				result = origin->opdid->getPortValue(this->port);
-			} catch (Poco::Exception &pe) {
-				origin->logExtreme(this->origin->portFunctionID + ": Unable to get the value of the port " + port->ID() + ": " + pe.message());
-				return this->errorDefault;
-			}
-		} else {
-			// propagate exceptions directly
+		try {
 			result = origin->opdid->getPortValue(this->port);
+		} catch (Poco::Exception &pe) {
+			origin->logExtreme(this->origin->portFunctionID + ": Unable to get the value of the port " + port->ID() + ": " + pe.message());
+			if (this->useErrorDefault) {
+				return this->errorDefault;
+			} else
+				// propagate exception
+				throw Poco::ApplicationException(this->origin->portFunctionID + ": Unable to get the value of the port " + port->ID() + ": " + pe.message());
 		}
 
 		// scale?

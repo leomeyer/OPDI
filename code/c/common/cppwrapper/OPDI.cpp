@@ -415,5 +415,5 @@ void OPDI::shutdown(void) {
 }
 
 void OPDI::persist(OPDI_Port *port) {
-	throw new Poco::NotImplementedException("This implementation does not support port state persistance");
+	throw Poco::NotImplementedException("This implementation does not support port state persistance");
 }
