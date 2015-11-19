@@ -45,11 +45,11 @@ void OPDID_ExecPort::configure(Poco::Util::AbstractConfiguration *config) {
 }
 
 void OPDID_ExecPort::setDirCaps(const char *dirCaps) {
-	throw PortError(std::string(this->getID()) + ": The direction capabilities of an ExecPort cannot be changed");
+	throw PortError(this->ID() + ": The direction capabilities of an ExecPort cannot be changed");
 }
 
 void OPDID_ExecPort::setMode(uint8_t mode) {
-	throw PortError(std::string(this->getID()) + ": The mode of an ExecPort cannot be changed");
+	throw PortError(this->ID() + ": The mode of an ExecPort cannot be changed");
 }
 
 void OPDID_ExecPort::prepare() {

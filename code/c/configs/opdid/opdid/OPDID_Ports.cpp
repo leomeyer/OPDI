@@ -100,15 +100,15 @@ void OPDID_LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
 }
 
 void OPDID_LogicPort::setDirCaps(const char *dirCaps) {
-	throw PortError(std::string(this->getID()) + ": The direction capabilities of a LogicPort cannot be changed");
+	throw PortError(this->ID() + ": The direction capabilities of a LogicPort cannot be changed");
 }
 
 void OPDID_LogicPort::setMode(uint8_t mode) {
-	throw PortError(std::string(this->getID()) + ": The mode of a LogicPort cannot be changed");
+	throw PortError(this->ID() + ": The mode of a LogicPort cannot be changed");
 }
 
 void OPDID_LogicPort::setLine(uint8_t line) {
-	throw PortError(std::string(this->getID()) + ": The line of a LogicPort cannot be set directly");
+	throw PortError(this->ID() + ": The line of a LogicPort cannot be set directly");
 }
 
 void OPDID_LogicPort::prepare() {
@@ -273,11 +273,11 @@ void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 }
 
 void OPDID_PulsePort::setDirCaps(const char *dirCaps) {
-	throw PortError(std::string(this->getID()) + ": The direction capabilities of a PulsePort cannot be changed");
+	throw PortError(this->ID() + ": The direction capabilities of a PulsePort cannot be changed");
 }
 
 void OPDID_PulsePort::setMode(uint8_t mode) {
-	throw PortError(std::string(this->getID()) + ": The mode of a PulsePort cannot be changed");
+	throw PortError(this->ID() + ": The mode of a PulsePort cannot be changed");
 }
 
 void OPDID_PulsePort::prepare() {
@@ -305,7 +305,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->getState(&mode, &line);
 			} catch (Poco::Exception &e) {
-				this->opdid->logNormal(std::string(this->getID()) + ": Error querying port " + (*it)->getID() + ": " + e.message());
+				this->opdid->logNormal(this->ID() + ": Error querying port " + (*it)->getID() + ": " + e.message());
 			}
 			highCount += line;
 			++it;
@@ -373,7 +373,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->setLine(newState);
 			} catch (Poco::Exception &e) {
-				this->opdid->logNormal(std::string(this->getID()) + ": Error setting output port state: " + (*it)->getID() + ": " + e.message());
+				this->opdid->logNormal(this->ID() + ": Error setting output port state: " + (*it)->getID() + ": " + e.message());
 			}
 			++it;
 		}
@@ -383,7 +383,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->setLine((newState == 0 ? 1 : 0));
 			} catch (Poco::Exception &e) {
-				this->opdid->logNormal(std::string(this->getID()) + ": Error setting inverse output port state: " + (*it)->getID() + ": " + e.message());
+				this->opdid->logNormal(this->ID() + ": Error setting inverse output port state: " + (*it)->getID() + ": " + e.message());
 			}
 			++it;
 		}
@@ -423,11 +423,11 @@ void OPDID_SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 }
 
 void OPDID_SelectorPort::setDirCaps(const char *dirCaps) {
-	throw PortError(std::string(this->getID()) + ": The direction capabilities of a SelectorPort cannot be changed");
+	throw PortError(this->ID() + ": The direction capabilities of a SelectorPort cannot be changed");
 }
 
 void OPDID_SelectorPort::setMode(uint8_t mode) {
-	throw PortError(std::string(this->getID()) + ": The mode of a SelectorPort cannot be changed");
+	throw PortError(this->ID() + ": The mode of a SelectorPort cannot be changed");
 }
 
 void OPDID_SelectorPort::setLine(uint8_t line) {
@@ -447,7 +447,7 @@ void OPDID_SelectorPort::prepare() {
 
 	// check position range
 	if (this->position > this->selectPort->getMaxPosition())
-		throw Poco::DataException(std::string(this->getID()) + ": The specified selector position exceeds the maximum of port " + this->selectPort->getID() + ": " + to_string(this->selectPort->getMaxPosition()));
+		throw Poco::DataException(this->ID() + ": The specified selector position exceeds the maximum of port " + this->selectPort->getID() + ": " + to_string(this->selectPort->getMaxPosition()));
 }
 
 uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
@@ -496,11 +496,11 @@ void OPDID_ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration *confi
 }
 
 void OPDID_ErrorDetectorPort::setDirCaps(const char *dirCaps) {
-	throw PortError(std::string(this->getID()) + ": The direction capabilities of an ErrorDetectorPort cannot be changed");
+	throw PortError(this->ID() + ": The direction capabilities of an ErrorDetectorPort cannot be changed");
 }
 
 void OPDID_ErrorDetectorPort::setMode(uint8_t mode) {
-	throw PortError(std::string(this->getID()) + ": The mode of an ErrorDetectorPort cannot be changed");
+	throw PortError(this->ID() + ": The mode of an ErrorDetectorPort cannot be changed");
 }
 
 void OPDID_ErrorDetectorPort::prepare() {
@@ -595,7 +595,7 @@ void OPDID_SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *con
 							ctb::SerialPort::NoFlowControl) >= 0) {
 		this->device = this->serialPort;
 	} else {
-		throw Poco::ApplicationException(std::string(this->getID()) + ": Unable to open serial port: " + serialPortName);
+		throw Poco::ApplicationException(this->ID() + ": Unable to open serial port: " + serialPortName);
 	}
 
 	this->logVerbose(this->ID() + ": Serial port " + serialPortName + " opened successfully");
@@ -608,7 +608,7 @@ void OPDID_SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *con
 		this->mode = PASS_THROUGH;
 	} else
 		if (modeStr != "")
-			throw Poco::DataException(std::string(this->getID()) + ": Invalid mode specifier; expected 'Passthrough' or 'Loopback': " + modeStr);
+			throw Poco::DataException(this->ID() + ": Invalid mode specifier; expected 'Passthrough' or 'Loopback': " + modeStr);
 }
 
 int OPDID_SerialStreamingPort::write(char *bytes, size_t length) {
@@ -738,7 +738,7 @@ void OPDID_LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 
 	std::string formatStr = config->getString("Format", "CSV");
 	if (formatStr != "CSV")
-		throw Poco::DataException(std::string(this->getID()) + ": Formats other than CSV are currently not supported");
+		throw Poco::DataException(this->ID() + ": Formats other than CSV are currently not supported");
 
 	std::string outFileStr = config->getString("OutputFile", "");
 	if (outFileStr != "") {
@@ -750,7 +750,7 @@ void OPDID_LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 		// open the stream in append mode
 		this->outFile.open(outFileStr, std::ios_base::app);
 	} else
-		throw Poco::DataException(std::string(this->getID()) + ": The OutputFile setting must be specified");
+		throw Poco::DataException(this->ID() + ": The OutputFile setting must be specified");
 
 	this->portsToLogStr = this->opdid->getConfigString(config, "Ports", "", true);
 }
@@ -831,11 +831,11 @@ void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 }
 
 void OPDID_FaderPort::setDirCaps(const char *dirCaps) {
-	throw PortError(std::string(this->getID()) + ": The direction capabilities of a FaderPort cannot be changed");
+	throw PortError(this->ID() + ": The direction capabilities of a FaderPort cannot be changed");
 }
 
 void OPDID_FaderPort::setMode(uint8_t mode) {
-	throw PortError(std::string(this->getID()) + ": The mode of a FaderPort cannot be changed");
+	throw PortError(this->ID() + ": The mode of a FaderPort cannot be changed");
 }
 
 void OPDID_FaderPort::setLine(uint8_t line) {
@@ -1204,6 +1204,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected decimal value between 0 and 1 but got: " + errorContent);
 				}
+				value = value * this->numerator / this->denominator;
 				this->logDebug(this->ID() + ": Setting value of analog port '" + this->port->ID() + "' to " + this->to_string(value));
 				((OPDI_AnalogPort*)this->port)->setRelativeValue(value);
 				break;
@@ -1212,7 +1213,12 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 				int64_t value;
 				int64_t min = ((OPDI_DialPort*)this->port)->getMin();
 				int64_t max = ((OPDI_DialPort*)this->port)->getMax();
-				if (!Poco::NumberParser::tryParse64(content, value) || (value < min) || (value > max)) {
+				if (!Poco::NumberParser::tryParse64(content, value)) {
+					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
+					throw Poco::DataFormatException("Expected integer value but got: " + errorContent);
+				}
+				value = value * this->numerator / this->denominator;
+				if ((value < min) || (value > max)) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
 				}
@@ -1261,7 +1267,11 @@ OPDID_FileInputPort::OPDID_FileInputPort(AbstractOPDID *opdid, const char *id) :
 	this->expiryMs = 0;
 	this->lastReloadTime = 0;
 	this->needsReload = false;
+	this->numerator = 1;
+	this->denominator = 1;
 
+	// a FileInput port is presented as an output (being High means that the file input is active)
+	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
 	// file input is active by default
 	this->setLine(1);
 }
@@ -1325,6 +1335,11 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 	if (this->expiryMs < 0) {
 		throw Poco::DataException(this->ID() + ": If Expiry is specified it must be greater than 0 (ms): " + this->to_string(this->expiryMs));
 	}
+
+	this->numerator = nodeConfig->getInt("Numerator", this->numerator);
+	this->denominator = nodeConfig->getInt("Denominator", this->denominator);
+	if (this->denominator == 0) 
+		throw Poco::InvalidArgumentException(this->ID() + ": The Denominator may not be 0");
 
 	// determine directory and filename
 	Poco::Path path(filePath);

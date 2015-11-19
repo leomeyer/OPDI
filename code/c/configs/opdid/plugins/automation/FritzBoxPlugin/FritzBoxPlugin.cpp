@@ -243,7 +243,7 @@ void FritzDECT200Switch::setLine(uint8_t line) {
 void FritzDECT200Switch::getState(uint8_t *mode, uint8_t *line) {
 	if (this->switchState < 0) {
 		// this->plugin->nodeID + "/" + this->id + " (" + this->ain + ") : 
-		throw PortError(std::string(this->getID()) + ": The switch state is unknown");
+		throw PortError(this->ID() + ": The switch state is unknown");
 	}
 	OPDI_DigitalPort::getState(mode, line);
 }
@@ -312,7 +312,7 @@ void FritzDECT200Power::query(FritzBoxPlugin *plugin) {
 
 void FritzDECT200Power::getState(int64_t *position) {
 	if (this->power < 0) {
-		throw PortError(std::string(this->getID()) + ": The power state is unknown");
+		throw PortError(this->ID() + ": The power state is unknown");
 	}
 	OPDI_DialPort::getState(position);
 }
@@ -387,7 +387,7 @@ void FritzDECT200Energy::query(FritzBoxPlugin *plugin) {
 
 void FritzDECT200Energy::getState(int64_t *position) {
 	if (this->energy < 0) {
-		throw PortError(std::string(this->getID()) + ": The energy state is unknown");
+		throw PortError(this->ID() + ": The energy state is unknown");
 	}
 	OPDI_DialPort::getState(position);
 }

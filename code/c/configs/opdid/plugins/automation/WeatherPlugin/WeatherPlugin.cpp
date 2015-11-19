@@ -121,7 +121,7 @@ void WeatherGaugePort::configure(Poco::Util::AbstractConfiguration *nodeConfig, 
 	this->numerator = nodeConfig->getInt("Numerator", this->numerator);
 	this->denominator = nodeConfig->getInt("Denominator", this->denominator);
 	if (this->denominator == 0) 
-		throw Poco::InvalidArgumentException(std::string(this->getID()) + ": The Denominator may not be 0");
+		throw Poco::InvalidArgumentException(this->ID() + ": The Denominator may not be 0");
 }
 
 void WeatherGaugePort::prepare(void) {
@@ -168,17 +168,17 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	if (this->regexMatch != "") {
 		Poco::RegularExpression regex(this->regexMatch, 0, true);
 		if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
-			this->opdid->logDebug(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Matching regex against weather data: " + rawValue);
+			this->opdid->logDebug(this->ID() + ": WeatherGaugePort for element " + this->dataElement + ": Matching regex against weather data: " + rawValue);
 		if (regex.extract(rawValue, value, 0) == 0) {
 		if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
-			this->opdid->logDebug(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Matching regex returned no result; weather data: " + rawValue);
+			this->opdid->logDebug(this->ID() + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Matching regex returned no result; weather data: " + rawValue);
 		}
 	}
 	if (this->regexReplace != "") {
 		Poco::RegularExpression regex(this->regexReplace, 0, true);
 		if (regex.subst(value, this->replaceBy, Poco::RegularExpression::RE_GLOBAL) == 0) {
 			if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
-				this->opdid->logDebug(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Replacement regex did not match in value: " + value);
+				this->opdid->logDebug(this->ID() + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Replacement regex did not match in value: " + value);
 		}
 	}
 
@@ -191,25 +191,25 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 		result = Poco::NumberParser::parseFloat(value);
 	} catch (Poco::Exception e) {
 		if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
-			this->opdid->logDebug(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Unable to parse weather data: " + value);
+			this->opdid->logDebug(this->ID() + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Unable to parse weather data: " + value);
 		return OPDI_STATUS_OK;
 	}
 
 	// scale the result
 	int64_t newPos = (int64_t)(result * this->numerator / this->denominator * 1.0);
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
-		this->opdid->logDebug(std::string(this->getID()) + ": WeatherGaugePort for element " + this->dataElement + ": Extracted value is: " + to_string(newPos));
+		this->opdid->logDebug(this->ID() + ": WeatherGaugePort for element " + this->dataElement + ": Extracted value is: " + to_string(newPos));
 
 	// correct value; a standard dial port will throw exceptions
 	// but exceptions must be avoided in this threaded code because they will cause strange messages on Linux
 	if (newPos < this->minValue) {
 		if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
-			this->opdid->logDebug(std::string(this->getID()) + ": Warning: Value too low (" + to_string(newPos) + " < " + to_string(this->minValue) + "), correcting");
+			this->opdid->logDebug(this->ID() + ": Warning: Value too low (" + to_string(newPos) + " < " + to_string(this->minValue) + "), correcting");
 		newPos = this->minValue;
 	}
 	if (newPos > this->maxValue) {
 		if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
-			this->opdid->logDebug(std::string(this->getID()) + ": Warning: Value too high (" + to_string(newPos) + " > " + to_string(this->maxValue) + "), correcting");
+			this->opdid->logDebug(this->ID() + ": Warning: Value too high (" + to_string(newPos) + " > " + to_string(this->maxValue) + "), correcting");
 		newPos = this->maxValue;
 	}
 	this->setPosition(newPos);
@@ -236,7 +236,7 @@ void WeatherGaugePort::getState(int64_t *position) {
 	this->lastRequestedValidState = this->isValid;
 
 	if (!this->isValid) {
-		throw PortError(std::string(this->getID()) + ": Reading is not valid");
+		throw PortError(this->ID() + ": Reading is not valid");
 	}
 
 	OPDI_DialPort::getState(position);

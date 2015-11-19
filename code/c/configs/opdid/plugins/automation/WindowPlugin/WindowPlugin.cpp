@@ -196,7 +196,7 @@ void WindowPort::setPosition(uint16_t position) {
 
 void WindowPort::getState(uint16_t *position) {
 	if (this->currentState == ERR && !this->positionNewlySet)
-		throw PortError(std::string(this->getID()) + ": Sensor or motor failure or misconfiguration");
+		throw PortError(this->ID() + ": Sensor or motor failure or misconfiguration");
 	OPDI_SelectPort::getState(position);
 }
 
@@ -220,7 +220,7 @@ void WindowPort::prepare() {
 		this->directionPort = this->findDigitalPort(this->ID(), "Direction", this->direction, true);
 		this->enablePort = this->findDigitalPort(this->ID(), "Enable", this->enable, true);
 	} else
-		throw Poco::DataException(std::string(this->getID()) + ": Unknown window mode; only H-Bridge and SerialRelay are supported");
+		throw Poco::DataException(this->ID() + ": Unknown window mode; only H-Bridge and SerialRelay are supported");
 
 	if (this->statusPortStr != "")
 		this->statusPort = this->findSelectPort(this->ID(), "StatusPort", this->statusPortStr, true);
@@ -311,7 +311,7 @@ void WindowPort::setMotorOff(void) {
 		this->setPortLine(this->motorAPort, (this->motorActive == 1 ? 0 : 1));
 		this->setPortLine(this->motorBPort, (this->motorActive == 1 ? 0 : 1));
 	} else if (this->mode == SERIAL_RELAY)
-		throw Poco::ApplicationException(std::string(this->getID()) + ": Cannot set motor off in Serial Relay Mode");
+		throw Poco::ApplicationException(this->ID() + ": Cannot set motor off in Serial Relay Mode");
 	this->isMotorOn = false;
 }
 

@@ -35,11 +35,11 @@ void OPDID_ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) 
 }
 
 void OPDID_ExpressionPort::setDirCaps(const char *dirCaps) {
-	throw PortError(std::string(this->getID()) + ": The direction capabilities of an ExpressionPort cannot be changed");
+	throw PortError(this->ID() + ": The direction capabilities of an ExpressionPort cannot be changed");
 }
 
 void OPDID_ExpressionPort::setMode(uint8_t mode) {
-	throw PortError(std::string(this->getID()) + ": The mode of an ExpressionPort cannot be changed");
+	throw PortError(this->ID() + ": The mode of an ExpressionPort cannot be changed");
 }
 
 bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
@@ -62,7 +62,7 @@ bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 
 		// port not found?
 		if (port == NULL) {
-			throw PortError(std::string(this->getID()) + ": Expression variable did not resolve to an available port ID: " + symbol.first);
+			throw PortError(this->ID() + ": Expression variable did not resolve to an available port ID: " + symbol.first);
 		}
 
 		// calculate port value
@@ -111,18 +111,18 @@ void OPDID_ExpressionPort::prepare() {
 
 	// compile to detect variables
 	if (!parser.compile(this->expressionStr, expression))
-		throw Poco::Exception(std::string(this->getID()) + ": Error in expression: " + parser.error());
+		throw Poco::Exception(this->ID() + ": Error in expression: " + parser.error());
 
 	// store symbol list (input variables)
 	parser.dec().symbols(this->symbol_list);
 
 	if (!this->prepareVariables(true)) {
-		throw Poco::Exception(std::string(this->getID()) + ": Unable to resolve variables");
+		throw Poco::Exception(this->ID() + ": Unable to resolve variables");
 	}
 	parser.disable_unknown_symbol_resolver();
 
 	if (!parser.compile(this->expressionStr, expression))
-		throw Poco::Exception(std::string(this->getID()) + ": Error in expression: " + parser.error());
+		throw Poco::Exception(this->ID() + ": Error in expression: " + parser.error());
 }
 
 uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
@@ -160,7 +160,7 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 					} else
 						throw PortError("");
 				} catch (Poco::Exception &e) {
-					this->opdid->logNormal(std::string(this->getID()) + ": Error setting output port value of port " + (*it)->getID() + ": " + e.message());
+					this->opdid->logNormal(this->ID() + ": Error setting output port value of port " + (*it)->getID() + ": " + e.message());
 				}
 
 				++it;

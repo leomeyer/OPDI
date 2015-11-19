@@ -439,7 +439,7 @@ void OPDI_DigitalPort::setDirCaps(const char *dirCaps) {
 
 void OPDI_DigitalPort::setMode(uint8_t mode) {
 	if (mode > 3)
-		throw PortError(std::string(this->getID()) + ": Digital port mode not supported: " + this->to_string((int)mode));
+		throw PortError(this->ID() + ": Digital port mode not supported: " + this->to_string((int)mode));
 
 	int8_t newMode = -1;
 	// validate mode
@@ -457,23 +457,23 @@ void OPDI_DigitalPort::setMode(uint8_t mode) {
 			break;
 		case 1:
 			if ((flags & OPDI_DIGITAL_PORT_PULLUP_ALWAYS) != OPDI_DIGITAL_PORT_PULLUP_ALWAYS)
-				throw PortError(std::string(this->getID()) + ": Digital port mode not supported; use mode 'Input with pullup': " + this->to_string((int)mode));
+				throw PortError(this->ID() + ": Digital port mode not supported; use mode 'Input with pullup': " + this->to_string((int)mode));
 			newMode = 1;
 			break;
 		case 2:
 			if ((flags & OPDI_DIGITAL_PORT_PULLDN_ALWAYS) != OPDI_DIGITAL_PORT_PULLDN_ALWAYS)
-				throw PortError(std::string(this->getID()) + ": Digital port mode not supported; use mode 'Input with pulldown': " + this->to_string((int)mode));
+				throw PortError(this->ID() + ": Digital port mode not supported; use mode 'Input with pulldown': " + this->to_string((int)mode));
 			newMode = 2;
 			break;
 		case 3:
 			if (!strcmp(this->caps, OPDI_PORTDIRCAP_INPUT))
-				throw PortError(std::string(this->getID()) + ": Cannot set input only digital port mode to 'Output'");
+				throw PortError(this->ID() + ": Cannot set input only digital port mode to 'Output'");
 			newMode = 3;
 		}
 	} else {
 		// direction is output only
 		if (mode < 3)
-			throw PortError(std::string(this->getID()) + ": Cannot set output only digital port mode to input");
+			throw PortError(this->ID() + ": Cannot set output only digital port mode to input");
 		newMode = 3;
 	}
 	if (newMode > -1) {
@@ -487,7 +487,7 @@ void OPDI_DigitalPort::setMode(uint8_t mode) {
 
 void OPDI_DigitalPort::setLine(uint8_t line) {
 	if (line > 1)
-		throw PortError(std::string(this->getID()) + ": Digital port line not supported: " + this->to_string((int)line));
+		throw PortError(this->ID() + ": Digital port line not supported: " + this->to_string((int)line));
 	if (this->error != VALUE_OK)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	if (line != this->line)
@@ -554,7 +554,7 @@ void OPDI_AnalogPort::doSelfRefresh(void) {
 
 void OPDI_AnalogPort::setMode(uint8_t mode) {
 	if (mode > 2)
-		throw PortError(std::string(this->getID()) + ": Analog port mode not supported: " + this->to_string((int)mode));
+		throw PortError(this->ID() + ": Analog port mode not supported: " + this->to_string((int)mode));
 	if (mode != this->mode)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->mode = mode;
@@ -572,14 +572,14 @@ int32_t OPDI_AnalogPort::validateValue(int32_t value) {
 
 void OPDI_AnalogPort::setResolution(uint8_t resolution) {
 	if (resolution < 8 || resolution > 12)
-		throw PortError(std::string(this->getID()) + ": Analog port resolution not supported; allowed values are 8..12 (bits): " + this->to_string((int)resolution));
+		throw PortError(this->ID() + ": Analog port resolution not supported; allowed values are 8..12 (bits): " + this->to_string((int)resolution));
 	// check whether the resolution is supported
 	if (((resolution == 8) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_8) != OPDI_ANALOG_PORT_RESOLUTION_8))
 		|| ((resolution == 9) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_9) != OPDI_ANALOG_PORT_RESOLUTION_9))
 		|| ((resolution == 10) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_10) != OPDI_ANALOG_PORT_RESOLUTION_10))
 		|| ((resolution == 11) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_11) != OPDI_ANALOG_PORT_RESOLUTION_11))
 		|| ((resolution == 12) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_12) != OPDI_ANALOG_PORT_RESOLUTION_12)))
-		throw PortError(std::string(this->getID()) + ": Analog port resolution not supported (port flags): " + this->to_string((int)resolution));
+		throw PortError(this->ID() + ": Analog port resolution not supported (port flags): " + this->to_string((int)resolution));
 	if (resolution != this->resolution)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->resolution = resolution;
@@ -593,7 +593,7 @@ void OPDI_AnalogPort::setResolution(uint8_t resolution) {
 
 void OPDI_AnalogPort::setReference(uint8_t reference) {
 	if (reference > 2)
-		throw PortError(std::string(this->getID()) + ": Analog port reference not supported: " + this->to_string((int)reference));
+		throw PortError(this->ID() + ": Analog port reference not supported: " + this->to_string((int)reference));
 	if (reference != this->reference)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->reference = reference;
@@ -714,7 +714,7 @@ void OPDI_SelectPort::setItems(const char **items) {
 		item = items[itemCount];
 	}
 	if (itemCount > 65535)
-		throw Poco::DataException(std::string(this->getID()) + "Too many select port items: " + to_string(itemCount));
+		throw Poco::DataException(this->ID() + "Too many select port items: " + to_string(itemCount));
 	// create target array
 	this->items = new char*[itemCount + 1];
 	// copy strings to array
@@ -734,7 +734,7 @@ void OPDI_SelectPort::setItems(const char **items) {
 
 void OPDI_SelectPort::setPosition(uint16_t position) {
 	if (position > count)
-		throw PortError(std::string(this->getID()) + ": Position must not exceed the number of items: " + to_string((int)this->count));
+		throw PortError(this->ID() + ": Position must not exceed the number of items: " + to_string((int)this->count));
 	if (this->error != VALUE_OK)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	if (position != this->position)
@@ -823,9 +823,9 @@ void OPDI_DialPort::setStep(uint64_t step) {
 
 void OPDI_DialPort::setPosition(int64_t position) {
 	if (position < this->minValue)
-		throw PortError(std::string(this->getID()) + ": Position must not be less than the minimum: " + to_string(this->minValue));
+		throw PortError(this->ID() + ": Position must not be less than the minimum: " + to_string(this->minValue));
 	if (position > this->maxValue)
-		throw PortError(std::string(this->getID()) + ": Position must not be greater than the maximum: " + to_string(this->maxValue));
+		throw PortError(this->ID() + ": Position must not be greater than the maximum: " + to_string(this->maxValue));
 	// correct position to next possible step
 	int64_t newPosition = ((position - this->minValue) / this->step) * this->step + this->minValue;
 	if (this->error != VALUE_OK)

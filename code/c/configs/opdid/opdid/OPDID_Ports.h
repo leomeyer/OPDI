@@ -389,6 +389,7 @@ public:
 *  - StreamingPort: content is injected into the streaming port as raw bytes
 * Additionally you can specify a delay that signals how long to wait until the file is
 * being re-read. This can help avoid too many refreshes.
+* For analog and dial ports the value can be scaled using a numerator and a denominator.
 */
 class OPDID_FileInputPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
@@ -407,6 +408,8 @@ protected:
 	PortType portType;
 	int reloadDelayMs;
 	int expiryMs;
+	int numerator;
+	int denominator;
 
 	Poco::DirectoryWatcher *directoryWatcher;
 	uint64_t lastReloadTime;
