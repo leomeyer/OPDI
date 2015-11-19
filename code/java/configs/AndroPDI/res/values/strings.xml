@@ -201,5 +201,11 @@
     
     <string name="percent">percent_integer=0</string>
     <string name="percent_integer">layout=dial_port_row_slider_only;</string>
+
+    <string name="gas_l">gas_l_in_m3=0</string>
+    <string name="gas_l_in_m3">layout=dial_port_row_noslider;icon=energymeter;label=Gas total;formatString=%.3f m³;denominator=1000</string>
+
+    <string name="gas_lPerTime">gas_m3_per_time=0</string>
+    <string name="gas_m3_per_time">layout=dial_port_row_noslider;icon=powermeter;label=Gas rate;formatString=%.3f m³;denominator=1000</string>
     
 </resources>
