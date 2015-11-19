@@ -1371,6 +1371,7 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 ///////////////////////////////////////////////////////////////////////////////
 
 void OPDID_AggregatorPort::resetValues() {
+	this->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
 	this->values.clear();
 }
 
@@ -1389,7 +1390,6 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			value = this->opdid->getPortValue(this->sourcePort);
 		} catch (Poco::Exception &e) {
 			this->logDebug(this->ID() + ": Error querying source port: " + e.message());
-			this->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
 			this->resetValues();
 			return OPDI_STATUS_OK;
 		}
@@ -1406,7 +1406,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			// diff may not exceed deltas
 			if ((diff < this->minDelta) || (diff > this->maxDelta)) {
 				this->logDebug(this->ID() + ": The new source port value of " + this->to_string(longValue) + " is outside of the specified limits (diff = " + this->to_string(diff) + ")");
-				this->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+				// an invalid value invalidates the whole calculation
 				this->resetValues();
 				return OPDI_STATUS_OK;
 			}
@@ -1414,29 +1414,33 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 		}
 		this->values.push_back(longValue);
 
-		switch (this->algorithm) {
-		case DELTA: {
-			int64_t newValue = this->values.at(this->values.size() - 1) - this->values.at(0);
-			this->logDebug(this->ID() + ": New value according to Delta algorithm: " + this->to_string(newValue));
-			if ((newValue >= this->getMin()) && (newValue <= this->getMax()))
-				this->setPosition(newValue);
-			else
-				this->logWarning(this->ID() + ": Cannot set new position: Calculated value is out of range: " + this->to_string(newValue));
-			break;
+		if (!this->allowIncomplete && this->values.size() < this->totalValues)
+			this->logVerbose(this->ID() + ": Cannot compute result because not all values have been collected and AllowIncomplete is false");
+		else {
+			switch (this->algorithm) {
+			case DELTA: {
+				int64_t newValue = this->values.at(this->values.size() - 1) - this->values.at(0);
+				this->logDebug(this->ID() + ": New value according to Delta algorithm: " + this->to_string(newValue));
+				if ((newValue >= this->getMin()) && (newValue <= this->getMax()))
+					this->setPosition(newValue);
+				else
+					this->logWarning(this->ID() + ": Cannot set new position: Calculated value is out of range: " + this->to_string(newValue));
+				break;
+			}
+			case ARITHMETIC_MEAN: {
+				int64_t sum = std::accumulate(this->values.begin(), this->values.end(), 0);
+				int64_t mean = sum / this->values.size();
+				this->logDebug(this->ID() + ": New value according to ArithmeticMean algorithm: " + this->to_string(mean));
+				if ((mean >= this->getMin()) && (mean <= this->getMax()))
+					this->setPosition(mean);
+				else
+					this->logWarning(this->ID() + ": Cannot set new position: Calculated value is out of range: " + this->to_string(mean));
+				break;
+			}
+			default:
+				throw Poco::ApplicationException("Algorithm not supported");
+			}
 		}
-		case ARITHMETIC_MEAN: {
-			int64_t sum = std::accumulate(this->values.begin(), this->values.end(), 0);
-			int64_t mean = sum / this->values.size();
-			this->logDebug(this->ID() + ": New value according to ArithmeticMean algorithm: " + this->to_string(mean));
-			if ((mean >= this->getMin()) && (mean <= this->getMax()))
-				this->setPosition(mean);
-			else
-				this->logWarning(this->ID() + ": Cannot set new position: Calculated value is out of range: " + this->to_string(mean));
-			break;
-		}
-		default:
-			throw Poco::ApplicationException("Algorithm not supported");
-		}	
 	}
 	
 	return OPDI_STATUS_OK;
@@ -1479,11 +1483,15 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config) 
 
 	if (algStr == "Delta") {
 		this->algorithm = DELTA;
+		this->allowIncomplete = false;
 	} else
 	if (algStr == "ArithmeticMean" || algStr == "Average") {
 		this->algorithm = ARITHMETIC_MEAN;
+		this->allowIncomplete = true;
 	} else
 		throw Poco::DataException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean', or 'Average': " + algStr);
+
+	this->allowIncomplete = config->getBool("AllowIncomplete", this->allowIncomplete);
 }
 
 void OPDID_AggregatorPort::prepare() {

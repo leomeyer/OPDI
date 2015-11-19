@@ -447,11 +447,13 @@ public:
 * is low, the impulses will typically arrive very slowly, perhaps once every few
 * minutes. It is interesting to calculate the average gas consumption per hour
 * or per day. To achieve this values are collected over the specified period in
-* regular intervals. The DELTA algorithm causes the value of the AggregatorPort
+* regular intervals. The Delta algorithm causes the value of the AggregatorPort
 * to be set to the difference of the last and the first value (moving window).
 * Another example is the calculation of averages, for example, temperature.
-* In this case you should use an averaging algorithm, such as ARITHMETIC_MEAN
-* or GEOMETRIC_MEAN.
+* In this case you should can use Average or ArithmeticMean for the algorithm.
+* Using AllowIncomplete you can specify that the result should also be computed
+* if not all necessary values have been collected. For an averaging algorithm
+* the default is True, while for the Delta algorithm the default is false.
 */
 class OPDID_AggregatorPort : public OPDI_DialPort, public OPDID_PortFunctions {
 protected:
@@ -469,6 +471,7 @@ protected:
 	int64_t minDelta;
 	int64_t maxDelta;
 	Algorithm algorithm;
+	bool allowIncomplete;
 
 	std::vector<int64_t> values;
 	uint64_t lastQueryTime;
