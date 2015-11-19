@@ -69,11 +69,19 @@ protected:
 		};
 		Type type;
 
+		static int ParseValue(Type type, std::string val);
+
 		static ScheduleComponent Parse(Type type, std::string def);
 
 		bool getNextPossibleValue(int* currentValue, bool* rollover, bool* changed, int month, int year);
 
 		bool getFirstPossibleValue(int* value, int month, int year);
+
+		bool hasValue(int value);
+
+		int getMinimum(void);
+
+		int getMaximum(void);
 	};
 
 	enum ScheduleType {
@@ -123,6 +131,7 @@ protected:
 		ScheduleComponent hourComponent;
 		ScheduleComponent minuteComponent;
 		ScheduleComponent secondComponent;
+		ScheduleComponent weekdayComponent;
 
 		// parameters for ASTRONOMICAL
 		AstroEvent astroEvent;
@@ -169,6 +178,8 @@ protected:
 	Poco::Timestamp lastWorkTimestamp;
 
 	void addNotification(ScheduleNotification::Ptr notification, Poco::Timestamp timestamp);
+
+	bool matchWeekday(int day, int month, int year, ScheduleComponent *weekdayScheduleComponent);
 
 	void recalculateSchedules(void);
 

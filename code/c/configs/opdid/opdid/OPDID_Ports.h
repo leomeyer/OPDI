@@ -424,3 +424,61 @@ public:
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig);
 };
+
+///////////////////////////////////////////////////////////////////////////////
+// Aggregator Port
+///////////////////////////////////////////////////////////////////////////////
+
+/** An AggregatorPort is a DialPort that collects the values of another port
+* (the source port) and calculates with these historic values using the specified
+* algorithm. The values can be multiplied by a specified factor to account
+* for fractions that might otherwise be lost.
+* The query interval and the number of values to collect must be specified.
+* Additionally, a minimum and maximum delta value that must not be exceeded
+* can be specified to validate the incoming values.
+* At startup the port will signal an error (invalid value). The port value will
+* also become invalid if delta values are exceeded or if the source port signals
+* an error.
+* A typical example for using this port is with a gas counter. Such a counter
+* emits impulses corresponding to a certain consumed gas value. If consumption
+* is low, the impulses will typically arrive very slowly, perhaps once every few
+* minutes. It is interesting to calculate the average gas consumption per hour
+* or per day. To achieve this values are collected over the specified period in
+* regular intervals. The DELTA algorithm causes the value of the AggregatorPort
+* to be set to the difference of the last and the first value (moving window).
+* Another example is the calculation of averages, for example, temperature.
+* In this case you should use an averaging algorithm, such as ARITHMETIC_MEAN
+* or GEOMETRIC_MEAN.
+*/
+class OPDID_AggregatorPort : public OPDI_DialPort, public OPDID_PortFunctions {
+protected:
+
+	enum Algorithm {
+		DELTA,
+		ARITHMETIC_MEAN,
+		GEOMETRIC_MEAN
+	};
+
+	std::string sourcePortID;
+	OPDI_Port *sourcePort;
+	uint64_t queryInterval;
+	uint16_t totalValues;
+	int32_t multiplier;
+	int64_t minDelta;
+	int64_t maxDelta;
+	Algorithm algorithm;
+
+	std::vector<int64_t> values;
+	uint64_t lastQueryTime;
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+
+	void resetValues(void);
+
+public:
+	OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id);
+
+	virtual void configure(Poco::Util::AbstractConfiguration *portConfig);
+
+	virtual void prepare() override;
+};

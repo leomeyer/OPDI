@@ -1194,7 +1194,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected '0' or '1' but got: " + errorContent);
 				}
-				this->logDebug(ID() + ": Setting line of digital port '" + this->port->ID() + "' to " + this->to_string((int)line));
+				this->logDebug(this->ID() + ": Setting line of digital port '" + this->port->ID() + "' to " + this->to_string((int)line));
 				((OPDI_DigitalPort*)this->port)->setLine(line);
 				break;
 			}
@@ -1204,7 +1204,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected decimal value between 0 and 1 but got: " + errorContent);
 				}
-				this->logDebug(ID() + ": Setting value of analog port '" + this->port->ID() + "' to " + this->to_string(value));
+				this->logDebug(this->ID() + ": Setting value of analog port '" + this->port->ID() + "' to " + this->to_string(value));
 				((OPDI_AnalogPort*)this->port)->setRelativeValue(value);
 				break;
 			}
@@ -1216,7 +1216,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
 				}
-				this->logDebug(ID() + ": Setting position of dial port '" + this->port->ID() + "' to " + this->to_string(value));
+				this->logDebug(this->ID() + ": Setting position of dial port '" + this->port->ID() + "' to " + this->to_string(value));
 				((OPDI_DialPort*)this->port)->setPosition(value);
 				break;
 			}
@@ -1228,7 +1228,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
 				}
-				this->logDebug(ID() + ": Setting position of select port '" + this->port->ID() + "' to " + this->to_string(value));
+				this->logDebug(this->ID() + ": Setting position of select port '" + this->port->ID() + "' to " + this->to_string(value));
 				((OPDI_SelectPort*)this->port)->setPosition(value);
 				break;
 			}
@@ -1349,4 +1349,119 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 		this->needsReload = true;
 	else
 		this->port->setError(VALUE_NOT_AVAILABLE);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// AggregatorPort
+///////////////////////////////////////////////////////////////////////////////
+
+void OPDID_AggregatorPort::resetValues() {
+	this->values.clear();
+}
+
+uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
+	uint8_t result = OPDI_DialPort::doWork(canSend);
+	if (result != OPDI_STATUS_OK)
+		return result;
+
+	// time to read the next value?
+	if (opdi_get_time_ms() - this->lastQueryTime > (uint64_t)this->queryInterval * 1000) {
+		this->lastQueryTime = opdi_get_time_ms();
+
+		double value;
+		try {
+			// get the port's value
+			value = this->opdid->getPortValue(this->sourcePort);
+		} catch (Poco::Exception &e) {
+			this->logDebug(this->ID() + ": Error querying source port: " + e.message());
+			this->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+			this->resetValues();
+			return OPDI_STATUS_OK;
+		}
+
+		int64_t longValue = (int64_t)(value * this->multiplier);
+		// use first value without check
+		if (this->values.size() > 0) {
+			// vector overflow?
+			if (this->values.size() >= this->totalValues) {
+				this->values.erase(this->values.begin());
+			}
+			// compare against last element
+			int64_t diff = this->values.at(this->values.size() - 1) - longValue;
+			// diff may not exceed deltas
+			if ((diff < this->minDelta) || (diff > this->maxDelta)) {
+				this->logDebug(this->ID() + ": The new source port value of " + this->to_string(longValue) + " is outside of the specified limits (diff = " + this->to_string(diff) + ")");
+				this->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+				this->resetValues();
+				return OPDI_STATUS_OK;
+			}
+			// value is ok
+		}
+		this->values.push_back(longValue);
+
+		if (this->algorithm == DELTA) {
+			int64_t newValue = this->values.at(this->values.size() - 1) - this->values.at(0);
+			this->logDebug(this->ID() + ": New value according to Delta algorithm: " + this->to_string(newValue));
+			this->setPosition(newValue);
+		} else
+			throw Poco::ApplicationException("Algorithm not supported");
+	}
+	
+	return OPDI_STATUS_OK;
+}
+
+OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id) : OPDI_DialPort(id), OPDID_PortFunctions(id) {
+	this->opdid = opdid;
+	this->multiplier = 1;
+	// default: allow all values (set limits very high)
+	this->minDelta = LLONG_MIN;
+	this->maxDelta = LLONG_MAX;
+	this->lastQueryTime = 0;
+
+	this->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+}
+
+void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config) {
+	this->opdid->configureDialPort(config, this);
+
+	this->sourcePortID = this->opdid->getConfigString(config, "SourcePort", "", true);
+
+	this->queryInterval = config->getInt("Interval", 0);
+	if (this->queryInterval <= 0) {
+		throw Poco::DataException(this->ID() + ": Please specify a positive value for Interval (in seconds): " + this->to_string(this->queryInterval));
+	}
+
+	this->totalValues = config->getInt("Values", 0);
+	if (this->totalValues <= 1) {
+		throw Poco::DataException(this->ID() + ": Please specify a number greater than 1 for Values: " + this->to_string(this->totalValues));
+	}
+
+	// allocate vector
+	this->values.reserve(this->totalValues);
+
+	this->multiplier = config->getInt("Multiplier", this->multiplier);
+	this->minDelta = config->getInt64("MinDelta", this->minDelta);
+	this->maxDelta = config->getInt64("MaxDelta", this->maxDelta);
+
+	std::string algStr = config->getString("Algorithm", "");
+
+	if (algStr == "Delta") {
+		this->algorithm = DELTA;
+	} else
+	if (algStr == "ArithmeticMean") {
+		this->algorithm = ARITHMETIC_MEAN;
+	} else
+	if (algStr == "GeometricMean") {
+		this->algorithm = GEOMETRIC_MEAN;
+	} else
+		throw Poco::DataException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean', or 'GeometricMean': " + algStr);
+}
+
+void OPDID_AggregatorPort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
+	OPDI_DialPort::prepare();
+
+	// find source port; throws errors if something required is missing
+	this->sourcePort = this->findPort(this->getID(), "InputPorts", this->sourcePortID, true);
 }

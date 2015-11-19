@@ -1049,6 +1049,15 @@ void AbstractOPDID::setupFileInputPort(Poco::Util::AbstractConfiguration *portCo
 	this->addPort(fiPort);
 }
 
+void AbstractOPDID::setupAggregatorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	this->logVerbose("Setting up Aggregator: " + port);
+
+	OPDID_AggregatorPort* agPort = new OPDID_AggregatorPort(this, port.c_str());
+	agPort->configure(portConfig);
+
+	this->addPort(agPort);
+}
+
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
 	this->logVerbose("Setting up node: " + node);
 
@@ -1144,6 +1153,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else
 		if (nodeType == "FileInput") {
 			this->setupFileInputPort(nodeConfig, config, node);
+		} else
+		if (nodeType == "Aggregator") {
+			this->setupAggregatorPort(nodeConfig, node);
 		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}
