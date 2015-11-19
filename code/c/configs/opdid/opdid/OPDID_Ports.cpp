@@ -1,8 +1,9 @@
 #include <bitset>
 #define _USE_MATH_DEFINES // for C++
 #include <math.h>
+#include <numeric>
 
-#include <Poco/String.h>
+#include "Poco/String.h"
 #include "Poco/Tuple.h"
 #include "Poco/Timezone.h"
 #include "Poco/DateTimeFormatter.h"
@@ -14,8 +15,6 @@
 #include "Poco/Delegate.h"
 #include "Poco/ScopedLock.h"
 #include "Poco/FileStream.h"
-
-#include "ctb-0.16/ctb.h"
 
 #include "opdi_port.h"
 #include "opdi_platformfuncs.h"
@@ -1415,12 +1414,29 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 		}
 		this->values.push_back(longValue);
 
-		if (this->algorithm == DELTA) {
+		switch (this->algorithm) {
+		case DELTA: {
 			int64_t newValue = this->values.at(this->values.size() - 1) - this->values.at(0);
 			this->logDebug(this->ID() + ": New value according to Delta algorithm: " + this->to_string(newValue));
-			this->setPosition(newValue);
-		} else
+			if ((newValue >= this->getMin()) && (newValue <= this->getMax()))
+				this->setPosition(newValue);
+			else
+				this->logWarning(this->ID() + ": Cannot set new position: Calculated value is out of range: " + this->to_string(newValue));
+			break;
+		}
+		case ARITHMETIC_MEAN: {
+			int64_t sum = std::accumulate(this->values.begin(), this->values.end(), 0);
+			int64_t mean = sum / this->values.size();
+			this->logDebug(this->ID() + ": New value according to ArithmeticMean algorithm: " + this->to_string(mean));
+			if ((mean >= this->getMin()) && (mean <= this->getMax()))
+				this->setPosition(mean);
+			else
+				this->logWarning(this->ID() + ": Cannot set new position: Calculated value is out of range: " + this->to_string(mean));
+			break;
+		}
+		default:
 			throw Poco::ApplicationException("Algorithm not supported");
+		}	
 	}
 	
 	return OPDI_STATUS_OK;
@@ -1429,7 +1445,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id) : OPDI_DialPort(id), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 	this->multiplier = 1;
-	// default: allow all values (set limits very high)
+	// default: allow all values (set absolute limits very high)
 	this->minDelta = LLONG_MIN;
 	this->maxDelta = LLONG_MAX;
 	this->lastQueryTime = 0;
@@ -1464,13 +1480,10 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config) 
 	if (algStr == "Delta") {
 		this->algorithm = DELTA;
 	} else
-	if (algStr == "ArithmeticMean") {
+	if (algStr == "ArithmeticMean" || algStr == "Average") {
 		this->algorithm = ARITHMETIC_MEAN;
 	} else
-	if (algStr == "GeometricMean") {
-		this->algorithm = GEOMETRIC_MEAN;
-	} else
-		throw Poco::DataException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean', or 'GeometricMean': " + algStr);
+		throw Poco::DataException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean', or 'Average': " + algStr);
 }
 
 void OPDID_AggregatorPort::prepare() {

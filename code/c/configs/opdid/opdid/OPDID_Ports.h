@@ -7,12 +7,12 @@
 #include <fstream>
 #include <list>
 
-// serial port library
-#include "ctb-0.16/ctb.h"
-
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/TimedNotificationQueue.h"
 #include "Poco/DirectoryWatcher.h"
+
+// serial port library
+#include "ctb-0.16/ctb.h"
 
 #include "opdi_constants.h"
 
@@ -458,8 +458,7 @@ protected:
 
 	enum Algorithm {
 		DELTA,
-		ARITHMETIC_MEAN,
-		GEOMETRIC_MEAN
+		ARITHMETIC_MEAN
 	};
 
 	std::string sourcePortID;
