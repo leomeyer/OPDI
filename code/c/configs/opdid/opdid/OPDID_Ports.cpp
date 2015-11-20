@@ -1500,6 +1500,8 @@ OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id)
 	this->minDelta = LLONG_MIN;
 	this->maxDelta = LLONG_MAX;
 	this->lastQueryTime = 0;
+	// an aggregator is enabled by default
+	this->line = 1;
 }
 
 void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
