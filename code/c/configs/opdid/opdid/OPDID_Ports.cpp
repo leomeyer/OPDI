@@ -1500,8 +1500,10 @@ OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id)
 	this->minDelta = LLONG_MIN;
 	this->maxDelta = LLONG_MAX;
 	this->lastQueryTime = 0;
+	// an aggregator is an output only port
+	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
 	// an aggregator is enabled by default
-	this->line = 1;
+	this->setLine(1);
 }
 
 void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
@@ -1579,6 +1581,7 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 		Calculation* calc = new Calculation(nodeName);
 		// initialize the port default values (taken from this port)
 		calc->setGroup(this->group);
+		calc->setRefreshMode(this->refreshMode);
 
 		// configure the dial port
 		this->opdid->configureDialPort(calculationConfig, calc);
