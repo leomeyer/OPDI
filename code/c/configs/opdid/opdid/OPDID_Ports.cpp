@@ -1573,7 +1573,10 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 		if (type != "DialPort")
 			throw Poco::DataException(this->ID() + ": Invalid type for calculation section, must be 'DialPort': " + nodeName);
 
+		// creat the dial port for the calculation
 		Calculation* calc = new Calculation(nodeName);
+		// initialize the port default values (taken from this port)
+		calc->setGroup(this->group);
 
 		// configure the dial port
 		this->opdid->configureDialPort(calculationConfig, calc);
