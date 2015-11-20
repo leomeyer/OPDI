@@ -295,7 +295,7 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 	// default: pulse is enabled if the line is High
 	bool enabled = (this->line == 1);
 
-	if (!enabled  && (this->enablePorts.size() > 0)) {
+	if (!enabled && (this->enablePorts.size() > 0)) {
 		int highCount = 0;
 		DigitalPortList::iterator it = this->enablePorts.begin();
 		while (it != this->enablePorts.end()) {
