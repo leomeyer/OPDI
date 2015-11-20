@@ -1374,6 +1374,7 @@ OPDID_AggregatorPort::Calculation::Calculation(std::string id) : OPDI_DialPort(i
 }
 
 void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregator) {
+	aggregator->logExtreme(this->ID() + ": Calculating new value");
 	if ((aggregator->values.size() < aggregator->totalValues) && !this->allowIncomplete)
 		aggregator->logVerbose(this->ID() + ": Cannot compute result because not all values have been collected and AllowIncomplete is false");
 	else {
@@ -1445,9 +1446,10 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 		return result;
 
 	// disabled?
-	if (this->line != 1)
+	if (this->line != 1) {
+		this->logExtreme(this->ID() + ": Aggregator is disabled");
 		return OPDI_STATUS_OK;
-
+	}
 	// time to read the next value?
 	if (opdi_get_time_ms() - this->lastQueryTime > (uint64_t)this->queryInterval * 1000) {
 		this->lastQueryTime = opdi_get_time_ms();
