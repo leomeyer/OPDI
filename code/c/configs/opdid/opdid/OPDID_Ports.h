@@ -501,4 +501,6 @@ public:
 	virtual void configure(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig);
 
 	virtual void prepare() override;
+
+	virtual void setLine(uint8_t newLine) override;
 };

@@ -1444,6 +1444,10 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 	if (result != OPDI_STATUS_OK)
 		return result;
 
+	// disabled?
+	if (this->line != 1)
+		return OPDI_STATUS_OK;
+
 	// time to read the next value?
 	if (opdi_get_time_ms() - this->lastQueryTime > (uint64_t)this->queryInterval * 1000) {
 		this->lastQueryTime = opdi_get_time_ms();
@@ -1615,4 +1619,11 @@ void OPDID_AggregatorPort::prepare() {
 
 	// find source port; throws errors if something required is missing
 	this->sourcePort = this->findPort(this->getID(), "InputPorts", this->sourcePortID, true);
+}
+
+void OPDID_AggregatorPort::setLine(uint8_t newLine) {
+	// if being deactivated, reset values and ports to error
+	if ((this->line == 1) && (newLine == 0))
+		this->resetValues();
+	OPDI_DigitalPort::setLine(newLine);
 }
