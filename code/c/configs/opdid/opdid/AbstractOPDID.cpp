@@ -918,10 +918,12 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portCon
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
 
 	int64_t position = stateConfig->getInt64("Position", port->getMin());
+	// set port error to invalid if the value is out of range
 	if ((position < port->getMin()) || (position > port->getMax()))
-		throw Poco::DataException("Wrong dial port setting: Position is out of range: " + to_string(position));
-
-	port->setPosition(position);
+		port->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+		//throw Poco::DataException("Wrong dial port setting: Position is out of range: " + to_string(position));
+	else
+		port->setPosition(position);
 }
 
 void AbstractOPDID::setupEmulatedDialPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {

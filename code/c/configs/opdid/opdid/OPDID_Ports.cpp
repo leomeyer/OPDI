@@ -1465,6 +1465,9 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 		}
 
 		int64_t longValue = (int64_t)(value * this->multiplier);
+
+		this->logDebug(this->ID() + ": Newly aggregated value: " + this->to_string(longValue));
+		
 		// use first value without check
 		if (this->values.size() > 0) {
 			// vector overflow?
