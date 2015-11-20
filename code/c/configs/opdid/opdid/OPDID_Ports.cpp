@@ -1602,6 +1602,9 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 		calc->allowIncomplete = calculationConfig->getBool("AllowIncomplete", calc->allowIncomplete);
 
 		this->calculations.push_back(calc);
+		
+		// add port to OPDID
+		this->opdid->addPort(calc);
 
 		nli++;
 	}
