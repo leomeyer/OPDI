@@ -902,15 +902,13 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portCon
 	if (!stateOnly) {
 		this->configurePort(portConfig, port, 0);
 
-		int64_t min = portConfig->getInt64("Min", 0);
-		if (!portConfig->hasProperty("Max"))
-			throw Poco::DataException("Missing dial port setting: Max");
-		int64_t max = portConfig->getInt64("Max", 0);
+		int64_t min = portConfig->getInt64("Min", LLONG_MIN);
+		int64_t max = portConfig->getInt64("Max", LLONG_MAX);
 		if (min >= max)
 			throw Poco::DataException("Wrong dial port setting: Max must be greater than Min");
 		int64_t step = portConfig->getInt64("Step", 1);
-		if (step > (max - min))
-			throw Poco::DataException("Wrong dial port setting: Step is too large: " + to_string(step));
+		if (step < 1)
+			throw Poco::DataException("Wrong dial port setting: Step may not be negative or zero: " + to_string(step));
 
 		port->setMin(min);
 		port->setMax(max);
@@ -1049,11 +1047,11 @@ void AbstractOPDID::setupFileInputPort(Poco::Util::AbstractConfiguration *portCo
 	this->addPort(fiPort);
 }
 
-void AbstractOPDID::setupAggregatorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupAggregatorPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port) {
 	this->logVerbose("Setting up Aggregator: " + port);
 
 	OPDID_AggregatorPort* agPort = new OPDID_AggregatorPort(this, port.c_str());
-	agPort->configure(portConfig);
+	agPort->configure(portConfig, parentConfig);
 
 	this->addPort(agPort);
 }
@@ -1155,7 +1153,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 			this->setupFileInputPort(nodeConfig, config, node);
 		} else
 		if (nodeType == "Aggregator") {
-			this->setupAggregatorPort(nodeConfig, node);
+			this->setupAggregatorPort(nodeConfig, config, node);
 		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}
@@ -1264,10 +1262,13 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 		result = OPDI::waiting(canSend);
 	} catch (Poco::Exception &pe) {
 		this->logError(std::string("Unhandled exception while housekeeping: ") + pe.message());
+		result = OPDI_DEVICE_ERROR;
 	} catch (std::exception &e) {
 		this->logError(std::string("Unhandled exception while housekeeping: ") + e.what());
+		result = OPDI_DEVICE_ERROR;
 	} catch (...) {
 		this->logError(std::string("Unknown error while housekeeping"));
+		result = OPDI_DEVICE_ERROR;
 	}
 	// TODO decide: ignore errors or abort?
 

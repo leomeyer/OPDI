@@ -432,16 +432,18 @@ public:
 // Aggregator Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** An AggregatorPort is a DialPort that collects the values of another port
-* (the source port) and calculates with these historic values using the specified
-* algorithm. The values can be multiplied by a specified factor to account
+/** An AggregatorPort is a DigitalPort that collects the values of another port
+* (the source port) and calculates with these historic values using specified
+* calculations. The values can be multiplied by a specified factor to account
 * for fractions that might otherwise be lost.
 * The query interval and the number of values to collect must be specified.
 * Additionally, a minimum and maximum delta value that must not be exceeded
-* can be specified to validate the incoming values.
-* At startup the port will signal an error (invalid value). The port value will
-* also become invalid if delta values are exceeded or if the source port signals
-* an error.
+* can be specified to validate the incoming values. A new value is compared against
+* the last collected value. If the difference exceeds the specified bounds the
+* whole collection is invalidated as a safeguard against implausible results.
+* Each calculation presents its result as a DialPort. At startup all such ports
+* will signal an error (invalid value). The port values will also become invalid 
+* if delta values are exceeded or if the source port signals an error.
 * A typical example for using this port is with a gas counter. Such a counter
 * emits impulses corresponding to a certain consumed gas value. If consumption
 * is low, the impulses will typically arrive very slowly, perhaps once every few
@@ -454,13 +456,26 @@ public:
 * Using AllowIncomplete you can specify that the result should also be computed
 * if not all necessary values have been collected. For an averaging algorithm
 * the default is True, while for the Delta algorithm the default is false.
+* In the case of temperature it might be interesting to determine the minimum
+* and maximum in the specified range. 
 */
-class OPDID_AggregatorPort : public OPDI_DialPort, public OPDID_PortFunctions {
+class OPDID_AggregatorPort : public OPDI_DigitalPort, public OPDID_PortFunctions {
 protected:
-
 	enum Algorithm {
 		DELTA,
-		ARITHMETIC_MEAN
+		ARITHMETIC_MEAN,
+		MINIMUM,
+		MAXIMUM
+	};
+
+	class Calculation : public OPDI_DialPort {
+	public:		
+		Algorithm algorithm;
+		bool allowIncomplete;
+
+		Calculation(std::string id);
+
+		void calculate(OPDID_AggregatorPort* aggregator);
 	};
 
 	std::string sourcePortID;
@@ -470,11 +485,11 @@ protected:
 	int32_t multiplier;
 	int64_t minDelta;
 	int64_t maxDelta;
-	Algorithm algorithm;
-	bool allowIncomplete;
 
 	std::vector<int64_t> values;
 	uint64_t lastQueryTime;
+
+	std::vector<Calculation*> calculations;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
@@ -483,7 +498,7 @@ protected:
 public:
 	OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id);
 
-	virtual void configure(Poco::Util::AbstractConfiguration *portConfig);
+	virtual void configure(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig);
 
 	virtual void prepare() override;
 };

@@ -1370,13 +1370,77 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 // AggregatorPort
 ///////////////////////////////////////////////////////////////////////////////
 
+OPDID_AggregatorPort::Calculation::Calculation(std::string id) : OPDI_DialPort(id.c_str()) {
+}
+
+void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregator) {
+	if ((aggregator->values.size() < aggregator->totalValues) && !this->allowIncomplete)
+		aggregator->logVerbose(this->ID() + ": Cannot compute result because not all values have been collected and AllowIncomplete is false");
+	else {
+		switch (this->algorithm) {
+		case DELTA: {
+			int64_t newValue = aggregator->values.at(aggregator->values.size() - 1) - aggregator->values.at(0);
+			aggregator->logDebug(this->ID() + ": New value according to Delta algorithm: " + this->to_string(newValue));
+			if ((newValue >= this->getMin()) && (newValue <= this->getMax()))
+				this->setPosition(newValue);
+			else
+				aggregator->logWarning(this->ID() + ": Cannot set new position: Calculated delta value is out of range: " + this->to_string(newValue));
+			break;
+		}
+		case ARITHMETIC_MEAN: {
+			int64_t sum = std::accumulate(aggregator->values.begin(), aggregator->values.end(), 0);
+			int64_t mean = sum / aggregator->values.size();
+			aggregator->logDebug(this->ID() + ": New value according to ArithmeticMean algorithm: " + this->to_string(mean));
+			if ((mean >= this->getMin()) && (mean <= this->getMax()))
+				this->setPosition(mean);
+			else
+				aggregator->logWarning(this->ID() + ": Cannot set new position: Calculated average value is out of range: " + this->to_string(mean));
+			break;
+		}
+		case MINIMUM: {
+			auto minimum = std::min_element(aggregator->values.begin(), aggregator->values.end());
+			if (minimum == aggregator->values.end())
+				this->setError(VALUE_NOT_AVAILABLE);
+			int64_t min = *minimum;
+			aggregator->logDebug(this->ID() + ": New value according to Minimum algorithm: " + this->to_string(min));
+			if ((min >= this->getMin()) && (min <= this->getMax()))
+				this->setPosition(min);
+			else
+				aggregator->logWarning(this->ID() + ": Cannot set new position: Calculated minimum value is out of range: " + this->to_string(min));
+			break;
+		}
+		case MAXIMUM: {
+			auto maximum = std::max_element(aggregator->values.begin(), aggregator->values.end());
+			if (maximum == aggregator->values.end())
+				this->setError(VALUE_NOT_AVAILABLE);
+			int64_t max = *maximum;
+			aggregator->logDebug(this->ID() + ": New value according to Maximum algorithm: " + this->to_string(max));
+			if ((max >= this->getMin()) && (max <= this->getMax()))
+				this->setPosition(max);
+			else
+				aggregator->logWarning(this->ID() + ": Cannot set new position: Calculated minimum value is out of range: " + this->to_string(max));
+			break;
+		}
+		default:
+			throw Poco::ApplicationException("Algorithm not supported");
+		}
+	}
+}
+
+// OPDID_AggregatorPort class implementation
+
 void OPDID_AggregatorPort::resetValues() {
-	this->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+	// indicate errors on all calculations
+	auto it = this->calculations.begin();
+	while (it != this->calculations.end()) {
+		(*it)->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+		it++;
+	}
 	this->values.clear();
 }
 
 uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
-	uint8_t result = OPDI_DialPort::doWork(canSend);
+	uint8_t result = OPDI_DigitalPort::doWork(canSend);
 	if (result != OPDI_STATUS_OK)
 		return result;
 
@@ -1414,39 +1478,18 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 		}
 		this->values.push_back(longValue);
 
-		if ((this->values.size() < this->totalValues) && !this->allowIncomplete)
-			this->logVerbose(this->ID() + ": Cannot compute result because not all values have been collected and AllowIncomplete is false");
-		else {
-			switch (this->algorithm) {
-			case DELTA: {
-				int64_t newValue = this->values.at(this->values.size() - 1) - this->values.at(0);
-				this->logDebug(this->ID() + ": New value according to Delta algorithm: " + this->to_string(newValue));
-				if ((newValue >= this->getMin()) && (newValue <= this->getMax()))
-					this->setPosition(newValue);
-				else
-					this->logWarning(this->ID() + ": Cannot set new position: Calculated value is out of range: " + this->to_string(newValue));
-				break;
-			}
-			case ARITHMETIC_MEAN: {
-				int64_t sum = std::accumulate(this->values.begin(), this->values.end(), 0);
-				int64_t mean = sum / this->values.size();
-				this->logDebug(this->ID() + ": New value according to ArithmeticMean algorithm: " + this->to_string(mean));
-				if ((mean >= this->getMin()) && (mean <= this->getMax()))
-					this->setPosition(mean);
-				else
-					this->logWarning(this->ID() + ": Cannot set new position: Calculated value is out of range: " + this->to_string(mean));
-				break;
-			}
-			default:
-				throw Poco::ApplicationException("Algorithm not supported");
-			}
+		// perform all calculations
+		auto it = this->calculations.begin();
+		while (it != this->calculations.end()) {
+			(*it)->calculate(this);
+			it++;
 		}
 	}
 	
 	return OPDI_STATUS_OK;
 }
 
-OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id) : OPDI_DialPort(id), OPDID_PortFunctions(id) {
+OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 	this->multiplier = 1;
 	// default: allow all values (set absolute limits very high)
@@ -1455,8 +1498,8 @@ OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id)
 	this->lastQueryTime = 0;
 }
 
-void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config) {
-	this->opdid->configureDialPort(config, this);
+void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
+	this->opdid->configureDigitalPort(config, this);
 
 	this->sourcePortID = this->opdid->getConfigString(config, "SourcePort", "", true);
 
@@ -1470,34 +1513,105 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config) 
 		throw Poco::DataException(this->ID() + ": Please specify a number greater than 1 for Values: " + this->to_string(this->totalValues));
 	}
 
-	// allocate vector
-	this->values.reserve(this->totalValues);
-
 	this->multiplier = config->getInt("Multiplier", this->multiplier);
 	this->minDelta = config->getInt64("MinDelta", this->minDelta);
 	this->maxDelta = config->getInt64("MaxDelta", this->maxDelta);
 
-	std::string algStr = config->getString("Algorithm", "");
+	// enumerate calculations
+	this->logVerbose(std::string("Enumerating Aggregator calculations: ") + this->ID() + ".Calculations");
 
-	if (algStr == "Delta") {
-		this->algorithm = DELTA;
-		this->allowIncomplete = false;
-	} else
-	if (algStr == "ArithmeticMean" || algStr == "Average") {
-		this->algorithm = ARITHMETIC_MEAN;
-		this->allowIncomplete = true;
-	} else
-		throw Poco::DataException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean', or 'Average': " + algStr);
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodes = config->createView("Calculations");
 
-	this->allowIncomplete = config->getBool("AllowIncomplete", this->allowIncomplete);
+	// get list of calculations
+	Poco::Util::AbstractConfiguration::Keys calculations;
+	nodes->keys("", calculations);
 
-	// initially there is no value available
-	this->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+	typedef Poco::Tuple<int, std::string> Item;
+	typedef std::vector<Item> ItemList;
+	ItemList orderedItems;
+
+	// create ordered list of calculations keys (by priority)
+	for (auto it = calculations.begin(); it != calculations.end(); ++it) {
+
+		int itemNumber = nodes->getInt(*it, 0);
+		// check whether the item is active
+		if (itemNumber < 0)
+			continue;
+
+		// insert at the correct position to create a sorted list of items
+		auto nli = orderedItems.begin();
+		while (nli != orderedItems.end()) {
+			if (nli->get<0>() > itemNumber)
+				break;
+			nli++;
+		}
+		Item item(itemNumber, *it);
+		orderedItems.insert(nli, item);
+	}
+
+	if (orderedItems.size() == 0) {
+		this->logNormal(std::string("Warning: No calculations configured in node ") + this->ID() + ".Calculations; is this intended?");
+	}
+
+	// go through items, create calculation objects
+	auto nli = orderedItems.begin();
+	while (nli != orderedItems.end()) {
+		std::string nodeName = nli->get<1>();
+		this->logVerbose("Setting up aggregator calculation for node: " + nodeName);
+
+		// get calculation section from the configuration
+		Poco::AutoPtr<Poco::Util::AbstractConfiguration> calculationConfig = parentConfig->createView(nodeName);
+
+		// get type (required)
+		std::string type = this->opdid->getConfigString(calculationConfig, "Type", "", true);
+
+		// type must be "DialPort"
+		if (type != "DialPort")
+			throw Poco::DataException(this->ID() + ": Invalid type for calculation section, must be 'DialPort': " + nodeName);
+
+		Calculation* calc = new Calculation(nodeName);
+
+		// configure the dial port
+		this->opdid->configureDialPort(calculationConfig, calc);
+
+		std::string algStr = calculationConfig->getString("Algorithm", "");
+
+		if (algStr == "Delta") {
+			calc->algorithm = DELTA;
+			calc->allowIncomplete = false;
+		} else
+		if (algStr == "ArithmeticMean" || algStr == "Average") {
+			calc->algorithm = ARITHMETIC_MEAN;
+			calc->allowIncomplete = true;
+		} else
+		if (algStr == "Minimum") {
+			calc->algorithm = MINIMUM;
+			calc->allowIncomplete = true;
+		} else
+		if (algStr == "Maximum") {
+			calc->algorithm = MAXIMUM;
+			calc->allowIncomplete = true;
+		} else
+			throw Poco::DataException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean'/'Average', 'Minimum', or 'Maximum': " + algStr);
+
+		// override allowIncomplete flag if specified
+		calc->allowIncomplete = calculationConfig->getBool("AllowIncomplete", calc->allowIncomplete);
+
+		this->calculations.push_back(calc);
+
+		nli++;
+	}
+
+	// allocate vector
+	this->values.reserve(this->totalValues);
+
+	// set initial state
+	this->resetValues();
 }
 
 void OPDID_AggregatorPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_DialPort::prepare();
+	OPDI_DigitalPort::prepare();
 
 	// find source port; throws errors if something required is missing
 	this->sourcePort = this->findPort(this->getID(), "InputPorts", this->sourcePortID, true);
