@@ -782,6 +782,8 @@ OPDID_FaderPort::OPDID_FaderPort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 	this->mode = LINEAR;
 	this->lastValue = -1;
 	this->invert = false;
+	this->switchOffAction = NONE;
+	this->actionToPerform = NONE;
 
 	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 }
@@ -822,6 +824,17 @@ void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 		this->expMax = this->expA * (exp(this->expB) - 1);
 	}
 	this->invert = config->getBool("Invert", this->invert);
+	std::string switchOffActionStr = config->getString("SwitchOffAction", "None");
+	if (switchOffActionStr == "SetToLeft") {
+		this->switchOffAction = SET_TO_LEFT;
+	} else
+	if (switchOffActionStr == "SetToRight") {
+		this->switchOffAction = SET_TO_RIGHT;
+	} else
+	if (switchOffActionStr == "None") {
+		this->switchOffAction = NONE;
+	} else
+		throw Poco::DataException(this->ID() + ": Illegal value for 'SwitchOffAction', expected 'SetToLeft', 'SetToRight', or 'None': " + switchOffActionStr);
 
 	this->outputPortStr = opdid->getConfigString(config, "OutputPorts", "", true);
 	this->endSwitchesStr = opdid->getConfigString(config, "EndSwitches", "", false);
@@ -839,7 +852,7 @@ void OPDID_FaderPort::setMode(uint8_t mode) {
 
 void OPDID_FaderPort::setLine(uint8_t line) {
 	uint8_t oldline = this->line;
-	if ((this->line == 0) && (line == 1)) {
+	if ((oldline == 0) && (line == 1)) {
 		// store current values on start (might be resolved by ValueResolvers, and we don't want them to change during fading
 		// because each value might again refer to the output port - not an uncommon scenario for e.g. dimmers)
 		this->left = this->leftValue;
@@ -858,8 +871,14 @@ void OPDID_FaderPort::setLine(uint8_t line) {
 		}
 	} else {
 		OPDI_DigitalPort::setLine(line);
-		if (oldline != this->line)
+		// switched off?
+		if (oldline != this->line) {
 			this->logVerbose(this->ID() + ": Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
+			this->actionToPerform = this->switchOffAction;
+			// resolve values again for the switch off action
+			this->left = this->leftValue;
+			this->right = this->rightValue;
+		}
 	}
 }
 
@@ -875,7 +894,8 @@ void OPDID_FaderPort::prepare() {
 uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 	OPDI_DigitalPort::doWork(canSend);
 
-	if (this->line == 1) {
+	// active, or a switch off action needs to be performed?
+	if ((this->line == 1) || (this->actionToPerform != NONE)) {
 
 		if (this->durationMs < 0) {
 			this->logWarning(this->ID() + ": Duration may not be negative; disabling fader: " + to_string(this->durationMs));
@@ -911,29 +931,44 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 
 		// calculate current value (linear first) within the range [0, 1]
 		double value = 0.0;
-		if (this->mode == LINEAR) {
-			if (this->invert)
-				value = (this->right - (double)elapsedMs / (double)this->durationMs * (this->right - this->left)) / 100.0;
-			else
-				value = (this->left + (double)elapsedMs / (double)this->durationMs * (this->right - this->left)) / 100.0;
-		} else
-		if (this->mode == EXPONENTIAL) {
-			// calculate exponential value; start with value relative to the range
-			if (this->invert)
-				value = 1.0 - (double)elapsedMs / (double)this->durationMs;
-			else
-				value = (double)elapsedMs / (double)this->durationMs;
 
-			// exponentiate value; map within [0..1]
-			value = (this->expMax <= 0 ? 1 : (this->expA * (exp(this->expB * value)) - 1) / this->expMax);
+		// if the port has been switched off, and a switch action needs to be performed,
+		// do it here
+		if (this->actionToPerform != NONE) {
+			if (this->actionToPerform == SET_TO_LEFT)
+				value = this->left;
+			else
+			if (this->actionToPerform == SET_TO_RIGHT)
+				value = this->right;
+			// action has been handled
+			this->actionToPerform = NONE;
+			this->logVerbose(this->ID() + ": Switch off action handled; setting value to: " + this->to_string(value));
+		} else {
+			// regular fader operation
+			if (this->mode == LINEAR) {
+				if (this->invert)
+					value = (this->right - (double)elapsedMs / (double)this->durationMs * (this->right - this->left)) / 100.0;
+				else
+					value = (this->left + (double)elapsedMs / (double)this->durationMs * (this->right - this->left)) / 100.0;
+			} else
+			if (this->mode == EXPONENTIAL) {
+				// calculate exponential value; start with value relative to the range
+				if (this->invert)
+					value = 1.0 - (double)elapsedMs / (double)this->durationMs;
+				else
+					value = (double)elapsedMs / (double)this->durationMs;
 
-			if (value < 0.0)
+				// exponentiate value; map within [0..1]
+				value = (this->expMax <= 0 ? 1 : (this->expA * (exp(this->expB * value)) - 1) / this->expMax);
+
+				if (value < 0.0)
+					value = 0.0;
+
+				// map back to the target range
+				value = (this->left + value * (this->right - this->left)) / 100.0;
+			} else
 				value = 0.0;
-
-			// map back to the target range
-			value = (this->left + value * (this->right - this->left)) / 100.0;
-		} else
-			value = 0.0;
+		}
 
 		this->logExtreme(this->ID() + ": Setting current fader value to " + to_string(value * 100.0) + "%");
 
@@ -950,7 +985,7 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 					port->setPosition((int64_t)pos);
 				} else
 					throw Poco::Exception("The port " + (*it)->ID() + " is neither an AnalogPort nor a DialPort");
-			} catch (Poco::Exception &e) {
+			} catch (Poco::Exception& e) {
 				this->opdid->logNormal(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
 			}
 			++it;
