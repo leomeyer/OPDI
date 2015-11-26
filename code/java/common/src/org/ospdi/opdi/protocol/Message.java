@@ -42,7 +42,8 @@ public class Message {
 				myChecksum += message[i] & 0xFF;
 			else
 				colonFound = message[i] == ':';
-		return myChecksum;
+		// checksum is limited to 16 bits
+		return myChecksum & 0xFFFF;
 	}
 	
 	/** Tries to decode a message from its serial form.
