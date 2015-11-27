@@ -896,37 +896,41 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 
 	// active, or a switch off action needs to be performed?
 	if ((this->line == 1) || (this->actionToPerform != NONE)) {
+		
+		Poco::Timestamp::TimeVal elapsedMs;
 
-		if (this->durationMs < 0) {
-			this->logWarning(this->ID() + ": Duration may not be negative; disabling fader: " + to_string(this->durationMs));
-			// disable the fader immediately
-			OPDI_DigitalPort::setLine(0);
-			this->refreshRequired = true;
-			return OPDI_STATUS_OK;
-		}
-
-		// calculate time difference
-		Poco::Timestamp now;
-		Poco::Timestamp::TimeVal elapsedMs = (now.epochMicroseconds() - this->startTime.epochMicroseconds()) / 1000;
-
-		// end reached?
-		if (elapsedMs > this->durationMs) {
-			this->setLine(0);
-			this->refreshRequired = true;
-
-			// set end switches if specified
-			DigitalPortList::iterator it = this->endSwitches.begin();
-			while (it != this->endSwitches.end()) {
-				try {
-					this->logDebug(this->ID() + ": Setting line of end switch port " + (*it)->ID() + " to High");
-					(*it)->setLine(1);
-				} catch (Poco::Exception &e) {
-					this->opdid->logWarning(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
-				}
-				++it;
+		if (this->line == 1) {
+			if (this->durationMs < 0) {
+				this->logWarning(this->ID() + ": Duration may not be negative; disabling fader: " + to_string(this->durationMs));
+				// disable the fader immediately
+				OPDI_DigitalPort::setLine(0);
+				this->refreshRequired = true;
+				return OPDI_STATUS_OK;
 			}
 
-			return OPDI_STATUS_OK;
+			// calculate time difference
+			Poco::Timestamp now;
+			elapsedMs = (now.epochMicroseconds() - this->startTime.epochMicroseconds()) / 1000;
+
+			// end reached?
+			if (elapsedMs > this->durationMs) {
+				this->setLine(0);
+				this->refreshRequired = true;
+
+				// set end switches if specified
+				DigitalPortList::iterator it = this->endSwitches.begin();
+				while (it != this->endSwitches.end()) {
+					try {
+						this->logDebug(this->ID() + ": Setting line of end switch port " + (*it)->ID() + " to High");
+						(*it)->setLine(1);
+					} catch (Poco::Exception &e) {
+						this->opdid->logWarning(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
+					}
+					++it;
+				}
+
+				return OPDI_STATUS_OK;
+			}
 		}
 
 		// calculate current value (linear first) within the range [0, 1]
@@ -936,13 +940,13 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 		// do it here
 		if (this->actionToPerform != NONE) {
 			if (this->actionToPerform == SET_TO_LEFT)
-				value = this->left;
+				value = this->left / 100.0;
 			else
 			if (this->actionToPerform == SET_TO_RIGHT)
-				value = this->right;
+				value = this->right / 100.0;
 			// action has been handled
 			this->actionToPerform = NONE;
-			this->logVerbose(this->ID() + ": Switch off action handled; setting value to: " + this->to_string(value));
+			this->logDebug(this->ID() + ": Switch off action handled; setting value to: " + this->to_string(value) + "%");
 		} else {
 			// regular fader operation
 			if (this->mode == LINEAR) {
