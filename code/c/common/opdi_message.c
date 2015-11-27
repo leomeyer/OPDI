@@ -83,11 +83,11 @@ static uint16_t compare_checksum(uint16_t cs, uint8_t bytes[], uint16_t pos) {
 */
 static uint8_t decode(opdi_Message *message, uint8_t bytes[]) {
 	char channelBuf[CHANNEL_MAXBUF + 1] = {'\0'};
-	uint8_t pos = 0;
-	uint8_t payloadPos = 0;
-	uint8_t lastSepPos = 0;
+	uint16_t pos = 0;
+	uint16_t payloadPos = 0;
+	uint16_t lastSepPos = 0;
 	uint16_t checksum = 0;
-	uint16_t i;
+	int16_t i;
 	uint8_t err;
 
 	// detect separator
