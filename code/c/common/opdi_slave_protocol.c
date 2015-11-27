@@ -48,7 +48,7 @@ static uint8_t connected;
 // send a comma-separated list of port IDs
 static uint8_t send_device_caps(channel_t channel) {
 	opdi_Message message;
-	uint8_t portCount = 0;
+	uint16_t portCount = 0;
 	const char *opdi_msg_parts[OPDI_MAX_DEVICE_PORTS];
 	char portCSV[OPDI_MESSAGE_PAYLOAD_LENGTH];
 	opdi_Port *port;
@@ -1175,7 +1175,7 @@ uint8_t opdi_handle_basic_message(opdi_Message *m) {
 }
 */
 
-static uint8_t handle_message_result(opdi_Message *m, uint8_t result) {
+static uint8_t handle_message_result(opdi_Message */*m*/, uint8_t result) {
 	if (result != OPDI_STATUS_OK) {
 		// special case: message unknown
 		if (result == OPDI_MESSAGE_UNKNOWN) {

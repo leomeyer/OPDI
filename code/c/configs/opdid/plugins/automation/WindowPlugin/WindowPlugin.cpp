@@ -962,9 +962,9 @@ void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, P
 
 		port->logVerbosity = this->opdid->getConfigLogVerbosity(nodeConfig, AbstractOPDID::UNKNOWN);
 
-		port->enableDelay = nodeConfig->getInt("EnableDelay", 0);
-		if (port->enableDelay < 0)
+		if (nodeConfig->getInt("EnableDelay", 0) < 0)
 			throw Poco::DataException("EnableDelay may not be negative: " + abstractOPDID->to_string(port->enableDelay));
+		port->enableDelay = nodeConfig->getInt("EnableDelay", 0);
 
 		// read control mode
 		std::string controlMode = abstractOPDID->getConfigString(nodeConfig, "ControlMode", "", true);
@@ -975,9 +975,9 @@ void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, P
 			// motorA and motorB are required
 			port->motorA = abstractOPDID->getConfigString(nodeConfig, "MotorA", "", true);
 			port->motorB = abstractOPDID->getConfigString(nodeConfig, "MotorB", "", true);
-			port->motorDelay = nodeConfig->getInt("MotorDelay", 0);
-			if (port->motorDelay < 0)
+			if (nodeConfig->getInt("MotorDelay", 0) < 0)
 				throw Poco::DataException("MotorDelay may not be negative: " + abstractOPDID->to_string(port->motorDelay));
+			port->motorDelay = nodeConfig->getInt("MotorDelay", 0);
 			port->enable = nodeConfig->getString("Enable", "");
 			if (port->enableDelay < port->motorDelay)
 				throw Poco::DataException("If using MotorDelay, EnableDelay must be greater or equal: " + abstractOPDID->to_string(port->enableDelay));
@@ -1051,7 +1051,7 @@ extern "C" __declspec(dllexport) IOPDIDPlugin* __cdecl GetOPDIDPluginInstance(in
 
 #elif linux
 
-extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion)
+extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int /*patchVersion*/)
 
 #else
 #error "Unable to compile plugin instance factory function: Compiler not supported"

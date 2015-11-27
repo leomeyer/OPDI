@@ -16,7 +16,7 @@
 // the main OPDI instance is declared here
 AbstractOPDID *Opdi;
 
-void signal_handler(int s) {
+void signal_handler(int) {
 	std::cout << "Interrupted, exiting" << std::endl;
 
 	// tell the OPDI system to shut down
@@ -24,7 +24,7 @@ void signal_handler(int s) {
 		Opdi->shutdown();
 }
 
-void signal_handler_term(int s) {
+void signal_handler_term(int) {
 	std::cout << "Terminated, exiting" << std::endl;
 
 	// tell the OPDI system to shut down

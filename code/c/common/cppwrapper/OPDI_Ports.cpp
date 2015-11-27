@@ -754,7 +754,7 @@ void OPDI_SelectPort::getState(uint16_t *position) {
 }
 
 const char *OPDI_SelectPort::getPositionLabel(uint16_t position) {
-	return this->items[this->position];
+	return this->items[position];
 }
 
 uint16_t OPDI_SelectPort::getMaxPosition(void) {

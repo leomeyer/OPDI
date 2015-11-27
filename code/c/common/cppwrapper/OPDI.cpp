@@ -107,7 +107,7 @@ uint8_t OPDI::setUsername(std::string userName) {
 	return OPDI_STATUS_OK;
 }
 
-uint8_t OPDI::setPassword(std::string userName) {
+uint8_t OPDI::setPassword(std::string /*password*/) {
 	return OPDI_STATUS_OK;
 }
 
@@ -376,7 +376,7 @@ uint8_t OPDI::idleTimeoutReached() {
 	return this->disconnect();
 }
 
-uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
+uint8_t OPDI::messageHandled(channel_t channel, const char **/*parts*/) {
 	// a complete message has been processed; it's now safe to send
 	this->canSend = true;
 
@@ -414,6 +414,6 @@ void OPDI::shutdown(void) {
 	this->shutdownRequested = true;
 }
 
-void OPDI::persist(OPDI_Port *port) {
+void OPDI::persist(OPDI_Port */*port*/) {
 	throw Poco::NotImplementedException("This implementation does not support port state persistance");
 }

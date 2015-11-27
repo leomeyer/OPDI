@@ -34,11 +34,11 @@ void OPDID_ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) 
 		throw Poco::DataException("You have to specify at least one output port in the OutputPorts setting");
 }
 
-void OPDID_ExpressionPort::setDirCaps(const char *dirCaps) {
+void OPDID_ExpressionPort::setDirCaps(const char */*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of an ExpressionPort cannot be changed");
 }
 
-void OPDID_ExpressionPort::setMode(uint8_t mode) {
+void OPDID_ExpressionPort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of an ExpressionPort cannot be changed");
 }
 

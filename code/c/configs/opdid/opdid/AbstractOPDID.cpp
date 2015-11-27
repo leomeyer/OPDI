@@ -882,7 +882,7 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
 
 	if (stateConfig->getString("Position", "") != "") {
-		uint16_t position = stateConfig->getInt("Position", 0);
+		int16_t position = stateConfig->getInt("Position", 0);
 		if ((position < 0) || (position > port->getMaxPosition()))
 			throw Poco::DataException("Wrong select port setting: Position is out of range: " + to_string(position));
 		port->setPosition(position);
@@ -1923,7 +1923,7 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int64_t position) {
 
 #endif	// OPDI_NO_DIAL_PORTS
 
-uint8_t opdi_choose_language(const char *languages) {
+uint8_t opdi_choose_language(const char */*languages*/) {
 	// TODO
 
 	return OPDI_STATUS_OK;

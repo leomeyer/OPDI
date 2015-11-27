@@ -624,7 +624,7 @@ extern "C" __declspec(dllexport) IOPDIDPlugin* __cdecl GetOPDIDPluginInstance(in
 
 #elif linux
 
-extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion)
+extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int /*patchVersion*/)
 
 #else
 #error "Unable to compile plugin instance factory function: Compiler not supported"

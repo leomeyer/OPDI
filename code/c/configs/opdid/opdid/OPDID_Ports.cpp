@@ -98,15 +98,15 @@ void OPDID_LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
 }
 
-void OPDID_LogicPort::setDirCaps(const char *dirCaps) {
+void OPDID_LogicPort::setDirCaps(const char */*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a LogicPort cannot be changed");
 }
 
-void OPDID_LogicPort::setMode(uint8_t mode) {
+void OPDID_LogicPort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of a LogicPort cannot be changed");
 }
 
-void OPDID_LogicPort::setLine(uint8_t line) {
+void OPDID_LogicPort::setLine(uint8_t /*line*/) {
 	throw PortError(this->ID() + ": The line of a LogicPort cannot be set directly");
 }
 
@@ -271,11 +271,11 @@ void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 		throw Poco::DataException("Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + this->to_string(this->dutyCycle));
 }
 
-void OPDID_PulsePort::setDirCaps(const char *dirCaps) {
+void OPDID_PulsePort::setDirCaps(const char */*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a PulsePort cannot be changed");
 }
 
-void OPDID_PulsePort::setMode(uint8_t mode) {
+void OPDID_PulsePort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of a PulsePort cannot be changed");
 }
 
@@ -421,11 +421,11 @@ void OPDID_SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->position = pos;
 }
 
-void OPDID_SelectorPort::setDirCaps(const char *dirCaps) {
+void OPDID_SelectorPort::setDirCaps(const char */*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a SelectorPort cannot be changed");
 }
 
-void OPDID_SelectorPort::setMode(uint8_t mode) {
+void OPDID_SelectorPort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of a SelectorPort cannot be changed");
 }
 
@@ -494,11 +494,11 @@ void OPDID_ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration *confi
 	this->negate = config->getBool("Negate", false);
 }
 
-void OPDID_ErrorDetectorPort::setDirCaps(const char *dirCaps) {
+void OPDID_ErrorDetectorPort::setDirCaps(const char */*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of an ErrorDetectorPort cannot be changed");
 }
 
-void OPDID_ErrorDetectorPort::setMode(uint8_t mode) {
+void OPDID_ErrorDetectorPort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of an ErrorDetectorPort cannot be changed");
 }
 
@@ -614,7 +614,7 @@ int OPDID_SerialStreamingPort::write(char *bytes, size_t length) {
 	return this->device->Write(bytes, length);
 }
 
-int OPDID_SerialStreamingPort::available(size_t count) {
+int OPDID_SerialStreamingPort::available(size_t /*count*/) {
 	// count has no meaning in this implementation
 
 	char buf;
@@ -754,17 +754,17 @@ void OPDID_LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->portsToLogStr = this->opdid->getConfigString(config, "Ports", "", true);
 }
 
-int OPDID_LoggerPort::write(char *bytes, size_t length) {
+int OPDID_LoggerPort::write(char */*bytes*/, size_t /*length*/) {
 	return 0;
 }
 
-int OPDID_LoggerPort::available(size_t count) {
+int OPDID_LoggerPort::available(size_t /*count*/) {
 	// count has no meaning in this implementation
 	// nothing available
 	return 0;
 }
 
-int OPDID_LoggerPort::read(char *result) {
+int OPDID_LoggerPort::read(char */*result*/) {
 	// nothing available
 	return 0;
 }
@@ -842,11 +842,11 @@ void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
 }
 
-void OPDID_FaderPort::setDirCaps(const char *dirCaps) {
+void OPDID_FaderPort::setDirCaps(const char */*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a FaderPort cannot be changed");
 }
 
-void OPDID_FaderPort::setMode(uint8_t mode) {
+void OPDID_FaderPort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of a FaderPort cannot be changed");
 }
 
