@@ -46,10 +46,10 @@ uint8_t OPDI::shutdownInternal(void) {
 		opdi_Port *oPort = (opdi_Port *)(*it)->data;
 		// release additional data structure memory
 		if (strcmp((*it)->type, OPDI_PORTTYPE_DIAL) == 0) {
-			if (oPort->info.ptr != NULL)
+			if (oPort->info.ptr != nullptr)
 				free(oPort->info.ptr);
 		}
-		if (oPort != NULL)
+		if (oPort != nullptr)
 			free(oPort);
 		delete *it;
 		++it;
@@ -63,8 +63,8 @@ uint8_t OPDI::setup(const char *slaveName, int idleTimeout) {
 
 	// initialize port list
 	this->ports.clear();
-	this->first_portGroup = NULL;
-	this->last_portGroup = NULL;
+	this->first_portGroup = nullptr;
+	this->last_portGroup = nullptr;
 
 	// copy slave name to internal buffer
 	this->slaveName = slaveName;
@@ -117,7 +117,7 @@ std::string OPDI::getExtendedDeviceInfo(void) {
 
 std::string OPDI::getExtendedPortInfo(char *portID, uint8_t *code) {
 	OPDI_Port *port = this->findPortByID(portID, false);
-	if (port == NULL) {
+	if (port == nullptr) {
 		*code = OPDI_PORT_UNKNOWN;
 		return "";
 	} else {
@@ -128,7 +128,7 @@ std::string OPDI::getExtendedPortInfo(char *portID, uint8_t *code) {
 
 std::string OPDI::getExtendedPortState(char *portID, uint8_t *code) {
 	OPDI_Port *port = this->findPortByID(portID, false);
-	if (port == NULL) {
+	if (port == nullptr) {
 		*code = OPDI_PORT_UNKNOWN;
 		return "";
 	} else {
@@ -166,12 +166,12 @@ void OPDI::addPort(OPDI_Port *port) {
 void OPDI::updatePortData(OPDI_Port *port) {
 	// allocate port data structure if necessary
 	opdi_Port *oPort = (opdi_Port *)port->data;
-	if (oPort == NULL) {
+	if (oPort == nullptr) {
 		oPort = (opdi_Port *)malloc(sizeof(opdi_Port));
 		port->data = oPort;
 		oPort->info.i = 0;
-		oPort->info.ptr = NULL;
-		oPort->next = NULL;
+		oPort->info.ptr = nullptr;
+		oPort->next = nullptr;
 	}
 	// update data
 	oPort->id = (const char*)port->id;
@@ -188,7 +188,7 @@ void OPDI::updatePortData(OPDI_Port *port) {
 	} else
 	if (strcmp(port->type, OPDI_PORTTYPE_DIAL) == 0) {
 		// release additional data structure memory
-		if (oPort->info.ptr != NULL)
+		if (oPort->info.ptr != nullptr)
 			free(oPort->info.ptr);
 		// allocate additional data structure memory
 		struct opdi_DialPortInfo* dialPortInfo = (struct opdi_DialPortInfo*)malloc(sizeof(opdi_DialPortInfo));
@@ -201,7 +201,7 @@ void OPDI::updatePortData(OPDI_Port *port) {
 }
 
 OPDI_Port *OPDI::findPort(opdi_Port *port) {
-	if (port == NULL)
+	if (port == nullptr)
 		return *this->ports.begin();
 	PortList::iterator it = this->ports.begin();
 	while (it != this->ports.end()) {
@@ -210,7 +210,7 @@ OPDI_Port *OPDI::findPort(opdi_Port *port) {
 		++it;
 	}
 	// not found
-	return NULL;
+	return nullptr;
 }
 
 OPDI::PortList OPDI::getPorts() {
@@ -235,16 +235,16 @@ OPDI_Port *OPDI::findPortByID(const char *portID, bool caseInsensitive) {
 		++it;
 	}
 	// not found
-	return NULL;
+	return nullptr;
 }
 
 void OPDI::updatePortGroupData(OPDI_PortGroup *group) {
 	// allocate port group data structure if necessary
 	opdi_PortGroup *oGroup = (opdi_PortGroup *)group->data;
-	if (oGroup == NULL) {
+	if (oGroup == nullptr) {
 		oGroup = (opdi_PortGroup *)malloc(sizeof(opdi_PortGroup));
 		group->data = oGroup;
-		oGroup->next = NULL;
+		oGroup->next = nullptr;
 	}
 	// update data
 	oGroup->id = (const char*)group->id;
@@ -259,7 +259,7 @@ void OPDI::addPortGroup(OPDI_PortGroup *portGroup) {
 	portGroup->opdi = this;
 
 	// first added port?
-	if (this->first_portGroup == NULL) {
+	if (this->first_portGroup == nullptr) {
 		this->first_portGroup = portGroup;
 		this->last_portGroup = portGroup;
 	} else {
@@ -307,7 +307,7 @@ uint8_t OPDI::start() {
 	this->last_activity = opdi_get_time_ms();
 
 	// initiate handshake
-	result = opdi_slave_start(&message, NULL, NULL);
+	result = opdi_slave_start(&message, nullptr, nullptr);
 
 	return result;
 }
@@ -352,20 +352,20 @@ uint8_t OPDI::refresh(OPDI_Port **ports) {
 	if (!this->isConnected() || !this->canSend)
 		return OPDI_DISCONNECTED;
 	opdi_Port *iPorts[OPDI_MAX_MESSAGE_PARTS + 1];
-	iPorts[0] = NULL;
-	if (ports == NULL)
+	iPorts[0] = nullptr;
+	if (ports == nullptr)
 		return opdi_refresh(iPorts);
 	// target array of internal ports to refresh
 	OPDI_Port *port = ports[0];
 	uint8_t i = 0;
-	while (port != NULL) {
+	while (port != nullptr) {
 		opdi_Port *oPort = (opdi_Port *)port->data;
 		iPorts[i] = oPort;
 		if (++i > OPDI_MAX_MESSAGE_PARTS)
 			return OPDI_ERROR_PARTS_OVERFLOW;
 		port = ports[i];
 	}
-	iPorts[i] = NULL;
+	iPorts[i] = nullptr;
 	return opdi_refresh(iPorts);
 }
 

@@ -464,7 +464,7 @@ std::string FritzBoxPlugin::getXMLValue(std::string xml, std::string node) {
 		Poco::XML::Node* pNode = it.nextNode();
 		while (pNode)
 		{
-			if ((pNode->nodeName() == node) && (pNode->firstChild() != NULL))
+			if ((pNode->nodeName() == node) && (pNode->firstChild() != nullptr))
 				return pNode->firstChild()->nodeValue();
 			pNode = it.nextNode();
 		}
@@ -773,12 +773,12 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 
 void FritzBoxPlugin::masterConnected() {
 	// when the master connects, login to the FritzBox
-	//this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGIN, NULL));
+	//this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGIN, nullptr));
 }
 
 void FritzBoxPlugin::masterDisconnected() {
 	// when the master connects, logout from the FritzBox
-	//this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGOUT, NULL));
+	//this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGOUT, nullptr));
 }
 
 void FritzBoxPlugin::run(void) {

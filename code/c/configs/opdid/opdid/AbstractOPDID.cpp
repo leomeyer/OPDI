@@ -60,9 +60,9 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->patchVersion = OPDID_PATCH_VERSION;
 
 	this->logVerbosity = NORMAL;
-	this->persistentConfig = NULL;
+	this->persistentConfig = nullptr;
 
-	this->logger = NULL;
+	this->logger = nullptr;
 	this->timestampFormat = "%Y-%m-%d %H:%M:%S.%i";
 
 	this->monSecondPos = 0;
@@ -237,7 +237,7 @@ void AbstractOPDID::log(std::string text) {
 	Poco::Mutex::ScopedLock(this->mutex);
 
 	std::string msg = "[" + this->getTimestampStr() + "] " + (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text;
-	if (this->logger != NULL) {
+	if (this->logger != nullptr) {
 		this->logger->information(msg);
 	} else {
 		this->println(msg);
@@ -253,7 +253,7 @@ void AbstractOPDID::logWarning(std::string text) {
 	Poco::Mutex::ScopedLock(this->mutex);
 
 	std::string msg = "[" + this->getTimestampStr() + "] WARNING: " + text;
-	if (this->logger != NULL) {
+	if (this->logger != nullptr) {
 		this->logger->warning(msg);
 	}
 	this->printlne(msg);
@@ -264,7 +264,7 @@ void AbstractOPDID::logError(std::string text) {
 	Poco::Mutex::ScopedLock(this->mutex);
 
 	std::string msg = "ERROR: " + text;
-	if (this->logger != NULL) {
+	if (this->logger != nullptr) {
 		this->logger->error(msg);
 	}
 	this->printlne("[" + this->getTimestampStr() + "] " + msg);
@@ -296,7 +296,7 @@ void AbstractOPDID::logExtreme(std::string message) {
 
 int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
 	this->environment = environment;
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> configuration = NULL;
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> configuration = nullptr;
 	
 	bool testMode = false;
 
@@ -450,7 +450,7 @@ Poco::Util::AbstractConfiguration *AbstractOPDID::getConfigForState(Poco::Util::
 	// thus, port states will be pulled from the persistent configuration if they are present
 	Poco::Util::LayeredConfiguration *newConfig = new Poco::Util::LayeredConfiguration();
 	// persistent configuration specified?
-	if (this->persistentConfig != NULL) {
+	if (this->persistentConfig != nullptr) {
 		// persistent config has high priority
 		if (viewName == "")
 			newConfig->add(this->persistentConfig, 0);
@@ -873,7 +873,7 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 			charItems.push_back(nli->get<1>().c_str());
 			nli++;
 		}
-		charItems.push_back(NULL);
+		charItems.push_back(nullptr);
 
 		// set port items
 		port->setItems(&charItems[0]);
@@ -1365,14 +1365,14 @@ uint8_t AbstractOPDID::refresh(OPDI_Port **ports) {
 		return result;
 
 	if (this->logVerbosity >= VERBOSE) {
-		if (ports == NULL) {
+		if (ports == nullptr) {
 			this->logDebug("Sent refresh for all ports");
 			return OPDI_STATUS_OK;
 		}
 
 		OPDI_Port *port = ports[0];
 		uint8_t i = 0;
-		while (port != NULL) {
+		while (port != nullptr) {
 			this->logDebug("Sent refresh for port: " + port->ID());
 			port = ports[++i];
 		}
@@ -1382,7 +1382,7 @@ uint8_t AbstractOPDID::refresh(OPDI_Port **ports) {
 }
 
 void AbstractOPDID::persist(OPDI_Port *port) {
-	if (this->persistentConfig == NULL) {
+	if (this->persistentConfig == nullptr) {
 		this->logWarning(std::string("Unable to persist state for port ") + port->getID() + ": No configuration file specified; use 'PersistentConfig' in the General configuration section");
 		return;
 	}
@@ -1612,7 +1612,7 @@ uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 	uint8_t dMode;
 	uint8_t dLine;
 	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi->findPort(port);
-	if (dPort == NULL)
+	if (dPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	try {
@@ -1641,7 +1641,7 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 	uint8_t dLine;
 
 	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi->findPort(port);
-	if (dPort == NULL)
+	if (dPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	if (dPort->isReadonly())
@@ -1667,7 +1667,7 @@ uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 	uint8_t dMode;
 
 	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi->findPort(port);
-	if (dPort == NULL)
+	if (dPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	if (dPort->isReadonly())
@@ -1700,7 +1700,7 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 	uint8_t aRes;
 
 	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
-	if (aPort == NULL)
+	if (aPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	try {
@@ -1729,7 +1729,7 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 
 uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
 	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
-	if (aPort == NULL)
+	if (aPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	if (aPort->isReadonly())
@@ -1751,7 +1751,7 @@ uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
 	uint8_t aMode;
 
 	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
-	if (aPort == NULL)
+	if (aPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	if ((mode[0] >= '0') && (mode[0] <= '1'))
@@ -1778,7 +1778,7 @@ uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
 uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
 	uint8_t aRes;
 	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
-	if (aPort == NULL)
+	if (aPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	if ((res[0] >= '0') && (res[0] <= '4'))
@@ -1802,7 +1802,7 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
 uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 	uint8_t aRef;
 	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
-	if (aPort == NULL)
+	if (aPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	if ((ref[0] >= '0') && (ref[0] <= '1'))
@@ -1829,7 +1829,7 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 
 uint8_t opdi_get_select_port_state(opdi_Port *port, uint16_t *position) {
 	OPDI_SelectPort *sPort = (OPDI_SelectPort *)Opdi->findPort(port);
-	if (sPort == NULL)
+	if (sPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	try {
@@ -1854,7 +1854,7 @@ uint8_t opdi_get_select_port_state(opdi_Port *port, uint16_t *position) {
 
 uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 	OPDI_SelectPort *sPort = (OPDI_SelectPort *)Opdi->findPort(port);
-	if (sPort == NULL)
+	if (sPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	if (sPort->isReadonly())
@@ -1878,7 +1878,7 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 
 uint8_t opdi_get_dial_port_state(opdi_Port *port, int64_t *position) {
 	OPDI_DialPort *dPort = (OPDI_DialPort *)Opdi->findPort(port);
-	if (dPort == NULL)
+	if (dPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	try {
@@ -1903,7 +1903,7 @@ uint8_t opdi_get_dial_port_state(opdi_Port *port, int64_t *position) {
 
 uint8_t opdi_set_dial_port_position(opdi_Port *port, int64_t position) {
 	OPDI_DialPort *dPort = (OPDI_DialPort *)Opdi->findPort(port);
-	if (dPort == NULL)
+	if (dPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	if (dPort->isReadonly())

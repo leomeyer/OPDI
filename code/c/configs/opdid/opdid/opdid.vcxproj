@@ -101,6 +101,7 @@
     <ClInclude Include="..\..\..\common\opdi_rijndael.h" />
     <ClInclude Include="..\..\..\common\opdi_slave_protocol.h" />
     <ClInclude Include="..\..\..\common\opdi_strings.h" />
+    <ClInclude Include="..\..\..\libraries\ExprTk\exprtk.hpp" />
     <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\ctb.h" />
     <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\fifo.h" />
     <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\getopt.h" />

@@ -630,7 +630,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 	if (this->line != 1)
 		return OPDI_STATUS_OK;
 
-	Poco::Notification::Ptr notification = NULL;
+	Poco::Notification::Ptr notification = nullptr;
 
 	if (connectionStateChanged) {
 		// check whether a schedule is specified for this event

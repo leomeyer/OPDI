@@ -154,10 +154,10 @@ WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(i
 	this->isMotorEnabled = false;
 	this->isMotorOn = false;
 	this->refreshMode = REFRESH_NOT_SET;
-	this->sensorPort = NULL;
-	this->enablePort = NULL;
-	this->directionPort = NULL;
-	this->statusPort = NULL;
+	this->sensorPort = nullptr;
+	this->enablePort = nullptr;
+	this->directionPort = nullptr;
+	this->statusPort = nullptr;
 	this->resetTo = RESET_NONE;
 	this->positionAfterClose = -1;
 	this->positionAfterOpen = -1;
@@ -213,7 +213,7 @@ void WindowPort::prepare() {
 		if (this->enable != "")
 			this->enablePort = this->findDigitalPort(this->ID(), "Enable", this->enable, true);
 		// no enable port? assume always enabled
-		if (this->enablePort == NULL)
+		if (this->enablePort == nullptr)
 			this->isMotorEnabled = true;
 
 	} else if (this->mode == SERIAL_RELAY) {
@@ -253,7 +253,7 @@ void WindowPort::setPortLine(OPDI_DigitalPort *port, uint8_t newLine) {
 
 bool WindowPort::isSensorClosed(void) {
 	// sensor not present?
-	if (this->sensorPort == NULL)
+	if (this->sensorPort == nullptr)
 		return false;
 	// query the sensor
 	if (this->getPortLine(this->sensorPort) == this->sensorClosed)
@@ -263,7 +263,7 @@ bool WindowPort::isSensorClosed(void) {
 }
 
 void WindowPort::enableMotor(void) {
-	if (this->enablePort == NULL)
+	if (this->enablePort == nullptr)
 		return;
 	this->logDebug(std::string(this->id) + ": Enabling motor");
 	this->setPortLine(this->enablePort, (this->enableActive == 1 ? 1 : 0));
@@ -271,7 +271,7 @@ void WindowPort::enableMotor(void) {
 }
 
 void WindowPort::disableMotor(void) {
-	if (this->enablePort == NULL)
+	if (this->enablePort == nullptr)
 		return;
 	this->logDebug(std::string(this->id) + ": Disabling motor");
 	this->setPortLine(this->enablePort, (this->enableActive == 1 ? 0 : 1));
@@ -383,7 +383,7 @@ void WindowPort::setCurrentState(WindowState state) {
 		}
 		
 		// update status port?
-		if ((this->statusPort != NULL) &&
+		if ((this->statusPort != nullptr) &&
 			((state == UNKNOWN) ||
 			(state == CLOSED) || 
 			(state == OPEN) || 
@@ -639,7 +639,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 				this->setMotorOff();
 
 				// without detecting sensor? error condition
-				if (this->sensorPort != NULL) {
+				if (this->sensorPort != nullptr) {
 					this->logNormal(std::string(this->id) + ": Warning: Closing sensor signal not detected while closing");
 
 					// enable delay specified?
@@ -813,7 +813,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 				this->disableMotor();
 
 				// without detecting sensor? error condition
-				if (this->sensorPort != NULL) {
+				if (this->sensorPort != nullptr) {
 					this->logNormal(std::string(this->id) + ": Warning: Closing sensor signal not detected while closing");
 
 					this->setCurrentState(ERR);

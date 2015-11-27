@@ -34,9 +34,9 @@ static unsigned long last_activity = 0;
 std::string utf8_encode(const std::wstring &wstr)
 {
     if (wstr.empty()) return std::string();
-    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), nullptr, 0, nullptr, nullptr);
     std::string strTo(size_needed, 0);
-    WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
+    WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, nullptr, nullptr);
     return strTo;
 }
 
@@ -44,7 +44,7 @@ std::string utf8_encode(const std::wstring &wstr)
 std::wstring utf8_decode(const std::string &str)
 {
     if (str.empty()) return std::wstring();
-    int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), nullptr, 0);
     std::wstring wstrTo(size_needed, 0);
     MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
     return wstrTo;
@@ -80,7 +80,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 			// try to receive a byte within the timeout
 			FD_ZERO(&sockset);
 			FD_SET(*csock, &sockset);
-			if ((result = select(0, &sockset, NULL, NULL, &aTimeout)) == SOCKET_ERROR) {
+			if ((result = select(0, &sockset, nullptr, nullptr, &aTimeout)) == SOCKET_ERROR) {
 				Opdi->logNormal("Network error: " + WSAGetLastError());
 				return OPDI_NETWORK_ERROR;
 			}
@@ -118,7 +118,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 				break;
 			}
 
-			if (ReadFile(hndPort, &inputData, 1, &bytesRead, NULL) != 0) {
+			if (ReadFile(hndPort, &inputData, 1, &bytesRead, nullptr) != 0) {
 				if (bytesRead == 1) {
 					// a byte has been received
 					c = inputData;
@@ -164,7 +164,7 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 		HANDLE hndPort = (HANDLE)info;
 		DWORD length;
 
-		if (WriteFile(hndPort, c, count, &length, NULL) == 0) {
+		if (WriteFile(hndPort, c, count, &length, nullptr) == 0) {
 			return OPDI_DEVICE_ERROR;
 		}
 	}
@@ -222,7 +222,7 @@ int WindowsOPDID::HandleTCPConnection(int *csock) {
 	last_activity = GetTickCount();
 
 	// initiate handshake
-	result = opdi_slave_start(&message, NULL, &protocol_callback);
+	result = opdi_slave_start(&message, nullptr, &protocol_callback);
 
     return result;
 }

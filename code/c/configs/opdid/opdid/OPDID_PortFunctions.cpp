@@ -14,10 +14,10 @@ OPDI_Port *OPDID_PortFunctions::findPort(std::string configPort, std::string set
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
-	if (port == NULL) {
+	if (port == nullptr) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
-		return NULL;
+		return nullptr;
 	}
 
 	return port;
@@ -35,7 +35,7 @@ void OPDID_PortFunctions::findPorts(std::string configPort, std::string setting,
 		// ignore empty items
 		if (item != "") {
 			OPDI_Port *port = this->findPort(configPort, setting, item, true);
-			if (port != NULL)
+			if (port != nullptr)
 				portList.push_back(port);
 		}
 	}
@@ -45,10 +45,10 @@ OPDI_DigitalPort *OPDID_PortFunctions::findDigitalPort(std::string configPort, s
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
-	if (port == NULL) {
+	if (port == nullptr) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
-		return NULL;
+		return nullptr;
 	}
 
 	// port type must be Digital
@@ -66,7 +66,7 @@ void OPDID_PortFunctions::findDigitalPorts(std::string configPort, std::string s
 		// ignore empty items
 		if (item != "") {
 			OPDI_DigitalPort *port = this->findDigitalPort(configPort, setting, item, true);
-			if (port != NULL)
+			if (port != nullptr)
 				portList.push_back(port);
 		}
 	}
@@ -76,10 +76,10 @@ OPDI_AnalogPort *OPDID_PortFunctions::findAnalogPort(std::string configPort, std
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
-	if (port == NULL) {
+	if (port == nullptr) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
-		return NULL;
+		return nullptr;
 	}
 
 	// port type must be Digital
@@ -97,7 +97,7 @@ void OPDID_PortFunctions::findAnalogPorts(std::string configPort, std::string se
 		// ignore empty items
 		if (item != "") {
 			OPDI_AnalogPort *port = this->findAnalogPort(configPort, setting, item, true);
-			if (port != NULL)
+			if (port != nullptr)
 				portList.push_back(port);
 		}
 	}
@@ -107,10 +107,10 @@ OPDI_SelectPort *OPDID_PortFunctions::findSelectPort(std::string configPort, std
 	// locate port by ID
 	OPDI_Port *port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
-	if (port == NULL) {
+	if (port == nullptr) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
-		return NULL;
+		return nullptr;
 	}
 
 	// port type must be Digital
@@ -159,7 +159,7 @@ void ValueResolver::initialize(OPDID_PortFunctions *origin, std::string paramNam
 	this->origin = origin;
 	this->useScaleValue = false;
 	this->useErrorDefault = false;
-	this->port = NULL;
+	this->port = nullptr;
 
 	// try to convert the value to a double
 	if (Poco::NumberParser::tryParseFloat(value, this->fixedValue)) {
@@ -237,7 +237,7 @@ ValueResolver::operator double() {
 		return fixedValue;
 	else {
 		// port not yet resolved?
-		if (this->port == NULL) {
+		if (this->port == nullptr) {
 			if (this->portID == "")
 				throw Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": ValueResolver not initialized (programming error)");
 			// try to resolve the port

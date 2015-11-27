@@ -546,7 +546,7 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 OPDID_SerialStreamingPort::OPDID_SerialStreamingPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 	this->mode = PASS_THROUGH;
-	this->device = NULL;
+	this->device = nullptr;
 	this->serialPort = new ctb::SerialPort();
 }
 
@@ -556,7 +556,7 @@ OPDID_SerialStreamingPort::~OPDID_SerialStreamingPort() {
 uint8_t OPDID_SerialStreamingPort::doWork(uint8_t canSend)  {
 	OPDI_StreamingPort::doWork(canSend);
 
-	if (this->device == NULL)
+	if (this->device == nullptr)
 		return OPDI_STATUS_OK;
 
 	if (this->mode == LOOPBACK) {
@@ -980,10 +980,10 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 		PortList::iterator it = this->outputPorts.begin();
 		while (it != this->outputPorts.end()) {
 			try {
-				if (!strcmp((*it)->getType(), OPDI_PORTTYPE_ANALOG)) {
+				if (0 == strcmp((*it)->getType(), OPDI_PORTTYPE_ANALOG)) {
 					((OPDI_AnalogPort*)(*it))->setRelativeValue(value);
 				} else
-				if (!strcmp((*it)->getType(), OPDI_PORTTYPE_DIAL)) {
+				if (0 == strcmp((*it)->getType(), OPDI_PORTTYPE_DIAL)) {
 					OPDI_DialPort* port = (OPDI_DialPort*)(*it);
 					double pos = port->getMin() + (port->getMax() - port->getMin()) * value;
 					port->setPosition((int64_t)pos);
@@ -1131,7 +1131,7 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = sectionKeys.begin(); it != sectionKeys.end(); it++) {
 			// find port corresponding to this section
 			OPDI_Port *port = this->opdid->findPortByID((*it).c_str());
-			if (port == NULL)
+			if (port == nullptr)
 				this->logWarning(this->ID() + ": In scene file " + sceneFile + ": Port with ID " + (*it) + " not present in current configuration");
 			else {
 				this->logDebug(this->ID() + ": Applying settings to port: " + *it);
@@ -1161,7 +1161,7 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 		}
 
 		// refresh all ports of a connected master
-		this->opdid->refresh(NULL);
+		this->opdid->refresh(nullptr);
 
 		this->positionSet = false;
 	}
@@ -1300,7 +1300,7 @@ void OPDID_FileInputPort::fileChangedEvent(const void*, const Poco::DirectoryWat
 
 OPDID_FileInputPort::OPDID_FileInputPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
-	this->directoryWatcher = NULL;
+	this->directoryWatcher = nullptr;
 	this->reloadDelayMs = 0;
 	this->expiryMs = 0;
 	this->lastReloadTime = 0;
@@ -1315,7 +1315,7 @@ OPDID_FileInputPort::OPDID_FileInputPort(AbstractOPDID *opdid, const char *id) :
 }
 
 OPDID_FileInputPort::~OPDID_FileInputPort() {
-	if (this->directoryWatcher != NULL)
+	if (this->directoryWatcher != nullptr)
 		delete this->directoryWatcher;
 }
 

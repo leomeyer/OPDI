@@ -61,7 +61,7 @@ bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 		OPDI_Port *port = this->opdid->findPortByID(symbol.first.c_str(), true);
 
 		// port not found?
-		if (port == NULL) {
+		if (port == nullptr) {
 			throw PortError(this->ID() + ": Expression variable did not resolve to an available port ID: " + symbol.first);
 		}
 

@@ -3,6 +3,8 @@
 // need to guard against security check warnings
 #define _SCL_SECURE_NO_WARNINGS	1
 
+#include <cstdio>
+
 #include "Poco/Util/AbstractConfiguration.h"
 
 // expression evaluation library
@@ -40,6 +42,7 @@
 
 class OPDID_ExpressionPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
+
 	std::string expressionStr;
 
 	std::vector<double> portValues;	// holds the values of the ports for the expression evaluation

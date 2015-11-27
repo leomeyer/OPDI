@@ -189,6 +189,9 @@
     <ClInclude Include="OPDID_ExecPort.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\libraries\ExprTk\exprtk.hpp">
+      <Filter>Headerdateien\libraries</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
