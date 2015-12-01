@@ -56,9 +56,9 @@ int _tmain(int argc, _TCHAR* argv[], _TCHAR* envp[])
 	while (env) {
 		std::wstring envStr(env);
 		wchar_t *envVar = wcstok(&envStr[0], L"=");
-		if (envVar != NULL) {
-			wchar_t *envValue = wcstok(NULL, L"");
-			if (envValue != NULL) {
+		if (envVar != nullptr) {
+			wchar_t *envValue = wcstok(nullptr, L"");
+			if (envValue != nullptr) {
 				std::wstring envKey(envVar);
 				// convert key to uppercase
 				std::transform(envKey.begin(), envKey.end(), envKey.begin(), towupper);

@@ -39,7 +39,7 @@ class FritzPort : protected OPDID_PortFunctions {
 public:
 	FritzPort(std::string id) : OPDID_PortFunctions(id) {};
 
-	virtual void query(FritzBoxPlugin *plugin) = 0;
+	virtual void query() = 0;
 };
 
 class ActionNotification : public Poco::Notification {
@@ -103,7 +103,7 @@ public:
 
 	virtual std::string getResponse(std::string challenge, std::string password);
 
-	virtual std::string getSessionID(std::string host, std::string user, std::string password);
+	virtual std::string getSessionID(std::string user, std::string password);
 
 	virtual std::string getXMLValue(std::string xml, std::string node);
 
@@ -149,7 +149,7 @@ public:
 
 	virtual void configure(Poco::Util::AbstractConfiguration *portConfig);
 
-	virtual void query(FritzBoxPlugin *plugin) override;
+	virtual void query() override;
 
 	virtual void setLine(uint8_t line) override;
 
@@ -172,7 +172,7 @@ public:
 
 	virtual void configure(Poco::Util::AbstractConfiguration *portConfig);
 
-	virtual void query(FritzBoxPlugin *plugin) override;
+	virtual void query() override;
 
 	virtual void getState(int64_t *position) override;
 
@@ -196,7 +196,7 @@ public:
 
 	virtual void configure(Poco::Util::AbstractConfiguration *portConfig);
 
-	virtual void query(FritzBoxPlugin *plugin) override;
+	virtual void query() override;
 
 	virtual void getState(int64_t *position) override;
 
@@ -225,7 +225,7 @@ void FritzDECT200Switch::configure(Poco::Util::AbstractConfiguration *portConfig
 	}
 }
 
-void FritzDECT200Switch::query(FritzBoxPlugin *plugin) {
+void FritzDECT200Switch::query() {
 	this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETSWITCHSTATE, this));
 }
 
@@ -306,7 +306,7 @@ void FritzDECT200Power::configure(Poco::Util::AbstractConfiguration *portConfig)
 	}
 }
 
-void FritzDECT200Power::query(FritzBoxPlugin *plugin) {
+void FritzDECT200Power::query() {
 	this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETSWITCHPOWER, this));
 }
 
@@ -329,7 +329,7 @@ void FritzDECT200Power::setPower(int32_t power) {
 }
 
 void FritzDECT200Power::doSelfRefresh(void) {
-	this->query(this->plugin);
+	this->query();
 }
 
 
@@ -381,7 +381,7 @@ void FritzDECT200Energy::configure(Poco::Util::AbstractConfiguration *portConfig
 	}
 }
 
-void FritzDECT200Energy::query(FritzBoxPlugin *plugin) {
+void FritzDECT200Energy::query() {
 	this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETSWITCHENERGY, this));
 }
 
@@ -404,7 +404,7 @@ void FritzDECT200Energy::setEnergy(int32_t energy) {
 }
 
 void FritzDECT200Energy::doSelfRefresh(void) {
-	this->query(this->plugin);
+	this->query();
 }
 
 std::string FritzBoxPlugin::httpGet(std::string url) {
@@ -464,7 +464,7 @@ std::string FritzBoxPlugin::getXMLValue(std::string xml, std::string node) {
 		Poco::XML::Node* pNode = it.nextNode();
 		while (pNode)
 		{
-			if ((pNode->nodeName() == node) && (pNode->firstChild() != NULL))
+			if ((pNode->nodeName() == node) && (pNode->firstChild() != nullptr))
 				return pNode->firstChild()->nodeValue();
 			pNode = it.nextNode();
 		}
@@ -497,7 +497,7 @@ std::string FritzBoxPlugin::getResponse(std::string challenge, std::string passw
 	return challenge + "-" + Poco::DigestEngine::digestToHex(digest);
 }
 
-std::string FritzBoxPlugin::getSessionID(std::string host, std::string user, std::string password) {
+std::string FritzBoxPlugin::getSessionID(std::string user, std::string password) {
 
 	std::string loginPage = this->httpGet("/login_sid.lua?sid=" + this->sid);
 	if (loginPage == "")
@@ -518,7 +518,7 @@ void FritzBoxPlugin::login(void) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
 		this->opdid->logDebug(this->nodeID + ": Attempting to login to FritzBox " + this->host + " with user " + this->user);
 
-	this->sid = this->getSessionID(this->host, this->user, this->password);
+	this->sid = this->getSessionID(this->user, this->password);
 
 	if (sid == INVALID_SID) {
 		this->opdid->logNormal(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " failed");
@@ -531,7 +531,7 @@ void FritzBoxPlugin::login(void) {
 	// query ports (post notifications to query)
 	FritzPorts::iterator it = this->fritzPorts.begin();
 	while (it != this->fritzPorts.end()) {
-		(*it)->query(this);
+		(*it)->query();
 		++it;
 	}
 }
@@ -773,12 +773,12 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 
 void FritzBoxPlugin::masterConnected() {
 	// when the master connects, login to the FritzBox
-	//this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGIN, NULL));
+	//this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGIN, nullptr));
 }
 
 void FritzBoxPlugin::masterDisconnected() {
 	// when the master connects, logout from the FritzBox
-	//this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGOUT, NULL));
+	//this->queue.enqueueNotification(new ActionNotification(ActionNotification::LOGOUT, nullptr));
 }
 
 void FritzBoxPlugin::run(void) {
@@ -822,7 +822,7 @@ extern "C" __declspec(dllexport) IOPDIDPlugin* __cdecl GetOPDIDPluginInstance(in
 
 #elif linux
 
-extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion)
+extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int /*patchVersion*/)
 
 #else
 #error "Unable to compile plugin instance factory function: Compiler not supported"

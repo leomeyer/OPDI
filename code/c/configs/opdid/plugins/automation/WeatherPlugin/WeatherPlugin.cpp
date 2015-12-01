@@ -472,7 +472,7 @@ void WeatherPlugin::refreshData(void) {
 			Poco::XML::Node *node;
 
 			node = pDoc->getNodeByPath(this->xpath);
-			if (node == NULL) {
+			if (node == nullptr) {
 				this->opdid->logNormal(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider);
 				this->opdid->logNormal(this->nodeID + ": Check XPath expression: " + this->xpath);
 				return;
@@ -487,7 +487,7 @@ void WeatherPlugin::refreshData(void) {
 				Poco::XML::Node *labelNode = children->item(i)->getNodeByPath("td[@class='stats_label']");
 				Poco::XML::Node *dataNode = children->item(i)->getNodeByPath("td[@class='stats_data']");
 
-				if ((labelNode == NULL) || (dataNode == NULL) || (labelNode == dataNode))
+				if ((labelNode == nullptr) || (dataNode == nullptr) || (labelNode == dataNode))
 					continue;
 
 				std::string dataElement = labelNode->innerText();
@@ -624,7 +624,7 @@ extern "C" __declspec(dllexport) IOPDIDPlugin* __cdecl GetOPDIDPluginInstance(in
 
 #elif linux
 
-extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion)
+extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int /*patchVersion*/)
 
 #else
 #error "Unable to compile plugin instance factory function: Compiler not supported"

@@ -23,14 +23,14 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 
 OPDI_Port::OPDI_Port(const char *id, const char *type) {
-	this->data = NULL;
-	this->id = NULL;
-	this->label = NULL;
+	this->data = nullptr;
+	this->id = nullptr;
+	this->label = nullptr;
 	this->caps[0] = OPDI_PORTDIRCAP_UNKNOWN[0];
 	this->caps[1] = '\0';
-	this->opdi = NULL;
+	this->opdi = nullptr;
 	this->flags = 0;
-	this->ptr = NULL;
+	this->ptr = nullptr;
 	this->hidden = false;
 	this->readonly = false;
 	this->refreshMode = REFRESH_NOT_SET;
@@ -47,10 +47,10 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 }
 
 OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const char *dircaps, int32_t flags, void* ptr) {
-	this->data = NULL;
-	this->id = NULL;
-	this->label = NULL;
-	this->opdi = NULL;
+	this->data = nullptr;
+	this->id = nullptr;
+	this->label = nullptr;
+	this->opdi = nullptr;
 	this->flags = flags;
 	this->ptr = ptr;
 	this->hidden = false;
@@ -74,7 +74,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 uint8_t OPDI_Port::doWork(uint8_t canSend) {
 
 	// while not connected, always reset the flag
-	if ((this->opdi == NULL) || !this->opdi->isConnected())
+	if ((this->opdi == nullptr) || !this->opdi->isConnected())
 		this->refreshRequired = false;
 
 	// refresh necessary? don't refresh too often
@@ -136,15 +136,15 @@ bool OPDI_Port::isPersistent(void) {
 }
 
 void OPDI_Port::setLabel(const char *label) {
-	if (this->label != NULL)
+	if (this->label != nullptr)
 		free(this->label);
-	this->label = NULL;
-	if (label == NULL)
+	this->label = nullptr;
+	if (label == nullptr)
 		return;
 	this->label = (char*)malloc(strlen(label) + 1);
 	strcpy(this->label, label);
 	// label changed; update internal data
-	if (this->opdi != NULL)
+	if (this->opdi != nullptr)
 		this->opdi->updatePortData(this);
 }
 
@@ -153,7 +153,7 @@ void OPDI_Port::setDirCaps(const char *dirCaps) {
 	this->caps[1] = '\0';
 
 	// label changed; update internal data
-	if (this->opdi != NULL)
+	if (this->opdi != nullptr)
 		this->opdi->updatePortData(this);
 }
 
@@ -164,7 +164,7 @@ void OPDI_Port::setFlags(int32_t flags) {
 	else
 		this->flags = flags;
 	// need to update already stored port data?
-	if ((this->opdi != NULL) && (oldFlags != this->flags))
+	if ((this->opdi != nullptr) && (oldFlags != this->flags))
 		this->opdi->updatePortData(this);
 }
 
@@ -186,7 +186,7 @@ void OPDI_Port::setUnit(std::string unit) {
 	if (this->unit != unit) {
 		this->unit = unit;
 		this->updateExtendedInfo();
-		if (this->opdi != NULL)
+		if (this->opdi != nullptr)
 			this->opdi->updatePortData(this);
 	}
 }
@@ -195,7 +195,7 @@ void OPDI_Port::setIcon(std::string icon) {
 	if (this->icon != icon) {
 		this->icon = icon;
 		this->updateExtendedInfo();
-		if (this->opdi != NULL)
+		if (this->opdi != nullptr)
 			this->opdi->updatePortData(this);
 	}
 }
@@ -204,7 +204,7 @@ void OPDI_Port::setGroup(std::string group) {
 	if (this->group != group) {
 		this->group = group;
 		this->updateExtendedInfo();
-		if (this->opdi != NULL)
+		if (this->opdi != nullptr)
 			this->opdi->updatePortData(this);
 	}
 }
@@ -256,7 +256,7 @@ uint8_t OPDI_Port::refresh() {
 
 	OPDI_Port *ports[2];
 	ports[0] = this;
-	ports[1] = NULL;
+	ports[1] = nullptr;
 
 	this->lastRefreshTime = opdi_get_time_ms();
 	return this->opdi->refresh(ports);
@@ -286,22 +286,22 @@ OPDI_Port::Error OPDI_Port::getError() {
 }
 
 OPDI_Port::~OPDI_Port() {
-	if (this->id != NULL)
+	if (this->id != nullptr)
 		free(this->id);
-	if (this->label != NULL)
+	if (this->label != nullptr)
 		free(this->label);
 }
 
 
 OPDI_PortGroup::OPDI_PortGroup(const char *id) {
-	this->data = NULL;
-	this->next = NULL;
-	this->id = NULL;
-	this->label = NULL;
-	this->parent = NULL;
-	this->opdi = NULL;
+	this->data = nullptr;
+	this->next = nullptr;
+	this->id = nullptr;
+	this->label = nullptr;
+	this->parent = nullptr;
+	this->opdi = nullptr;
 	this->flags = 0;
-	this->extendedInfo = NULL;
+	this->extendedInfo = nullptr;
 
 	this->id = (char*)malloc(strlen(id) + 1);
 	strcpy(this->id, id);
@@ -312,13 +312,13 @@ OPDI_PortGroup::OPDI_PortGroup(const char *id) {
 }
 
 OPDI_PortGroup::~OPDI_PortGroup() {
-	if (this->id != NULL)
+	if (this->id != nullptr)
 		free(this->id);
-	if (this->label != NULL)
+	if (this->label != nullptr)
 		free(this->label);
-	if (this->parent != NULL)
+	if (this->parent != nullptr)
 		free(this->parent);
-	if (this->data != NULL)
+	if (this->data != nullptr)
 		free(this->data);
 }
 
@@ -331,7 +331,7 @@ void OPDI_PortGroup::updateExtendedInfo(void) {
 	if (this->icon.size() > 0) {
 		exInfo += "icon=" + this->icon + ";";
 	}
-	if (this->extendedInfo != NULL) {
+	if (this->extendedInfo != nullptr) {
 		free(this->extendedInfo);
 	}
 	this->extendedInfo = (char *)malloc(exInfo.size() + 1);
@@ -339,15 +339,15 @@ void OPDI_PortGroup::updateExtendedInfo(void) {
 }
 
 void OPDI_PortGroup::setLabel(const char *label) {
-	if (this->label != NULL)
+	if (this->label != nullptr)
 		free(this->label);
-	this->label = NULL;
-	if (label == NULL)
+	this->label = nullptr;
+	if (label == nullptr)
 		return;
 	this->label = (char*)malloc(strlen(label) + 1);
 	strcpy(this->label, label);
 	// label changed; update internal data
-	if (this->opdi != NULL)
+	if (this->opdi != nullptr)
 		this->opdi->updatePortGroupData(this);
 }
 
@@ -359,7 +359,7 @@ void OPDI_PortGroup::setFlags(int32_t flags) {
 	int32_t oldFlags = this->flags;
 	this->flags = flags;
 	// need to update already stored port data?
-	if ((this->opdi != NULL) && (oldFlags != this->flags))
+	if ((this->opdi != nullptr) && (oldFlags != this->flags))
 		this->opdi->updatePortGroupData(this);
 }
 
@@ -367,21 +367,21 @@ void OPDI_PortGroup::setIcon(std::string icon) {
 	if (this->icon != icon) {
 		this->icon = icon;
 		this->updateExtendedInfo();
-		if (this->opdi != NULL)
+		if (this->opdi != nullptr)
 			this->opdi->updatePortGroupData(this);
 	}
 }
 
 void OPDI_PortGroup::setParent(const char *parent) {
-	if (this->parent != NULL)
+	if (this->parent != nullptr)
 		free(this->parent);
-	this->parent = NULL;
-	if (parent == NULL)
-		throw Poco::InvalidArgumentException("Parent group ID must never be NULL");
+	this->parent = nullptr;
+	if (parent == nullptr)
+		throw Poco::InvalidArgumentException("Parent group ID must never be nullptr");
 	this->parent = (char*)malloc(strlen(parent) + 1);
 	strcpy(this->parent, parent);
 	// label changed; update internal data
-	if (this->opdi != NULL)
+	if (this->opdi != nullptr)
 		this->opdi->updatePortGroupData(this);
 }
 
@@ -403,7 +403,7 @@ OPDI_DigitalPort::OPDI_DigitalPort(const char *id) : OPDI_Port(id, OPDI_PORTTYPE
 
 OPDI_DigitalPort::OPDI_DigitalPort(const char *id, const char *label, const char *dircaps, const int32_t flags) :
 	// call base constructor; mask unsupported flags (?)
-	OPDI_Port(id, label, OPDI_PORTTYPE_DIGITAL, dircaps, flags, NULL) { // & (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) & (OPDI_DIGITAL_PORT_HAS_PULLDN | OPDI_DIGITAL_PORT_PULLDN_ALWAYS)) 
+	OPDI_Port(id, label, OPDI_PORTTYPE_DIGITAL, dircaps, flags, nullptr) { // & (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) & (OPDI_DIGITAL_PORT_HAS_PULLDN | OPDI_DIGITAL_PORT_PULLDN_ALWAYS)) 
 
 	this->mode = 0;
 	this->line = 0;
@@ -482,7 +482,7 @@ void OPDI_DigitalPort::setMode(uint8_t mode) {
 		if (newMode != this->mode)
 			this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 		this->mode = newMode;
-		if (persistent && (this->opdi != NULL))
+		if (persistent && (this->opdi != nullptr))
 			this->opdi->persist(this);
 	}
 }
@@ -496,7 +496,7 @@ void OPDI_DigitalPort::setLine(uint8_t line) {
 		this->refreshRequired |= (this->refreshMode == REFRESH_AUTO);
 	this->line = line;
 	this->error = VALUE_OK;
-	if (persistent && (this->opdi != NULL))
+	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }
 
@@ -539,7 +539,7 @@ OPDI_AnalogPort::OPDI_AnalogPort(const char *id) : OPDI_Port(id, OPDI_PORTTYPE_A
 
 OPDI_AnalogPort::OPDI_AnalogPort(const char *id, const char *label, const char *dircaps, const int32_t flags) :
 	// call base constructor
-	OPDI_Port(id, label, OPDI_PORTTYPE_ANALOG, dircaps, flags, NULL) {
+	OPDI_Port(id, label, OPDI_PORTTYPE_ANALOG, dircaps, flags, nullptr) {
 
 	this->mode = 0;
 	this->value = 0;
@@ -560,7 +560,7 @@ void OPDI_AnalogPort::setMode(uint8_t mode) {
 	if (mode != this->mode)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->mode = mode;
-	if (persistent && (this->opdi != NULL))
+	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }
 
@@ -589,7 +589,7 @@ void OPDI_AnalogPort::setResolution(uint8_t resolution) {
 	if (this->mode != 0)
 		this->setValue(this->value);
 	else
-		if (persistent && (this->opdi != NULL))
+		if (persistent && (this->opdi != nullptr))
 			this->opdi->persist(this);
 }
 
@@ -599,7 +599,7 @@ void OPDI_AnalogPort::setReference(uint8_t reference) {
 	if (reference != this->reference)
 		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
 	this->reference = reference;
-	if (persistent && (this->opdi != NULL))
+	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }
 
@@ -612,7 +612,7 @@ void OPDI_AnalogPort::setValue(int32_t value) {
 		this->refreshRequired |= (this->refreshMode == REFRESH_AUTO);
 	this->value = newValue;
 	this->error = VALUE_OK;
-	if (persistent && (this->opdi != NULL))
+	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }
 
@@ -669,14 +669,14 @@ bool OPDI_AnalogPort::hasError(void) {
 
 #ifndef OPDI_NO_SELECT_PORTS
 
-OPDI_SelectPort::OPDI_SelectPort(const char *id) : OPDI_Port(id, NULL, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, NULL) {
+OPDI_SelectPort::OPDI_SelectPort(const char *id) : OPDI_Port(id, nullptr, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	this->count = 0;
-	this->items = NULL;
+	this->items = nullptr;
 	this->position = 0;
 }
 
 OPDI_SelectPort::OPDI_SelectPort(const char *id, const char *label, const char *items[]) 
-	: OPDI_Port(id, label, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, NULL) {
+	: OPDI_Port(id, label, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	this->setItems(items);
 	this->position = 0;
 }
@@ -690,7 +690,7 @@ void OPDI_SelectPort::doSelfRefresh(void) {
 }
 
 void OPDI_SelectPort::freeItems() {
-	if (this->items != NULL) {
+	if (this->items != nullptr) {
 		int i = 0;
 		const char *item = this->items[i];
 		while (item) {
@@ -704,9 +704,9 @@ void OPDI_SelectPort::freeItems() {
 
 void OPDI_SelectPort::setItems(const char **items) {
 	this->freeItems();
-	this->items = NULL;
+	this->items = nullptr;
 	this->count = 0;
-	if (items == NULL)
+	if (items == nullptr)
 		return;
 	// determine array size
 	const char *item = items[0];
@@ -730,7 +730,7 @@ void OPDI_SelectPort::setItems(const char **items) {
 		item = items[itemCount];
 	}
 	// end token
-	this->items[itemCount] = NULL;
+	this->items[itemCount] = nullptr;
 	this->count = itemCount - 1;
 }
 
@@ -743,7 +743,7 @@ void OPDI_SelectPort::setPosition(uint16_t position) {
 		this->refreshRequired |= (this->refreshMode == REFRESH_AUTO);
 	this->position = position;
 	this->error = VALUE_OK;
-	if (persistent && (this->opdi != NULL))
+	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }
 
@@ -754,7 +754,7 @@ void OPDI_SelectPort::getState(uint16_t *position) {
 }
 
 const char *OPDI_SelectPort::getPositionLabel(uint16_t position) {
-	return this->items[this->position];
+	return this->items[position];
 }
 
 uint16_t OPDI_SelectPort::getMaxPosition(void) {
@@ -775,7 +775,7 @@ bool OPDI_SelectPort::hasError(void) {
 
 #ifndef OPDI_NO_DIAL_PORTS
 
-OPDI_DialPort::OPDI_DialPort(const char *id) : OPDI_Port(id, NULL, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCAP_OUTPUT, 0, NULL) {
+OPDI_DialPort::OPDI_DialPort(const char *id) : OPDI_Port(id, nullptr, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	this->minValue = 0;
 	this->maxValue = 0;
 	this->step = 0;
@@ -783,7 +783,7 @@ OPDI_DialPort::OPDI_DialPort(const char *id) : OPDI_Port(id, NULL, OPDI_PORTTYPE
 }
 
 OPDI_DialPort::OPDI_DialPort(const char *id, const char *label, int64_t minValue, int64_t maxValue, uint64_t step) 
-	: OPDI_Port(id, label, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCAP_OUTPUT, 0, NULL) {
+	: OPDI_Port(id, label, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	if (minValue >= maxValue) {
 		throw Poco::DataException("Dial port minValue must be < maxValue");
 	}
@@ -836,7 +836,7 @@ void OPDI_DialPort::setPosition(int64_t position) {
 		this->refreshRequired |= (this->refreshMode == REFRESH_AUTO);
 	this->position = position;
 	this->error = VALUE_OK;
-	if (persistent && (this->opdi != NULL))
+	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }
 

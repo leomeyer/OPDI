@@ -259,7 +259,7 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 	return result;
 }
 
-int LinuxOPDID::setupTCP(std::string interface_, int port) {
+int LinuxOPDID::setupTCP(std::string /*interface_*/, int port) {
 
 	// store instance reference
 	linuxOPDID = this;

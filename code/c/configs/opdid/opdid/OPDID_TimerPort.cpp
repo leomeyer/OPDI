@@ -109,8 +109,7 @@ bool OPDID_TimerPort::ScheduleComponent::getNextPossibleValue(int* currentValue,
 	*rollover = false;
 	*changed = false;
 	// find a match
-	int i = *currentValue;
-	for (; i < (int)this->values.size(); i++) {
+	for (int i = *currentValue; i < (int)this->values.size(); i++) {
 		if (this->values[i]) {
 			// for days, make a special check whether the month has as many days
 			if ((this->type != DAY) || (i < Poco::DateTime::daysOfMonth(year, month))) {
@@ -127,7 +126,7 @@ bool OPDID_TimerPort::ScheduleComponent::getNextPossibleValue(int* currentValue,
 	return this->getFirstPossibleValue(currentValue, month, year);
 }
 
-bool OPDID_TimerPort::ScheduleComponent::getFirstPossibleValue(int* currentValue, int month, int year) {
+bool OPDID_TimerPort::ScheduleComponent::getFirstPossibleValue(int* currentValue, int /*month*/, int /*year*/) {
 	// find a match
 	int i = 0;
 	switch (type) {
@@ -371,7 +370,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 	}
 }
 
-void OPDID_TimerPort::setDirCaps(const char *dirCaps) {
+void OPDID_TimerPort::setDirCaps(const char */*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a TimerPort cannot be changed");
 }
 
@@ -630,7 +629,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 	if (this->line != 1)
 		return OPDI_STATUS_OK;
 
-	Poco::Notification::Ptr notification = NULL;
+	Poco::Notification::Ptr notification = nullptr;
 
 	if (connectionStateChanged) {
 		// check whether a schedule is specified for this event

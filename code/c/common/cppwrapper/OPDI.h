@@ -91,7 +91,7 @@ public:
 	virtual uint8_t setLanguages(std::string languages);
 
 	virtual uint8_t setUsername(std::string userName);
-	virtual uint8_t setPassword(std::string userName);
+	virtual uint8_t setPassword(std::string password);
 
 	virtual std::string getExtendedDeviceInfo(void);
 

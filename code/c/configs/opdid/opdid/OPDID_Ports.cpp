@@ -98,15 +98,15 @@ void OPDID_LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
 }
 
-void OPDID_LogicPort::setDirCaps(const char *dirCaps) {
+void OPDID_LogicPort::setDirCaps(const char */*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a LogicPort cannot be changed");
 }
 
-void OPDID_LogicPort::setMode(uint8_t mode) {
+void OPDID_LogicPort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of a LogicPort cannot be changed");
 }
 
-void OPDID_LogicPort::setLine(uint8_t line) {
+void OPDID_LogicPort::setLine(uint8_t /*line*/) {
 	throw PortError(this->ID() + ": The line of a LogicPort cannot be set directly");
 }
 
@@ -271,11 +271,11 @@ void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 		throw Poco::DataException("Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + this->to_string(this->dutyCycle));
 }
 
-void OPDID_PulsePort::setDirCaps(const char *dirCaps) {
+void OPDID_PulsePort::setDirCaps(const char */*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a PulsePort cannot be changed");
 }
 
-void OPDID_PulsePort::setMode(uint8_t mode) {
+void OPDID_PulsePort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of a PulsePort cannot be changed");
 }
 
@@ -421,11 +421,11 @@ void OPDID_SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->position = pos;
 }
 
-void OPDID_SelectorPort::setDirCaps(const char *dirCaps) {
+void OPDID_SelectorPort::setDirCaps(const char */*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a SelectorPort cannot be changed");
 }
 
-void OPDID_SelectorPort::setMode(uint8_t mode) {
+void OPDID_SelectorPort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of a SelectorPort cannot be changed");
 }
 
@@ -494,11 +494,11 @@ void OPDID_ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration *confi
 	this->negate = config->getBool("Negate", false);
 }
 
-void OPDID_ErrorDetectorPort::setDirCaps(const char *dirCaps) {
+void OPDID_ErrorDetectorPort::setDirCaps(const char */*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of an ErrorDetectorPort cannot be changed");
 }
 
-void OPDID_ErrorDetectorPort::setMode(uint8_t mode) {
+void OPDID_ErrorDetectorPort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of an ErrorDetectorPort cannot be changed");
 }
 
@@ -546,7 +546,7 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 OPDID_SerialStreamingPort::OPDID_SerialStreamingPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 	this->mode = PASS_THROUGH;
-	this->device = NULL;
+	this->device = nullptr;
 	this->serialPort = new ctb::SerialPort();
 }
 
@@ -556,7 +556,7 @@ OPDID_SerialStreamingPort::~OPDID_SerialStreamingPort() {
 uint8_t OPDID_SerialStreamingPort::doWork(uint8_t canSend)  {
 	OPDI_StreamingPort::doWork(canSend);
 
-	if (this->device == NULL)
+	if (this->device == nullptr)
 		return OPDI_STATUS_OK;
 
 	if (this->mode == LOOPBACK) {
@@ -614,7 +614,7 @@ int OPDID_SerialStreamingPort::write(char *bytes, size_t length) {
 	return this->device->Write(bytes, length);
 }
 
-int OPDID_SerialStreamingPort::available(size_t count) {
+int OPDID_SerialStreamingPort::available(size_t /*count*/) {
 	// count has no meaning in this implementation
 
 	char buf;
@@ -754,17 +754,17 @@ void OPDID_LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->portsToLogStr = this->opdid->getConfigString(config, "Ports", "", true);
 }
 
-int OPDID_LoggerPort::write(char *bytes, size_t length) {
+int OPDID_LoggerPort::write(char */*bytes*/, size_t /*length*/) {
 	return 0;
 }
 
-int OPDID_LoggerPort::available(size_t count) {
+int OPDID_LoggerPort::available(size_t /*count*/) {
 	// count has no meaning in this implementation
 	// nothing available
 	return 0;
 }
 
-int OPDID_LoggerPort::read(char *result) {
+int OPDID_LoggerPort::read(char */*result*/) {
 	// nothing available
 	return 0;
 }
@@ -782,6 +782,8 @@ OPDID_FaderPort::OPDID_FaderPort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 	this->mode = LINEAR;
 	this->lastValue = -1;
 	this->invert = false;
+	this->switchOffAction = NONE;
+	this->actionToPerform = NONE;
 
 	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 }
@@ -822,6 +824,17 @@ void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 		this->expMax = this->expA * (exp(this->expB) - 1);
 	}
 	this->invert = config->getBool("Invert", this->invert);
+	std::string switchOffActionStr = config->getString("SwitchOffAction", "None");
+	if (switchOffActionStr == "SetToLeft") {
+		this->switchOffAction = SET_TO_LEFT;
+	} else
+	if (switchOffActionStr == "SetToRight") {
+		this->switchOffAction = SET_TO_RIGHT;
+	} else
+	if (switchOffActionStr == "None") {
+		this->switchOffAction = NONE;
+	} else
+		throw Poco::DataException(this->ID() + ": Illegal value for 'SwitchOffAction', expected 'SetToLeft', 'SetToRight', or 'None': " + switchOffActionStr);
 
 	this->outputPortStr = opdid->getConfigString(config, "OutputPorts", "", true);
 	this->endSwitchesStr = opdid->getConfigString(config, "EndSwitches", "", false);
@@ -829,17 +842,17 @@ void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
 }
 
-void OPDID_FaderPort::setDirCaps(const char *dirCaps) {
+void OPDID_FaderPort::setDirCaps(const char */*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a FaderPort cannot be changed");
 }
 
-void OPDID_FaderPort::setMode(uint8_t mode) {
+void OPDID_FaderPort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of a FaderPort cannot be changed");
 }
 
 void OPDID_FaderPort::setLine(uint8_t line) {
 	uint8_t oldline = this->line;
-	if ((this->line == 0) && (line == 1)) {
+	if ((oldline == 0) && (line == 1)) {
 		// store current values on start (might be resolved by ValueResolvers, and we don't want them to change during fading
 		// because each value might again refer to the output port - not an uncommon scenario for e.g. dimmers)
 		this->left = this->leftValue;
@@ -858,8 +871,14 @@ void OPDID_FaderPort::setLine(uint8_t line) {
 		}
 	} else {
 		OPDI_DigitalPort::setLine(line);
-		if (oldline != this->line)
+		// switched off?
+		if (oldline != this->line) {
 			this->logVerbose(this->ID() + ": Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
+			this->actionToPerform = this->switchOffAction;
+			// resolve values again for the switch off action
+			this->left = this->leftValue;
+			this->right = this->rightValue;
+		}
 	}
 }
 
@@ -875,65 +894,85 @@ void OPDID_FaderPort::prepare() {
 uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 	OPDI_DigitalPort::doWork(canSend);
 
-	if (this->line == 1) {
+	// active, or a switch off action needs to be performed?
+	if ((this->line == 1) || (this->actionToPerform != NONE)) {
+		
+		Poco::Timestamp::TimeVal elapsedMs;
 
-		if (this->durationMs < 0) {
-			this->logWarning(this->ID() + ": Duration may not be negative; disabling fader: " + to_string(this->durationMs));
-			// disable the fader immediately
-			OPDI_DigitalPort::setLine(0);
-			this->refreshRequired = true;
-			return OPDI_STATUS_OK;
-		}
-
-		// calculate time difference
-		Poco::Timestamp now;
-		Poco::Timestamp::TimeVal elapsedMs = (now.epochMicroseconds() - this->startTime.epochMicroseconds()) / 1000;
-
-		// end reached?
-		if (elapsedMs > this->durationMs) {
-			this->setLine(0);
-			this->refreshRequired = true;
-
-			// set end switches if specified
-			DigitalPortList::iterator it = this->endSwitches.begin();
-			while (it != this->endSwitches.end()) {
-				try {
-					this->logDebug(this->ID() + ": Setting line of end switch port " + (*it)->ID() + " to High");
-					(*it)->setLine(1);
-				} catch (Poco::Exception &e) {
-					this->opdid->logWarning(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
-				}
-				++it;
+		if (this->line == 1) {
+			if (this->durationMs < 0) {
+				this->logWarning(this->ID() + ": Duration may not be negative; disabling fader: " + to_string(this->durationMs));
+				// disable the fader immediately
+				OPDI_DigitalPort::setLine(0);
+				this->refreshRequired = true;
+				return OPDI_STATUS_OK;
 			}
 
-			return OPDI_STATUS_OK;
+			// calculate time difference
+			Poco::Timestamp now;
+			elapsedMs = (now.epochMicroseconds() - this->startTime.epochMicroseconds()) / 1000;
+
+			// end reached?
+			if (elapsedMs > this->durationMs) {
+				this->setLine(0);
+				this->refreshRequired = true;
+
+				// set end switches if specified
+				DigitalPortList::iterator it = this->endSwitches.begin();
+				while (it != this->endSwitches.end()) {
+					try {
+						this->logDebug(this->ID() + ": Setting line of end switch port " + (*it)->ID() + " to High");
+						(*it)->setLine(1);
+					} catch (Poco::Exception &e) {
+						this->opdid->logWarning(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
+					}
+					++it;
+				}
+
+				return OPDI_STATUS_OK;
+			}
 		}
 
 		// calculate current value (linear first) within the range [0, 1]
 		double value = 0.0;
-		if (this->mode == LINEAR) {
-			if (this->invert)
-				value = (this->right - (double)elapsedMs / (double)this->durationMs * (this->right - this->left)) / 100.0;
-			else
-				value = (this->left + (double)elapsedMs / (double)this->durationMs * (this->right - this->left)) / 100.0;
-		} else
-		if (this->mode == EXPONENTIAL) {
-			// calculate exponential value; start with value relative to the range
-			if (this->invert)
-				value = 1.0 - (double)elapsedMs / (double)this->durationMs;
-			else
-				value = (double)elapsedMs / (double)this->durationMs;
 
-			// exponentiate value; map within [0..1]
-			value = (this->expMax <= 0 ? 1 : (this->expA * (exp(this->expB * value)) - 1) / this->expMax);
+		// if the port has been switched off, and a switch action needs to be performed,
+		// do it here
+		if (this->actionToPerform != NONE) {
+			if (this->actionToPerform == SET_TO_LEFT)
+				value = this->left / 100.0;
+			else
+			if (this->actionToPerform == SET_TO_RIGHT)
+				value = this->right / 100.0;
+			// action has been handled
+			this->actionToPerform = NONE;
+			this->logDebug(this->ID() + ": Switch off action handled; setting value to: " + this->to_string(value) + "%");
+		} else {
+			// regular fader operation
+			if (this->mode == LINEAR) {
+				if (this->invert)
+					value = (this->right - (double)elapsedMs / (double)this->durationMs * (this->right - this->left)) / 100.0;
+				else
+					value = (this->left + (double)elapsedMs / (double)this->durationMs * (this->right - this->left)) / 100.0;
+			} else
+			if (this->mode == EXPONENTIAL) {
+				// calculate exponential value; start with value relative to the range
+				if (this->invert)
+					value = 1.0 - (double)elapsedMs / (double)this->durationMs;
+				else
+					value = (double)elapsedMs / (double)this->durationMs;
 
-			if (value < 0.0)
+				// exponentiate value; map within [0..1]
+				value = (this->expMax <= 0 ? 1 : (this->expA * (exp(this->expB * value)) - 1) / this->expMax);
+
+				if (value < 0.0)
+					value = 0.0;
+
+				// map back to the target range
+				value = (this->left + value * (this->right - this->left)) / 100.0;
+			} else
 				value = 0.0;
-
-			// map back to the target range
-			value = (this->left + value * (this->right - this->left)) / 100.0;
-		} else
-			value = 0.0;
+		}
 
 		this->logExtreme(this->ID() + ": Setting current fader value to " + to_string(value * 100.0) + "%");
 
@@ -941,16 +980,16 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 		PortList::iterator it = this->outputPorts.begin();
 		while (it != this->outputPorts.end()) {
 			try {
-				if (!strcmp((*it)->getType(), OPDI_PORTTYPE_ANALOG)) {
+				if (0 == strcmp((*it)->getType(), OPDI_PORTTYPE_ANALOG)) {
 					((OPDI_AnalogPort*)(*it))->setRelativeValue(value);
 				} else
-				if (!strcmp((*it)->getType(), OPDI_PORTTYPE_DIAL)) {
+				if (0 == strcmp((*it)->getType(), OPDI_PORTTYPE_DIAL)) {
 					OPDI_DialPort* port = (OPDI_DialPort*)(*it);
 					double pos = port->getMin() + (port->getMax() - port->getMin()) * value;
 					port->setPosition((int64_t)pos);
 				} else
 					throw Poco::Exception("The port " + (*it)->ID() + " is neither an AnalogPort nor a DialPort");
-			} catch (Poco::Exception &e) {
+			} catch (Poco::Exception& e) {
 				this->opdid->logNormal(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
 			}
 			++it;
@@ -1092,7 +1131,7 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = sectionKeys.begin(); it != sectionKeys.end(); it++) {
 			// find port corresponding to this section
 			OPDI_Port *port = this->opdid->findPortByID((*it).c_str());
-			if (port == NULL)
+			if (port == nullptr)
 				this->logWarning(this->ID() + ": In scene file " + sceneFile + ": Port with ID " + (*it) + " not present in current configuration");
 			else {
 				this->logDebug(this->ID() + ": Applying settings to port: " + *it);
@@ -1122,7 +1161,7 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 		}
 
 		// refresh all ports of a connected master
-		this->opdid->refresh(NULL);
+		this->opdid->refresh(nullptr);
 
 		this->positionSet = false;
 	}
@@ -1261,7 +1300,7 @@ void OPDID_FileInputPort::fileChangedEvent(const void*, const Poco::DirectoryWat
 
 OPDID_FileInputPort::OPDID_FileInputPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
-	this->directoryWatcher = NULL;
+	this->directoryWatcher = nullptr;
 	this->reloadDelayMs = 0;
 	this->expiryMs = 0;
 	this->lastReloadTime = 0;
@@ -1276,7 +1315,7 @@ OPDID_FileInputPort::OPDID_FileInputPort(AbstractOPDID *opdid, const char *id) :
 }
 
 OPDID_FileInputPort::~OPDID_FileInputPort() {
-	if (this->directoryWatcher != NULL)
+	if (this->directoryWatcher != nullptr)
 		delete this->directoryWatcher;
 }
 

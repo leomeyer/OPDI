@@ -23,10 +23,10 @@
 
 #include "opdi_rijndael.h"
 
-static CRijndael *rijndael = NULL;
+static CRijndael *rijndael = nullptr;
 
 static CRijndael *get_rijndael() {
-	if (rijndael != NULL) {
+	if (rijndael != nullptr) {
 		return rijndael;
 	}
 	if (strlen(opdi_encryption_key) != OPDI_ENCRYPTION_BLOCKSIZE)

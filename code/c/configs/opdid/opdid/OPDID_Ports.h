@@ -287,12 +287,20 @@ public:
 * to be specified as percentages. Once the duration is up the port sets itself to 
 * inactive (line = Low). When the fader is done it can set optionally specified DigitalPorts
 * (end switches) to High.
+* If ReturnToLeft is specified as true, the output port is set to the current value of Left
+* when switched off.
 */
 class OPDID_FaderPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
 	enum FaderMode {
 		LINEAR,
 		EXPONENTIAL
+	};
+
+	enum SwitchOffAction {
+		NONE,
+		SET_TO_LEFT,
+		SET_TO_RIGHT
 	};
 
 	FaderMode mode;
@@ -306,6 +314,7 @@ protected:
 	double expB;
 	double expMax;
 	bool invert;
+	SwitchOffAction switchOffAction;
 
 	std::string outputPortStr;
 	PortList outputPorts;
@@ -315,6 +324,7 @@ protected:
 
 	Poco::Timestamp startTime;
 	double lastValue;
+	SwitchOffAction actionToPerform;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 

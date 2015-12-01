@@ -48,7 +48,7 @@ static uint8_t connected;
 // send a comma-separated list of port IDs
 static uint8_t send_device_caps(channel_t channel) {
 	opdi_Message message;
-	uint8_t portCount = 0;
+	uint16_t portCount = 0;
 	const char *opdi_msg_parts[OPDI_MAX_DEVICE_PORTS];
 	char portCSV[OPDI_MESSAGE_PAYLOAD_LENGTH];
 	opdi_Port *port;
@@ -206,26 +206,26 @@ static uint8_t send_streaming_port_info(channel_t channel, opdi_Port *port) {
 static uint8_t send_port_info(channel_t channel, opdi_Port *port) {
 
 #ifndef OPDI_NO_DIGITAL_PORTS
-	if (!strcmp(port->type, OPDI_PORTTYPE_DIGITAL)) {
+	if (0 == strcmp(port->type, OPDI_PORTTYPE_DIGITAL)) {
 		return send_digital_port_info(channel, port);
 #else
 	// "better keep it gramat."
 	if (0) {
 #endif
 #ifndef OPDI_NO_ANALOG_PORTS
-	} else if (!strcmp(port->type, OPDI_PORTTYPE_ANALOG)) {
+	} else if (0 == strcmp(port->type, OPDI_PORTTYPE_ANALOG)) {
 		return send_analog_port_info(channel, port);
 #endif
 #ifndef OPDI_NO_SELECT_PORTS
-	} else if (!strcmp(port->type, OPDI_PORTTYPE_SELECT)) {
+	} else if (0 == strcmp(port->type, OPDI_PORTTYPE_SELECT)) {
 		return send_select_port_info(channel, port);
 #endif
 #ifndef OPDI_NO_DIAL_PORTS
-	} else if (!strcmp(port->type, OPDI_PORTTYPE_DIAL)) {
+	} else if (0 == strcmp(port->type, OPDI_PORTTYPE_DIAL)) {
 		return send_dial_port_info(channel, port);
 #endif
 #if (OPDI_STREAMING_PORTS > 0)
-	} else if (!strcmp(port->type, OPDI_PORTTYPE_STREAMING)) {
+	} else if (0 == strcmp(port->type, OPDI_PORTTYPE_STREAMING)) {
 		return send_streaming_port_info(channel, port);
 #endif
 	} else
@@ -243,7 +243,7 @@ static uint8_t get_analog_port_state(opdi_Port *port) {
 	int32_t value = 0;
 	char valStr[BUFSIZE_32BIT];
 
-	if (strcmp(port->type, OPDI_PORTTYPE_ANALOG)) {
+	if (0 != strcmp(port->type, OPDI_PORTTYPE_ANALOG)) {
 		return OPDI_WRONG_PORT_TYPE;
 	}
 
@@ -854,11 +854,11 @@ static uint8_t basic_protocol_message(channel_t channel) {
 	// we can be sure to have no control channel messages here
 	// so we don't have to handle Disconnect etc.
 
-	if (!strcmp(opdi_msg_parts[0], OPDI_getDeviceCaps)) {
+	if (0 == strcmp(opdi_msg_parts[0], OPDI_getDeviceCaps)) {
 		// get device capabilities
 		return send_device_caps(channel);
 	}
-	else if (!strcmp(opdi_msg_parts[0], OPDI_getPortInfo)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_getPortInfo)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -870,7 +870,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 		return result;
 	} 
 #ifndef OPDI_NO_ANALOG_PORTS
-	else if (!strcmp(opdi_msg_parts[0], OPDI_getAnalogPortState)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_getAnalogPortState)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -881,7 +881,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 		result = send_analog_port_state(channel, port);
 		return result;
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_setAnalogPortValue)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_setAnalogPortValue)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -895,7 +895,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 		result = set_analog_port_value(channel, port, opdi_msg_parts[2]);
 		return result;
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_setAnalogPortMode)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_setAnalogPortMode)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -909,7 +909,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 		result = set_analog_port_mode(channel, port, opdi_msg_parts[2]);
 		return result;
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_setAnalogPortResolution)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_setAnalogPortResolution)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -923,7 +923,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 		result = set_analog_port_resolution(channel, port, opdi_msg_parts[2]);
 		return result;
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_setAnalogPortReference)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_setAnalogPortReference)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -939,7 +939,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 	} 
 #endif
 #ifndef OPDI_NO_DIGITAL_PORTS
-	else if (!strcmp(opdi_msg_parts[0], OPDI_getDigitalPortState)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_getDigitalPortState)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -950,7 +950,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 		result = send_digital_port_state(channel, port);
 		return result;
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_setDigitalPortLine)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_setDigitalPortLine)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -961,7 +961,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 		result = set_digital_port_line(channel, port, opdi_msg_parts[2]);
 		return result;
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_setDigitalPortMode)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_setDigitalPortMode)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -974,7 +974,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 	}
 #endif
 #ifndef OPDI_NO_SELECT_PORTS
-	else if (!strcmp(opdi_msg_parts[0], OPDI_getSelectPortLabel)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_getSelectPortLabel)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -986,7 +986,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 		result = send_select_port_label(channel, port, opdi_msg_parts[2]);
 		return result;
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_getSelectPortState)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_getSelectPortState)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -996,7 +996,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 		result = send_select_port_state(channel, port);
 		return result;
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_setSelectPortPosition)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_setSelectPortPosition)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -1010,7 +1010,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 	} 
 #endif
 #ifndef OPDI_NO_DIAL_PORTS
-	else if (!strcmp(opdi_msg_parts[0], OPDI_getDialPortState)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_getDialPortState)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -1020,7 +1020,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 		result = send_dial_port_state(channel, port);
 		return result;
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_setDialPortPosition)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_setDialPortPosition)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -1034,7 +1034,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 	} 
 #endif
 #if (OPDI_STREAMING_PORTS > 0)
-	else if (!strcmp(opdi_msg_parts[0], OPDI_bindStreamingPort)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_bindStreamingPort)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -1046,7 +1046,7 @@ static uint8_t basic_protocol_message(channel_t channel) {
 		result = bind_streaming_port(channel, port, opdi_msg_parts[2]);
 		return result;
 	}
-	else if (!strcmp(opdi_msg_parts[0], OPDI_unbindStreamingPort)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_unbindStreamingPort)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -1073,15 +1073,15 @@ static uint8_t extended_protocol_message(channel_t channel) {
 	char buffer[OPDI_EXTENDED_INFO_LENGTH];
 
 	// only handle messages of the extended protocol here
-	if (!strcmp(opdi_msg_parts[0], OPDI_getAllPortInfos)) {
+	if (0 == strcmp(opdi_msg_parts[0], OPDI_getAllPortInfos)) {
 		return send_all_port_infos(channel);
 	} 
 	else 
-	if (!strcmp(opdi_msg_parts[0], OPDI_getAllPortStates)) {
+	if (0 == strcmp(opdi_msg_parts[0], OPDI_getAllPortStates)) {
 		return send_all_port_states(channel);
 	} 
 	else 
-	if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedPortInfo)) {
+	if (0 == strcmp(opdi_msg_parts[0], OPDI_getExtendedPortInfo)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// copy port ID to the buffer
@@ -1091,7 +1091,7 @@ static uint8_t extended_protocol_message(channel_t channel) {
 			return result;
 		return send_extended_port_info(channel, opdi_msg_parts[1], buffer);
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedPortState)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_getExtendedPortState)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// copy port ID to the buffer
@@ -1101,7 +1101,7 @@ static uint8_t extended_protocol_message(channel_t channel) {
 			return result;
 		return send_extended_port_state(channel, opdi_msg_parts[1], buffer);
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_getGroupInfo)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_getGroupInfo)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find group
@@ -1110,7 +1110,7 @@ static uint8_t extended_protocol_message(channel_t channel) {
 			return OPDI_GROUP_UNKNOWN;
 		return send_group_info(channel, group);
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedGroupInfo)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_getExtendedGroupInfo)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find group
@@ -1119,7 +1119,7 @@ static uint8_t extended_protocol_message(channel_t channel) {
 			return OPDI_GROUP_UNKNOWN;
 		return send_extended_group_info(channel, group);
 	} 
-	else if (!strcmp(opdi_msg_parts[0], OPDI_getExtendedDeviceInfo)) {
+	else if (0 == strcmp(opdi_msg_parts[0], OPDI_getExtendedDeviceInfo)) {
 		result = opdi_slave_callback(OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO, buffer, OPDI_EXTENDED_INFO_LENGTH);
 		if (result != OPDI_STATUS_OK)
 			return result;
@@ -1127,7 +1127,7 @@ static uint8_t extended_protocol_message(channel_t channel) {
 	} 
 	else
 	// only handle messages of the extended protocol here
-	if (!strcmp(opdi_msg_parts[0], OPDI_getAllSelectPortLabels)) {
+	if (0 == strcmp(opdi_msg_parts[0], OPDI_getAllSelectPortLabels)) {
 		if (opdi_msg_parts[1] == NULL)
 			return OPDI_PROTOCOL_ERROR;
 		// find port
@@ -1175,7 +1175,7 @@ uint8_t opdi_handle_basic_message(opdi_Message *m) {
 }
 */
 
-static uint8_t handle_message_result(opdi_Message *m, uint8_t result) {
+static uint8_t handle_message_result(opdi_Message */*m*/, uint8_t result) {
 	if (result != OPDI_STATUS_OK) {
 		// special case: message unknown
 		if (result == OPDI_MESSAGE_UNKNOWN) {
@@ -1212,15 +1212,15 @@ static uint8_t message_loop(opdi_ProtocolHandler protocolHandler) {
 		// message on control channel?
 		if (m.channel == 0) {
 			// disconnect message?
-			if (!strcmp(opdi_msg_parts[0], OPDI_Disconnect))
+			if (0 == strcmp(opdi_msg_parts[0], OPDI_Disconnect))
 				return OPDI_DISCONNECTED;
 
 			// error message?
-			if (!strcmp(opdi_msg_parts[0], OPDI_Error))
+			if (0 == strcmp(opdi_msg_parts[0], OPDI_Error))
 				return OPDI_DEVICE_ERROR;
 
 			// debug message?
-			if (!strcmp(opdi_msg_parts[0], OPDI_Debug)) {
+			if (0 == strcmp(opdi_msg_parts[0], OPDI_Debug)) {
 				result = opdi_debug_msg(opdi_msg_parts[1], OPDI_DIR_DEBUG);
 				if (result != OPDI_STATUS_OK)
 					return result;
@@ -1354,7 +1354,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 		// device's encryption must be supported
 		result = OPDI_ENCRYPTION_NOT_SUPPORTED;
 		for (i = 0; i < partCount; i++) {
-			if (!strcmp(encryptions[i], opdi_encryption_method)) {
+			if (0 == strcmp(encryptions[i], opdi_encryption_method)) {
 				result = OPDI_STATUS_OK;
 				break;
 			}
@@ -1378,7 +1378,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 		// device's encryption must be supported
 		result = OPDI_ENCRYPTION_REQUIRED;
 		for (i = 0; i < partCount; i++) {
-			if (!strcmp(encryptions[i], opdi_encryption_method)) {
+			if (0 == strcmp(encryptions[i], opdi_encryption_method)) {
 				result = OPDI_STATUS_OK;
 				break;
 			}
@@ -1398,7 +1398,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 		if ((opdi_device_flags & OPDI_FLAG_ENCRYPTION_NOT_ALLOWED) != OPDI_FLAG_ENCRYPTION_NOT_ALLOWED) {
 			// device's encryption may be supported
 			for (i = 0; i < partCount; i++) {
-				if (!strcmp(encryptions[i], opdi_encryption_method)) {
+				if (0 == strcmp(encryptions[i], opdi_encryption_method)) {
 					// choose encryption
 					encryption = opdi_encryption_method;
 					use_encryption = 1;
@@ -1467,13 +1467,13 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 		
 #ifdef OPDI_EXTENDED_PROTOCOL
 	// check extended protocol implementation
-	if (strcmp(opdi_msg_parts[0], OPDI_Extended_protocol_magic) == 0) {
+	if (0 == strcmp(opdi_msg_parts[0], OPDI_Extended_protocol_magic)) {
 		protocol_handler = &extended_protocol_message;
 	}
 #endif
 	else
 	// check chosen protocol implementation
-	if (strcmp(opdi_msg_parts[0], OPDI_Basic_protocol_magic)) {
+	if (0 != strcmp(opdi_msg_parts[0], OPDI_Basic_protocol_magic)) {
 		// not the basic protocol, use device supplied function to determine protocol handler
 		if (get_protocol == NULL)
 			return OPDI_PROTOCOL_NOT_SUPPORTED;
@@ -1545,7 +1545,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 		if (result != OPDI_STATUS_OK)
 			return result;
 
-		if (strcmp(opdi_msg_parts[0], OPDI_Auth)) {
+		if (0 != strcmp(opdi_msg_parts[0], OPDI_Auth)) {
 			send_disagreement(0, OPDI_AUTHENTICATION_EXPECTED, NULL, NULL);
 			return OPDI_AUTHENTICATION_EXPECTED;
 		}

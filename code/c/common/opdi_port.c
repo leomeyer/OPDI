@@ -27,7 +27,7 @@
 #include "opdi_constants.h"
 #include "opdi_config.h"
 
-static uint8_t portCount = 0;
+static uint16_t portCount = 0;
 static opdi_Port *portHead = NULL;
 static opdi_Port *portTail = NULL;
 
