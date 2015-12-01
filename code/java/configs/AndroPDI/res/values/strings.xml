@@ -167,7 +167,7 @@
     <string name="electricEnergy_Wh_in_Wh">layout=dial_port_row_noslider;icon=energymeter;formatString=%.0f Wh</string>
 
     <string name="electricEnergy_100nWh">electricEnergy_100nWh_in_kWh=0</string>
-    <string name="electricEnergy_100nWh_in_kWh">layout=dial_port_row_noslider;icon=energymeter;formatString=%.7f kWh;denominator=10000000</string>
+    <string name="electricEnergy_100nWh_in_kWh">layout=dial_port_row_noslider;icon=energymeter;formatString=%.3f kWh;denominator=10000000</string>
     
     <string name="temperature_degreesCelsius">temperature_DegC_in_DegC=0</string>
     <string name="temperature_DegC_in_DegC">layout=dial_port_row_noslider;icon=thermometer_celsius;label=Temperature (°C);formatString=%d °C</string>
