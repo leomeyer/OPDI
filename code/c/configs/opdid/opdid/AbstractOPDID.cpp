@@ -42,7 +42,7 @@ char opdi_encryption_method[(ENCRYPTION_METHOD_MAXLENGTH + 1)];
 char opdi_encryption_key[(ENCRYPTION_KEY_MAXLENGTH + 1)];
 
 #define OPDI_ENCRYPTION_BLOCKSIZE	16
-uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
+const uint16_t opdi_encryption_blocksize = OPDI_ENCRYPTION_BLOCKSIZE;
 
 #ifdef _MSC_VER
 unsigned char opdi_encryption_buffer[OPDI_ENCRYPTION_BLOCKSIZE];

@@ -205,7 +205,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	this->outputPortStr = this->opdid->getConfigString(config, "OutputPorts", "", true);
-
+	this->propagateSwitchOff = config->getBool("PropagateSwitchOff", false);
 	this->deactivatedText = config->getString("DeactivatedText", this->deactivatedText);
 	this->notScheduledText = config->getString("NotScheduledText", this->notScheduledText);
 	this->timestampFormat = config->getString("TimestampFormat", this->timestampFormat);
@@ -453,11 +453,11 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 	} else
 	if (schedule->type == PERIODIC) {
 
-#define correctValues	if (second > 59) { second = 0; minute++;                                \
-						if (minute > 59) { minute = 0; hour++;                                  \
-						if (hour > 23) { hour = 0; day++;                                       \
-						if (day > Poco::DateTime::daysOfMonth(year, month)) { day = 1; month++; \
-						if (month > 12) { month = 1; year++; }}}}}
+#define correctValues	if (second > 59) { second = 0; minute++; }                                \
+						if (minute > 59) { minute = 0; hour++; }                                  \
+						if (hour > 23) { hour = 0; day++; }                                       \
+						if (day > Poco::DateTime::daysOfMonth(year, month)) { day = 1; month++; } \
+						if (month > 12) { month = 1; year++; }
 
 		Poco::LocalDateTime now;
 		// start from the next second
@@ -617,6 +617,29 @@ void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Po
 	}
 }
 
+void OPDID_TimerPort::setOutputs(int8_t outputLine) {
+	DigitalPortList::iterator it = this->outputPorts.begin();
+	while (it != this->outputPorts.end()) {
+		try {
+			// toggle?
+			if (outputLine < 0) {
+				// get current output port state
+				uint8_t mode;
+				uint8_t line;
+				(*it)->getState(&mode, &line);
+				// set new state
+				outputLine = (line == 1 ? 0 : 1);
+			}
+
+			// set output line
+			(*it)->setLine(outputLine);
+		} catch (Poco::Exception &e) {
+			this->opdid->logNormal(this->ID() + ": Error setting output port state: " + (*it)->ID() + ": " + e.message());
+		}
+		++it;
+	}
+}
+
 uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 	OPDI_DigitalPort::doWork(canSend);
 
@@ -714,26 +737,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 			if (workNf->schedule->action == SET_LOW)
 				outputLine = (workNf->deactivate ? 1 : 0);
 
-			DigitalPortList::iterator it = this->outputPorts.begin();
-			while (it != this->outputPorts.end()) {
-				try {
-					// toggle?
-					if (outputLine < 0) {
-						// get current output port state
-						uint8_t mode;
-						uint8_t line;
-						(*it)->getState(&mode, &line);
-						// set new state
-						outputLine = (line == 1 ? 0 : 1);
-					}
-
-					// set output line
-					(*it)->setLine(outputLine);
-				} catch (Poco::Exception &e) {
-					this->opdid->logNormal(this->ID() + ": Error setting output port state: " + (*it)->ID() + ": " + e.message());
-				}
-				++it;
-			}
+			this->setOutputs(outputLine);
 		} catch (Poco::Exception &e) {
 			this->opdid->logNormal(this->ID() + ": Error processing timer schedule: " + e.message());
 		}
@@ -766,7 +770,6 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 }
 
 void OPDID_TimerPort::recalculateSchedules() {
-	// recalculate all schedules
 	for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
 		Schedule *schedule = &*it;
 		// calculate
@@ -791,6 +794,8 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 		if (!wasLow) {
 			// clear all schedules
 			this->queue.clear();
+			if (this->propagateSwitchOff)
+				this->setOutputs(0);
 		}
 	}
 

@@ -164,6 +164,7 @@ protected:
 
 	std::string outputPortStr;
 	DigitalPortList outputPorts;
+	bool propagateSwitchOff;	// deactivates the output ports if itself being deactivated
 
 	Poco::TimedNotificationQueue queue;
 
@@ -182,6 +183,8 @@ protected:
 	bool matchWeekday(int day, int month, int year, ScheduleComponent *weekdayScheduleComponent);
 
 	void recalculateSchedules(void);
+	
+	void setOutputs(int8_t outputLine);
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
