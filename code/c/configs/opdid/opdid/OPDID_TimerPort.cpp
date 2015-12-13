@@ -707,7 +707,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 					// add with the specified occurrence time
 					this->addNotification(workNf, nextOccurrence);
 				} else {
-					// warn if unable to calculate next ocucurrence; except if login or logout event
+					// warn if unable to calculate next occurrence; except if login or logout event
 					if ((workNf->schedule->type != ONLOGIN) && (workNf->schedule->type != ONLOGOUT))
 						this->logNormal(this->ID() + ": Warning: Next scheduled time for " + workNf->schedule->nodeName + " could not be determined");
 				}

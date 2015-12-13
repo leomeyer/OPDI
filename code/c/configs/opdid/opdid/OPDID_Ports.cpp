@@ -1415,7 +1415,7 @@ OPDID_AggregatorPort::Calculation::Calculation(std::string id) : OPDI_DialPort(i
 void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregator) {
 	aggregator->logExtreme(this->ID() + ": Calculating new value");
 	if ((aggregator->values.size() < aggregator->totalValues) && !this->allowIncomplete)
-		aggregator->logVerbose(this->ID() + ": Cannot compute result because not all values have been collected and AllowIncomplete is false");
+		aggregator->logDebug(this->ID() + ": Cannot compute result because not all values have been collected and AllowIncomplete is false");
 	else {
 		switch (this->algorithm) {
 		case DELTA: {
