@@ -1517,7 +1517,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			int64_t diff = this->values.at(this->values.size() - 1) - longValue;
 			// diff may not exceed deltas
 			if ((diff < this->minDelta) || (diff > this->maxDelta)) {
-				this->logDebug(this->ID() + ": The new source port value of " + this->to_string(longValue) + " is outside of the specified limits (diff = " + this->to_string(diff) + ")");
+				this->logWarning(this->ID() + ": The new source port value of " + this->to_string(longValue) + " is outside of the specified limits (diff = " + this->to_string(diff) + ")");
 				// an invalid value invalidates the whole calculation
 				this->resetValues();
 				return OPDI_STATUS_OK;
@@ -1602,7 +1602,7 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 	}
 
 	if (orderedItems.size() == 0) {
-		this->logNormal(std::string("Warning: No calculations configured in node ") + this->ID() + ".Calculations; is this intended?");
+		this->logWarning(std::string("No calculations configured in node ") + this->ID() + ".Calculations; is this intended?");
 	}
 
 	// go through items, create calculation objects
