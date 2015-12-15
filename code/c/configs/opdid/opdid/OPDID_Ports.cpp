@@ -1291,7 +1291,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 
 void OPDID_FileInputPort::fileChangedEvent(const void*, const Poco::DirectoryWatcher::DirectoryEvent& evt) {
 	if (evt.item.path() == this->filePath) {
-		this->logExtreme(this->ID() + ": Detected file modification: " + this->filePath);
+		this->logDebug(this->ID() + ": Detected file modification: " + this->filePath);
 		
 		Poco::Mutex::ScopedLock(this->mutex);
 		this->needsReload = true;
@@ -1398,10 +1398,23 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 
 	// can the file be loaded initially?
 	Poco::File file(this->filePath);
-	if (file.exists())
-		this->needsReload = true;
-	else
+	if (!file.exists())
 		this->port->setError(VALUE_NOT_AVAILABLE);
+	else {
+		// expiry time specified?
+		if (this->expiryMs > 0) {
+			// determine whether the file is younger than the expiry time
+			Poco::Timestamp now;
+			// timestamp difference is in microseconds
+			if ((now - file.getLastModified()) / 1000 < this->expiryMs)
+				// file is not yet expired, reload
+				this->needsReload = true;
+			else
+				this->port->setError(VALUE_NOT_AVAILABLE);
+		}
+		else
+			this->port->setError(VALUE_NOT_AVAILABLE);
+	}
 }
 
 
@@ -1470,6 +1483,7 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 // OPDID_AggregatorPort class implementation
 
 void OPDID_AggregatorPort::resetValues() {
+	this->logVerbose(this->ID() + ": Resetting aggregator; values are now unavailable");
 	// indicate errors on all calculations
 	auto it = this->calculations.begin();
 	while (it != this->calculations.end()) {
@@ -1486,7 +1500,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 
 	// disabled?
 	if (this->line != 1) {
-		this->logExtreme(this->ID() + ": Aggregator is disabled");
+		// this->logExtreme(this->ID() + ": Aggregator is disabled");
 		return OPDI_STATUS_OK;
 	}
 	// time to read the next value?
