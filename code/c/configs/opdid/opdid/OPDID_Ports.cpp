@@ -657,7 +657,8 @@ bool OPDID_SerialStreamingPort::hasError(void) {
 OPDID_LoggerPort::OPDID_LoggerPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
 	this->logPeriod = 10000;		// default: 10 seconds
-	this->lastEntryTime = 0;
+	this->writeHeader = true;
+	this->lastEntryTime = opdi_get_time_ms();		// wait until writing first record
 	this->format = CSV;
 	this->separator = ";";
 }
@@ -685,16 +686,13 @@ uint8_t OPDID_LoggerPort::doWork(uint8_t canSend)  {
 	if (timeDiff < this->logPeriod)
 		return OPDI_STATUS_OK;
 
-	// first time writing? write a header
-	bool writeHeader = (lastEntryTime == 0);
-
 	this->lastEntryTime = opdi_get_time_ms();
 
 	// build log entry
 	std::string entry;
 
 	if (format == CSV) {
-		if (writeHeader) {
+		if (this->writeHeader) {
 			entry = "Timestamp" + this->separator;
 			// go through port list, build header
 			OPDI::PortList::iterator it = this->portsToLog.begin();
@@ -706,6 +704,7 @@ uint8_t OPDID_LoggerPort::doWork(uint8_t canSend)  {
 				++it;
 			}
 			this->outFile << entry << std::endl;
+			this->writeHeader = false;
 		}
 		entry = this->opdid->getTimestampStr() + this->separator;
 		// go through port list
@@ -1190,7 +1189,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 	if ((this->expiryMs > 0) && (this->lastReloadTime > 0) && (opdi_get_time_ms() - lastReloadTime > (uint64_t)this->expiryMs)) {
 		// only if the port's value is ok
 		if (this->port->getError() == VALUE_OK) {
-			this->logDebug(ID() + ": Value of port '" + this->port->ID() + "' has expired");
+			this->logVerbose(ID() + ": Value of port '" + this->port->ID() + "' has expired");
 			this->port->setError(OPDI_Port::VALUE_EXPIRED);
 		}
 	}

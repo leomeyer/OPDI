@@ -250,8 +250,9 @@ protected:
 	std::string separator;
 	std::string portsToLogStr;
 	OPDI::PortList portsToLog;
-
+	bool writeHeader;
 	uint64_t lastEntryTime;
+	
 	std::ofstream outFile;
 
 	std::string getPortStateStr(OPDI_Port* port);

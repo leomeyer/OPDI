@@ -392,7 +392,7 @@ uint8_t GertboardButton::doWork(uint8_t canSend) {
 		this->lastQueriedState = line;
 		if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::VERBOSE))
 			this->opdid->logVerbose(this->ID() + ": Gertboard Button change detected (now: "
-				+ (this->line == 0 ? "off" : "on") + ")");
+				+ (this->lastQueriedState == 0 ? "off" : "on") + ")");
 		// refresh interval not exceeded?
 		if (opdi->isConnected() && (opdi_get_time_ms() - this->lastRefreshTime > this->refreshInterval)) {
 			this->lastRefreshTime = opdi_get_time_ms();
