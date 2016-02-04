@@ -60,7 +60,7 @@ public class ExtendedProtocol extends BasicProtocol {
 	protected void expectExtendedPortInfo(Port port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 		Message message;
 		try {
-			message = expect(channel, DEFAULT_TIMEOUT);
+			message = expect(channel, DEFAULT_TIMEOUT, ExpectationMode.IGNORE_REFRESHES);
 		} catch (PortAccessDeniedException e) {
 			throw new IllegalStateException("Programming error on device: getExtendedPortInfo should never signal port access denied", e);
 		} catch (PortErrorException e) {
@@ -117,7 +117,7 @@ public class ExtendedProtocol extends BasicProtocol {
 		try {
 			int counter = 0;
 			while (counter < port.getPosCount()) {
-				Message message = expect(channel, DEFAULT_TIMEOUT);
+				Message message = expect(channel, DEFAULT_TIMEOUT, ExpectationMode.IGNORE_REFRESHES);
 				result.add(parseSelectPortLabel(port, counter, message));
 				
 				counter++;
@@ -134,7 +134,7 @@ public class ExtendedProtocol extends BasicProtocol {
 	protected void expectExtendedPortState(Port port, int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 		Message message;
 		try {
-			message = expect(channel, DEFAULT_TIMEOUT);
+			message = expect(channel, DEFAULT_TIMEOUT, ExpectationMode.IGNORE_REFRESHES);
 		} catch (PortAccessDeniedException e) {
 			return;
 		} catch (PortErrorException e) {
@@ -249,7 +249,7 @@ public class ExtendedProtocol extends BasicProtocol {
 		send(new Message(channel, Strings.join(SEPARATOR, GET_GROUP_INFO, groupID)));
 		Message message;
 		try {
-			message = expect(channel, DEFAULT_TIMEOUT);
+			message = expect(channel, DEFAULT_TIMEOUT, ExpectationMode.IGNORE_REFRESHES);
 		} catch (PortAccessDeniedException e) {
 			throw new IllegalStateException("Programming error on device: getGroupInfo should never signal port access denied", e);
 		} catch (PortErrorException e) {
@@ -289,7 +289,7 @@ public class ExtendedProtocol extends BasicProtocol {
 	protected DeviceInfo expectExtendedDeviceInfo(int channel) throws TimeoutException, InterruptedException, DisconnectedException, DeviceException, ProtocolException {
 		Message message;
 		try {
-			message = expect(channel, DEFAULT_TIMEOUT);
+			message = expect(channel, DEFAULT_TIMEOUT, ExpectationMode.IGNORE_REFRESHES);
 		} catch (PortAccessDeniedException e) {
 			throw new IllegalStateException("Programming error on device: getExtendedDeviceInfo should never signal port access denied", e);
 		} catch (PortErrorException e) {
@@ -359,10 +359,10 @@ public class ExtendedProtocol extends BasicProtocol {
 			int counter = 0;
 			while (counter < portIDs.length) {
 				// the first message is the port info
-				Message message = expect(channel, DEFAULT_TIMEOUT);
+				Message message = expect(channel, DEFAULT_TIMEOUT, ExpectationMode.IGNORE_REFRESHES);
 				Port port = parsePortInfo(message);
 				// the second message is the extended port info
-				message = expect(channel, DEFAULT_TIMEOUT);
+				message = expect(channel, DEFAULT_TIMEOUT, ExpectationMode.IGNORE_REFRESHES);
 				parseExtendedPortInfo(port, channel, message);
 				
 				counter++;
@@ -400,7 +400,7 @@ public class ExtendedProtocol extends BasicProtocol {
 			// the first message is the port state
 			Message message;
 			try {
-				message = expect(channel, DEFAULT_TIMEOUT);
+				message = expect(channel, DEFAULT_TIMEOUT, ExpectationMode.IGNORE_REFRESHES);
 				if (port instanceof DigitalPort)
 					parseDigitalPortState((DigitalPort)port, message);
 				else
@@ -426,7 +426,7 @@ public class ExtendedProtocol extends BasicProtocol {
 
 			try {
 				// the second message is the extended port state
-				message = expect(channel, DEFAULT_TIMEOUT);
+				message = expect(channel, DEFAULT_TIMEOUT, ExpectationMode.IGNORE_REFRESHES);
 				parseExtendedPortState(port, message);
 			} catch (Exception e) {}
 		}

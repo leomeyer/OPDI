@@ -170,25 +170,30 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		try {
 			// set flag: expecting a message
 			expectingMessage = true;
-			this.expectationMode = mode;
+			// this.expectationMode = mode;
 			
 			return super.expect(channel, timeout, abortable);
 			
 		} finally {
 			expectingMessage = false;
 			
-			// ignore duplicate messages
-			HashSet<String> messages = new HashSet<String>();
-			// dispatch messages collected during expect
-			while (!messagesToDispatch.isEmpty()) {
-				Message m = messagesToDispatch.poll();
-				if (messages.contains(m.toString()))
-					continue;
-				messages.add(m.toString());
-				try {
-					dispatch(m);
-				} catch (Throwable t) {
-					// ignore all errors here
+			// workaround for unreliable behaviour of ExpectationMode/refreshes during getDeviceCapabilities:
+			// do not dispatch any message until device capabilities have been received
+			if (deviceCaps != null) {
+				
+				// ignore duplicate messages
+				HashSet<String> messages = new HashSet<String>();
+				// dispatch messages collected during expect
+				while (!messagesToDispatch.isEmpty()) {
+					Message m = messagesToDispatch.poll();
+					if (messages.contains(m.toString()))
+						continue;
+					messages.add(m.toString());
+					try {
+						dispatch(m);
+					} catch (Throwable t) {
+						// ignore all errors here
+					}
 				}
 			}
 		}
@@ -208,7 +213,9 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 	
 	@Override
 	public boolean dispatch(Message message) {
-		
+
+		boolean ignoreRefreshes = expectationMode == ExpectationMode.IGNORE_REFRESHES;
+
 		// analyze control channel messages
 		if (message.getChannel() == 0) {
 			// received a disconnect?
@@ -226,7 +233,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 				}
 				
 				// ignore RECONFIGURE if specified
-				if (message.getPayload().equals(RECONFIGURE) && expectationMode != ExpectationMode.IGNORE_REFRESHES) {
+				if (message.getPayload().equals(RECONFIGURE) && !ignoreRefreshes) {
 					// clear cached device capabilities
 					deviceCaps = null;
 					// reset bound streaming ports (reconfigure on the device unbinds streaming ports)
@@ -247,7 +254,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 						device.receivedDebug(Strings.join(1, SEPARATOR, (Object[])parts));
 					} else
 						// ignore REFRESH if specified
-					if (parts[0].equals(REFRESH) && expectationMode != ExpectationMode.IGNORE_REFRESHES) {
+					if (parts[0].equals(REFRESH) && !ignoreRefreshes) {
 						// remaining components are port IDs
 						String[] portIDs = new String[parts.length - 1];
 						System.arraycopy(parts, 1, portIDs, 0, parts.length - 1);
@@ -320,7 +327,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		send(new Message(channel, Strings.join(SEPARATOR, GET_PORT_INFO, portID)));
 		Message message;
 		try {
-			message = expect(channel, DEFAULT_TIMEOUT);
+			message = expect(channel, DEFAULT_TIMEOUT, ExpectationMode.IGNORE_REFRESHES);
 		} catch (PortAccessDeniedException e) {
 			throw new IllegalStateException("Programming error on device: getPortInfo should never signal port access denied", e);
 		} catch (PortErrorException e) {
@@ -474,7 +481,7 @@ public class BasicProtocol extends AbstractProtocol implements IBasicProtocol {
 		int channel = getSynchronousChannel(port.isRefreshing());
 		send(new Message(channel, Strings.join(SEPARATOR, GET_SELECT_PORT_LABEL, port.getID(), pos)));
 		
-		Message m = expect(channel, DEFAULT_TIMEOUT);
+		Message m = expect(channel, DEFAULT_TIMEOUT, ExpectationMode.IGNORE_REFRESHES);
 		
 		return parseSelectPortLabel(port, pos, m);
 	}
