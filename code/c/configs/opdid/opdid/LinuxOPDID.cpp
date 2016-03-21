@@ -229,7 +229,8 @@ void LinuxOPDID::switchToUser(std::string newUser) {
 	}
 
 	// change effective user ID
-	setuid(uid);
+	if (setuid(uid) == -1)
+		throw Poco::DataException(std::string("Unable to switch process context to new user: ") + newUser);
 
 	this->logNormal("Switched to user: " + this->getCurrentUser());	
 }
