@@ -16,7 +16,11 @@ public:
 	virtual void printe(const char *text);
 
 	virtual void printlne(const char *text);
+	
+	virtual std::string getCurrentUser(void);
 
+	virtual void switchToUser(std::string newUser);
+	
 	int HandleTCPConnection(int csock);
 
 	int setupTCP(std::string interfaces, int port);

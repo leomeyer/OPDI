@@ -131,6 +131,12 @@ public:
 	virtual void sayHello(void);
 
 	virtual void showHelp(void);
+	
+	/** Returns the current user ID or name. */
+	virtual std::string getCurrentUser(void) = 0;
+
+	/** Modify the current process credentials to a less privileged user. */
+	virtual void switchToUser(std::string newUser) = 0;
 
 	virtual std::string getTimestampStr(void);
 

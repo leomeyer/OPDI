@@ -1,4 +1,3 @@
-
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
@@ -16,6 +15,11 @@
 #include <sys/param.h>
 #include <dlfcn.h>
 #include <syslog.h>
+#include <sys/types.h>
+#include <pwd.h>
+
+#include "Poco/Exception.h"
+#include "Poco/NumberParser.h"
 
 #include "opdi_platformfuncs.h"
 #include "opdi_configspecs.h"
@@ -202,6 +206,32 @@ void LinuxOPDID::printe(const char *text) {
 void LinuxOPDID::printlne(const char *text) {
 	// text is treated as UTF8.
 	std::cerr << text << std::endl;
+}
+
+std::string LinuxOPDID::getCurrentUser(void) {
+	struct passwd* passwd_data = getpwuid(getuid());
+	if (passwd_data == nullptr)
+		throw Poco::DataException(std::string("Unable to resolve user ID"));	
+	
+	return std::string(passwd_data->pw_name) + " (" + this->to_string(getuid()) + ")";
+}
+
+void LinuxOPDID::switchToUser(std::string newUser) {
+	// this implementation expects a numeric user ID or a user name
+	int uid;
+	
+	if (!Poco::NumberParser::tryParse(newUser, uid)) {
+		// try to map user name to UID
+		struct passwd* passwd_data = getpwnam(newUser.c_str());
+		if (passwd_data == nullptr)
+			throw Poco::DataException(std::string("Unable to resolve user name: ") + newUser);
+		uid = passwd_data->pw_uid;
+	}
+
+	// change effective user ID
+	setuid(uid);
+
+	this->logNormal("Switched to user: " + this->getCurrentUser());	
 }
 
 /** This method handles an incoming TCP connection. It blocks until the connection is closed.

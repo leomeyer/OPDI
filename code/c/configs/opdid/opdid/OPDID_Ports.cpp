@@ -1209,6 +1209,8 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 
 		this->lastReloadTime = opdi_get_time_ms();
 
+		this->needsReload = false;
+
 		// read file and parse content
 		try {
 			std::string content;
@@ -1218,7 +1220,18 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 
 			content = Poco::trim(content);
 			if (content == "")
-				throw Poco::DataFormatException("File is empty");
+				// This case may happen frequently when files are copied.
+				// Apparently, on Linux, cp clears the file first or perhaps
+				// creates an empty file before filling it with content.
+				// To avoid generating too many log warnings, this case
+				// is being silently ignored.
+				// When the file is being modified, the DirectoryWatcher will
+				// hopefully catch this change so data is not lost.
+				// So, instead of:
+				// throw Poco::DataFormatException("File is empty");
+				// do:
+				return OPDI_STATUS_OK;
+
 			switch (this->portType) {
 			case DIGITAL_PORT: {
 				uint8_t line;
@@ -1281,8 +1294,6 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 		} catch (Poco::Exception &e) {
 			this->logWarning(this->ID() + ": Error setting port state from file '" + this->filePath + "': " + e.message());
 		}
-
-		this->needsReload = false;
 	}
 
 	return OPDI_STATUS_OK;

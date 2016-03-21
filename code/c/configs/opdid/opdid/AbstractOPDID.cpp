@@ -175,6 +175,7 @@ void AbstractOPDID::sayHello(void) {
 
 	this->logNormal("OPDID version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion) + " (c) Leo Meyer 2015");
 	this->logVerbose("Build: " + std::string(__DATE__) + " " + std::string(__TIME__));
+	this->logNormal("Running as user: " + this->getCurrentUser());
 }
 
 void AbstractOPDID::showHelp(void) {
@@ -401,6 +402,12 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 
 	this->sortPorts();
 	this->preparePorts();
+	
+	// startup has been done using the process owner
+	// if specified, change process privileges to a different user
+	if (general->hasProperty("SwitchToUser")) {
+		this->switchToUser(general->getString("SwitchToUser"));
+	}
 	
 	// create view to "Connection" section
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> connection = configuration->createView("Connection");
