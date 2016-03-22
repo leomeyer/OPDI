@@ -33,7 +33,7 @@
 uint16_t opdi_device_flags = 0;
 
 // digital port functions
-#ifndef NO_DIGITAL_PORTS
+#ifndef OPDI_NO_DIGITAL_PORTS
 
 uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 	uint8_t result;
@@ -82,9 +82,9 @@ uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 	return dPort->setMode(dMode);
 }
 
-#endif 		// NO_DIGITAL_PORTS
+#endif 		// OPDI_NO_DIGITAL_PORTS
 
-#ifndef NO_ANALOG_PORTS
+#ifndef OPDI_NO_ANALOG_PORTS
 
 uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], char ref[], int32_t *value) {
 	uint8_t result;
@@ -160,7 +160,7 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 	return aPort->setReference(aRef);
 }
 
-#endif
+#endif		// OPDI_NO_ANALOG_PORTS
 
 #ifndef OPDI_NO_SELECT_PORTS
 
