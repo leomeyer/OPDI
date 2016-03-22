@@ -24,7 +24,7 @@
 /** DoorControl for Arduino
  * - Keypad
  * - RTC
- * - RFID access
+ * - RFID access (optional)
  * - OPDI slave implementation
  *
  * Install the provided libraries by copying them to your Arduino libraries folder.
@@ -32,24 +32,30 @@
  * and restart the Arduino IDE, then compile.
  */
 
+// #define USE_RFID
+
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #else
 #include "WProgram.h"
 #endif
 
-#include "opdi_constants.h"
-
-#include "DoorControl_secrets.h"
-
 #include <EEPROM.h>
 #include <SPI.h>
 #include <Wire.h>
 
-#include <MFRC522.h>    // from: https://github.com/miguelbalboa/rfid
 #include <Keypad.h>    // from: http://playground.arduino.cc/code/keypad
 #include <DS1307RTC.h>  // from: http://www.pjrc.com/teensy/td_libs_DS1307RTC.html
 #include <Time.h>      // from: http://www.pjrc.com/teensy/td_libs_Time.html
+
+#ifdef USE_RFID
+#include <MFRC522.h>    // from: https://github.com/miguelbalboa/rfid
+#endif
+
+#include "opdi_constants.h"
+
+#include "DoorControl_secrets.h"
+
 #include "ArduinOPDI.h"
 
 #define STATUS_LED    6
@@ -205,10 +211,12 @@ uint8_t getState(uint8_t *mode, uint8_t *line) {
 // Global variables
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef USE_RFID
 #define RST_PIN         9
 #define SS_PIN          10
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
+#endif
 
 // keyboard input state
 uint32_t enteredValue = 0;
@@ -225,10 +233,12 @@ OPDI* Opdi = &ArduinOpdi;
 OPDI_EEPROMDialPort codePort = OPDI_EEPROMDialPort("C", "Code", 0, 0, 99999, "unit=keypadCode");
 OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("T", "Time");
 OPDI_DigitalPortDoor doorPort = OPDI_DigitalPortDoor("D", "Door");
+OPDI_EEPROMDialPort lastAccessPort = OPDI_EEPROMDialPort("A", "LAcc", 50, 0, 999999999999, "unit=unixTime"); // store time for keypad opening only
+#ifdef USE_RFID
 OPDI_EEPROMDialPort tag1Port = OPDI_EEPROMDialPort("1", "Tag1", 10, 0, 999999999999, "");
 OPDI_EEPROMDialPort tag2Port = OPDI_EEPROMDialPort("2", "Tag2", 20, 0, 999999999999, "");
 OPDI_EEPROMDialPort lastTagPort = OPDI_EEPROMDialPort("L", "LTag", 40, 0, 999999999999, "");
-OPDI_EEPROMDialPort lastAccessPort = OPDI_EEPROMDialPort("A", "LAcc", 50, 0, 999999999999, "unit=unixTime"); // store time for keypad opening only
+#endif
 
 // Keypad definitions
 const byte ROWS = 4; //four rows
@@ -349,17 +359,19 @@ uint8_t setupDevice() {
     Opdi->addPort(&rtcPort);
   }
 
-  SPI.begin();        // Init SPI bus
-  mfrc522.PCD_Init(); // Init MFRC522 card
-  mfrc522.PCD_SetAntennaGain((0x07<<4));
-
   // add the ports provided by this configuration
   Opdi->addPort(&codePort);
   Opdi->addPort(&doorPort);
+  Opdi->addPort(&lastAccessPort);
+
+#ifdef USE_RFID
+  SPI.begin();        // Init SPI bus
+  mfrc522.PCD_Init(); // Init MFRC522 card
+  mfrc522.PCD_SetAntennaGain((0x07<<4));
   Opdi->addPort(&tag1Port);
   Opdi->addPort(&tag2Port);
   Opdi->addPort(&lastTagPort);
-  Opdi->addPort(&lastAccessPort);
+#endif
 
   // start serial port at 9600 baud
   Serial.begin(9600);
@@ -451,6 +463,7 @@ uint8_t doWork() {
     digitalWrite(STATUS_LED, LOW);   // set the LED off
   }
 
+#ifdef USE_RFID
   // check RFID tags
   // Look for new cards
   if (!mfrc522.PICC_IsNewCardPresent())
@@ -480,6 +493,7 @@ uint8_t doWork() {
       openDoor();
     }
   }
+#endif
   
   return OPDI_STATUS_OK;
 }
