@@ -23,12 +23,10 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include <opdi_constants.h>
-#include <opdi_protocol.h>
-#include <opdi_slave_protocol.h>
-#include <opdi_config.h>
-
-#include <opdi_configspecs.h>
+#include "opdi_constants.h"
+#include "opdi_protocol.h"
+#include "opdi_slave_protocol.h"
+#include "opdi_config.h"
 
 #include "OPDI.h"
 
