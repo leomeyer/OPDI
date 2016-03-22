@@ -44,11 +44,11 @@
 #define OPDI_MAX_DEVICE_PORTS	6
 
 // define to conserve RAM and ROM
-//#define OPDI_NO_DIGITAL_PORTS
+// #define OPDI_NO_DIGITAL_PORTS
 
 // define to conserve RAM and ROM
-// Arduino compiler may crash or loop endlessly if this defined, so better keep them
-//#define OPDI_NO_ANALOG_PORTS
+// Arduino compiler may crash or loop endlessly if this defined, so better keep them (on older Arduino IDEs)
+#define OPDI_NO_ANALOG_PORTS
 
 // define to conserve RAM and ROM
 #define OPDI_NO_SELECT_PORTS

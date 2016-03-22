@@ -32,6 +32,7 @@
  * and restart the Arduino IDE, then compile.
  */
 
+// Uncomment this define if you want to use an RFID receiver (MFRC522 is supported).
 // #define USE_RFID
 
 #if defined(ARDUINO) && ARDUINO >= 100
