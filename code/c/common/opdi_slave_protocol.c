@@ -1175,7 +1175,7 @@ uint8_t opdi_handle_basic_message(opdi_Message *m) {
 }
 */
 
-static uint8_t handle_message_result(opdi_Message */*m*/, uint8_t result) {
+static uint8_t handle_message_result(opdi_Message *m, uint8_t result) {
 	if (result != OPDI_STATUS_OK) {
 		// special case: message unknown
 		if (result == OPDI_MESSAGE_UNKNOWN) {

@@ -24,86 +24,16 @@
 /** DoorControl for Arduino
  * - Keypad
  * - RTC
- * - RFID access
+ * - RFID access (optional)
  * - OPDI slave implementation
  *
- * Important! Copy the file DoorControl_secrets.inc to the installed OPDI library folder and
- * modify it to fit your desired settings!
+ * Install the provided libraries by copying them to your Arduino libraries folder.
+ * Copy the OPDI files to this folder (you can use the provided batch file for this)
+ * and restart the Arduino IDE, then compile.
  */
- 
-/*
-// Arduino configuration specifications
 
-// set these values in opdi_configspecs.h in the Arduino library folder!
-
-#ifndef __OPDI_CONFIGSPECS_H
-#define __OPDI_CONFIGSPECS_H
-
-#define OPDI_IS_SLAVE	1
-#define OPDI_ENCODING_DEFAULT	OPDI_ENCODING_UTF8
-
-// Defines the maximum message length this slave can receive.
-// Consumes this amount of bytes in data and the same amount on the stack.
-#define OPDI_MESSAGE_BUFFER_SIZE		50
-
-// Defines the maximum message string length this slave can receive.
-// Consumes this amount of bytes times sizeof(char) in data and the same amount on the stack.
-// As the channel identifier and the checksum of a message typically consume a
-// maximum amount of nine bytes, this value may be OPDI_MESSAGE_BUFFER_SIZE - 9
-// on systems with only single-byte character sets.
-#define OPDI_MESSAGE_PAYLOAD_LENGTH	(OPDI_MESSAGE_BUFFER_SIZE - 9)
-
-// maximum permitted message parts
-#define OPDI_MAX_MESSAGE_PARTS	8
-
-// maximum length of master's name this device will accept
-#define OPDI_MASTER_NAME_LENGTH	1
-
-// maximum possible ports on this device
-#define OPDI_MAX_DEVICE_PORTS	7
-
-// define to conserve RAM and ROM
-//#define OPDI_NO_DIGITAL_PORTS
-
-// define to conserve RAM and ROM
-// Arduino compiler may crash or loop endlessly if this defined, so better keep them
-//#define OPDI_NO_ANALOG_PORTS
-
-// define to conserve RAM and ROM
-#define OPDI_NO_SELECT_PORTS
-
-// define to conserve RAM and ROM
-// #define OPDI_NO_DIAL_PORTS
-
-// maximum number of streaming ports
-// set to 0 to conserve both RAM and ROM
-#define OPDI_STREAMING_PORTS		0
-
-// Define to conserve memory
-#define OPDI_NO_ENCRYPTION
-
-// Define to conserve memory
-// #define OPDI_NO_AUTHENTICATION
-
-#define OPDI_HAS_MESSAGE_HANDLED
-
-// Defines for the OPDI implementation on Arduino
-
-// keep these numbers as low as possible to conserve memory
-#define MAX_PORTIDLENGTH		2
-#define MAX_PORTNAMELENGTH		5
-#define MAX_SLAVENAMELENGTH		12
-#define MAX_ENCODINGNAMELENGTH          7
-
-#define OPDI_MAX_PORT_INFO_MESSAGE	0
-
-#define OPDI_EXTENDED_INFO_LENGTH	16
-
-#define OPDI_EXTENDED_PROTOCOL          1
-
-#endif		// __OPDI_CONFIGSPECS_H
-
-*/ 
+// Uncomment this define if you want to use an RFID receiver (MFRC522 is supported).
+// #define USE_RFID
 
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
@@ -111,18 +41,22 @@
 #include "WProgram.h"
 #endif
 
-#include <opdi_constants.h>
-
-#include <DoorControl_secrets.inc>
-
 #include <EEPROM.h>
 #include <SPI.h>
 #include <Wire.h>
 
-#include <MFRC522.h>    // from: https://github.com/miguelbalboa/rfid
 #include <Keypad.h>    // from: http://playground.arduino.cc/code/keypad
 #include <DS1307RTC.h>  // from: http://www.pjrc.com/teensy/td_libs_DS1307RTC.html
 #include <Time.h>      // from: http://www.pjrc.com/teensy/td_libs_Time.html
+
+#ifdef USE_RFID
+#include <MFRC522.h>    // from: https://github.com/miguelbalboa/rfid
+#endif
+
+#include "opdi_constants.h"
+
+#include "DoorControl_secrets.h"
+
 #include "ArduinOPDI.h"
 
 #define STATUS_LED    6
@@ -278,10 +212,12 @@ uint8_t getState(uint8_t *mode, uint8_t *line) {
 // Global variables
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef USE_RFID
 #define RST_PIN         9
 #define SS_PIN          10
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
+#endif
 
 // keyboard input state
 uint32_t enteredValue = 0;
@@ -298,10 +234,12 @@ OPDI* Opdi = &ArduinOpdi;
 OPDI_EEPROMDialPort codePort = OPDI_EEPROMDialPort("C", "Code", 0, 0, 99999, "unit=keypadCode");
 OPDI_DS1307DialPort rtcPort = OPDI_DS1307DialPort("T", "Time");
 OPDI_DigitalPortDoor doorPort = OPDI_DigitalPortDoor("D", "Door");
+OPDI_EEPROMDialPort lastAccessPort = OPDI_EEPROMDialPort("A", "LAcc", 50, 0, 999999999999, "unit=unixTime"); // store time for keypad opening only
+#ifdef USE_RFID
 OPDI_EEPROMDialPort tag1Port = OPDI_EEPROMDialPort("1", "Tag1", 10, 0, 999999999999, "");
 OPDI_EEPROMDialPort tag2Port = OPDI_EEPROMDialPort("2", "Tag2", 20, 0, 999999999999, "");
 OPDI_EEPROMDialPort lastTagPort = OPDI_EEPROMDialPort("L", "LTag", 40, 0, 999999999999, "");
-OPDI_EEPROMDialPort lastAccessPort = OPDI_EEPROMDialPort("A", "LAcc", 50, 0, 999999999999, "unit=unixTime"); // store time for keypad opening only
+#endif
 
 // Keypad definitions
 const byte ROWS = 4; //four rows
@@ -422,17 +360,19 @@ uint8_t setupDevice() {
     Opdi->addPort(&rtcPort);
   }
 
-  SPI.begin();        // Init SPI bus
-  mfrc522.PCD_Init(); // Init MFRC522 card
-  mfrc522.PCD_SetAntennaGain((0x07<<4));
-
   // add the ports provided by this configuration
   Opdi->addPort(&codePort);
   Opdi->addPort(&doorPort);
+  Opdi->addPort(&lastAccessPort);
+
+#ifdef USE_RFID
+  SPI.begin();        // Init SPI bus
+  mfrc522.PCD_Init(); // Init MFRC522 card
+  mfrc522.PCD_SetAntennaGain((0x07<<4));
   Opdi->addPort(&tag1Port);
   Opdi->addPort(&tag2Port);
   Opdi->addPort(&lastTagPort);
-  Opdi->addPort(&lastAccessPort);
+#endif
 
   // start serial port at 9600 baud
   Serial.begin(9600);
@@ -524,6 +464,7 @@ uint8_t doWork() {
     digitalWrite(STATUS_LED, LOW);   // set the LED off
   }
 
+#ifdef USE_RFID
   // check RFID tags
   // Look for new cards
   if (!mfrc522.PICC_IsNewCardPresent())
@@ -553,6 +494,7 @@ uint8_t doWork() {
       openDoor();
     }
   }
+#endif
   
   return OPDI_STATUS_OK;
 }

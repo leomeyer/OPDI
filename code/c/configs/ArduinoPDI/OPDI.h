@@ -21,8 +21,8 @@
  */
 #include <Stream.h>
 
-#include <opdi_config.h>
-#include <opdi_port.h>
+#include "opdi_config.h"
+#include "opdi_port.h"
 
 /** Base class for OPDI port wrappers.
  *
