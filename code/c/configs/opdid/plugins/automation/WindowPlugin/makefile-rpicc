@@ -19,7 +19,7 @@ PPATHBASE = $(OPDIDPATH)/../../../platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List source files of the plugin here.
-SRC = $(TARGET).cpp ../../../opdid/OPDID_PortFunctions.cpp
+SRC = $(TARGET).cpp $(OPDIDPATH)/OPDID_PortFunctions.cpp
 
 # C++ wrapper
 CPPPATH = $(CPATH)/cppwrapper

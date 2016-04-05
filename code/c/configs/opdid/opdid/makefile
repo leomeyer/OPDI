@@ -84,7 +84,7 @@ CFLAGS += -ggdb -O0 -fbuiltin
 
 OBJECTS = $(SRC)
 
-all: $(SRC) $(TARGET)
+all: $(SRC) plugins $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(POCOLIBS) $(LIBS)
@@ -96,6 +96,9 @@ $(TARGET): $(OBJECTS)
 
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
+
+plugins:
+	$(MAKE) -C ../plugins
 
 clean:
 	rm -f $(PPATH)/*.o

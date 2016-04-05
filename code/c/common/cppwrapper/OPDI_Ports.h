@@ -124,6 +124,8 @@ protected:
 	// checks the error state and throws an exception
 	// should be used by subclasses in getState() methods
 	virtual void checkError(void);
+	
+	virtual void setID(const char* newID);
 
 public:
 

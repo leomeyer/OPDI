@@ -40,9 +40,8 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->orderID = -1;
 	this->persistent = false;
 	this->error = VALUE_OK;
-
-	this->id = (char*)malloc(strlen(id) + 1);
-	strcpy(this->id, id);
+	
+	this->setID(id);
 	strcpy(this->type, type);
 }
 
@@ -63,8 +62,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->persistent = false;
 	this->error = VALUE_OK;
 
-	this->id = (char*)malloc(strlen(id) + 1);
-	strcpy(this->id, id);
+	this->setID(id);
 	strcpy(this->type, type);
 
 	this->setLabel(label);
@@ -97,6 +95,13 @@ uint8_t OPDI_Port::doWork(uint8_t canSend) {
 
 const char *OPDI_Port::getID(void) {
 	return this->id;
+}
+
+void OPDI_Port::setID(const char* newID) {
+	if (this->id != nullptr)
+		free(this->id);
+	this->id = (char*)malloc(strlen(newID) + 1);
+	strcpy(this->id, newID);
 }
 
 std::string OPDI_Port::ID() {
