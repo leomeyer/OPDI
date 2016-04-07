@@ -33,6 +33,10 @@ public:
 	int setupTCP(std::string interfaces, int port) override;
 
 	IOPDIDPlugin *getPlugin(std::string driver) override;
+
+	virtual std::string getCurrentUser(void) override;
+
+	virtual void switchToUser(std::string newUser) override;
 };
 
 

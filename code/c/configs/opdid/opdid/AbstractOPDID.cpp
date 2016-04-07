@@ -1367,25 +1367,30 @@ std::string AbstractOPDID::getExtendedDeviceInfo(void) {
 }
 
 uint8_t AbstractOPDID::refresh(OPDI_Port **ports) {
-	uint8_t result = OPDI::refresh(ports);
-	if (result != OPDI_STATUS_OK)
-		return result;
+	// base class functionality handles a connected master
+	if (this->canSend) {
+		uint8_t result = OPDI::refresh(ports);
+		if (result != OPDI_STATUS_OK)
+			return result;
+	}
 
 	if (this->logVerbosity >= VERBOSE) {
 		if (ports == nullptr) {
-			this->logDebug("Sent refresh for all ports");
+			this->allPortsRefreshed(this);
+			this->logDebug("Processed refresh for all ports");
 			return OPDI_STATUS_OK;
 		}
 
 		OPDI_Port *port = ports[0];
 		uint8_t i = 0;
 		while (port != nullptr) {
-			this->logDebug("Sent refresh for port: " + port->ID());
+			this->portRefreshed(this, port);
+			this->logDebug("Processed refresh for port: " + port->ID());
 			port = ports[++i];
 		}
 	}
 
-	return result;
+	return OPDI_STATUS_OK;
 }
 
 void AbstractOPDID::persist(OPDI_Port *port) {
@@ -1930,7 +1935,7 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int64_t position) {
 
 #endif	// OPDI_NO_DIAL_PORTS
 
-uint8_t opdi_choose_language(const char */*languages*/) {
+uint8_t opdi_choose_language(const char* /*languages*/) {
 	// TODO
 
 	return OPDI_STATUS_OK;

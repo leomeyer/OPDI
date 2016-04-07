@@ -351,3 +351,12 @@ IOPDIDPlugin *WindowsOPDID::getPlugin(std::string driver) {
 	// call the DLL function to get the plugin instance
 	return getPluginInstance(this->majorVersion, this->minorVersion, this->patchVersion);
 }
+
+
+std::string WindowsOPDID::getCurrentUser(void) {
+	return "<unknown>";
+}
+
+void WindowsOPDID::switchToUser(std::string newUser) {
+	// TODO
+}

@@ -49,6 +49,9 @@
     <Filter Include="Quelldateien\libraries\libctb">
       <UniqueIdentifier>{fc51c054-eb17-44b7-be46-90d5c9e425ec}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Ressourcendateien\webdocroot">
+      <UniqueIdentifier>{321ae4be-ff15-4696-b28e-67890965877d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -69,6 +72,45 @@
     </None>
     <None Include="fileinputtest.txt">
       <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="webdocroot\index.html">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\jquery.jsonrpc.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\jquery-1.12.2.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\jquery-ui.css">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\jquery-ui.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\jquery-ui.structure.css">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\jquery-ui.theme.css">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\jquery.gridster.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\jquery.gridster.css">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\opdid.css">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\simple-js-inheritance.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\strings.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\utils.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

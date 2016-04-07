@@ -1,10 +1,503 @@
+<!DOCTYPE html>
 <html>
-<head>WebServer Test Page</head>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+  <meta name="viewport" content="width=720"/>
+    
+<title>WebServer Test Page</title>
+
+<link rel="stylesheet" href="jquery-ui.min.css"/>
+<link rel="stylesheet" type="text/css" href="jquery.gridster.css"/>
+<link rel="stylesheet" type="text/css" href="opdid.css"/>
+
 <script type="text/javascript" src="jquery-1.12.2.js"></script>
 <script type="text/javascript" src="jquery.jsonrpc.js"></script>
+<script type="text/javascript" src="jquery-ui.min.js"></script>
+<script type="text/javascript" src="jquery.gridster.js" charset="utf-8"></script>
+
+<script type="text/javascript" src="simple-js-inheritance.js"></script>
+
+<script type="text/javascript" src="strings.js"></script>
+
+</head>
 
 <script type="text/javascript">
 <!--
+
+var imageURLPrefix = "images/";
+
+function handleError(error) {
+    if (typeof error == "object")
+        alert("Error " + error.code + ": " + error.message);
+    else
+        alert("Error: " + error);
+}
+
+// *********************************************************
+// Port management
+var ports = Array();
+
+function findPortByID(id) {
+    for (var i = 0; i < ports.length; i++) {
+        if (ports[i].id == id)
+            return ports[i];
+    }
+    return null;
+}
+
+function refreshPort(id) {
+    var port = findPortByID(id);
+    if (port != null)
+        port.refresh();
+}
+
+function refreshAll() {
+    for (var i = 0; i < ports.length; i++)
+        ports[i].refresh();
+}
+
+// *********************************************************
+// Port Classes
+
+// base class
+var Port = Class.extend({
+    init: function(port) {
+        // store port information
+        this.setPort(port);
+    },
+
+    setPort: function(port) {
+        this.port = port;
+        this.id = port.id;  // shortcut
+        this.properties = getProperties(port.extendedInfo);
+        this.extendedState = getProperties(port.extendedState);
+    },
+
+    refresh: function() {
+        var instance = this;
+        $.jsonRPC.request('getPortInfo', {
+            params: {"portID": this.port.id},
+            success: function(response) {
+                instance.updatePort(response.result.port);
+            },
+            error: function (response) {
+                handleError(response.error);
+            }
+        });
+    },
+
+    getLabel: function() {
+        var label = this.port.label;
+        // TODO override label from unit?
+        return label;
+    },
+
+    createLabel: function() {
+        var label = this.getLabel();
+        // use different CSS classes for different lengths of labels
+        if (label.length < 20)
+            var labelDiv = "<div class='OPDIDPortLabelShort' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
+        else
+        if (label.length < 30)
+            var labelDiv = "<div class='OPDIDPortLabel30' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
+        else
+        if (label.length < 40)
+            var labelDiv = "<div class='OPDIDPortLabel40' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
+        else
+            var labelDiv = "<div class='OPDIDPortLabelLong' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
+        // info text from extended state
+        var text = this.extendedState.text;
+        var textDiv = "";
+        if (typeof text != "undefined")
+            textDiv = "<div class='OPDIDPortText' id='Port_" + this.port.id + "_Text'>" + text + "</div>"
+        return labelDiv + textDiv;
+    },
+
+    getMaxLengthInPixels: function(values) {
+        // converts each item of the values array to a string, determines the maximum length
+        // and returns this value multiplied with a fixed constant
+        var maxlen = 0;
+        for (var i = 0; i < values.length; i++) {
+            var len = ("" + values[i]).length;
+            if (len > maxlen)
+                maxlen = len;
+        }
+        return maxlen * 10;
+    },
+
+    updatePort: function(port) {
+        this.setPort(port);
+        $("#Port_" + port.id + "_Label").html("<nobr>" + this.getLabel());
+        var text = this.extendedState.text;
+        if (typeof text != "undefined")
+            $("#Port_" + port.id + "_Text").html(text);
+    }
+});
+
+var DigitalPort = Port.extend({
+    OPDI_DIGITAL_MODE_UNKNOWN: -1,
+    OPDI_DIGITAL_MODE_INPUT_FLOATING: 0,
+    OPDI_DIGITAL_MODE_INPUT_PULLUP: 1,
+    OPDI_DIGITAL_MODE_INPUT_PULLDOWN: 2,
+    OPDI_DIGITAL_MODE_OUTPUT: 3,
+
+    OPDI_DIGITAL_LINE_UNKNOWN: -1,
+    OPDI_DIGITAL_LINE_LOW: 0,
+    OPDI_DIGITAL_LINE_HIGH: 1,
+
+    getPortIconSrc: function() {
+        if (this.port.state.error != null)
+            return imageURLPrefix + "digital_port_error.png";
+        // special icon?
+        if (this.properties.icon != null) {
+            return imageURLPrefix + this.properties.icon + ".png";
+        }
+        if (this.port.state.mode == this.OPDI_DIGITAL_MODE_OUTPUT)
+            return imageURLPrefix + "digital_port_output.png";
+        else
+        if ((this.port.state.mode == this.OPDI_DIGITAL_MODE_INPUT_FLOATING)
+            || (this.port.state.mode == this.OPDI_DIGITAL_MODE_INPUT_PULLUP)
+            || (this.port.state.mode == this.OPDI_DIGITAL_MODE_INPUT_PULLDOWN))
+            return imageURLPrefix + "digital_port_input.png";
+        else
+            return imageURLPrefix + "digital_port.png";
+    },
+
+    getPortStateSrc: function() {
+        if (this.port.state.mode != this.OPDI_DIGITAL_MODE_OUTPUT) {
+            if (this.port.state.line == this.OPDI_DIGITAL_LINE_HIGH)
+                return imageURLPrefix + "led_green.png";
+            else
+            if (this.port.state.line == this.OPDI_DIGITAL_LINE_LOW)
+                return imageURLPrefix + "led_red.png";
+            else
+                return imageURLPrefix + "led_yellow.png";
+        } else {
+            // OPDI_DIGITAL_MODE_OUTPUT
+            if (this.port.state.line == this.OPDI_DIGITAL_LINE_HIGH)
+                return imageURLPrefix + "switch_on.png";
+            else
+                return imageURLPrefix + "switch_off.png";
+        }
+    },
+
+    createWidget: function() {
+        var widget = ["<div class='OPDIDPort' id='Port_" + this.port.id + "'>"
+        + "<table class='OPDIDPortWidget'><tr>"
+        + "<td width='1px'>" + "<img src='" + this.getPortIconSrc() + "' style='float:left;' id='Port_" + this.port.id + "_Icon'>" + "</td>"
+        + "<td width='10px'>&nbsp;</td>"
+        + "<td>" + this.createLabel() + "</td>"
+        + "<td class='OPDIDPortState' width='1px'>" + "<img src='" + this.getPortStateSrc() + "' style='float:right;' id='Port_" + this.port.id + "_State'>" + "</td>"
+        + "</tr></table></div>", 1, 1];
+
+        return widget;
+    },
+
+    updatePort: function(port) {
+        this._super(port);
+        $("#Port_" + port.id + "_Icon").attr("src", this.getPortIconSrc());
+        $("#Port_" + port.id + "_State").attr("src", this.getPortStateSrc());
+    },
+
+    stateClicked: function() {
+        var instance = this;
+        // mode must be output
+        if (this.port.state.mode != this.OPDI_DIGITAL_MODE_OUTPUT)
+            return;
+        // check current state
+        var newLine = this.port.state.line == this.OPDI_DIGITAL_LINE_HIGH? this.OPDI_DIGITAL_LINE_LOW : this.OPDI_DIGITAL_LINE_HIGH;
+        // call server
+        $.jsonRPC.request('setDigitalState', {
+            params: {"portID": this.port.id, "line": newLine},
+            success: function(response) {
+                instance.updatePort(response.result.port);
+            },
+            error: function(response) {
+                handleError(response.error);
+            }
+        });
+    },
+
+    registerCommands: function() {
+        var instance = this;
+        $("#Port_" + this.port.id + "_Icon").click(function() {
+            instance.refresh();
+        });
+        $("#Port_" + this.port.id + "_Label").click(function() {
+            // alert("Clicked: Label of port " + instance.port.id);
+        });
+        $("#Port_" + this.port.id + "_State").click(function() {
+            instance.stateClicked();
+        });
+    }
+});
+
+var AnalogPort = Port.extend({
+
+    getPortIconSrc: function() {
+        // special icon?
+        if (this.properties.icon != null) {
+            return imageURLPrefix + this.properties.icon + ".png";
+        }
+        return imageURLPrefix + "analog_port.png";
+    },
+
+    getMax: function() {
+        return (1 << this.port.state.resolution) - 1;
+    },
+
+    getPortValue: function() {
+        if (this.port.state.error != null || (typeof this.port.state.value == "undefined"))
+            return "";
+        else
+            return "" + this.port.state.value;
+    },
+
+    createWidget: function() {
+        var widget = ["<div class='OPDIDPort' id='Port_" + this.port.id + "'>"
+        + "<table><tr>"
+        + "<td>" + "<img src='" + this.getPortIconSrc() + "' id='Port_" + this.port.id + "_Icon'>" + "</td>"
+        + "<td width='5px'>&nbsp;</td>"
+            + "<td align='right'><table width='220px'>"
+            + "<tr><td>" + this.createLabel() + "</td></tr>"
+            + "<tr><td><div id='Port_" + this.port.id + "_Slider'></div></td>"
+            + "<td width='10px'>&nbsp;</td>"
+            + "<td width='" + this.getMaxLengthInPixels([this.getMax()]) + "'>"
+                + "<div class='OPDIDAnalogPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td><tr>"
+            + "</table></td>"
+        + "</tr></table></div>", 1, 1];
+
+        return widget;
+    },
+
+    updatePort: function(port) {
+        this._super(port);
+        $("#Port_" + this.port.id + "_Icon").attr("src", this.getPortIconSrc());
+        // avoid triggering a slider change if set programmatically (refresh loop)
+        this.port.noRefresh = true;
+        $("#Port_" + this.port.id + "_Slider").slider("value", this.port.state.value);
+        this.port.noRefresh = false;
+        $("#Port_" + this.port.id + "_Value").html("<nobr>" + this.getPortValue());
+    },
+
+    sliderChanged: function() {
+        var instance = this;
+        // changed by updatePort? If so, do nothing
+        if (this.port.noRefresh)
+            return;
+        // determine new value to set
+        var newValue = $("#Port_" + this.port.id + "_Slider").slider("value");
+//        $("#Port_" + this.port.id + "_Slider").slider("disable");
+        // call server
+        $.jsonRPC.request('setAnalogValue', {
+            params: {"portID": this.port.id, "value": newValue},
+            success: function(response) {
+                instance.updatePort(response.result.port);
+//                $("#Port_" + instance.port.id + "_Slider").slider("enable");
+            },
+            error: function(response) {
+//                $("#Port_" + instance.port.id + "_Slider").slider("enable");
+                handleError(response.error);
+            }
+        });
+    },
+
+    registerCommands: function() {
+        var instance = this;
+        $("#Port_" + this.port.id + "_Icon").click(function() {
+            instance.refresh();
+        });
+        $("#Port_" + this.port.id + "_Label").click(function() {
+            // alert("Clicked: Label of port " + instance.port.id);
+        }); 
+        $("#Port_" + this.port.id + "_Slider").slider({
+            min: 0,
+            max: this.getMax(),
+            step: 1,
+            value: this.port.state.value,
+            start: function(event, ui) {
+                gridster.disable();
+            },
+            stop: function(event, ui) {
+                gridster.enable();
+            },
+            slide: function(event, ui) {
+                if (instance.port.readonly)
+                    return false;
+            },
+            change: function(event, ui) {
+                if (instance.port.readonly)
+                    return false;
+                instance.sliderChanged();
+            }
+        });
+    }
+});
+
+var DialPort = Port.extend({
+
+    getPortIconSrc: function() {
+        if (this.port.state.error != null)
+            return imageURLPrefix + "dial_port_error.png";
+        // special icon?
+        if (this.properties.icon != null) {
+            return imageURLPrefix + this.properties.icon + ".png";
+        }
+        return imageURLPrefix + "dial_port.png";
+    },
+
+    getPortValue: function() {
+        if (this.port.state.error != null || (typeof this.port.state.position == "undefined"))
+            return "";
+        else
+            return "" + this.port.state.position;
+    },
+
+    createWidget: function() {
+        var widget = ["<div class='OPDIDPort' id='Port_" + this.port.id + "'>"
+        + "<table><tr>"
+        + "<td>" + "<img src='" + this.getPortIconSrc() + "' id='Port_" + this.port.id + "_Icon'>" + "</td>"
+        + "<td width='5px'>&nbsp;</td>"
+            + "<td align='right'><table width='220px'>"
+            + "<tr><td>" + this.createLabel() + "</td></tr>"
+            + "<tr><td class='OPDIDPortState'><div id='Port_" + this.port.id + "_Slider'></div></td>"
+            + "<td width='10px'>&nbsp;</td>"
+            + "<td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>"
+                + "<div class='OPDIDDialPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td><tr>"
+            + "</table></td>"
+        + "</tr></table></div>", 1, 1];
+
+        return widget;
+    },
+
+    updatePort: function(port) {
+        this._super(port);
+        $("#Port_" + this.port.id + "_Icon").attr("src", this.getPortIconSrc());
+        // avoid triggering a slider change if set programmatically (refresh loop)
+        this.port.noRefresh = true;
+        $("#Port_" + this.port.id + "_Slider").slider("value", this.port.state.position);
+        this.port.noRefresh = false;
+        $("#Port_" + this.port.id + "_Value").html("<nobr>" + this.getPortValue());
+    },
+
+    sliderChanged: function() {
+        var instance = this;
+        // changed by updatePort? If so, do nothing
+        if (this.port.noRefresh)
+            return;
+        // determine new position to set
+        var newPosition = $("#Port_" + this.port.id + "_Slider").slider("value");
+//        $("#Port_" + this.port.id + "_Slider").slider("disable");
+        // call server
+        $.jsonRPC.request('setDialPosition', {
+            params: {"portID": this.port.id, "position": newPosition},
+            success: function(response) {
+                instance.updatePort(response.result.port);
+//                $("#Port_" + instance.port.id + "_Slider").slider("enable");
+            },
+            error: function(response) {
+//                $("#Port_" + instance.port.id + "_Slider").slider("enable");
+                handleError(response.error);
+            }
+        });
+    },
+
+    registerCommands: function() {
+        var instance = this;
+        $("#Port_" + this.port.id + "_Icon").click(function() {
+            instance.refresh();
+        });
+        $("#Port_" + this.port.id + "_Label").click(function() {
+            // alert("Clicked: Label of port " + instance.port.id);
+        }); 
+        $("#Port_" + this.port.id + "_Slider").slider({
+            min: this.port.min,
+            max: this.port.max,
+            step: this.port.step,
+            value: this.port.state.position,
+            start: function(event, ui) {
+                gridster.disable();
+            },
+            stop: function(event, ui) {
+                gridster.enable();
+            },
+            slide: function(event, ui) {
+                if (instance.port.readonly)
+                    return false;
+            },
+            change: function(event, ui) {
+                if (instance.port.readonly)
+                    return false;
+                instance.sliderChanged();
+            }
+        });
+    }
+});
+
+// Port Classes
+// *********************************************************
+
+// *********************************************************
+// UI functions
+var OPDI_PORTTYPE_DIGITAL = "0";
+var OPDI_PORTTYPE_ANALOG = "1";
+var OPDI_PORTTYPE_SELECT = "2";
+var OPDI_PORTTYPE_DIAL = "3";
+var OPDI_PORTTYPE_STREAMING = "4";
+
+function createPort(port) {
+    var widget = null;
+    var portObject = null;
+    if (port.type == OPDI_PORTTYPE_DIGITAL) {
+        portObject = new DigitalPort(port);
+    } else
+    if (port.type == OPDI_PORTTYPE_ANALOG) {
+        portObject = new AnalogPort(port);
+    } else
+    if (port.type == OPDI_PORTTYPE_DIAL) {
+        portObject = new DialPort(port);
+    }
+
+    if (portObject != null)
+        widget = portObject.createWidget();
+
+    if (widget != null)
+        gridster.add_widget.apply(gridster, widget);
+
+    return portObject;
+}
+
+function buildUI(portList) {
+    // create port UI elements
+    for (var i = 0; i < portList.length; i++) {
+        var portObject = createPort(portList[i])
+        if (portObject != null)
+            ports.push(portObject);
+    }
+    // go through ports, register events on UI
+    $(ports).each(function(i, port) {
+        port.registerCommands();
+    });
+}
+
+function setupUI() {
+    $.jsonRPC.request('getPortList', {
+        params: {},
+        success: function (response) {
+            buildUI(response.result.portList);
+        },
+        error: function (response) {
+            handleError(response.error);
+        }
+    });
+}
+
+// UI functions
+// *********************************************************
+
+// *********************************************************
+// RPC functions
+
 function setupRPC() {
 	$.jsonRPC.setup({
 	  endPoint: '/api/jsonrpc',
@@ -12,22 +505,60 @@ function setupRPC() {
 	});
 }
 
-function list() {
-	$.jsonRPC.request('list', {
-	  params: {},
-	  success: function(result) {
-		  alert(result);
-	  },
-	  error: function(result) {
-		  alert("Error: " + result);
-	  }
-	});
+function setupWebsocket() {
+    var ws = new WebSocket('ws://' + location.host + '/ws');
+    if (!window.console) { window.console = { log: function() {} } };
+    ws.onopen = function(ev)  { console.log(ev); };
+    ws.onerror = function(ev) { console.log(ev); };
+    ws.onclose = function(ev) { console.log(ev); };
+    ws.onmessage = function(ev) {
+        console.log(ev);
+        // examine message
+        var parts = ev.data.split(" ");
+        if (parts[0] == "RefreshAll") {
+            refreshAll();
+        } else
+        if (parts[0] == "Refresh") {
+            refreshPort(parts[1]);
+        }
+    };
 }
+
+// RPC functions
+// *********************************************************
+
+// *********************************************************
+// Application
+
+function startup() {
+    setupRPC();
+    setupUI();
+    setupWebsocket();
+}
+
 //-->
 </script>
 
-<body onload="setupRPC()">
-<h1>WebServer Test Page</h1>
-	<button onClick="list()">List</button>
+<body onload="startup()">
+
+<h1>OPDID WebServer</h1>
+
+<!-- Port grid -->
+<div class="gridster"><ul></ul></div>
+
+<script type="text/javascript" id="code">
+<!--
+    var gridster;
+
+    $(function() {
+
+        gridster = $(".gridster > ul").gridster({
+            widget_margins: [10, 10],
+            widget_base_dimensions: [300, 60]
+        }).data('gridster');
+
+    });
+//-->
+</script>
 </body>
 </html>

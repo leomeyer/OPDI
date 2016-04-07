@@ -70,13 +70,11 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 }
 
 uint8_t OPDI_Port::doWork(uint8_t canSend) {
-
-	// while not connected, always reset the flag
-	if ((this->opdi == nullptr) || !this->opdi->isConnected())
+	if (this->opdi == nullptr)
 		this->refreshRequired = false;
 
 	// refresh necessary? don't refresh too often
-	if (canSend && this->refreshRequired && (opdi_get_time_ms() - this->lastRefreshTime > 1000)) {
+	if (this->refreshRequired && (opdi_get_time_ms() - this->lastRefreshTime > 1000)) {
 		this->refresh();
 		this->refreshRequired = false;
 	}
@@ -162,6 +160,10 @@ void OPDI_Port::setDirCaps(const char *dirCaps) {
 		this->opdi->updatePortData(this);
 }
 
+const char* OPDI_Port::getDirCaps() {
+	return this->caps;
+}
+
 void OPDI_Port::setFlags(int32_t flags) {
 	int32_t oldFlags = this->flags;
 	if (this->readonly)
@@ -171,6 +173,10 @@ void OPDI_Port::setFlags(int32_t flags) {
 	// need to update already stored port data?
 	if ((this->opdi != nullptr) && (oldFlags != this->flags))
 		this->opdi->updatePortData(this);
+}
+
+int32_t OPDI_Port::getFlags() {
+	return this->flags;
 }
 
 void OPDI_Port::updateExtendedInfo(void) {

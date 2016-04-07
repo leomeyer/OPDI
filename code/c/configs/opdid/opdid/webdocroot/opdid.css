@@ -1,0 +1,64 @@
+/*! opdid.css - 
+*
+* Copyright (c) 2016 Leo Meyer, leo@leomeyer.de; Licensed MIT */
+
+.OPDIDPort {
+    margin: 2 auto;
+    border-width: 3px;
+    border-style: outset;
+    border-color: Gray;
+    background-color: #E0E0E0;
+    position: relative;
+}
+
+.OPDIDPort table 
+{
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+.OPDIDPortWidget {
+    vertical-align: middle;
+    width: 100%;
+}
+
+.OPDIDPortLabelShort {
+    font-family: Verdana;
+    text-align: left;
+}
+
+.OPDIDPortLabel30 {
+    font-family: Verdana;
+    text-align: left;
+    font-size: small;
+}
+
+.OPDIDPortLabel40 {
+    font-family: Verdana;
+    text-align: left;
+    font-size: x-small;
+}
+
+.OPDIDPortLabelLong {
+    font-family: Verdana;
+    text-align: left;
+    font-size: xx-small;
+}
+
+.OPDIDPortText {
+    font-family: Verdana;
+    text-align: left;
+    font-size: xx-small;
+}
+
+.OPDIDAnalogPortState {
+    font-family: Verdana;
+    text-align: center;
+}
+
+.OPDIDDialPortState {
+    font-family: Verdana;
+    text-align: center;
+}

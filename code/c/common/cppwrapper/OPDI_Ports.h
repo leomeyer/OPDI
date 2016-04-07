@@ -194,8 +194,12 @@ public:
 	/** Sets the direction capabilities of the port. */
 	virtual void setDirCaps(const char *dirCaps);
 
+	virtual const char* getDirCaps(void);
+
 	/** Sets the flags of the port. */
 	virtual void setFlags(int32_t flags);
+
+	virtual int32_t getFlags(void);
 
 	virtual void setUnit(std::string unit);
 
@@ -208,8 +212,8 @@ public:
 	virtual std::string getExtendedInfo(void);
 
 	/** Causes the port to be refreshed by sending a refresh message to a connected master.
-	*   Only if the port is not hidden. */
-	virtual uint8_t refresh(void);
+	*   Only if the port is not hidden and canSend is true. */
+	virtual uint8_t refresh();
 
 	virtual RefreshMode getRefreshMode(void);
 

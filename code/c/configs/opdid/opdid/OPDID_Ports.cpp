@@ -98,7 +98,7 @@ void OPDID_LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
 }
 
-void OPDID_LogicPort::setDirCaps(const char */*dirCaps*/) {
+void OPDID_LogicPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a LogicPort cannot be changed");
 }
 
@@ -271,7 +271,7 @@ void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 		throw Poco::DataException("Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + this->to_string(this->dutyCycle));
 }
 
-void OPDID_PulsePort::setDirCaps(const char */*dirCaps*/) {
+void OPDID_PulsePort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a PulsePort cannot be changed");
 }
 
@@ -421,7 +421,7 @@ void OPDID_SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->position = pos;
 }
 
-void OPDID_SelectorPort::setDirCaps(const char */*dirCaps*/) {
+void OPDID_SelectorPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a SelectorPort cannot be changed");
 }
 
@@ -494,7 +494,7 @@ void OPDID_ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration *confi
 	this->negate = config->getBool("Negate", false);
 }
 
-void OPDID_ErrorDetectorPort::setDirCaps(const char */*dirCaps*/) {
+void OPDID_ErrorDetectorPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of an ErrorDetectorPort cannot be changed");
 }
 

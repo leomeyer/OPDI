@@ -370,7 +370,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 	}
 }
 
-void OPDID_TimerPort::setDirCaps(const char */*dirCaps*/) {
+void OPDID_TimerPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a TimerPort cannot be changed");
 }
 

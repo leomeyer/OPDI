@@ -8,6 +8,8 @@
 #include "Poco/Util/PropertyFileConfiguration.h"
 #include "Poco/Logger.h"
 #include "Poco/Stopwatch.h"
+#include "Poco/BasicEvent.h"
+#include "Poco/Delegate.h"
 
 #include "OPDIDConfigurationFile.h"
 
@@ -113,6 +115,9 @@ public:
 	int logVerbosity;
 	std::string timestampFormat;
 
+	Poco::BasicEvent<void> allPortsRefreshed;
+	Poco::BasicEvent<OPDI_Port*> portRefreshed;
+	
 	AbstractOPDID(void);
 
 	virtual ~AbstractOPDID(void);
