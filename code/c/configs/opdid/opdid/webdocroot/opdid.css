@@ -3,6 +3,7 @@
 * Copyright (c) 2016 Leo Meyer, leo@leomeyer.de; Licensed MIT */
 
 .OPDIDPort {
+    font-family: Verdana;
     margin: 2 auto;
     border-width: 3px;
     border-style: outset;
@@ -25,40 +26,58 @@
 }
 
 .OPDIDPortLabelShort {
-    font-family: Verdana;
     text-align: left;
 }
 
 .OPDIDPortLabel30 {
-    font-family: Verdana;
     text-align: left;
     font-size: small;
 }
 
 .OPDIDPortLabel40 {
-    font-family: Verdana;
     text-align: left;
     font-size: x-small;
 }
 
 .OPDIDPortLabelLong {
-    font-family: Verdana;
     text-align: left;
     font-size: xx-small;
 }
 
 .OPDIDPortText {
-    font-family: Verdana;
     text-align: left;
     font-size: xx-small;
 }
 
 .OPDIDAnalogPortState {
-    font-family: Verdana;
     text-align: center;
 }
 
 .OPDIDDialPortState {
-    font-family: Verdana;
     text-align: center;
 }
+
+.OPDIDSelectPort {
+}
+
+.OPDIDSelectPortPosition {
+    text-align: left;
+    font-size: small;
+}
+
+.OPDIDSelectPort>ul.list { display:none;
+	position:absolute; left:30px; top:-30px; z-index:999;
+	width:300px;
+	margin:0; padding:10px; list-style:none;
+	background:#fff; color:#333;
+	-moz-border-radius:5px; -webkit-border-radius:5px; border-radius:5px;
+	-moz-box-shadow:0 0 5px #999; -webkit-box-shadow:0 0 5px #999; box-shadow:0 0 5px #999
+}
+.OPDIDSelectPort>ul.list li {
+	padding:10px;
+	border-bottom: solid 1px #ccc;
+}
+.OPDIDSelectPort>ul.list li:hover {
+	background:#EC6603; color:#fff;
+}
+.OPDIDSelectPort>ul.list li:last-child { border:none }

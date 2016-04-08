@@ -8,15 +8,15 @@
 
 <link rel="stylesheet" href="jquery-ui.min.css"/>
 <link rel="stylesheet" type="text/css" href="jquery.gridster.css"/>
+<link rel="stylesheet" type="text/css" href="contextMenu.css"/>
 <link rel="stylesheet" type="text/css" href="opdid.css"/>
 
 <script type="text/javascript" src="jquery-1.12.2.js"></script>
 <script type="text/javascript" src="jquery.jsonrpc.js"></script>
 <script type="text/javascript" src="jquery-ui.min.js"></script>
 <script type="text/javascript" src="jquery.gridster.js" charset="utf-8"></script>
-
+<script type="text/javascript" src="contextMenu.js"></script>
 <script type="text/javascript" src="simple-js-inheritance.js"></script>
-
 <script type="text/javascript" src="strings.js"></script>
 
 </head>
@@ -33,13 +33,54 @@ function handleError(error) {
         alert("Error: " + error);
 }
 
+// Units
+var units = {};         // a hash that maps unit names to a list of display units
+var unitsToUse = {};    // a hash that maps unit names to actual display unit settings
+
+function loadUnits() {
+    $.ajax({
+        url: "units.json",
+        success: function(script, textStatus) {
+            var jsonUnits = eval(script);
+            // build easily accessible unit list
+            for (var i = 0; i < jsonUnits.units.string.length; i++) {
+                var name = jsonUnits.units.string[i]["-name"];
+                var text = jsonUnits.units.string[i]["#text"];
+                units[name] = getProperties(text);
+            }
+        },
+        fail: function(jqxhr, settings, exception) {
+            console.log("Failed to load units.json: " + exception);
+        }
+    });    
+}
+
+function getUnitSettings(unit) {
+    // checks the unitsToUse cache whether a display unit setting has already been selected
+    // if so returns it, otherwise selects the first possible display unit setting and caches it
+    if (typeof unitsToUse[unit] != "undefined")
+        return unitsToUse[unit];
+    if (typeof units[unit] == "undefined")
+        return null;
+    var possibleSettings = units[unit];
+    for (setting in possibleSettings) {
+        if (possibleSettings[setting] == "0") {
+            result = units[setting];
+            unitsToUse[unit] = result;
+            return result;
+        }
+    }
+    return null;
+}
+
+
 // *********************************************************
 // Port management
 var ports = Array();
 
 function findPortByID(id) {
     for (var i = 0; i < ports.length; i++) {
-        if (ports[i].id == id)
+        if (ports[i].id === id)
             return ports[i];
     }
     return null;
@@ -69,8 +110,11 @@ var Port = Class.extend({
     setPort: function(port) {
         this.port = port;
         this.id = port.id;  // shortcut
-        this.properties = getProperties(port.extendedInfo);
+        this.extendedInfo = getProperties(port.extendedInfo);
         this.extendedState = getProperties(port.extendedState);
+        this.unit = null;
+        if (typeof this.extendedInfo.unit != "undefined")
+            this.unit = getUnitSettings(this.extendedInfo.unit);
     },
 
     refresh: function() {
@@ -88,7 +132,11 @@ var Port = Class.extend({
 
     getLabel: function() {
         var label = this.port.label;
-        // TODO override label from unit?
+        // set label from unit?
+        if ((label == "") && (this.unit != null)) {
+            if (typeof this.unit.label != "undefined")
+                label = this.unit.label;
+        }
         return label;
     },
 
@@ -111,6 +159,19 @@ var Port = Class.extend({
         if (typeof text != "undefined")
             textDiv = "<div class='OPDIDPortText' id='Port_" + this.port.id + "_Text'>" + text + "</div>"
         return labelDiv + textDiv;
+    },
+
+    getPortIconSrc: function() {
+        // unit icon?
+        if (this.unit != null) {
+            if (typeof this.unit.icon != "undefined")
+                return imageURLPrefix + this.unit.icon + ".png";
+        }
+        // special icon?
+        if (this.extendedInfo.icon != null) {
+            return imageURLPrefix + this.extendedInfo.icon + ".png";
+        }
+        return null;
     },
 
     getMaxLengthInPixels: function(values) {
@@ -148,10 +209,9 @@ var DigitalPort = Port.extend({
     getPortIconSrc: function() {
         if (this.port.state.error != null)
             return imageURLPrefix + "digital_port_error.png";
-        // special icon?
-        if (this.properties.icon != null) {
-            return imageURLPrefix + this.properties.icon + ".png";
-        }
+        var icon = this._super();
+        if (icon != null)
+            return icon;
         if (this.port.state.mode == this.OPDI_DIGITAL_MODE_OUTPUT)
             return imageURLPrefix + "digital_port_output.png";
         else
@@ -235,10 +295,11 @@ var DigitalPort = Port.extend({
 var AnalogPort = Port.extend({
 
     getPortIconSrc: function() {
-        // special icon?
-        if (this.properties.icon != null) {
-            return imageURLPrefix + this.properties.icon + ".png";
-        }
+        if (this.port.state.error != null)
+            return imageURLPrefix + "analog_port_error.png";
+        var icon = this._super();
+        if (icon != null)
+            return icon;
         return imageURLPrefix + "analog_port.png";
     },
 
@@ -339,18 +400,47 @@ var DialPort = Port.extend({
     getPortIconSrc: function() {
         if (this.port.state.error != null)
             return imageURLPrefix + "dial_port_error.png";
-        // special icon?
-        if (this.properties.icon != null) {
-            return imageURLPrefix + this.properties.icon + ".png";
-        }
+        var icon = this._super();
+        if (icon != null)
+            return icon;
         return imageURLPrefix + "dial_port.png";
     },
 
     getPortValue: function() {
         if (this.port.state.error != null || (typeof this.port.state.position == "undefined"))
             return "";
-        else
+        else {
+            // unit defined?
+            if (this.unit != null) {
+                // conversion defined?
+                if (typeof this.unit.conversion != "undefined") {
+                    // timestamp conversions
+			        if ("unixSeconds".equals(this.unit.conversion)) {
+				        return formatUnixSeconds(value);
+			        } else
+			        if ("unixSecondsLocal".equals(this.unit.conversion)) {
+				        return formatUnixSecondsLocal(value);
+			        } else
+                        return "Unknown conversion: " + this.unit.conversion;
+                }
+                var value = this.port.state.position;
+                // value needs to be formatted
+                var formatString = "%s";    // default
+                if (typeof this.unit.formatString != "undefined")
+                    formatString = this.unit.formatString;
+                if ((typeof this.unit.numerator != "undefined") || (typeof this.unit.denominator != "undefined")) {
+                    var numerator = (typeof this.unit.numerator != "undefined" ? this.unit.numerator : 1);
+                    var denominator = (typeof this.unit.denominator != "undefined" ? this.unit.denominator : 1);
+			        // calculate value
+			        if ((numerator != 1) || (denominator != 1)) {
+				        value = value * numerator / denominator;
+                    }
+                }
+				return sprintf(formatString, value);
+            }
+            // no unit defined, use plain numeric value
             return "" + this.port.state.position;
+        }
     },
 
     createWidget: function() {
@@ -358,25 +448,38 @@ var DialPort = Port.extend({
         + "<table><tr>"
         + "<td>" + "<img src='" + this.getPortIconSrc() + "' id='Port_" + this.port.id + "_Icon'>" + "</td>"
         + "<td width='5px'>&nbsp;</td>"
-            + "<td align='right'><table width='220px'>"
-            + "<tr><td>" + this.createLabel() + "</td></tr>"
-            + "<tr><td class='OPDIDPortState'><div id='Port_" + this.port.id + "_Slider'></div></td>"
-            + "<td width='10px'>&nbsp;</td>"
-            + "<td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>"
-                + "<div class='OPDIDDialPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td><tr>"
-            + "</table></td>"
+            + (this.noSlider 
+                ? "<td>" + this.createLabel() + "</td>"
+                + "<td width='10px'>&nbsp;</td>"
+                + "<td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>"
+                    + "<div class='OPDIDDialPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td>"
+                : "<td align='right'><table width='220px'>"
+                + "<tr><td>" + this.createLabel() + "</td></tr>"
+                + "<tr><td class='OPDIDPortState'><div id='Port_" + this.port.id + "_Slider'></div></td>"
+                + "<td width='10px'>&nbsp;</td>"
+                + "<td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>"
+                    + "<div class='OPDIDDialPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td><tr>"
+                + "</table></td>")
         + "</tr></table></div>", 1, 1];
 
         return widget;
     },
 
+    setPort: function(port) {
+        this._super(port);
+        if (this.unit != null)
+            this.noSlider = typeof this.unit.layout != "undefined" && this.unit.layout == "dial_port_row_noslider";
+    },
+
     updatePort: function(port) {
         this._super(port);
         $("#Port_" + this.port.id + "_Icon").attr("src", this.getPortIconSrc());
-        // avoid triggering a slider change if set programmatically (refresh loop)
-        this.port.noRefresh = true;
-        $("#Port_" + this.port.id + "_Slider").slider("value", this.port.state.position);
-        this.port.noRefresh = false;
+        if (!this.noSlider) {
+            // avoid triggering a slider change if set programmatically (refresh loop)
+            this.port.noRefresh = true;
+            $("#Port_" + this.port.id + "_Slider").slider("value", this.port.state.position);
+            this.port.noRefresh = false;
+        }
         $("#Port_" + this.port.id + "_Value").html("<nobr>" + this.getPortValue());
     },
 
@@ -410,27 +513,122 @@ var DialPort = Port.extend({
         $("#Port_" + this.port.id + "_Label").click(function() {
             // alert("Clicked: Label of port " + instance.port.id);
         }); 
-        $("#Port_" + this.port.id + "_Slider").slider({
-            min: this.port.min,
-            max: this.port.max,
-            step: this.port.step,
-            value: this.port.state.position,
-            start: function(event, ui) {
-                gridster.disable();
+        if (!this.noSlider) {
+            $("#Port_" + this.port.id + "_Slider").slider({
+                min: this.port.min,
+                max: this.port.max,
+                step: this.port.step,
+                value: this.port.state.position,
+                start: function(event, ui) {
+                    gridster.disable();
+                },
+                stop: function(event, ui) {
+                    gridster.enable();
+                },
+                slide: function(event, ui) {
+                    if (instance.port.readonly)
+                        return false;
+                },
+                change: function(event, ui) {
+                    if (instance.port.readonly)
+                        return false;
+                    instance.sliderChanged();
+                }
+            });
+        }
+    }
+});
+
+var SelectPort = Port.extend({
+
+    getPortIconSrc: function() {
+        if (this.port.state.error != null)
+            return imageURLPrefix + "select_port_error.png";
+        var icon = this._super();
+        if (icon != null)
+            return icon;
+        return imageURLPrefix + "select_port.png";
+    },
+
+    getPortStateSrc: function() {
+        return "";
+    },
+
+    getPositionText: function() {
+        if (this.port.state.error != null)
+            return "";
+        return this.port.positions[this.port.state.position];
+    },
+
+    createWidget: function() {
+        var widget = ["<div class='OPDIDPort' id='Port_" + this.port.id + "'>"
+        + "<table class='OPDIDPortWidget'><tr>"
+        + "<td width='1px'>" + "<img src='" + this.getPortIconSrc() + "' style='float:left;' id='Port_" + this.port.id + "_Icon'>" + "</td>"
+        + "<td width='10px'>&nbsp;</td>"
+        + "<td class='OPDIDSelectPort'>" + this.createLabel()
+        + "<div class='OPDIDSelectPortPosition' id='Port_" + this.port.id + "_Position'><nobr>" + this.getPositionText() + "</div>"
+        + "</td>"
+        + "</tr></table></div>", 1, 1];
+
+        return widget;
+    },
+
+    updatePort: function(port) {
+        this._super(port);
+        $("#Port_" + port.id + "_Icon").attr("src", this.getPortIconSrc());
+        $("#Port_" + port.id + "_Position").html("<nobr>" + this.getPositionText());
+    },
+
+    showMenu: function(ev) {
+        $("#Port_" + this.port.id + "_Icon").contextMenu('open', ev);
+    },
+
+    selectPosition: function(newPosition) {
+        var instance = this;
+
+        // call server
+        $.jsonRPC.request('setSelectPosition', {
+            params: {"portID": this.port.id, "position": newPosition},
+            success: function(response) {
+                instance.updatePort(response.result.port);
             },
-            stop: function(event, ui) {
-                gridster.enable();
-            },
-            slide: function(event, ui) {
-                if (instance.port.readonly)
-                    return false;
-            },
-            change: function(event, ui) {
-                if (instance.port.readonly)
-                    return false;
-                instance.sliderChanged();
+            error: function(response) {
+                handleError(response.error);
             }
         });
+    },
+
+    registerCommands: function() {
+        var instance = this;
+        $("#Port_" + this.port.id + "_Icon").click(function(ev) {
+            instance.showMenu(ev);
+            return false;
+        });
+        $("#Port_" + this.port.id + "_Label").click(function(ev) {
+            instance.showMenu(ev);
+            return false;
+        });
+        $("#Port_" + this.port.id + "_Position").click(function(ev) {
+            instance.showMenu(ev);
+            return false;
+        });
+
+        var menu = Array();
+        for (var i = 0; i < this.port.positions.length; i++) {
+            var item = function(index, position) {
+                return {
+                    name: position,
+                    title: position,
+                    fun: function() {
+                        instance.selectPosition(index);
+                    }
+                };
+            }(i, this.port.positions[i]);
+            menu.push(item);
+        }
+        $("#Port_" + this.port.id + "_Icon").contextMenu(menu);
+        $("#Port_" + this.port.id + "_Label").contextMenu(menu);
+        $("#Port_" + this.port.id + "_Position").contextMenu(menu);
     }
 });
 
@@ -456,6 +654,9 @@ function createPort(port) {
     } else
     if (port.type == OPDI_PORTTYPE_DIAL) {
         portObject = new DialPort(port);
+    } else
+    if (port.type == OPDI_PORTTYPE_SELECT) {
+        portObject = new SelectPort(port);
     }
 
     if (portObject != null)
@@ -530,7 +731,9 @@ function setupWebsocket() {
 // *********************************************************
 // Application
 
+
 function startup() {
+    loadUnits();
     setupRPC();
     setupUI();
     setupWebsocket();

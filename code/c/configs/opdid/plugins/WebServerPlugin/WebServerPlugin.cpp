@@ -101,6 +101,10 @@ public:
 	/** This method expects the port ID in the portID parameter and the new position in the position parameter of the params object.
 	* It returns the port info object. */
 	Poco::JSON::Object jsonRpcSetDialPosition(struct mg_connection *nc, struct http_message *hm, Poco::Dynamic::Var& params);
+
+	/** This method expects the port ID in the portID parameter and the new position in the position parameter of the params object.
+	* It returns the port info object. */
+	Poco::JSON::Object jsonRpcSetSelectPosition(struct mg_connection *nc, struct http_message *hm, Poco::Dynamic::Var& params);
 };
 
 static WebServerPlugin* instance;
@@ -170,6 +174,14 @@ Poco::JSON::Object WebServerPlugin::jsonGetPortInfo(OPDI_Port* port) {
 		result.set("min", dport->getMin());
 		result.set("max", dport->getMax());
 		result.set("step", dport->getStep());
+	} else
+		if (0 == strcmp(port->getType(), OPDI_PORTTYPE_SELECT)) {
+		OPDI_SelectPort* sport = (OPDI_SelectPort*)port;
+		Poco::JSON::Array positions;
+		for (size_t i = 0; i <= sport->getMaxPosition(); i++) {
+			positions.add(sport->getPositionLabel(i));
+		}
+		result.set("positions", positions);
 	}
 	result.set("state", this->jsonGetPortState(port));
 	result.set("extendedInfo", port->getExtendedInfo());
@@ -294,6 +306,33 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetDialPosition(struct mg_connection 
 	return this->jsonGetPortInfo(port);
 }
 
+Poco::JSON::Object WebServerPlugin::jsonRpcSetSelectPosition(struct mg_connection *nc, struct http_message *hm, Poco::Dynamic::Var& params) {
+	Poco::JSON::Object::Ptr object = params.extract<Poco::JSON::Object::Ptr>();
+	Poco::Dynamic::Var portID = object->get("portID");
+	if (portID.isEmpty())
+		throw Poco::InvalidArgumentException("Method setSelectPosition: parameter portID is missing");
+
+	std::string portIDStr = portID.convert<std::string>();
+	if (portIDStr == "")
+		throw Poco::InvalidArgumentException("Method setSelectPosition: parameter portID is missing");
+
+	OPDI_Port* port = this->opdid->findPortByID(portIDStr.c_str());
+	if (port == NULL)
+		throw Poco::InvalidArgumentException(std::string("Method setSelectPosition: port not found: ") + portIDStr);
+
+	if (0 != strcmp(port->getType(), OPDI_PORTTYPE_SELECT))
+		throw Poco::InvalidArgumentException(std::string("Method setSelectPosition: Specified port is not a select port: ") + portIDStr);
+
+	Poco::Dynamic::Var position = object->get("position");
+	if (position.isEmpty())
+		throw Poco::InvalidArgumentException("Method setSelectPosition: parameter position is missing");
+	uint16_t newPosition = position.convert<uint16_t>();
+
+	((OPDI_SelectPort*)port)->setPosition(newPosition);
+
+	return this->jsonGetPortInfo(port);
+}
+
 // get sockaddr, IPv4 or IPv6:
 static void *get_in_addr(struct sockaddr *sa)
 {
@@ -374,6 +413,9 @@ void WebServerPlugin::handleEvent(struct mg_connection *nc, int ev, void *p) {
 					} else
 					if (methodStr == "setDialPosition") {
 						result.set("port", this->jsonRpcSetDialPosition(nc, hm, params));
+					} else
+					if (methodStr == "setSelectPosition") {
+						result.set("port", this->jsonRpcSetSelectPosition(nc, hm, params));
 					} else
 						throw MethodNotFoundException(std::string("Unknown JSON-RPC method: ") + methodStr);
 
