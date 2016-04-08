@@ -143,14 +143,14 @@ var Port = Class.extend({
     createLabel: function() {
         var label = this.getLabel();
         // use different CSS classes for different lengths of labels
-        if (label.length < 20)
+        if (label.length < 15)
             var labelDiv = "<div class='OPDIDPortLabelShort' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
         else
-        if (label.length < 30)
-            var labelDiv = "<div class='OPDIDPortLabel30' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
+        if (label.length < 25)
+            var labelDiv = "<div class='OPDIDPortLabelMedium' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
         else
-        if (label.length < 40)
-            var labelDiv = "<div class='OPDIDPortLabel40' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
+        if (label.length < 35)
+            var labelDiv = "<div class='OPDIDPortLabelLonger' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
         else
             var labelDiv = "<div class='OPDIDPortLabelLong' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
         // info text from extended state
