@@ -69,7 +69,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 	this->setDirCaps(dircaps);
 }
 
-uint8_t OPDI_Port::doWork(uint8_t canSend) {
+uint8_t OPDI_Port::doWork(uint8_t /* canSend */) {
 	if (this->opdi == nullptr)
 		this->refreshRequired = false;
 

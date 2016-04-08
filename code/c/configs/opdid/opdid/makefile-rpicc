@@ -106,6 +106,7 @@ plugins:
 tar:
 	mkdir $(TARFOLDER)
 	cp $(TARGET) $(TARFOLDER)
+	cp -r webdocroot $(TARFOLDER)
 	mkdir $(TARFOLDER)/plugins
 	find ../plugins/ -name '*.so' -exec cp {} $(TARFOLDER)/plugins \;
 	tar czf $(TARFOLDER).tar.gz $(TARFOLDER)

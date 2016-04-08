@@ -36,7 +36,7 @@ CONIOINCPATH = $(OPDIDPATH)/../../../libraries/conio
 
 # POCO include path
 POCOINCPATH = $(OPDIDPATH)/../../../libraries/POCO/Util/include $(OPDIDPATH)/../../../libraries/POCO/Foundation/include $(OPDIDPATH)/../../../libraries/POCO/Net/include
-POCOINCPATH += $(OPDIDPATH)/../../../libraries/POCO/XML/include
+POCOINCPATH += $(OPDIDPATH)/../../../libraries/POCO/JSON/include
 
 # POCO library path
 POCOLIBPATH = $(OPDIDPATH)/../../../libraries/POCO/lib/Linux/ARM
