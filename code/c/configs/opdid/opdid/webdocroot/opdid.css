@@ -2,6 +2,15 @@
 *
 * Copyright (c) 2016 Leo Meyer, leo@leomeyer.de; Licensed MIT */
 
+.OPDIDDeviceName {
+    font-family: Verdana;
+    font-size: large;
+}
+
+.OPDIDGroupTree {
+    font-family: Verdana;
+}
+
 .OPDIDPort {
     font-family: Verdana;
     margin: 2 auto;
@@ -12,17 +21,26 @@
     position: relative;
 }
 
-.OPDIDPort table 
+.OPDIDPort > table
 {
     margin: 0;
     position: absolute;
     top: 50%;
     transform: translate(0, -50%);
+	width: 100%;
 }
 
 .OPDIDPortWidget {
     vertical-align: middle;
     width: 100%;
+}
+
+.OPDIDPortIcon {
+    width: 48px;
+}
+
+.OPDIDPortIconCell {
+    width: 48px;
 }
 
 .OPDIDPortLabelShort {
@@ -54,7 +72,7 @@
 }
 
 .OPDIDDialPortState {
-    text-align: center;
+    text-align: right;
 }
 
 .OPDIDSelectPort {

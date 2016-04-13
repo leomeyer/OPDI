@@ -92,12 +92,15 @@
     <None Include="webdocroot\jquery-ui.js" />
     <None Include="webdocroot\jquery-ui.structure.css" />
     <None Include="webdocroot\jquery-ui.theme.css" />
+    <None Include="webdocroot\jquery.fancytree.js" />
+    <None Include="webdocroot\jquery.formatter.js" />
     <None Include="webdocroot\jquery.gridster.css" />
     <None Include="webdocroot\jquery.gridster.js" />
     <None Include="webdocroot\jquery.jsonrpc.js" />
     <None Include="webdocroot\opdid.css" />
     <None Include="webdocroot\simple-js-inheritance.js" />
     <None Include="webdocroot\strings.js" />
+    <None Include="webdocroot\ui.fancytree.css" />
     <None Include="webdocroot\utils.js" />
     <None Include="win_opdid.ini" />
     <None Include="ReadMe.txt" />

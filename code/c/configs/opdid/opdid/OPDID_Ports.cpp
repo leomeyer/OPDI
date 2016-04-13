@@ -753,7 +753,7 @@ void OPDID_LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->portsToLogStr = this->opdid->getConfigString(config, "Ports", "", true);
 }
 
-int OPDID_LoggerPort::write(char */*bytes*/, size_t /*length*/) {
+int OPDID_LoggerPort::write(char * /*bytes*/, size_t /*length*/) {
 	return 0;
 }
 
@@ -763,7 +763,7 @@ int OPDID_LoggerPort::available(size_t /*count*/) {
 	return 0;
 }
 
-int OPDID_LoggerPort::read(char */*result*/) {
+int OPDID_LoggerPort::read(char * /*result*/) {
 	// nothing available
 	return 0;
 }
@@ -841,7 +841,7 @@ void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
 }
 
-void OPDID_FaderPort::setDirCaps(const char */*dirCaps*/) {
+void OPDID_FaderPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a FaderPort cannot be changed");
 }
 

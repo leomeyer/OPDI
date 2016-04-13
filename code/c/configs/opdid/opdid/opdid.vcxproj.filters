@@ -112,6 +112,15 @@
     <None Include="webdocroot\utils.js">
       <Filter>Ressourcendateien\webdocroot</Filter>
     </None>
+    <None Include="webdocroot\jquery.fancytree.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\ui.fancytree.css">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\jquery.formatter.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

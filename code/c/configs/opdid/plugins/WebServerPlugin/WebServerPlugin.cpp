@@ -85,10 +85,17 @@ public:
 	/** This method returns information about the given port as a JSON object. */
 	Poco::JSON::Object jsonGetPortInfo(OPDI_Port* port);
 
+	/** This method returns the list of (non-hidden) ports as a JSON array. */
+	Poco::JSON::Array jsonGetPortList();
+
+	/** This method returns the list of groups as a JSON array. */
+	Poco::JSON::Array jsonGetPortGroups();
+
+	/** This method returns information about the device (name, ports, groups, ...) as a JSON object. */
+	Poco::JSON::Object jsonRpcGetDeviceInfo(struct mg_connection* nc, struct http_message* hm, Poco::Dynamic::Var& params);
+
 	/** This method expects the port ID in the portID parameter of the params object. */
 	Poco::JSON::Object jsonRpcGetPortInfo(struct mg_connection* nc, struct http_message* hm, Poco::Dynamic::Var& params);
-
-	Poco::JSON::Array jsonRpcGetPortList(struct mg_connection* nc, struct http_message* hm, Poco::Dynamic::Var& params);
 
 	/** This method expects the port ID in the portID parameter and the new line state in the line parameter of the params object.
 	* It returns the port info object. */
@@ -204,11 +211,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcGetPortInfo(struct mg_connection* /*n
 	return this->jsonGetPortInfo(port);
 }
 
-Poco::JSON::Array WebServerPlugin::jsonRpcGetPortList(struct mg_connection* /*nc*/, struct http_message* /*hm*/, Poco::Dynamic::Var& /*params*/) {
-	// list all ports, expect no parameters
-//	if (params.isArray())
-//		throw Poco::InvalidArgumentException("JSON-RPC method 'getPortList' expects no parameters");
-
+Poco::JSON::Array WebServerPlugin::jsonGetPortList() {
 	// return an array of port objects
 	Poco::JSON::Array result;
 	OPDI::PortList pl = this->opdid->getPorts();
@@ -218,6 +221,35 @@ Poco::JSON::Array WebServerPlugin::jsonRpcGetPortList(struct mg_connection* /*nc
 			result.add(this->jsonGetPortInfo(*it));
 		it++;
 	}
+
+	return result;
+}
+
+Poco::JSON::Array WebServerPlugin::jsonGetPortGroups() {
+	// return an array of group objects
+	Poco::JSON::Array result;
+	OPDI::PortGroupList gl = this->opdid->getPortGroups();
+	OPDI::PortGroupList::const_iterator it = gl.begin();
+	while (it != gl.end()) {
+		Poco::JSON::Object group;
+		group.set("id", std::string((*it)->getID()));
+		group.set("label", std::string((*it)->getLabel()));
+		group.set("parent", std::string((*it)->getParent()));
+		result.add(group);
+		it++;
+	}
+
+	return result;
+}
+
+Poco::JSON::Object WebServerPlugin::jsonRpcGetDeviceInfo(struct mg_connection* /*nc*/, struct http_message* /*hm*/, Poco::Dynamic::Var& /*params*/) {
+	// return an object that represents the top group
+	// sub-groups will be contained in its subgroups member
+	Poco::JSON::Object result;
+
+	result.set("name", this->opdid->getSlaveName());
+	result.set("ports", this->jsonGetPortList());
+	result.set("groups", this->jsonGetPortGroups());
 
 	return result;
 }
@@ -399,8 +431,8 @@ void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void *p) {
 						throw InvalidRequestException("Method name missing");
 					
 					Poco::JSON::Object result;
-					if (methodStr == "getPortList") {
-						result.set("portList", this->jsonRpcGetPortList(nc, hm, params));
+					if (methodStr == "getDeviceInfo") {
+						result.set("deviceInfo", this->jsonRpcGetDeviceInfo(nc, hm, params));
 					} else
 					if (methodStr == "getPortInfo") {
 						result.set("port", this->jsonRpcGetPortInfo(nc, hm, params));

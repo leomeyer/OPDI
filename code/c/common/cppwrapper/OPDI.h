@@ -35,6 +35,7 @@
 class OPDI {
 public:
 	typedef std::vector<OPDI_Port *> PortList;
+	typedef std::vector<OPDI_PortGroup *> PortGroupList;
 
 protected:
 	std::string slaveName;
@@ -52,9 +53,10 @@ protected:
 
 	// list pointers
 	PortList ports;
+	PortGroupList groups;
 
-	OPDI_PortGroup *first_portGroup;
-	OPDI_PortGroup *last_portGroup;
+//	OPDI_PortGroup *first_portGroup;
+//	OPDI_PortGroup *last_portGroup;
 
 	uint32_t idle_timeout_ms;
 	uint64_t last_activity;
@@ -117,7 +119,7 @@ public:
 	virtual OPDI_Port *findPort(opdi_Port *port);
 
 	/** Returns the list of all ports registered in this instance. */
-	virtual PortList getPorts(void);
+	virtual PortList& getPorts(void);
 
 	/** Returns NULL if the port could not be found. */
 	virtual OPDI_Port *findPortByID(const char *portID, bool caseInsensitive = false);
@@ -131,6 +133,9 @@ public:
 
 	/** Adds the specified port group. */
 	virtual void addPortGroup(OPDI_PortGroup *portGroup);
+
+	/** Returns the list of all port groups registered in this instance. */
+	virtual PortGroupList& getPortGroups(void);
 
 	/** Starts the OPDI handshake to accept commands from a master.
 	 * Does not use a housekeeping function.

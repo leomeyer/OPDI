@@ -63,8 +63,9 @@ uint8_t OPDI::setup(const char *slaveName, int idleTimeout) {
 
 	// initialize port list
 	this->ports.clear();
-	this->first_portGroup = nullptr;
-	this->last_portGroup = nullptr;
+	this->groups.clear();
+	//this->first_portGroup = nullptr;
+	//this->last_portGroup = nullptr;
 
 	// copy slave name to internal buffer
 	this->slaveName = slaveName;
@@ -213,7 +214,7 @@ OPDI_Port *OPDI::findPort(opdi_Port *port) {
 	return nullptr;
 }
 
-OPDI::PortList OPDI::getPorts() {
+OPDI::PortList& OPDI::getPorts() {
 	return this->ports;
 }
 
@@ -257,7 +258,7 @@ void OPDI::updatePortGroupData(OPDI_PortGroup *group) {
 void OPDI::addPortGroup(OPDI_PortGroup *portGroup) {
 	// associate port with this instance
 	portGroup->opdi = this;
-
+	/*
 	// first added port?
 	if (this->first_portGroup == nullptr) {
 		this->first_portGroup = portGroup;
@@ -267,11 +268,17 @@ void OPDI::addPortGroup(OPDI_PortGroup *portGroup) {
 		this->last_portGroup->next = portGroup;
 		this->last_portGroup = portGroup;
 	}
-
+	*/
+	this->groups.push_back(portGroup);
 	this->updatePortGroupData(portGroup);
 
 	opdi_add_portgroup((opdi_PortGroup*)portGroup->data);
 }
+
+OPDI::PortGroupList& OPDI::getPortGroups(void) {
+	return this->groups;
+}
+
 
 bool OPDI_Port_Sort(OPDI_Port *i, OPDI_Port *j) { return i->orderID < j->orderID; }
 
@@ -376,7 +383,7 @@ uint8_t OPDI::idleTimeoutReached() {
 	return this->disconnect();
 }
 
-uint8_t OPDI::messageHandled(channel_t channel, const char **/*parts*/) {
+uint8_t OPDI::messageHandled(channel_t channel, const char ** /*parts*/) {
 	// a complete message has been processed; it's now safe to send
 	this->canSend = true;
 
@@ -414,6 +421,6 @@ void OPDI::shutdown(void) {
 	this->shutdownRequested = true;
 }
 
-void OPDI::persist(OPDI_Port */*port*/) {
+void OPDI::persist(OPDI_Port * /*port*/) {
 	throw Poco::NotImplementedException("This implementation does not support port state persistance");
 }
