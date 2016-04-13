@@ -989,7 +989,7 @@ function buildSubGroup(parentGroup, selectedGroup) {
 function buildGroupView(selectedGroup) {
     // build group tree
     var treeHtml = "<ul>"
-        + "<li><a href=\"" + removeParam("group", window.location.href) + "\">" +
+        + "<li><a href=\"?group=\">" +
             (typeof selectedGroup == "undefined" ? "<b>" : "")
         + "All ports</b></a></li>";
     treeHtml += buildSubGroup(null, selectedGroup);
