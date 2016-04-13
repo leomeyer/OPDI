@@ -34,7 +34,7 @@ var imageURLPrefix = "images/";
 var units = {};         // a hash that maps unit names to a list of display units
 var unitsToUse = {};    // a hash that maps unit names to actual display unit settings
 
-var deviceInfo = {};
+var device = {};
 
 // port UI control list
 var ports = Array();
@@ -178,14 +178,22 @@ function getUnitSettings(unit) {
 					if (typeof this.formatString != "undefined")
 						formatString = this.formatString;
                     var unit = this;
-                    return formatString.replace(/%(\.[0-9])*f/, function(match, detail) {
-                        var minLength = ("" + min).length + (min < 0 ? 1 : 0);
-                        var maxLength = ("" + max).length + (max < 0 ? 1 : 0);
-                        var totalLength = Math.max(minLength, maxLength);
-                        var decimalLength = Math.ceil(Math.log10(unit.denominator));
-                        var prefixLength = totalLength - decimalLength;
-                        return "{{" + "9".repeat(prefixLength) + "}}" + (decimalLength > 0 ? ".{{" + "9".repeat(decimalLength) + "}}" : "");
-                    });
+                    return formatString
+                        .replace(/%(\.[0-9])*f/, function(match, detail) {
+                            var minLength = ("" + min).length + (min < 0 ? 1 : 0);
+                            var maxLength = ("" + max).length + (max < 0 ? 1 : 0);
+                            var totalLength = Math.max(minLength, maxLength);
+                            var decimalLength = Math.ceil(Math.log10(unit.denominator));
+                            var prefixLength = totalLength - decimalLength;
+                            return "{{" + "9".repeat(prefixLength) + "}}" + (decimalLength > 0 ? ".{{" + "9".repeat(decimalLength) + "}}" : "");
+                        })
+                        .replace(/%d/, function(match, detail) {
+                            var minLength = ("" + min).length + (min < 0 ? 1 : 0);
+                            var maxLength = ("" + max).length + (max < 0 ? 1 : 0);
+                            var totalLength = Math.max(minLength, maxLength);
+                            return "{{" + "9".repeat(totalLength) + "}}";
+                        })
+                        .replace("%%", "%");
                 };
 			}
 
@@ -211,9 +219,9 @@ function findPortByID(id) {
 }
 
 function findGroupByID(id) {
-    for (var i = 0; i < deviceInfo.groups.length; i++) {
-        if (deviceInfo.groups[i].id === id)
-            return deviceInfo.groups[i];
+    for (var i = 0; i < device.groups.length; i++) {
+        if (device.groups[i].id === id)
+            return device.groups[i];
     }
     return null;
 }
@@ -891,9 +899,9 @@ function getParentGroup(group) {
     if (group.parent == "")
         return null;
 
-    for (var i = 0; i < deviceInfo.groups.length; i++) {
-        if (deviceInfo.groups[i].id === group.parent)
-            return deviceInfo.groups[i];
+    for (var i = 0; i < device.groups.length; i++) {
+        if (device.groups[i].id === group.parent)
+            return device.groups[i];
     }
 
     return null;
@@ -922,8 +930,8 @@ function isPortInGroup(port, group) {
 
 function buildPortView(group) {
     // create port UI elements
-    for (var i = 0; i < deviceInfo.ports.length; i++) {
-        var portObject = createPort(deviceInfo.ports[i])
+    for (var i = 0; i < device.ports.length; i++) {
+        var portObject = createPort(device.ports[i])
         // group specified?
         if (typeof group != "undefined") {
             // check whether the port is in the group or its parents
@@ -949,8 +957,8 @@ function buildSubGroup(parentGroup, selectedGroup) {
     var result = "";
     // determine groups on this level
     var groups = new Array();
-    for (var i = 0; i < deviceInfo.groups.length; i++) {
-        var group = deviceInfo.groups[i];
+    for (var i = 0; i < device.groups.length; i++) {
+        var group = device.groups[i];
         // top level? take all top level groups
         if (parentGroup == null && group.parent == "")
             groups.push(group);
@@ -990,22 +998,26 @@ function buildGroupView(selectedGroup) {
     $("#groupTree").html(treeHtml);
 }
 
-function buildUI(deviceInfoP) {
+function buildUI(deviceP) {
     // store device info globally
-    deviceInfo = deviceInfoP;
+    device = deviceP;
+    // store info properties
+    device.info = getProperties(device.info);
+    if (typeof device.info != "undefined")
+        device.startGroup = device.info.startGroup;
 
-    $("#deviceName").html(deviceInfo.name);
+    $("#deviceName").html(device.name);
 
     // determine initial group
     var groupID = getParameterByName("group", window.location.href);
-    if (typeof groupID == "undefined")
+    if (groupID == null)
         // fall back to optional device specification
-        groupID = deviceInfo.startGroup;
+        groupID = device.startGroup;
 
     var group = undefined;
-    for (var i = 0; i < deviceInfoP.groups.length; i++)
-        if (deviceInfoP.groups[i].id == groupID) {
-            group = deviceInfoP.groups[i];
+    for (var i = 0; i < deviceP.groups.length; i++)
+        if (deviceP.groups[i].id == groupID) {
+            group = deviceP.groups[i];
             break;
         }
 
@@ -1054,11 +1066,10 @@ function setupRPC() {
 function setupWebsocket() {
     var ws = new WebSocket('ws://' + location.host + '/ws');
     if (!window.console) { window.console = { log: function() {} } };
-    ws.onopen = function(ev)  { console.log(ev); };
-    ws.onerror = function(ev) { console.log(ev); };
-    ws.onclose = function(ev) { console.log(ev); };
+    ws.onopen = function(ev) {};
+    ws.onerror = function(ev) {};
+    ws.onclose = function(ev) {};
     ws.onmessage = function(ev) {
-        console.log(ev);
         // examine message
         var parts = ev.data.split(" ");
         if (parts[0] == "RefreshAll") {

@@ -1544,6 +1544,10 @@ double AbstractOPDID::getPortValue(OPDI_Port* port) {
 	return value;
 }
 
+std::string AbstractOPDID::getDeviceInfo(void) {
+	return this->deviceInfo;
+}
+
 void AbstractOPDID::getEnvironment(std::map<std::string, std::string>& mapToFill) {
 	mapToFill.insert(this->environment.begin(), this->environment.end());
 }

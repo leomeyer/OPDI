@@ -121,6 +121,9 @@
     <None Include="webdocroot\jquery.formatter.js">
       <Filter>Ressourcendateien\webdocroot</Filter>
     </None>
+    <None Include="webdocroot\units.json">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

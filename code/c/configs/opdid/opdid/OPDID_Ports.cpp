@@ -1653,6 +1653,8 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 
 		// configure the dial port
 		this->opdid->configureDialPort(calculationConfig, calc);
+		// these ports are always readonly (because they contain the result of a calculation)
+		calc->setReadonly(true);
 
 		std::string algStr = calculationConfig->getString("Algorithm", "");
 

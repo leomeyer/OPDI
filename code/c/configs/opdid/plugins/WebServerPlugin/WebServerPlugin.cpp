@@ -250,6 +250,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcGetDeviceInfo(struct mg_connection* /
 	result.set("name", this->opdid->getSlaveName());
 	result.set("ports", this->jsonGetPortList());
 	result.set("groups", this->jsonGetPortGroups());
+	result.set("info", this->opdid->getDeviceInfo());
 
 	return result;
 }
