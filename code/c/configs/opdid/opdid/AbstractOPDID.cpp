@@ -1065,6 +1065,15 @@ void AbstractOPDID::setupAggregatorPort(Poco::Util::AbstractConfiguration *portC
 	this->addPort(agPort);
 }
 
+void AbstractOPDID::setupTriggerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+	this->logVerbose("Setting up Trigger: " + port);
+
+	OPDID_TriggerPort* tPort = new OPDID_TriggerPort(this, port.c_str());
+	tPort->configure(portConfig);
+
+	this->addPort(tPort);
+}
+
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
 	this->logVerbose("Setting up node: " + node);
 
@@ -1163,6 +1172,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else
 		if (nodeType == "Aggregator") {
 			this->setupAggregatorPort(nodeConfig, config, node);
+		} else
+		if (nodeType == "Trigger") {
+			this->setupTriggerPort(nodeConfig, node);
 		} else
 			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 	}

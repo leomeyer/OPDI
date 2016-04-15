@@ -406,7 +406,7 @@ void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void *p) {
 			// prepare log message
 			char address[INET6_ADDRSTRLEN];
 			inet_ntop(nc->sa.sa.sa_family, get_in_addr(&nc->sa.sa), address, sizeof address);
-			this->logVerbose(this->ID() + ": Request received from: " + address + " for: " + std::string(hm->uri.p, hm->uri.len));
+			this->logDebug(this->ID() + ": Request received from: " + address + " for: " + std::string(hm->uri.p, hm->uri.len));
 
 			// JSON-RPC url received?
 			if (mg_vcmp(&hm->uri, jsonRpcUrl.c_str()) == 0) {

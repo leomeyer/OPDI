@@ -33,7 +33,7 @@
 * Additionally you can specify whether the output should be negated.
 * The LogicPort requires at least one digital port as input. The output
 * can optionally be distributed to an arbitrary number of digital ports.
-* Processing occurs in the OPDI waiting event loop, i. e. about once a ms.
+* Processing occurs in the OPDI waiting event loop.
 * All input ports' state is queried. If the logic function results in a change
 * of this port's state the new state is set on the output ports. This means that
 * there is no unnecessary continuous state propagation.
@@ -510,6 +510,68 @@ public:
 	OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id);
 
 	virtual void configure(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig);
+
+	virtual void prepare() override;
+
+	virtual void setLine(uint8_t newLine) override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Trigger Port
+///////////////////////////////////////////////////////////////////////////////
+
+/** A TriggerPort is a DigitalPort that continuously monitors one or more 
+* digital ports for changes of their state. If a state change is detected it
+* can change the state of other DigitalPorts.
+* Triggering can happen on a change from Low to High (rising edge), from
+* High to Low (falling edge), or on both changes.
+* The effected state change can either be to set the output DigitalPorts
+* High, Low, or toggle them. If you specify inverse output ports the state change
+* is inverted, except for the Toggle specification.
+* Disabling the TriggerPort sets all previously recorded port states to "unknown".
+* No change is performed the first time a DigitalPort is read when its current
+* state is unknown. A port that returns an error will also be set to "unknown".
+*/
+class OPDID_TriggerPort : public OPDI_DigitalPort, public OPDID_PortFunctions {
+protected:
+
+	enum TriggerType {
+		RISING_EDGE,
+		FALLING_EDGE,
+		BOTH
+	};
+
+	enum ChangeType {
+		SET_HIGH,
+		SET_LOW,
+		TOGGLE
+	};
+
+	enum PortState {
+		UNKNOWN,
+		LOW,
+		HIGH
+	};
+
+	typedef Poco::Tuple<OPDI_DigitalPort*, PortState> PortData;
+	typedef std::vector<PortData> PortDataList;
+
+	std::string inputPortStr;
+	std::string outputPortStr;
+	std::string inverseOutputPortStr;
+	DigitalPortList outputPorts;
+	DigitalPortList inverseOutputPorts;
+	TriggerType triggerType;
+	ChangeType changeType;
+
+	PortDataList portDataList;
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+
+public:
+	OPDID_TriggerPort(AbstractOPDID *opdid, const char *id);
+
+	virtual void configure(Poco::Util::AbstractConfiguration *portConfig);
 
 	virtual void prepare() override;
 

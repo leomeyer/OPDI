@@ -1708,3 +1708,175 @@ void OPDID_AggregatorPort::setLine(uint8_t newLine) {
 		this->resetValues();
 	OPDI_DigitalPort::setLine(newLine);
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// TriggerPort
+///////////////////////////////////////////////////////////////////////////////
+
+OPDID_TriggerPort::OPDID_TriggerPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
+	this->opdid = opdid;
+
+	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+	this->line = 1;	// default: active
+}
+
+void OPDID_TriggerPort::configure(Poco::Util::AbstractConfiguration *config) {
+	this->opdid->configurePort(config, this, 0);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+
+	std::string triggerTypeStr = config->getString("Trigger", "RisingEdge");
+	if (triggerTypeStr == "RisingEdge")
+		this->triggerType = RISING_EDGE;
+	else
+	if (triggerTypeStr == "FallingEdge")
+		this->triggerType = FALLING_EDGE;
+	else
+	if (triggerTypeStr == "Both")
+		this->triggerType = BOTH;
+	else
+		if (triggerTypeStr != "")
+			throw Poco::DataException(this->ID() + ": Invalid specification for 'Trigger', expected 'RisingEdge', 'FallingEdge', or 'Both'");
+
+	std::string changeTypeStr = config->getString("Change", "Toggle");
+	if (changeTypeStr == "SetHigh")
+		this->changeType = SET_HIGH;
+	else
+	if (changeTypeStr == "SetLow")
+		this->changeType = SET_LOW;
+	else
+	if (changeTypeStr == "Toggle")
+		this->changeType = TOGGLE;
+	else
+		if (changeTypeStr != "")
+			throw Poco::DataException(this->ID() + ": Invalid specification for 'Change', expected 'SetHigh', 'SetLow', or 'Toggle'");
+
+	this->inputPortStr = config->getString("InputPorts", "");
+	if (this->inputPortStr == "")
+		throw Poco::DataException("Expected at least one input port for TriggerPort");
+
+	this->outputPortStr = config->getString("OutputPorts", "");
+	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
+}
+
+void OPDID_TriggerPort::setLine(uint8_t line) {
+	OPDI_DigitalPort::setLine(line);
+
+	// deactivated?
+	if (line == 0) {
+		// reset all input port states to "unknown"
+		PortDataList::iterator it = this->portDataList.begin();
+		while (it != this->portDataList.end()) {
+			(*it).set<1>(UNKNOWN);
+			it++;
+		}
+	}
+}
+
+void OPDID_TriggerPort::prepare() {
+	this->logDebug(this->ID() + ": Preparing port");
+	OPDI_DigitalPort::prepare();
+
+	// find ports; throws errors if something required is missing
+	DigitalPortList inputPorts;
+	this->findDigitalPorts(this->getID(), "InputPorts", this->inputPortStr, inputPorts);
+	// go through input ports, build port state list
+	DigitalPortList::const_iterator it = inputPorts.begin();
+	while (it != inputPorts.end()) {
+		PortData pd(*it, UNKNOWN);
+		this->portDataList.push_back(pd);
+		it++;
+	}
+
+	this->findDigitalPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
+	this->findDigitalPorts(this->getID(), "InverseOutputPorts", this->inverseOutputPortStr, this->inverseOutputPorts);
+}
+
+uint8_t OPDID_TriggerPort::doWork(uint8_t canSend)  {
+	OPDI_DigitalPort::doWork(canSend);
+
+	if (this->line == 0)
+		return OPDI_STATUS_OK;
+
+	bool changeDetected = false;
+	PortDataList::iterator it = this->portDataList.begin();
+	while (it != this->portDataList.end()) {
+		uint8_t mode;
+		uint8_t line;
+		try {
+			(*it).get<0>()->getState(&mode, &line);
+
+			if ((*it).get<1>() != UNKNOWN) {
+				// state change?
+				switch (this->triggerType) {
+				case RISING_EDGE: if (((*it).get<1>() == LOW) && (line == 1))
+									changeDetected = true; break;
+				case FALLING_EDGE: if (((*it).get<1>() == HIGH) && (line == 0)) 
+									changeDetected = true; break;
+				case BOTH: if ((*it).get<1>() != (line == 1 ? HIGH : LOW)) 
+									changeDetected = true; break;
+				}
+			}
+			// remember current state
+			(*it).set<1>(line == 1 ? HIGH : LOW);
+			// do not exit the loop even if a change has been detected
+			// always go through all ports
+		} catch (Poco::Exception&) {
+			// port has an error, set it to unknown
+			(*it).set<1>(UNKNOWN);
+		}
+		++it;
+	}
+
+	// change detected?
+	if (changeDetected) {
+		this->logDebug(this->ID() + ": Detected triggering change");
+
+		// regular output ports
+		DigitalPortList::iterator it = this->outputPorts.begin();
+		while (it != this->outputPorts.end()) {
+			try {
+				if (this->changeType == SET_HIGH) {
+					(*it)->setLine(1);
+				} else
+				if (this->changeType == SET_LOW) {
+					(*it)->setLine(0);
+				} else {
+					// toggle
+					uint8_t mode;
+					uint8_t line;
+					// get current output port state
+					(*it)->getState(&mode, &line);
+					(*it)->setLine(line == 1 ? 0 : 1);
+				}
+			} catch (Poco::Exception &e) {
+				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
+			}
+			++it;
+		}
+		// inverse output ports
+		it = this->inverseOutputPorts.begin();
+		while (it != this->inverseOutputPorts.end()) {
+			try {
+				if (this->changeType == SET_HIGH) {
+					(*it)->setLine(0);
+				} else
+				if (this->changeType == SET_LOW) {
+					(*it)->setLine(1);
+				} else {
+					// toggle
+					uint8_t mode;
+					uint8_t line;
+					// get current output port state
+					(*it)->getState(&mode, &line);
+					(*it)->setLine(line == 1 ? 0 : 1);
+				}
+			} catch (Poco::Exception &e) {
+				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
+			}
+			++it;
+		}
+	}
+
+	return OPDI_STATUS_OK;
+}
