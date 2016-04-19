@@ -22,6 +22,8 @@
 
 #define MG_VERSION "6.3"
 
+#define _CRT_SECURE_NO_WARNINGS
+
 /* Local tweaks, applied before any of Mongoose's own headers. */
 #ifdef MG_LOCALS
 #include <mg_locals.h>
