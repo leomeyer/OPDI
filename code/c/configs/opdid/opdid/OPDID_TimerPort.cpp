@@ -689,41 +689,41 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 	if (notification) {
 		try {
 			ScheduleNotification::Ptr workNf = notification.cast<ScheduleNotification>();
+			Schedule* schedule = workNf->schedule;
 
 			this->logVerbose(this->ID() + ": Timer reached scheduled " + (workNf->deactivate ? "deactivation " : "") 
-				+ "time for node: " + workNf->schedule->nodeName);
+				+ "time for node: " + schedule->nodeName);
 
-			workNf->schedule->occurrences++;
+			schedule->occurrences++;
 
 			// cause master's UI state refresh if no deactivate
 			this->refreshRequired = !workNf->deactivate;
 
 			// calculate next occurrence depending on type; maximum ocurrences must not have been reached
-			if ((!workNf->deactivate) && (workNf->schedule->type != ONCE) 
-				&& ((workNf->schedule->maxOccurrences < 0) || (workNf->schedule->occurrences < workNf->schedule->maxOccurrences))) {
+			if ((!workNf->deactivate) && (schedule->type != ONCE) 
+				&& ((schedule->maxOccurrences < 0) || (schedule->occurrences < schedule->maxOccurrences))) {
 
-				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(workNf->schedule);
+				Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(schedule);
 				if (nextOccurrence > Poco::Timestamp()) {
 					// add with the specified occurrence time
 					this->addNotification(workNf, nextOccurrence);
 				} else {
 					// warn if unable to calculate next occurrence; except if login or logout event
-					if ((workNf->schedule->type != ONLOGIN) && (workNf->schedule->type != ONLOGOUT))
-						this->logNormal(this->ID() + ": Warning: Next scheduled time for " + workNf->schedule->nodeName + " could not be determined");
+					if ((schedule->type != ONLOGIN) && (schedule->type != ONLOGOUT))
+						this->logNormal(this->ID() + ": Warning: Next scheduled time for " + schedule->nodeName + " could not be determined");
 				}
 			}
 
 			// need to deactivate?
-			if ((!workNf->deactivate) && (workNf->schedule->duration > 0)) {
+			if ((!workNf->deactivate) && (schedule->duration > 0)) {
 				// enqueue the notification for the deactivation
-				Schedule *deacSchedule = workNf->schedule;
-				ScheduleNotification *notification = new ScheduleNotification(deacSchedule, true);
+				ScheduleNotification *notification = new ScheduleNotification(schedule, true);
 				Poco::Timestamp deacTime;
-				Poco::Timestamp::TimeDiff timediff = workNf->schedule->duration * Poco::Timestamp::resolution() / 1000;
+				Poco::Timestamp::TimeDiff timediff = schedule->duration * Poco::Timestamp::resolution() / 1000;
 				deacTime += timediff;
 				Poco::DateTime deacLocal(deacTime);
 				deacLocal.makeLocal(Poco::Timezone::tzd());
-				this->logVerbose(this->ID() + ": Scheduled deactivation time for node " + deacSchedule->nodeName + " is at: " + 
+				this->logVerbose(this->ID() + ": Scheduled deactivation time for node " + schedule->nodeName + " is at: " + 
 						Poco::DateTimeFormatter::format(deacLocal, this->opdid->timestampFormat)
 						+ "; in " + this->to_string(timediff / 1000000) + " second(s)");
 				// add with the specified deactivation time
@@ -732,9 +732,9 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 
 			// set the output ports' state
 			int8_t outputLine = -1;	// assume: toggle
-			if (workNf->schedule->action == SET_HIGH)
+			if (schedule->action == SET_HIGH)
 				outputLine = (workNf->deactivate ? 0 : 1);
-			if (workNf->schedule->action == SET_LOW)
+			if (schedule->action == SET_LOW)
 				outputLine = (workNf->deactivate ? 1 : 0);
 
 			this->setOutputs(outputLine);
