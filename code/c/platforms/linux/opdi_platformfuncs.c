@@ -148,8 +148,13 @@ uint8_t opdi_is_space(char c) {
 	return isspace(c);
 }
 
-uint8_t opdi_string_cmp(const char *s1, const char *s2) {
-	return strcasecmp(s1, s2);
+int8_t opdi_string_cmp(const char *s1, const char *s2) {
+	int result = strcasecmp(s1, s2);
+	if (result < 0)
+		return -1;
+	if (result > 0)
+		return 1;
+	return 0;
 }
 
 uint64_t opdi_get_time_ms(void) {
