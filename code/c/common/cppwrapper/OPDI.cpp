@@ -45,7 +45,7 @@ uint8_t OPDI::shutdownInternal(void) {
 		// free internal port memory
 		opdi_Port *oPort = (opdi_Port *)(*it)->data;
 		// release additional data structure memory
-		if (strcmp((*it)->type, OPDI_PORTTYPE_DIAL) == 0) {
+		if ((oPort != nullptr) && (strcmp((*it)->type, OPDI_PORTTYPE_DIAL) == 0)) {
 			if (oPort->info.ptr != nullptr)
 				free(oPort->info.ptr);
 		}
@@ -81,7 +81,7 @@ void OPDI::setIdleTimeout(uint32_t idleTimeoutMs) {
 	this->idle_timeout_ms = idleTimeoutMs;
 }
 
-void OPDI::setEncoding(std::string encoding) {
+void OPDI::setEncoding(const std::string& encoding) {
 	this->encoding = encoding;
 }
 
@@ -89,7 +89,7 @@ std::string OPDI::getSlaveName(void) {
 	return this->slaveName;
 }
 
-uint8_t OPDI::setMasterName(std::string masterName) {
+uint8_t OPDI::setMasterName(const std::string& masterName) {
 	this->masterName = masterName;
 	return OPDI_STATUS_OK;
 }
@@ -98,17 +98,17 @@ std::string OPDI::getEncoding(void) {
 	return this->encoding;
 }
 
-uint8_t OPDI::setLanguages(std::string languages) {
+uint8_t OPDI::setLanguages(const std::string& languages) {
 	this->languages = languages;
 	return OPDI_STATUS_OK;
 }
 
-uint8_t OPDI::setUsername(std::string userName) {
+uint8_t OPDI::setUsername(const std::string& userName) {
 	this->username = userName;
 	return OPDI_STATUS_OK;
 }
 
-uint8_t OPDI::setPassword(std::string /*password*/) {
+uint8_t OPDI::setPassword(const std::string& /*password*/) {
 	return OPDI_STATUS_OK;
 }
 

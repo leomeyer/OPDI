@@ -92,7 +92,7 @@ extern uint8_t opdi_string_to_bytes(char* string, uint8_t *dest, uint16_t pos, u
 /** Case insensitive comparison. Platforms that do not support this may implement a case sensitive comparison.
 *   Semantics like strcmp.
 */
-extern uint8_t opdi_string_cmp(const char *s1, const char *s2);
+extern int8_t opdi_string_cmp(const char *s1, const char *s2);
 
 /** Returns current system time in milliseconds. 
 */

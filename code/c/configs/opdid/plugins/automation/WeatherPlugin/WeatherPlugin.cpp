@@ -47,7 +47,7 @@ public:
 
 	virtual void invalidate(void) = 0;
 
-	virtual void extract(std::string rawValue) = 0;
+	virtual void extract(const std::string& rawValue) = 0;
 };
 
 /** A WeatherGaugePort extracts a data value from the weather station's data source.
@@ -84,7 +84,7 @@ public:
 
 	virtual void invalidate(void);
 
-	virtual void extract(std::string rawValue);
+	virtual void extract(const std::string& rawValue);
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
@@ -143,7 +143,7 @@ bool WeatherGaugePort::hasError(void) {
 	return !this->isValid;
 }
 
-void WeatherGaugePort::extract(std::string rawValue) {
+void WeatherGaugePort::extract(const std::string& rawValue) {
 	// important! Do not process on the weather plugin's thread;
 	// instead, store the value for processing on the OPDID thread
 	Poco::Mutex::ScopedLock lock(this->mutex);
@@ -282,10 +282,10 @@ public:
 	// weather data collection thread method
 	virtual void run(void);
 
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) override;
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) override;
 };
 
-void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
+void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
 	this->nodeID = node;
 	this->timeoutSeconds = 10;
@@ -347,7 +347,7 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, 
 		while (nli != orderedItems.end()) {
 			if (nli->get<0>() > itemNumber)
 				break;
-			nli++;
+			++nli;
 		}
 		Item item(itemNumber, *it);
 		orderedItems.insert(nli, item);
@@ -384,7 +384,7 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, 
 		} else
 			throw Poco::DataException("This plugin does not support the port type", portType);
 
-		nli++;
+		++nli;
 	}
 
 	this->opdid->addConnectionListener(this);

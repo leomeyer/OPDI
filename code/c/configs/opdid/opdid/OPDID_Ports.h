@@ -406,6 +406,7 @@ class OPDID_FileInputPort : public OPDI_DigitalPort, protected OPDID_PortFunctio
 protected:
 
 	enum PortType {
+		UNKNOWN,
 		DIGITAL_PORT,
 		ANALOG_PORT,
 		DIAL_PORT,
@@ -473,6 +474,7 @@ public:
 class OPDID_AggregatorPort : public OPDI_DigitalPort, public OPDID_PortFunctions {
 protected:
 	enum Algorithm {
+		UNKNOWN,
 		DELTA,
 		ARITHMETIC_MEAN,
 		MINIMUM,

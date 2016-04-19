@@ -161,6 +161,17 @@ WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(i
 	this->resetTo = RESET_NONE;
 	this->positionAfterClose = -1;
 	this->positionAfterOpen = -1;
+	this->sensorClosed = false;
+	this->motorActive = false;
+	this->motorDelay = 0;
+	this->enableDelay = false;
+	this->enableActive = false;
+	this->openingTime = 0;
+	this->closingTime = 0;
+	this->motorAPort = nullptr;
+	this->motorBPort = nullptr;
+	this->delayTimer = 0;
+	this->openTimer = 0;
 }
 
 void WindowPort::setPosition(uint16_t position) {
@@ -361,7 +372,7 @@ void WindowPort::setCurrentState(WindowState state) {
 			while (pi != this->errorPorts.end()) {
 				this->logDebug(std::string(this->id) + ": Notifying error port: " + (*pi)->getID() + ": " + (state == ERR ? "Entering" : "Leaving") + " error state");
 				this->setPortLine((*pi), (state == ERR ? 1 : 0));
-				pi++;
+				++pi;
 			}
 		}
 
@@ -839,7 +850,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 				forceOpen = true;
 				break;
 			}
-			pi++;
+			++pi;
 		}
 		// if one of the ForceClose ports is High, the window must be closed
 		pi = this->forceClosePorts.begin();
@@ -849,7 +860,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 				forceClose = true;
 				break;
 			}
-			pi++;
+			++pi;
 		}
 	} else {
 		// if one of the Reset ports is High, the window should be reset to the defined state
@@ -864,7 +875,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 					forceOpen = true;
 				break;
 			}
-			pi++;
+			++pi;
 		}
 	}
 
@@ -888,7 +899,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 					target = CLOSED;
 					break;
 				}
-				pi++;
+				++pi;
 			}
 			if (target == UNKNOWN) {
 				// if one of the AutoOpen ports is High, the window should be opened
@@ -902,7 +913,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 						target = OPEN;
 						break;
 					}
-					pi++;
+					++pi;
 				}
 			}
 		} else
@@ -941,13 +952,13 @@ protected:
 	AbstractOPDID *opdid;
 
 public:
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) override;
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) override;
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
 };
 
-void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
+void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);

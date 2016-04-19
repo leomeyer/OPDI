@@ -66,10 +66,12 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->timestampFormat = "%Y-%m-%d %H:%M:%S.%i";
 
 	this->monSecondPos = 0;
+	this->monSecondStats = (uint64_t*)malloc(this->maxSecondStats * sizeof(uint64_t));
 	this->totalMicroseconds = 0;
 	this->targetFramesPerSecond = 200;
 	this->waitingCallsPerSecond = 0;
 	this->framesPerSecond = 0;
+	this->allowHiddenPorts = true;
 
 	// map result codes
 	opdiCodeTexts[0] = "STATUS_OK";
@@ -206,7 +208,7 @@ std::string AbstractOPDID::getOPDIResult(uint8_t code) {
 	return it->second;
 }
 
-Poco::Util::AbstractConfiguration *AbstractOPDID::readConfiguration(const std::string filename, std::map<std::string, std::string> parameters) {
+Poco::Util::AbstractConfiguration *AbstractOPDID::readConfiguration(const std::string& filename, const std::map<std::string, std::string>& parameters) {
 	// will throw an exception if something goes wrong
 	Poco::Util::AbstractConfiguration *result = new OPDIDConfigurationFile(filename, parameters);
 	// remember config file location
@@ -225,15 +227,15 @@ std::string AbstractOPDID::getConfigString(Poco::Util::AbstractConfiguration *co
 	return config->getString(key, defaultValue);
 }
 
-void AbstractOPDID::println(std::string text) {
+void AbstractOPDID::println(const std::string& text) {
 	this->println(text.c_str());
 }
 
-void AbstractOPDID::printlne(std::string text) {
+void AbstractOPDID::printlne(const std::string& text) {
 	this->printlne(text.c_str());
 }
 
-void AbstractOPDID::log(std::string text) {
+void AbstractOPDID::log(const std::string& text) {
 	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
 
@@ -245,7 +247,7 @@ void AbstractOPDID::log(std::string text) {
 	}
 }
 
-void AbstractOPDID::logWarning(std::string text) {
+void AbstractOPDID::logWarning(const std::string& text) {
 	// suppress warnings?
 	if (this->logVerbosity == QUIET)
 		return;
@@ -260,7 +262,7 @@ void AbstractOPDID::logWarning(std::string text) {
 	this->printlne(msg);
 }
 
-void AbstractOPDID::logError(std::string text) {
+void AbstractOPDID::logError(const std::string& text) {
 	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
 
@@ -271,31 +273,31 @@ void AbstractOPDID::logError(std::string text) {
 	this->printlne("[" + this->getTimestampStr() + "] " + msg);
 }
 
-void AbstractOPDID::logNormal(std::string message) {
+void AbstractOPDID::logNormal(const std::string& message) {
 	if (this->logVerbosity >= AbstractOPDID::NORMAL) {
 		this->log(message);
 	}
 }
 
-void AbstractOPDID::logVerbose(std::string message) {
+void AbstractOPDID::logVerbose(const std::string& message) {
 	if (this->logVerbosity >= AbstractOPDID::VERBOSE) {
 		this->log(message);
 	}
 }
 
-void AbstractOPDID::logDebug(std::string message) {
+void AbstractOPDID::logDebug(const std::string& message) {
 	if (this->logVerbosity >= AbstractOPDID::DEBUG) {
 		this->log(message);
 	}
 }
 
-void AbstractOPDID::logExtreme(std::string message) {
+void AbstractOPDID::logExtreme(const std::string& message) {
 	if (this->logVerbosity >= AbstractOPDID::EXTREME) {
 		this->log(message);
 	}
 }
 
-int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, std::string> environment) {
+int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<std::string, std::string>& environment) {
 	this->environment = environment;
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> configuration = nullptr;
 	
@@ -415,7 +417,7 @@ int AbstractOPDID::startup(std::vector<std::string> args, std::map<std::string, 
 	return this->setupConnection(connection, testMode);
 }
 
-void AbstractOPDID::lockResource(std::string resourceID, std::string lockerID) {
+void AbstractOPDID::lockResource(const std::string& resourceID, const std::string& lockerID) {
 	this->logDebug("Trying to lock resource '" + resourceID + "' for " + lockerID);
 	// try to locate the resource ID
 	LockedResources::const_iterator it = this->lockedResources.find(resourceID);
@@ -451,7 +453,7 @@ AbstractOPDID::LogVerbosity AbstractOPDID::getConfigLogVerbosity(Poco::Util::Abs
 	return defaultVerbosity;
 }
 
-Poco::Util::AbstractConfiguration *AbstractOPDID::getConfigForState(Poco::Util::AbstractConfiguration *baseConfig, std::string viewName) {
+Poco::Util::AbstractConfiguration *AbstractOPDID::getConfigForState(Poco::Util::AbstractConfiguration *baseConfig, const std::string& viewName) {
 	// replace configuration with a layered configuration that uses the persistent
 	// configuration with higher priority
 	// thus, port states will be pulled from the persistent configuration if they are present
@@ -599,7 +601,7 @@ void AbstractOPDID::configureGroup(Poco::Util::AbstractConfiguration *groupConfi
 	}
 }
 
-void AbstractOPDID::setupGroup(Poco::Util::AbstractConfiguration *groupConfig, std::string group) {
+void AbstractOPDID::setupGroup(Poco::Util::AbstractConfiguration *groupConfig, const std::string& group) {
 	this->logVerbose("Setting up group: " + group);
 
 	OPDI_PortGroup *portGroup = new OPDI_PortGroup(group.c_str());
@@ -608,7 +610,7 @@ void AbstractOPDID::setupGroup(Poco::Util::AbstractConfiguration *groupConfig, s
 	this->addPortGroup(portGroup);
 }
 
-void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig, std::string node) {
+void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig, const std::string& node) {
 	this->logVerbose("Setting up include: " + node);
 
 	// filename must be present
@@ -783,7 +785,7 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration *port
 		throw Poco::DataException("Unknown Line specified; expected 'Low' or 'High'", portLine);
 }
 
-void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up emulated digital port: " + port);
 
 	OPDI_DigitalPort *digPort = new OPDI_DigitalPort(port.c_str());
@@ -828,7 +830,7 @@ void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration *portC
 	}
 }
 
-void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up emulated analog port: " + port);
 
 	OPDI_AnalogPort *anaPort = new OPDI_AnalogPort(port.c_str());
@@ -864,7 +866,7 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 			while (nli != orderedItems.end()) {
 				if (nli->get<0>() > itemNumber)
 					break;
-				nli++;
+				++nli;
 			}
 			Item item(itemNumber, *it);
 			orderedItems.insert(nli, item);
@@ -878,7 +880,7 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 		ItemList::const_iterator nli = orderedItems.begin();
 		while (nli != orderedItems.end()) {
 			charItems.push_back(nli->get<1>().c_str());
-			nli++;
+			++nli;
 		}
 		charItems.push_back(nullptr);
 
@@ -896,7 +898,7 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration *portC
 	}
 }
 
-void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port) {
+void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, const std::string& port) {
 	this->logVerbose("Setting up emulated select port: " + port);
 
 	OPDI_SelectPort *selPort = new OPDI_SelectPort(port.c_str());
@@ -933,7 +935,7 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration *portCon
 		port->setPosition(position);
 }
 
-void AbstractOPDID::setupEmulatedDialPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupEmulatedDialPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up emulated dial port: " + port);
 
 	OPDI_DialPort *dialPort = new OPDI_DialPort(port.c_str());
@@ -946,7 +948,7 @@ void AbstractOPDID::configureStreamingPort(Poco::Util::AbstractConfiguration *po
 	this->configurePort(portConfig, port, 0);
 }
 
-void AbstractOPDID::setupSerialStreamingPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupSerialStreamingPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up serial streaming port: " + port);
 
 	OPDID_SerialStreamingPort *ssPort = new OPDID_SerialStreamingPort(this, port.c_str());
@@ -955,7 +957,7 @@ void AbstractOPDID::setupSerialStreamingPort(Poco::Util::AbstractConfiguration *
 	this->addPort(ssPort);
 }
 
-void AbstractOPDID::setupLoggerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupLoggerPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up Logger port: " + port);
 
 	OPDID_LoggerPort *logPort = new OPDID_LoggerPort(this, port.c_str());
@@ -964,7 +966,7 @@ void AbstractOPDID::setupLoggerPort(Poco::Util::AbstractConfiguration *portConfi
 	this->addPort(logPort);
 }
 
-void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up LogicPort: " + port);
 
 	OPDID_LogicPort *dlPort = new OPDID_LogicPort(this, port.c_str());
@@ -973,7 +975,7 @@ void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration *portConfig
 	this->addPort(dlPort);
 }
 
-void AbstractOPDID::setupFaderPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupFaderPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up FaderPort: " + port);
 
 	OPDID_FaderPort *fPort = new OPDID_FaderPort(this, port.c_str());
@@ -982,7 +984,7 @@ void AbstractOPDID::setupFaderPort(Poco::Util::AbstractConfiguration *portConfig
 	this->addPort(fPort);
 }
 
-void AbstractOPDID::setupExecPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupExecPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up ExecPort: " + port);
 
 	OPDID_ExecPort *ePort = new OPDID_ExecPort(this, port.c_str());
@@ -991,7 +993,7 @@ void AbstractOPDID::setupExecPort(Poco::Util::AbstractConfiguration *portConfig,
 	this->addPort(ePort);
 }
 
-void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up PulsePort: " + port);
 
 	OPDID_PulsePort *pulsePort = new OPDID_PulsePort(this, port.c_str());
@@ -1000,7 +1002,7 @@ void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration *portConfig
 	this->addPort(pulsePort);
 }
 
-void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up SelectorPort: " + port);
 
 	OPDID_SelectorPort *selectorPort = new OPDID_SelectorPort(this, port.c_str());
@@ -1010,7 +1012,7 @@ void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration *portCon
 }
 
 #ifdef OPDID_USE_EXPRTK
-void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up Expression: " + port);
 
 	OPDID_ExpressionPort *expressionPort = new OPDID_ExpressionPort(this, port.c_str());
@@ -1020,7 +1022,7 @@ void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration *portC
 }
 #endif	// def OPDID_USE_EXPRTK
 
-void AbstractOPDID::setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port) {
+void AbstractOPDID::setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, const std::string& port) {
 	this->logVerbose("Setting up Timer: " + port);
 
 	OPDID_TimerPort *timerPort = new OPDID_TimerPort(this, port.c_str());
@@ -1029,7 +1031,7 @@ void AbstractOPDID::setupTimerPort(Poco::Util::AbstractConfiguration *portConfig
 	this->addPort(timerPort);
 }
 
-void AbstractOPDID::setupErrorDetectorPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupErrorDetectorPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up ErrorDetector: " + port);
 
 	OPDID_ErrorDetectorPort *edPort = new OPDID_ErrorDetectorPort(this, port.c_str());
@@ -1038,7 +1040,7 @@ void AbstractOPDID::setupErrorDetectorPort(Poco::Util::AbstractConfiguration *po
 	this->addPort(edPort);
 }
 
-void AbstractOPDID::setupSceneSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port) {
+void AbstractOPDID::setupSceneSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, const std::string& port) {
 	this->logVerbose("Setting up SceneSelect: " + port);
 
 	OPDID_SceneSelectPort *ssPort = new OPDID_SceneSelectPort(this, port.c_str());
@@ -1047,7 +1049,7 @@ void AbstractOPDID::setupSceneSelectPort(Poco::Util::AbstractConfiguration *port
 	this->addPort(ssPort);
 }
 
-void AbstractOPDID::setupFileInputPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port) {
+void AbstractOPDID::setupFileInputPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, const std::string& port) {
 	this->logVerbose("Setting up FileInput: " + port);
 
 	OPDID_FileInputPort* fiPort = new OPDID_FileInputPort(this, port.c_str());
@@ -1056,7 +1058,7 @@ void AbstractOPDID::setupFileInputPort(Poco::Util::AbstractConfiguration *portCo
 	this->addPort(fiPort);
 }
 
-void AbstractOPDID::setupAggregatorPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, std::string port) {
+void AbstractOPDID::setupAggregatorPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, const std::string& port) {
 	this->logVerbose("Setting up Aggregator: " + port);
 
 	OPDID_AggregatorPort* agPort = new OPDID_AggregatorPort(this, port.c_str());
@@ -1065,7 +1067,7 @@ void AbstractOPDID::setupAggregatorPort(Poco::Util::AbstractConfiguration *portC
 	this->addPort(agPort);
 }
 
-void AbstractOPDID::setupTriggerPort(Poco::Util::AbstractConfiguration *portConfig, std::string port) {
+void AbstractOPDID::setupTriggerPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port) {
 	this->logVerbose("Setting up Trigger: " + port);
 
 	OPDID_TriggerPort* tPort = new OPDID_TriggerPort(this, port.c_str());
@@ -1074,7 +1076,7 @@ void AbstractOPDID::setupTriggerPort(Poco::Util::AbstractConfiguration *portConf
 	this->addPort(tPort);
 }
 
-void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::string node) {
+void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, const std::string& node) {
 	this->logVerbose("Setting up node: " + node);
 
 	// emit warnings if node IDs deviate from best practices
@@ -1116,7 +1118,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration *config, std::st
 		} else 
 		if (nodeType == "Include") {
 			this->setupInclude(nodeConfig, config, node);
-		} else 
+		} else
 		// standard driver (internal ports)
 		if (nodeType == "DigitalPort") {
 			this->setupEmulatedDigitalPort(nodeConfig, node);
@@ -1204,7 +1206,7 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 		while (nli != orderedNodes.end()) {
 			if (nli->get<0>() > nodeNumber)
 				break;
-			nli++;
+			++nli;
 		}
 		Node node(nodeNumber, *it);
 		orderedNodes.insert(nli, node);
@@ -1223,7 +1225,7 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration *config) {
 	NodeList::const_iterator nli = orderedNodes.begin();
 	while (nli != orderedNodes.end()) {
 		this->setupNode(config, nli->get<1>());
-		nli++;
+		++nli;
 	}
 
 	// TODO check group hierarchy
@@ -1246,9 +1248,9 @@ int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration *config, bo
 		throw Poco::DataException("Invalid configuration; unknown connection type", connectionType);
 }
 
-void AbstractOPDID::warnIfPluginMoreRecent(std::string driver) {
+void AbstractOPDID::warnIfPluginMoreRecent(const std::string& driver) {
 	// parse compile date and time
-    std::stringstream compiled;
+    std::stringstream compiled; 
     compiled << __DATE__ << " " << __TIME__;
 
 	Poco::DateTime buildTime;
@@ -1362,7 +1364,7 @@ bool icompare(std::string const& a, std::string const& b)
                                         b.begin(), b.end(), icompare_pred);
 }
 
-uint8_t AbstractOPDID::setPassword(std::string password) {
+uint8_t AbstractOPDID::setPassword(const std::string& password) {
 	// TODO fix: username/password side channel leak (timing attack) (?)
 	// username must match case insensitive
 	if (Poco::UTF8::icompare(this->loginUser, this->username))
@@ -1455,7 +1457,7 @@ void AbstractOPDID::persist(OPDI_Port *port) {
 			else if (mode == OPDI_ANALOG_MODE_OUTPUT)
 				modeStr = "Output";
 			// TODO reference
-			std::string refStr = "";
+//			std::string refStr = "";
 
 			if (modeStr != "") {
 				this->logDebug("Writing port state for: " + port->ID() + "; mode = " + modeStr);

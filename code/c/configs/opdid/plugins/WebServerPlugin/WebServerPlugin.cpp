@@ -54,16 +54,17 @@ class WebServerPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener, pu
 	std::string jsonRpcUrl;
 
 public:
-	WebServerPlugin(): OPDI_DigitalPort("WebServerPlugin"), OPDID_PortFunctions("WebServerPlugin") {
+	WebServerPlugin(): OPDI_DigitalPort("WebServerPlugin"), OPDID_PortFunctions("WebServerPlugin"), mgr() {
 		memset(&this->s_http_server_opts, 0, sizeof(mg_serve_http_opts));
 		this->httpPort = "8080";
 		this->documentRoot = ".";
 		this->enableDirListing = "yes";
 		this->indexFiles = "index.html";
 		this->jsonRpcUrl = "/api/jsonrpc";
+		this->nc = nullptr;
 	};
 
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) override;
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *nodeConfig) override;
 
 	void handleEvent(struct mg_connection* nc, int ev, void *p);
 
@@ -77,7 +78,7 @@ public:
 	
 	// JSON-RPC functions
 
-	void sendJsonRpcError(struct mg_connection* nc, Poco::Dynamic::Var id, int code, std::string message);
+	void sendJsonRpcError(struct mg_connection* nc, Poco::Dynamic::Var id, int code, const std::string& message);
 
 	/** This method returns the state of the given port as a JSON object. */
 	Poco::JSON::Object jsonGetPortState(OPDI_Port* port);
@@ -219,7 +220,7 @@ Poco::JSON::Array WebServerPlugin::jsonGetPortList() {
 	while (it != pl.end()) {
 		if (!(*it)->isHidden())
 			result.add(this->jsonGetPortInfo(*it));
-		it++;
+		++it;
 	}
 
 	return result;
@@ -236,7 +237,7 @@ Poco::JSON::Array WebServerPlugin::jsonGetPortGroups() {
 		group.set("label", std::string((*it)->getLabel()));
 		group.set("parent", std::string((*it)->getParent()));
 		result.add(group);
-		it++;
+		++it;
 	}
 
 	return result;
@@ -374,7 +375,7 @@ static void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-void WebServerPlugin::sendJsonRpcError(struct mg_connection* nc, Poco::Dynamic::Var id, int code, std::string message) {
+void WebServerPlugin::sendJsonRpcError(struct mg_connection* nc, Poco::Dynamic::Var id, int code, const std::string& message) {
 	Poco::JSON::Object error;
 	error.set("code", code);
 	error.set("message", message);
@@ -534,10 +535,11 @@ void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void *p) {
 void WebServerPlugin::onAllPortsRefreshed(const void* /*pSender*/) {
 	struct mg_connection *c;
 	const char* message = "RefreshAll";
+	int msgLen = strlen(message);
 
 	for (c = mg_next(&this->mgr, NULL); c != NULL; c = mg_next(&this->mgr, c)) {
 		if (c->flags & MG_F_IS_WEBSOCKET)
-			mg_send_websocket_frame(c, WEBSOCKET_OP_TEXT, message, strlen(message));
+			mg_send_websocket_frame(c, WEBSOCKET_OP_TEXT, message, msgLen);
 	}
 }
 
@@ -546,13 +548,14 @@ void WebServerPlugin::onPortRefreshed(const void* /*pSender*/, OPDI_Port*& port)
 	char buf[255];
 
 	snprintf(buf, sizeof(buf), "Refresh %s", port->ID().c_str());
+	int bufLen = strlen(buf);
 	for (c = mg_next(&this->mgr, NULL); c != NULL; c = mg_next(&this->mgr, c)) {
 		if (c->flags & MG_F_IS_WEBSOCKET)
-			mg_send_websocket_frame(c, WEBSOCKET_OP_TEXT, buf, strlen(buf));
+			mg_send_websocket_frame(c, WEBSOCKET_OP_TEXT, buf, bufLen);
 	}
 }
 
-void WebServerPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
+void WebServerPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
 	this->setID(node.c_str());
 	this->portFunctionID = node;

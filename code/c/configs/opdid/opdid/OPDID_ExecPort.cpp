@@ -86,10 +86,10 @@ uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
 			OPDI::PortList::const_iterator pli = pl.begin();
 			while (pli != pl.end()) {
 				std::string val = this->opdid->getPortStateStr(*pli);
-				if (val == "")
+				if (val.empty())
 					val = "<error>";
-				std::string id = "$" + (*pli)->ID();
-				portValues[id] = val;
+				// store value
+				portValues[std::string("$") + (*pli)->ID()] = val;
 				allPorts += (*pli)->ID() + "=" + val + " ";
 				++pli;
 			}
@@ -114,7 +114,7 @@ uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
 			std::stringstream ss(params);
 			std::string item;
 			while (std::getline(ss, item, ' ')) {
-				if (item != "")
+				if (!item.empty())
 					argList.push_back(item);
 			}
 

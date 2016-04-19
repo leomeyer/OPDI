@@ -43,7 +43,7 @@ uint8_t opdi_encrypt_block(uint8_t *dest, const uint8_t *src) {
 	{
 		CRijndael *oRijndael = get_rijndael();
 		oRijndael->EncryptBlock((const char*)src, (char*)dest);
-	} catch (exception) {
+	} catch (exception&) {
 		return OPDI_ENCRYPTION_ERROR;
 	}
 
@@ -56,7 +56,7 @@ uint8_t opdi_decrypt_block(uint8_t *dest, const uint8_t *src) {
 	{
 		CRijndael *oRijndael = get_rijndael();
 		oRijndael->DecryptBlock((const char*)src, (char*)dest);
-	} catch (exception) {
+	} catch (exception&) {
 		return OPDI_ENCRYPTION_ERROR;
 	}
 

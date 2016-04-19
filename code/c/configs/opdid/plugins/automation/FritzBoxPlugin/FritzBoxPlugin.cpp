@@ -99,13 +99,13 @@ protected:
 public:
 	AbstractOPDID *opdid;
 
-	virtual std::string httpGet(std::string url);
+	virtual std::string httpGet(const std::string& url);
 
-	virtual std::string getResponse(std::string challenge, std::string password);
+	virtual std::string getResponse(const std::string& challenge, const std::string& password);
 
-	virtual std::string getSessionID(std::string user, std::string password);
+	virtual std::string getSessionID(const std::string& user, const std::string& password);
 
-	virtual std::string getXMLValue(std::string xml, std::string node);
+	virtual std::string getXMLValue(const std::string& xml, const std::string& node);
 
 	virtual void login(void);
 
@@ -126,7 +126,7 @@ public:
 
 	virtual void run(void);
 
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig) override;
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *nodeConfig) override;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -407,7 +407,7 @@ void FritzDECT200Energy::doSelfRefresh(void) {
 	this->query();
 }
 
-std::string FritzBoxPlugin::httpGet(std::string url) {
+std::string FritzBoxPlugin::httpGet(const std::string& url) {
 	try {
 		// prepare session
 		Poco::URI uri(std::string("http://") + this->host + ":" + this->opdid->to_string(this->port) + url);
@@ -454,7 +454,7 @@ std::string FritzBoxPlugin::httpGet(std::string url) {
 	return "";
 }
 
-std::string FritzBoxPlugin::getXMLValue(std::string xml, std::string node) {
+std::string FritzBoxPlugin::getXMLValue(const std::string& xml, const std::string& node) {
 	try {
 		std::stringstream in(xml);
 		Poco::XML::InputSource src(in);
@@ -475,7 +475,7 @@ std::string FritzBoxPlugin::getXMLValue(std::string xml, std::string node) {
 	throw Poco::NotFoundException("Node or value not found in XML: " + node);
 }
 
-std::string FritzBoxPlugin::getResponse(std::string challenge, std::string password) {
+std::string FritzBoxPlugin::getResponse(const std::string& challenge, const std::string& password) {
 	Poco::MD5Engine md5;
 	// password is UTF8 internally; need to convert to UTF16LE
 	std::string toHash = challenge + "-" + password;
@@ -497,7 +497,7 @@ std::string FritzBoxPlugin::getResponse(std::string challenge, std::string passw
 	return challenge + "-" + Poco::DigestEngine::digestToHex(digest);
 }
 
-std::string FritzBoxPlugin::getSessionID(std::string user, std::string password) {
+std::string FritzBoxPlugin::getSessionID(const std::string& user, const std::string& password) {
 
 	std::string loginPage = this->httpGet("/login_sid.lua?sid=" + this->sid);
 	if (loginPage == "")
@@ -645,7 +645,7 @@ void FritzBoxPlugin::getSwitchPower(FritzPort *port) {
 }
 
 
-void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
+void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
 	this->nodeID = node;
 	this->sid = INVALID_SID;			// default; means not connected
@@ -696,7 +696,7 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 		while (nli != orderedItems.end()) {
 			if (nli->get<0>() > itemNumber)
 				break;
-			nli++;
+			++nli;
 		}
 		Item item(itemNumber, *it);
 		orderedItems.insert(nli, item);
@@ -759,7 +759,7 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node,
 		} else
 			throw Poco::DataException("This plugin does not support the port type", portType);
 
-		nli++;
+		++nli;
 	}
 
 	this->opdid->addConnectionListener(this);

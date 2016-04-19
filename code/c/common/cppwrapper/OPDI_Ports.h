@@ -35,10 +35,11 @@ public:
 		VALUE_NOT_AVAILABLE
 	};
 
+	/*
 private:
 	// disable copy constructor
-    OPDI_Port(const OPDI_Port& that);
-
+    OPDI_Port(const OPDI_Port& that) delete;
+	*/
 protected:
 	// protected constructor - for use by friend classes only
 	OPDI_Port(const char *id, const char *type);
@@ -119,7 +120,7 @@ protected:
 
 	virtual void updateExtendedInfo(void);
 
-	std::string escapeKeyValueText(std::string str);
+	std::string escapeKeyValueText(const std::string& str);
 
 	// checks the error state and throws an exception
 	// should be used by subclasses in getState() methods
@@ -201,11 +202,11 @@ public:
 
 	virtual int32_t getFlags(void);
 
-	virtual void setUnit(std::string unit);
+	virtual void setUnit(const std::string& unit);
 
-	virtual void setIcon(std::string icon);
+	virtual void setIcon(const std::string& icon);
 
-	virtual void setGroup(std::string group);
+	virtual void setGroup(const std::string& group);
 
 	virtual std::string getExtendedState(void);
 
@@ -252,10 +253,11 @@ template <class T> inline std::string OPDI_Port::to_string(const T& t) {
 class OPDI_PortGroup {
 friend class OPDI;
 
+/*
 private:
 	// disable copy constructor
     OPDI_PortGroup(const OPDI_PortGroup& that);
-
+*/
 protected:
 	char *id;
 	char *label;
@@ -297,7 +299,7 @@ public:
 	/** Sets the flags of the port group. */
 	virtual void setFlags(int32_t flags);
 
-	virtual void setIcon(std::string icon);
+	virtual void setIcon(const std::string& icon);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1040,7 +1040,7 @@ void OPDID_SceneSelectPort::configure(Poco::Util::AbstractConfiguration *config,
 		while (nli != orderedItems.end()) {
 			if (nli->get<0>() > itemNumber)
 				break;
-			nli++;
+			++nli;
 		}
 		Item item(itemNumber, portItems->getString(*it));
 		orderedItems.insert(nli, item);
@@ -1053,7 +1053,7 @@ void OPDID_SceneSelectPort::configure(Poco::Util::AbstractConfiguration *config,
 	ItemList::const_iterator nli = orderedItems.begin();
 	while (nli != orderedItems.end()) {
 		this->fileList.push_back(nli->get<1>());
-		nli++;
+		++nli;
 	}
 
 	this->opdid->configureSelectPort(config, parentConfig, this, 0);
@@ -1089,7 +1089,7 @@ void OPDID_SceneSelectPort::prepare() {
 		// store absolute scene file path
 		*fi = sceneFile;
 
-		fi++;
+		++fi;
 	}
 }
 
@@ -1127,7 +1127,7 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 		else
 			this->logDebug(this->ID() + ": Applying settings from scene file: " + sceneFile);
 
-		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = sectionKeys.begin(); it != sectionKeys.end(); it++) {
+		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = sectionKeys.begin(); it != sectionKeys.end(); ++it) {
 			// find port corresponding to this section
 			OPDI_Port *port = this->opdid->findPortByID((*it).c_str());
 			if (port == nullptr)
@@ -1317,6 +1317,8 @@ OPDID_FileInputPort::OPDID_FileInputPort(AbstractOPDID *opdid, const char *id) :
 	this->needsReload = false;
 	this->numerator = 1;
 	this->denominator = 1;
+	this->port = nullptr;
+	this->portType = UNKNOWN;
 
 	// a FileInput port is presented as an output (being High means that the file input is active)
 	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
@@ -1433,6 +1435,8 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 ///////////////////////////////////////////////////////////////////////////////
 
 OPDID_AggregatorPort::Calculation::Calculation(std::string id) : OPDI_DialPort(id.c_str()) {
+	this->algorithm = UNKNOWN;
+	this->allowIncomplete = false;
 }
 
 void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregator) {
@@ -1498,7 +1502,7 @@ void OPDID_AggregatorPort::resetValues() {
 	auto it = this->calculations.begin();
 	while (it != this->calculations.end()) {
 		(*it)->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
-		it++;
+		++it;
 	}
 	this->values.clear();
 }
@@ -1554,7 +1558,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 		auto it = this->calculations.begin();
 		while (it != this->calculations.end()) {
 			(*it)->calculate(this);
-			it++;
+			++it;
 		}
 	}
 	
@@ -1568,6 +1572,9 @@ OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id)
 	this->minDelta = LLONG_MIN;
 	this->maxDelta = LLONG_MAX;
 	this->lastQueryTime = 0;
+	this->sourcePort = nullptr;
+	this->queryInterval = 0;
+	this->totalValues = 0;
 	// an aggregator is an output only port
 	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
 	// an aggregator is enabled by default
@@ -1619,7 +1626,7 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 		while (nli != orderedItems.end()) {
 			if (nli->get<0>() > itemNumber)
 				break;
-			nli++;
+			++nli;
 		}
 		Item item(itemNumber, *it);
 		orderedItems.insert(nli, item);
@@ -1684,7 +1691,7 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 		// add port to OPDID
 		this->opdid->addPort(calc);
 
-		nli++;
+		++nli;
 	}
 
 	// allocate vector
@@ -1768,7 +1775,7 @@ void OPDID_TriggerPort::setLine(uint8_t line) {
 		PortDataList::iterator it = this->portDataList.begin();
 		while (it != this->portDataList.end()) {
 			(*it).set<1>(UNKNOWN);
-			it++;
+			++it;
 		}
 	}
 }
@@ -1785,7 +1792,7 @@ void OPDID_TriggerPort::prepare() {
 	while (it != inputPorts.end()) {
 		PortData pd(*it, UNKNOWN);
 		this->portDataList.push_back(pd);
-		it++;
+		++it;
 	}
 
 	this->findDigitalPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);

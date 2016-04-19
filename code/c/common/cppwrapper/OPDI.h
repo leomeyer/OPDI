@@ -82,18 +82,18 @@ public:
 
 	virtual std::string getSlaveName(void);
 
-	virtual uint8_t setMasterName(std::string masterName);
+	virtual uint8_t setMasterName(const std::string& masterName);
 
 	/** Sets the encoding which must be a valid Java Charset identifier. Examples: ascii, utf-8, iso8859-1.
 	 * The default encoding of this implementation is utf-8.
 	 */
-	virtual void setEncoding(std::string encoding);
+	virtual void setEncoding(const std::string& encoding);
 	virtual std::string getEncoding(void);
 
-	virtual uint8_t setLanguages(std::string languages);
+	virtual uint8_t setLanguages(const std::string& languages);
 
-	virtual uint8_t setUsername(std::string userName);
-	virtual uint8_t setPassword(std::string password);
+	virtual uint8_t setUsername(const std::string& userName);
+	virtual uint8_t setPassword(const std::string& password);
 
 	virtual std::string getExtendedDeviceInfo(void);
 

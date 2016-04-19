@@ -236,7 +236,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 		while (nli != orderedItems.end()) {
 			if (nli->get<0>() > itemNumber)
 				break;
-			nli++;
+			++nli;
 		}
 		Item item(itemNumber, *it);
 		orderedItems.insert(nli, item);
@@ -274,7 +274,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 		if (action == "Toggle") {
 			schedule.action = TOGGLE;
 		} else
-			if (action != "")
+			if (!action.empty())
 				throw Poco::DataException(nodeName + ": Unknown schedule action; expected: 'SetHigh', 'SetLow' or 'Toggle': " + action);
 
 		// get schedule type (required)
@@ -366,7 +366,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 
 		this->schedules.push_back(schedule);
 
-		nli++;
+		++nli;
 	}
 }
 
@@ -770,7 +770,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 }
 
 void OPDID_TimerPort::recalculateSchedules() {
-	for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); it++) {
+	for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); ++it) {
 		Schedule *schedule = &*it;
 		// calculate
 		Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(schedule);

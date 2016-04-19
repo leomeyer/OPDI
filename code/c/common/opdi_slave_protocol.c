@@ -1346,7 +1346,7 @@ uint8_t opdi_slave_start(opdi_Message *message, opdi_GetProtocol get_protocol, o
 	// is encryption required by the master?
 	if ((flags & OPDI_FLAG_ENCRYPTION_REQUIRED) == OPDI_FLAG_ENCRYPTION_REQUIRED) {
 		// does the device not allow or support encryption?
-		if (((opdi_device_flags & OPDI_FLAG_ENCRYPTION_NOT_ALLOWED) == OPDI_FLAG_ENCRYPTION_NOT_ALLOWED) || (strlen(opdi_encryption_method) == 0)) {
+		if (((opdi_device_flags & OPDI_FLAG_ENCRYPTION_NOT_ALLOWED) == OPDI_FLAG_ENCRYPTION_NOT_ALLOWED) || (opdi_encryption_method[0] == '\0')) {
 			send_disagreement(0, OPDI_ENCRYPTION_NOT_SUPPORTED, "Encryption not supported: ", "by device");
 			return OPDI_ENCRYPTION_NOT_SUPPORTED;
 		}

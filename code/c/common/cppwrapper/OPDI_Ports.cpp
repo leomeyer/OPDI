@@ -193,7 +193,7 @@ void OPDI_Port::updateExtendedInfo(void) {
 	this->extendedInfo = exInfo;
 }
 
-void OPDI_Port::setUnit(std::string unit) {
+void OPDI_Port::setUnit(const std::string& unit) {
 	if (this->unit != unit) {
 		this->unit = unit;
 		this->updateExtendedInfo();
@@ -202,7 +202,7 @@ void OPDI_Port::setUnit(std::string unit) {
 	}
 }
 
-void OPDI_Port::setIcon(std::string icon) {
+void OPDI_Port::setIcon(const std::string& icon) {
 	if (this->icon != icon) {
 		this->icon = icon;
 		this->updateExtendedInfo();
@@ -211,7 +211,7 @@ void OPDI_Port::setIcon(std::string icon) {
 	}
 }
 
-void OPDI_Port::setGroup(std::string group) {
+void OPDI_Port::setGroup(const std::string& group) {
 	if (this->group != group) {
 		this->group = group;
 		this->updateExtendedInfo();
@@ -228,7 +228,7 @@ std::string OPDI_Port::getExtendedState() {
 	return "";
 }
 
-std::string OPDI_Port::escapeKeyValueText(std::string str) {
+std::string OPDI_Port::escapeKeyValueText(const std::string& str) {
 	std::string result = str;
     size_t start_pos;
 	start_pos = 0;
@@ -374,7 +374,7 @@ void OPDI_PortGroup::setFlags(int32_t flags) {
 		this->opdi->updatePortGroupData(this);
 }
 
-void OPDI_PortGroup::setIcon(std::string icon) {
+void OPDI_PortGroup::setIcon(const std::string& icon) {
 	if (this->icon != icon) {
 		this->icon = icon;
 		this->updateExtendedInfo();
@@ -633,14 +633,7 @@ void OPDI_AnalogPort::getState(uint8_t *mode, uint8_t *resolution, uint8_t *refe
 	*mode = this->mode;
 	*resolution = this->resolution;
 	*reference = this->reference;
-
-	// output?
-	if (this->mode == 1) {
-		// set remembered value
-		*value = this->value;
-	} else {
-		*value = this->value;
-	}
+	*value = this->value;
 }
 
 double OPDI_AnalogPort::getRelativeValue(void) {
