@@ -277,7 +277,11 @@ void FritzDECT200Power::configure(Poco::Util::AbstractConfiguration *portConfig)
 	// get actor identification number (required)
 	this->ain = plugin->opdid->getConfigString(portConfig, "AIN", "", true);
 
-	this->setHidden(portConfig->getBool("Hidden", false) | portConfig->getBool("PowerHidden", false));
+	// setting PowerHidden takes precedende
+	if (portConfig->has("PowerHidden"))
+		this->setHidden(portConfig->getBool("PowerHidden", false));
+	else
+		this->setHidden(portConfig->getBool("Hidden", false));
 
 	// the default label is the port ID
 	std::string portLabel = portConfig->getString("PowerLabel", this->getID());
@@ -300,7 +304,7 @@ void FritzDECT200Power::configure(Poco::Util::AbstractConfiguration *portConfig)
 	if (unit != "") {
 		this->setUnit(unit);
 	}
-	std::string group = plugin->opdid->getConfigString(portConfig, "Group", "", false);
+	std::string group = plugin->opdid->getConfigString(portConfig, "PowerGroup", portConfig->getString("Group", ""), false);
 	if (group != "") {
 		this->setGroup(group);
 	}
@@ -352,7 +356,11 @@ void FritzDECT200Energy::configure(Poco::Util::AbstractConfiguration *portConfig
 	// get actor identification number (required)
 	this->ain = plugin->opdid->getConfigString(portConfig, "AIN", "", true);
 
-	this->setHidden(portConfig->getBool("Hidden", false) | portConfig->getBool("EnergyHidden", false));
+	// setting EnergyHidden takes precedende
+	if (portConfig->has("EnergyHidden"))
+		this->setHidden(portConfig->getBool("EnergyHidden", false));
+	else
+		this->setHidden(portConfig->getBool("Hidden", false));
 
 	// the default label is the port ID
 	std::string portLabel = portConfig->getString("EnergyLabel", this->getID());
@@ -375,7 +383,7 @@ void FritzDECT200Energy::configure(Poco::Util::AbstractConfiguration *portConfig
 	if (unit != "") {
 		this->setUnit(unit);
 	}
-	std::string group = plugin->opdid->getConfigString(portConfig, "Group", "", false);
+	std::string group = plugin->opdid->getConfigString(portConfig, "EnergyGroup", portConfig->getString("Group", ""), false);
 	if (group != "") {
 		this->setGroup(group);
 	}

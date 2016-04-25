@@ -21,8 +21,8 @@
 *    - Once: Executes only at the specified time.
 *    - Interval: Executes with the specifed interval.
 *    - Periodic: Executes at matching points in time specified by a pattern.
-*    - Random: Executes randomly.
-*   In schedules of type Interval, Periodic and Random you can specify how often the schedule
+*    - Manual: Executes at a time set by a DialPort.
+*   In schedules of type Interval and Periodic you can specify how often the schedule
 *   should trigger. When the maximum number of occurrences has been reached the schedule
 *   will become inactive.
 *   The TimerPort will act on the output ports only if it is enabled (line = High).
@@ -48,22 +48,16 @@
 *    - Minute
 *    - Second
 *
-*   The schedule types Periodic and Random are not yet implemented.
+*   A manual schedule needs to specify a configuration node that describes a DialPort. The unit
+*   of this DialPort should be set to unixTime. The value of the DialPort will be interpreted as
+*   a unix epoch time in seconds (since 1/1/1970 00:00:00 UTC).
+*   The DialPort (called the "dependent" dial port) is intended to allow the user to set a time 
+*   for the event manually. There can be more than one manual schedule. The port must not be added
+*   through the Root configuration section but is instead created by this port.
 */
 class OPDID_TimerPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 
 protected:
-
-	// manual schedule port class for input of date value
-	class ManualSchedulePort: public OPDI_DialPort {
-		OPDID_TimerPort* timerPort;
-	public:
-		ManualSchedulePort(const char* id, OPDID_TimerPort* timerPort): OPDI_DialPort(id) {
-			this->timerPort = timerPort;
-		}
-
-		virtual void setPosition(int64_t position) override;
-	};
 
 	// helper class
 	class ScheduleComponent {
@@ -101,7 +95,6 @@ protected:
 		INTERVAL,
 		PERIODIC,
 		ASTRONOMICAL,
-		RANDOM,
 		ONLOGIN,
 		ONLOGOUT,
 		MANUAL
@@ -118,6 +111,8 @@ protected:
 		TOGGLE
 	};
 
+	class ManualSchedulePort;
+
 	struct Schedule {
 		std::string nodeName;
 		ScheduleType type;
@@ -132,10 +127,6 @@ protected:
 				int16_t minute;
 				int16_t second;
 			} time;
-			struct random {		// for random-based schedules
-				int jitter;
-				// TODO
-			} random;
 			ManualSchedulePort* manualPort;	// for manual schedules
 		} data;
 
@@ -159,6 +150,19 @@ protected:
 
 		Poco::Timestamp nextEvent;
 	};
+
+	// manual schedule port class for input of date value
+	class ManualSchedulePort: public OPDI_DialPort {
+		OPDID_TimerPort* timerPort;
+		Schedule* schedule;
+	public:
+		ManualSchedulePort(const char* id, OPDID_TimerPort* timerPort): OPDI_DialPort(id) {
+			this->timerPort = timerPort;
+		}
+
+		virtual void setPosition(int64_t position) override;
+	};
+
 
 	class ScheduleNotification : public Poco::Notification {
 	public:
@@ -197,7 +201,7 @@ protected:
 
 	bool matchWeekday(int day, int month, int year, ScheduleComponent *weekdayScheduleComponent);
 
-	void recalculateSchedules(void);
+	void recalculateSchedules(Schedule* activatingSchedule = nullptr);
 	
 	void setOutputs(int8_t outputLine);
 
