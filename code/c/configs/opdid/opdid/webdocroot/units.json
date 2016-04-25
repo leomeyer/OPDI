@@ -116,7 +116,15 @@
       },
       {
         "-name": "clocktime_unixseconds",
-        "#text": "layout=dial_port_row_noslider;conversion=unixSecondsLocal;icon=clock;formatString=yyyy-MM-dd\\\\nHH:mm:ss"
+        "#text": "layout=dial_port_row_noslider_two_rows;conversion=unixSecondsLocal;icon=clock;formatString=yyyy-MM-dd\\\\nHH:mm:ss;editor=DateTimeEditor"
+      },
+      {
+        "-name": "unixTimeUTC",
+        "#text": "clocktime_unixsecondsUTC=0"
+      },
+      {
+        "-name": "clocktime_unixsecondsUTC",
+        "#text": "layout=dial_port_row_noslider_two_rows;conversion=unixSeconds;icon=clock;formatString=yyyy-MM-dd\\\\nHH:mm:ss;editor=DateTimeEditor"
       },
       {
         "-name": "percent",

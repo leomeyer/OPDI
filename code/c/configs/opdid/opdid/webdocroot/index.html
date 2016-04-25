@@ -10,6 +10,7 @@
 <link rel="stylesheet" type="text/css" href="jquery.gridster.css"/>
 <link rel="stylesheet" type="text/css" href="contextMenu.css"/>
 <link rel="stylesheet" type="text/css" href="opdid.css"/>
+<link rel="stylesheet" type="text/css" href="jquery-ui-timepicker-addon.css"/>
 
 <script type="text/javascript" src="jquery-1.12.2.js"></script>
 <script type="text/javascript" src="jquery.jsonrpc.js"></script>
@@ -19,6 +20,8 @@
 <script type="text/javascript" src="simple-js-inheritance.js"></script>
 <script type="text/javascript" src="strings.js"></script>
 <script type="text/javascript" src="jquery.formatter.js"></script>
+<script type="text/javascript" src="jquery-ui-timepicker-addon.js"></script>
+<script type="text/javascript" src="date.js"></script>
 
 </head>
 
@@ -86,6 +89,14 @@ function removeParam(key, sourceURL) {
 // *********************************************************
 // Unit management
 
+function formatUnixSecondsLocal(timestamp) {
+    var dt = new Date(timestamp * 1000);
+    // with time zone
+    // return dt.format("yyyy-mm-dd HH:MM:ss Z", false);
+    // without time zone
+    return dt.format("yyyy-mm-dd HH:MM:ss", false);
+}
+
 function loadUnits() {
     $.ajax({
         url: "units.json",
@@ -123,10 +134,10 @@ function getUnitSettings(unit) {
 					// conversion defined?
 					if (typeof this.conversion != "undefined") {
 						// timestamp conversions
-						if ("unixSeconds".equals(this.conversion)) {
+						if ("unixSeconds" === this.conversion) {
 							return formatUnixSeconds(value);
 						} else
-						if ("unixSecondsLocal".equals(this.conversion)) {
+						if ("unixSecondsLocal" === this.conversion) {
 							return formatUnixSecondsLocal(value);
 						} else
 							return "Unknown conversion: " + this.conversion;
@@ -150,7 +161,17 @@ function getUnitSettings(unit) {
                 result.parseValue = function(valueStr) {
 					// conversion defined?
 					if (typeof this.conversion != "undefined") {
-                        throw "Conversion not yet supported";
+						// timestamp conversions
+						if ("unixSeconds" === this.conversion) {
+                            return 0;   // TODO
+						} else
+						if ("unixSecondsLocal" === this.conversion) {
+                            // accept a date string; parse it and return the unix timestamp
+                            // uses date.js which will extend parse() and return a date object
+                            var date = Date.parse(valueStr);
+                            return date.getTime() / 1000;   // convert to seconds
+						} else
+							return "Unknown conversion: " + this.conversion;
 					}
                     // remove non-numeric characters
                     var str = valueStr.replace(/[^-0-9.]/g, "");
@@ -568,9 +589,8 @@ var DialPort = Port.extend({
         + "<td class='OPDIDPortIconCell'>" + "<img class='OPDIDPortIcon' src='" + this.getPortIconSrc() + "' id='Port_" + this.port.id + "_Icon'>" + "</td>"
         + "<td width='5px'>&nbsp;</td>"
             + (this.noSlider 
-                ? "<td>" + this.createLabel() + "</td>"
-                + "<td width='5px'>&nbsp;</td>"
-                + "<td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>"
+                ? "<td>" + this.createLabel()
+                + (this.twoRows ? "" : "</td><td width='5px'>&nbsp;</td><td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>")
                     + "<div class='OPDIDDialPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td>"
                 : "<td align='right'><table width='220px'>"
                 + "<tr><td>" + this.createLabel() + "</td></tr>"
@@ -586,8 +606,10 @@ var DialPort = Port.extend({
 
     setPort: function(port) {
         this._super(port);
-        if (this.unit != null)
-            this.noSlider = typeof this.unit.layout != "undefined" && this.unit.layout == "dial_port_row_noslider";
+        if (this.unit != null) {
+            this.noSlider = typeof this.unit.layout != "undefined" && (this.unit.layout == "dial_port_row_noslider" || this.unit.layout == "dial_port_row_noslider_two_rows");
+            this.twoRows = typeof this.unit.layout != "undefined" && this.unit.layout == "dial_port_row_noslider_two_rows";
+        }
     },
 
     updatePort: function(port) {
@@ -632,16 +654,29 @@ var DialPort = Port.extend({
         this.dialog.dialog("open");
         // if there is a unit, apply the formatter and set the formatted value
         if (this.unit != null) {
-            $('#' + this.port.id + '_Value').formatter({
-                'pattern': this.unit.getFormatterPattern(this.port.min, this.port.max),
-                'persistent': true
-            });
+            // special editor?
+            if (this.unit.editor == "DateTimeEditor") {
+                // reset select
+                $("#" + this.port.id + "_datetime_select").prop('selectedIndex', 0);
+                $('#' + this.port.id + '_Value').datetimepicker({
+                    dateFormat: "yy-mm-dd",
+                    timeFormat: "HH:mm:ss"
+                 });
+            } else {
+                // standard numeric editor with formatted pattern
+                $('#' + this.port.id + '_Value').formatter({
+                    'pattern': this.unit.getFormatterPattern(this.port.min, this.port.max),
+                    'persistent': true
+                });
+            }
             $('#' + this.port.id + '_Value').val(this.unit.format(this.port.state.position));
         } else
             $('#' + this.port.id + '_Value').val(this.port.state.position);
 
-        $('#' + this.port.id + '_Value').focus();
-        $('#' + this.port.id + '_Value').select();
+        if (this.unit.editor != "DateTimeEditor") {
+            $('#' + this.port.id + '_Value').focus();
+            $('#' + this.port.id + '_Value').select();
+        }
     },
 
     updateTips: function(t) {
@@ -691,6 +726,24 @@ var DialPort = Port.extend({
         this.dialog.dialog("close");
     },
 
+    dateTimeSelected: function(selectedIndex) {
+        // called when the selection of an active DateTimeEditor is being changed
+        if (selectedIndex < 1)
+            return;
+        var date = new Date();
+        switch (selectedIndex) {
+            case 1: date.addSeconds(30); break;
+            case 2: date.addMinutes(1); break;
+            case 3: date.addMinutes(5); break;
+            case 4: date.addMinutes(15); break;
+            case 5: date.addHours(1); break;
+            case 6: date.addHours(2); break;
+            case 7: date.addHours(6); break;
+            case 6: date.addDays(1); break;
+        }
+        $('#' + this.port.id + '_Value').val(this.unit.format(date.getTime() / 1000));
+    },
+
     registerCommands: function() {
         var instance = this;
         $("#Port_" + this.port.id + "_Icon").click(function() {
@@ -735,13 +788,32 @@ var DialPort = Port.extend({
             + '<fieldset>'
             + '<label for="' + this.port.id + '_Value">New value:&nbsp;&nbsp;</label>'
             + '<input type="text" name="' + this.port.id + '_Value" id="' + this.port.id + '_Value" class="text ui-widget-content ui-corner-all">'
+            + (this.unit != null && this.unit.editor == "DateTimeEditor" ? 
+                '<select id="' + this.port.id + '_datetime_select" name="' + this.port.id + '_datetime_select">'
+                    + '<option>Select...</option>'
+                    + '<option>In 30 seconds</option>'
+                    + '<option>In one minute</option>'
+                    + '<option>In five minutes</option>'
+                    + '<option>In 15 minutes</option>'
+                    + '<option>In one hour</option>'
+                    + '<option>In two hours</option>'
+                    + '<option>In six hours</option>'
+                    + '<option>In one day</option>'
+                + '</select>'
+                : "")
             + '<input type="submit" tabindex="-1" style="position:absolute; top:-1000px">'
             + '</fieldset>'
             + '</form>'
             + '</div>';
  
         $("body").append(dialogHtml);
-        
+
+        if (this.unit != null && this.unit.editor == "DateTimeEditor") {
+            $("#" + this.port.id + "_datetime_select").change(function(event) {
+                instance.dateTimeSelected(event.target.selectedIndex);
+            });
+        }
+
         this.dialog = $("#" + this.port.id + "_dialog").dialog({
             autoOpen: false,
             height: 300,
