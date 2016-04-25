@@ -76,7 +76,7 @@ CINCS =
 CDEFINES = -Dlinux -DPOCO_STATIC
 
 # Compiler flags.
-CFLAGS = -Wall -Wextra $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
+CFLAGS = -Wall -Wextra $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES) -Wno-unused-parameter
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -static-libstdc++ -Wno-narrowing
 
 # Debug flags
