@@ -216,7 +216,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 	this->propagateSwitchOff = config->getBool("PropagateSwitchOff", false);
 	this->deactivatedText = config->getString("DeactivatedText", this->deactivatedText);
 	this->notScheduledText = config->getString("NotScheduledText", this->notScheduledText);
-	this->nextEventText = config->getString("NextEventText", this->notScheduledText);
+	this->nextEventText = config->getString("NextEventText", this->nextEventText);
 	this->timestampFormat = config->getString("TimestampFormat", this->timestampFormat);
 
 	// enumerate schedules of the <timer>.Schedules node
