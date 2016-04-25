@@ -16,13 +16,6 @@
 // Timer Port
 ///////////////////////////////////////////////////////////////////////////////
 
-void OPDID_TimerPort::ManualSchedulePort::setPosition(int64_t position) {
-	OPDI_DialPort::setPosition(position);
-
-	// notify timer port: schedule has changed
-	this->timerPort->recalculateSchedules();
-}
-
 int OPDID_TimerPort::ScheduleComponent::ParseValue(Type type, std::string value) {
 	std::string compName;
 	switch (type) {
@@ -181,6 +174,14 @@ int OPDID_TimerPort::ScheduleComponent::getMaximum(void) {
 	case WEEKDAY: return 6;
 	}
 	return -1;
+}
+
+
+void OPDID_TimerPort::ManualSchedulePort::setPosition(int64_t position) {
+	OPDI_DialPort::setPosition(position);
+
+	// notify timer port: schedule has changed
+	this->timerPort->recalculateSchedules(this->schedule);
 }
 
 
@@ -805,7 +806,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void OPDID_TimerPort::recalculateSchedules() {
+void OPDID_TimerPort::recalculateSchedules(Schedule* activatingSchedule) {
 	// clear all schedules
 	this->queue.clear();
 	for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); ++it) {

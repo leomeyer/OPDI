@@ -23,11 +23,11 @@
       },
       {
         "-name": "electricEnergy_Wh",
-        "#text": "electricEnergy_Wh_in_Wh=0"
+        "#text": "electricEnergy_Wh_in_kWh=0"
       },
       {
-        "-name": "electricEnergy_Wh_in_Wh",
-        "#text": "layout=dial_port_row_noslider;icon=energymeter;formatString=%.0f Wh"
+        "-name": "electricEnergy_Wh_in_kWh",
+        "#text": "layout=dial_port_row_noslider;icon=energymeter;formatString=%.3f kWh;denominator=1000"
       },
       {
         "-name": "electricEnergy_100nWh",
