@@ -2,7 +2,9 @@ package org.ospdi.opdi.androPDI.ports;
 
 import java.util.concurrent.TimeoutException;
 
+import org.joda.time.LocalDateTime;
 import org.ospdi.opdi.androPDI.R;
+import org.ospdi.opdi.androPDI.ports.editors.DialPortDateTimeEditor;
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.ports.DialPort;
 import org.ospdi.opdi.ports.Port;
@@ -11,6 +13,7 @@ import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.ProtocolException;
 
 import android.app.Dialog;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.view.ContextMenu;
@@ -304,64 +307,111 @@ class DialPortViewAdapter implements IPortViewAdapter {
 				item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
 					@Override
 					public boolean onMenuItemClick(MenuItem item) {
-						// open input dialog
-	
-						final Dialog dl = new Dialog(showDevicePorts);
-						dl.setTitle("Dial port value");
-						dl.setContentView(R.layout.dialog_analog_value);
-						
-						final EditText value = (EditText) dl.findViewById(R.id.edittext_value);
-						try {
-							value.setText("" + dPort.getPosition());
-						} catch (Exception e1) {
-							// can't read the value
-							return false;
-						}
-	
-						Button bOk = (Button) dl.findViewById(R.id.button_ok);
-						bOk.setOnClickListener(new View.OnClickListener() {
-							public void onClick(View v) {
-								// close dialog
-								dl.dismiss();
-								
-								// parse value
-								final long val;
+						// should use editor?
+						if (dPort.getUnitFormat().hasEditor()) {
+							String editor = dPort.getUnitFormat().getProperty("editor", null);
+							
+							if ("DateTimeEditor".equals(editor)) {
+								// build and show the DateTimeEditor
+						        FragmentManager fm = showDevicePorts.getFragmentManager();
+						        DialPortDateTimeEditor dialog;
 								try {
-									val = Long.parseLong(value.getText().toString());
-								} catch (Exception e) {
-									// no number entered
-									return;
-								}
-								if ((val >= portMinValue) && (val <= portMaxValue))
-									// set value
-									DialPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DialPortViewAdapter.this) {
-										@Override
-										void perform()
-												throws TimeoutException,
-												InterruptedException,
-												DisconnectedException,
-												DeviceException,
-												ProtocolException {
-											// set the port value
-											// this corrects to the nearest step
-											try {
-												dPort.setPosition(val);
-											} catch (PortAccessDeniedException e) {
+									dialog = new DialPortDateTimeEditor(dPort.getUnitFormat().convertToLocalDate(dPort.getPosition()),
+										// callback when new value has been confirmed
+										new DialPortDateTimeEditor.DismissedListener() {
+											@Override
+											public void dismissed(LocalDateTime date) {
+												final long val = dPort.getUnitFormat().convertFromLocalDate(date);
+												if ((val >= portMinValue) && (val <= portMaxValue))
+													// set value
+													DialPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DialPortViewAdapter.this) {
+														@Override
+														void perform()
+																throws TimeoutException,
+																InterruptedException,
+																DisconnectedException,
+																DeviceException,
+																ProtocolException {
+															// set the port value
+															// this corrects to the nearest step
+															try {
+																dPort.setPosition(val);
+															} catch (PortAccessDeniedException e) {
+															}
+															queryState();
+														}							
+													});												
 											}
-											queryState();
-										}							
 									});
+							        dialog.show(fm, "fragment_edit_name");
+							        return true;
+								} catch (Exception e) {
+									e.printStackTrace();
+									return false;
+								}
+							} else
+								throw new RuntimeException("Unknown editor specified by unit " + dPort.getUnit() + " of port " + dPort.getID() + ": " + editor);
+							
+						} else {
+							// open standard value input dialog
+		
+							final Dialog dl = new Dialog(showDevicePorts);
+							dl.setTitle("Dial port value");
+							dl.setContentView(R.layout.dialog_analog_value);
+							
+							final EditText value = (EditText) dl.findViewById(R.id.edittext_value);
+							try {
+								value.setText("" + dPort.getPosition());
+							} catch (Exception e1) {
+								// can't read the value
+								return false;
 							}
-						});
-						Button bCancel = (Button) dl.findViewById(R.id.button_cancel);
-						bCancel.setOnClickListener(new View.OnClickListener() {
-							public void onClick(View v) {
-								dl.dismiss();
-							}
-						});
-					
-					dl.show();				
-					return true;
+		
+							Button bOk = (Button) dl.findViewById(R.id.button_ok);
+							bOk.setOnClickListener(new View.OnClickListener() {
+								public void onClick(View v) {
+									// close dialog
+									dl.dismiss();
+									
+									// parse value
+									final long val;
+									try {
+										val = Long.parseLong(value.getText().toString());
+									} catch (Exception e) {
+										// no number entered
+										return;
+									}
+									if ((val >= portMinValue) && (val <= portMaxValue))
+										// set value
+										DialPortViewAdapter.this.showDevicePorts.addPortAction(new PortAction(DialPortViewAdapter.this) {
+											@Override
+											void perform()
+													throws TimeoutException,
+													InterruptedException,
+													DisconnectedException,
+													DeviceException,
+													ProtocolException {
+												// set the port value
+												// this corrects to the nearest step
+												try {
+													dPort.setPosition(val);
+												} catch (PortAccessDeniedException e) {
+												}
+												queryState();
+											}							
+										});
+								}
+							});
+							Button bCancel = (Button) dl.findViewById(R.id.button_cancel);
+							bCancel.setOnClickListener(new View.OnClickListener() {
+								public void onClick(View v) {
+									dl.dismiss();
+								}
+							});
+						
+							dl.show();				
+							return true;
+						}
 				}
 			});
 		} catch (Exception e) {

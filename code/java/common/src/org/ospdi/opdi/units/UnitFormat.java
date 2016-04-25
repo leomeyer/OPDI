@@ -3,8 +3,11 @@ package org.ospdi.opdi.units;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
-import java.util.TimeZone;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
+import org.joda.time.format.DateTimeFormat;
 import org.ospdi.opdi.utils.Strings;
 
 public class UnitFormat {
@@ -16,6 +19,7 @@ public class UnitFormat {
 	int numerator = 1;
 	int denominator = 1;
 	String conversion;
+	String editor;
 	Map<String, String> config;
 	
 	public static UnitFormat DEFAULT = new UnitFormat("Default", "");
@@ -45,6 +49,8 @@ public class UnitFormat {
 			numerator = Strings.parseInt(config.get("numerator"), "Unit numerator: " + name, 1, Integer.MAX_VALUE);
 		if (config.containsKey("denominator"))
 			denominator = Strings.parseInt(config.get("denominator"), "Unit denominator: " + name, 1, Integer.MAX_VALUE);
+		if (config.containsKey("editor"))
+			editor = config.get("editor");
 	}
 	
 	public String getProperty(String property, String defaultValue) {
@@ -54,17 +60,67 @@ public class UnitFormat {
 		return defaultValue;
 	}
 	
+	public boolean hasEditor() {
+		return editor != null;
+	}
+	
 	protected String formatUnixSeconds(long value) {
 		Date date = new Date(value * 1000);
 		return new SimpleDateFormat(formatString).format(date);
 	}
 	
 	protected String formatUnixSecondsLocal(long value) {
-		Date date = new Date(value * 1000);
-		// treat unix seconds as local time value
-		SimpleDateFormat sdf = new SimpleDateFormat(formatString);
-		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-		return sdf.format(date);
+		return DateTimeFormat.mediumDateTime().print(convertToLocalDate(value));
+	}
+/*	
+	public DateTime convertToDate(long value) {
+		if ("unixSeconds".equals(conversion)) {
+			return new DateTime(value, DateTimeZone.UTC);
+		}
+		else
+		if ("unixSecondsLocal".equals(conversion)) {
+			return new DateTime(value);
+		}
+		else
+			throw new RuntimeException("UnitFormat: Conversion not supported: " + conversion);
+	}
+*/	
+	public LocalDateTime convertToLocalDate(long value) {
+		if ("unixSeconds".equals(conversion)) {
+			return new LocalDateTime(value * 1000, DateTimeZone.UTC);
+		}
+		else
+		if ("unixSecondsLocal".equals(conversion)) {
+			return new LocalDateTime(value * 1000);
+		}
+		else
+			throw new RuntimeException("UnitFormat: Conversion not supported: " + conversion);
+	}
+/*	
+	public long convertFromDate(DateTime date) {
+		if ("unixSeconds".equals(conversion)) {
+			return date.getMillis() / 1000;
+		}
+		else
+		if ("unixSecondsLocal".equals(conversion)) {
+			return date.getMillis() / 1000;
+		}
+		else
+			throw new RuntimeException("UnitFormat: Conversion not supported: " + conversion);
+	}	
+*/
+	public long convertFromLocalDate(LocalDateTime date) {
+		if ("unixSeconds".equals(conversion)) {
+			DateTime utc = date.toDateTime(DateTimeZone.UTC);
+			return utc.getMillis() / 1000;
+		}
+		else
+		if ("unixSecondsLocal".equals(conversion)) {
+			DateTime utc = date.toDateTime();
+			return utc.getMillis() / 1000;
+		}
+		else
+			throw new RuntimeException("UnitFormat: Conversion not supported: " + conversion);
 	}
 	
 	public String format(int value) {

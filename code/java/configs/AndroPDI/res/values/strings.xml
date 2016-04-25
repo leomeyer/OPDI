@@ -152,7 +152,19 @@
     <string name="device_error">{0} reports error: {1}</string>
     <string name="menuitem_port_reload">Reload</string>
     <string name="device_port_group">Port Group:</string>
-    
+    <string name="date_time_editor_date_label">Date</string>
+    <string name="date_time_editor_time_label">Time</string>
+    <string-array name="date_time_editor_spinner_selections">
+        <item>Select&#8230;</item>
+        <item>In 30 seconds</item>
+        <item>In one minute</item>
+        <item>In five minutes</item>
+        <item>In 15 minutes</item>
+        <item>In one hour</item>
+        <item>In two hours</item>
+        <item>In six hours</item>
+        <item>In one day</item>
+    </string-array>    
 
     <!--  Unit specifications -->
     
@@ -197,7 +209,10 @@
     <string name="keypadCode_display">layout=dial_port_row_noslider;icon=keypad;formatString=%d</string>
     
     <string name="unixTime">clocktime_unixseconds=0</string>
-    <string name="clocktime_unixseconds">layout=dial_port_row_noslider;conversion=unixSecondsLocal;icon=clock;formatString=yyyy-MM-dd\\nHH:mm:ss</string>
+    <string name="clocktime_unixseconds">layout=dial_port_row_noslider_two_rows;conversion=unixSecondsLocal;icon=clock;formatString=yyyy-MM-dd\\nHH:mm:ss;editor=DateTimeEditor</string>
+    
+    <string name="unixTimeUTC">clocktime_unixsecondsUTC=0</string>
+    <string name="clocktime_unixsecondsUTC">layout=dial_port_row_noslider_two_rows;conversion=unixSeconds;icon=clock;formatString=yyyy-MM-dd\\nHH:mm:ss;editor=DateTimeEditor</string>
     
     <string name="percent">percent_integer=0</string>
     <string name="percent_integer">layout=dial_port_row_slider_only;</string>
