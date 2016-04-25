@@ -16,6 +16,13 @@
 // Timer Port
 ///////////////////////////////////////////////////////////////////////////////
 
+void OPDID_TimerPort::ManualSchedulePort::setPosition(int64_t position) {
+	OPDI_DialPort::setPosition(position);
+
+	// notify timer port: schedule has changed
+	this->timerPort->recalculateSchedules();
+}
+
 int OPDID_TimerPort::ScheduleComponent::ParseValue(Type type, std::string value) {
 	std::string compName;
 	switch (type) {
@@ -192,7 +199,8 @@ OPDID_TimerPort::OPDID_TimerPort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 	// set default texts
 	this->deactivatedText = "Deactivated";
 	this->notScheduledText = "Not scheduled";
-	this->timestampFormat = "Next event: " + opdid->timestampFormat;
+	this->nextEventText = "Next event: ";
+	this->timestampFormat = opdid->timestampFormat;
 
 	this->lastWorkTimestamp = 0;
 }
@@ -208,6 +216,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 	this->propagateSwitchOff = config->getBool("PropagateSwitchOff", false);
 	this->deactivatedText = config->getString("DeactivatedText", this->deactivatedText);
 	this->notScheduledText = config->getString("NotScheduledText", this->notScheduledText);
+	this->nextEventText = config->getString("NextEventText", this->notScheduledText);
 	this->timestampFormat = config->getString("TimestampFormat", this->timestampFormat);
 
 	// enumerate schedules of the <timer>.Schedules node
@@ -351,16 +360,36 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 			if ((schedule.astroLat < -65) || (schedule.astroLat > 65))
 				throw Poco::DataException(nodeName + ": Sorry. Latitudes outside -65..65 are currently not supported (library crash). You can either relocate or try and fix the bug.");
 		} else
-		/*
-		if (scheduleType == "Random") {
-			schedule.type = RANDOM;
-		} else
-		*/
 		if (scheduleType == "OnLogin") {
 			schedule.type = ONLOGIN;
 		} else
 		if (scheduleType == "OnLogout") {
 			schedule.type = ONLOGOUT;
+		} else
+		if (scheduleType == "Manual") {
+			schedule.type = MANUAL;
+			// a manual schedule is represented by a DialPort with unit=unixTime
+			// the user can set the scheduled instant using this port
+			// This port is a dependent node, i. e. it is not included by root but created by this port.
+
+			std::string nodeID = this->opdid->getConfigString(scheduleConfig, "NodeID", "", true);
+
+			Poco::AutoPtr<Poco::Util::AbstractConfiguration> manualPortNode = parentConfig->createView(nodeID);
+
+			// port must be of type "DialPort"
+			if (this->opdid->getConfigString(manualPortNode, "Type", "", true) != "DialPort")
+				throw Poco::DataException(nodeName + "The dependent port node for a manual timer schedule must be of type 'DialPort' (referenced by NodeID '" + nodeID + "')");
+
+			// create the manual schedule dial port
+			schedule.data.manualPort = new ManualSchedulePort(nodeID.c_str(), this);
+
+			// the new port inherits the group from this port (can be overridden)
+			schedule.data.manualPort->setGroup(this->group);
+
+			this->opdid->configureDialPort(manualPortNode, schedule.data.manualPort);
+
+			// add the port
+			this->opdid->addPort(schedule.data.manualPort);
 		} else
 			throw Poco::DataException(nodeName + ": Schedule type is not supported: " + scheduleType);
 
@@ -569,7 +598,7 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 				result = sunRiseSet.GetSunrise(schedule->astroLat, schedule->astroLon, Poco::DateTime(now.julianDay() + 1));
 			// values are specified in local time; convert to UTC
 			result.makeUTC(Poco::Timezone::tzd());
-			return result.timestamp() + schedule->astroOffset * 1000000;		// add offset in nanoseconds
+			return result.timestamp() + schedule->astroOffset * Poco::Timestamp::resolution();		// add offset in microseconds
 		}
 		case SUNSET: {
 			// find today's sunset
@@ -580,14 +609,23 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 				result = sunRiseSet.GetSunset(schedule->astroLat, schedule->astroLon, Poco::DateTime(now.julianDay() + 1));
 			// values are specified in local time; convert to UTC
 			result.makeUTC(Poco::Timezone::tzd());
-			return result.timestamp() + schedule->astroOffset * 1000000;		// add offset in nanoseconds
+			return result.timestamp() + schedule->astroOffset * Poco::Timestamp::resolution();		// add offset in microseconds
 		}
 		}
 		return Poco::Timestamp();
 	} else
-	if (schedule->type == RANDOM) {
-		// determine next point in type randomly
-		return Poco::Timestamp();
+	if (schedule->type == MANUAL) {
+		// try to get the value from the dependent dial port
+		int64_t position;
+		try {
+			// the dial port contains the UTC timestamp
+			schedule->data.manualPort->getState(&position);
+			Poco::Timestamp timestamp(position * Poco::Timestamp::resolution());
+			return timestamp;
+		} catch (...) {
+			// ignore errors, can't schedule from this port
+			return Poco::Timestamp();
+		}
 	} else
 		// return default value (now; must not be enqueued)
 		return Poco::Timestamp();
@@ -673,8 +711,6 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 	// or due to system time corrections (user action, NTP etc)
 	if (abs(Poco::Timestamp() - this->lastWorkTimestamp) > Poco::Timestamp::resolution() * 5) {
 		this->logVerbose(this->ID() + ": Relevant system time change detected; recalculating schedules");
-		// clear all schedules
-		this->queue.clear();
 		this->recalculateSchedules();
 	}
 
@@ -762,7 +798,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 		if (ts < Poco::Timestamp::TIMEVAL_MAX) {
 			// calculate extended port info text
 			Poco::LocalDateTime ldt(ts);
-			this->nextOccurrenceStr = Poco::DateTimeFormatter::format(ldt, this->timestampFormat);
+			this->nextOccurrenceStr = this->nextEventText + Poco::DateTimeFormatter::format(ldt, this->timestampFormat);
 		}
 	}
 
@@ -770,6 +806,8 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 }
 
 void OPDID_TimerPort::recalculateSchedules() {
+	// clear all schedules
+	this->queue.clear();
 	for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); ++it) {
 		Schedule *schedule = &*it;
 		// calculate
@@ -780,8 +818,10 @@ void OPDID_TimerPort::recalculateSchedules() {
 		} else {
 			if ((schedule->type != ONLOGIN) && (schedule->type != ONLOGOUT))
 				this->logVerbose(this->ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
+			schedule->nextEvent = Poco::Timestamp();
 		}
 	}
+	this->refreshRequired = true;
 }
 
 void OPDID_TimerPort::setLine(uint8_t line) {

@@ -53,6 +53,18 @@
 class OPDID_TimerPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 
 protected:
+
+	// manual schedule port class for input of date value
+	class ManualSchedulePort: public OPDI_DialPort {
+		OPDID_TimerPort* timerPort;
+	public:
+		ManualSchedulePort(const char* id, OPDID_TimerPort* timerPort): OPDI_DialPort(id) {
+			this->timerPort = timerPort;
+		}
+
+		virtual void setPosition(int64_t position) override;
+	};
+
 	// helper class
 	class ScheduleComponent {
 	private:
@@ -91,7 +103,8 @@ protected:
 		ASTRONOMICAL,
 		RANDOM,
 		ONLOGIN,
-		ONLOGOUT
+		ONLOGOUT,
+		MANUAL
 	};
 
 	enum AstroEvent {
@@ -123,6 +136,7 @@ protected:
 				int jitter;
 				// TODO
 			} random;
+			ManualSchedulePort* manualPort;	// for manual schedules
 		} data;
 
 		// schedule components for PERIODIC
@@ -171,6 +185,7 @@ protected:
 	Poco::Timestamp calculateNextOccurrence(Schedule *schedule);
 	std::string deactivatedText;
 	std::string notScheduledText;
+	std::string nextEventText;
 	std::string timestampFormat;
 	std::string nextOccurrenceStr;
 

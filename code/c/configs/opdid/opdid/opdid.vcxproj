@@ -86,8 +86,11 @@
     <None Include="scene0.ini" />
     <None Include="scene1.ini" />
     <None Include="test_include.ini" />
+    <None Include="webdocroot\date.js" />
     <None Include="webdocroot\index.html" />
     <None Include="webdocroot\jquery-1.12.2.js" />
+    <None Include="webdocroot\jquery-ui-timepicker-addon.css" />
+    <None Include="webdocroot\jquery-ui-timepicker-addon.js" />
     <None Include="webdocroot\jquery-ui.css" />
     <None Include="webdocroot\jquery-ui.js" />
     <None Include="webdocroot\jquery-ui.structure.css" />

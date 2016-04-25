@@ -124,6 +124,15 @@
     <None Include="webdocroot\units.json">
       <Filter>Ressourcendateien\webdocroot</Filter>
     </None>
+    <None Include="webdocroot\jquery-ui-timepicker-addon.css">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\jquery-ui-timepicker-addon.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\date.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
