@@ -5,6 +5,17 @@
 
 #include "OPDIDConfigurationFile.h"
 
+bool OPDIDConfigurationFile::getRaw(const std::string & key, std::string & value) const {
+	bool result = Poco::Util::IniFileConfiguration::getRaw(key, value);
+	if (result) {
+		// detect quotes around the value
+		if ((value.size() > 1) && (value[0] == '"') && (value[value.size() - 1] == '"')) {
+			value = value.substr(1, value.size() - 2);
+		}
+	}
+	return result;
+}
+
 OPDIDConfigurationFile::OPDIDConfigurationFile(const std::string& path, std::map<std::string, std::string> parameters) {
 
 	// load the file content
