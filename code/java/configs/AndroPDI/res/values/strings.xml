@@ -175,8 +175,8 @@
     <string name="electricPower_10mW">electricPower_10mW_in_W=0</string>
     <string name="electricPower_10mW_in_W">layout=dial_port_row_noslider;icon=powermeter;label=Electric Power (W);formatString=%.2f W;denominator=100</string>
     
-    <string name="electricEnergy_Wh">electricEnergy_Wh_in_Wh=0</string>
-    <string name="electricEnergy_Wh_in_Wh">layout=dial_port_row_noslider;icon=energymeter;formatString=%.0f Wh</string>
+    <string name="electricEnergy_Wh">electricEnergy_Wh_in_kWh=0</string>
+    <string name="electricEnergy_Wh_in_kWh">layout=dial_port_row_noslider;icon=energymeter;formatString=%.3f Wh;denominator=10000000</string>
 
     <string name="electricEnergy_100nWh">electricEnergy_100nWh_in_kWh=0</string>
     <string name="electricEnergy_100nWh_in_kWh">layout=dial_port_row_noslider;icon=energymeter;formatString=%.3f kWh;denominator=10000000</string>
@@ -220,10 +220,13 @@
     <string name="gas_l">gas_l_in_m3=0</string>
     <string name="gas_l_in_m3">layout=dial_port_row_noslider;icon=energymeter;label=Gas total;formatString=%.3f m³;denominator=1000</string>
 
-    <string name="gas_lPerTime">gas_m3_per_time=0</string>
-    <string name="gas_m3_per_time">layout=dial_port_row_noslider;icon=powermeter;label=Gas rate;formatString=%.3f m³;denominator=1000</string>
+    <string name="gas_lPerTime">gas_l_in_m3_per_time=0</string>
+    <string name="gas_l_in_m3_per_time">layout=dial_port_row_noslider;icon=powermeter;label=Gas rate;formatString=%.3f m³;denominator=1000</string>
     
-    <string name="energy_100nWhPerTime">energy_kWh_per_time=0</string>
-    <string name="energy_kWh_per_time">layout=dial_port_row_noslider;icon=powermeter;label=Electric energy rate;formatString=%.3f kWh;denominator=10000000</string>
+    <string name="energy_100nWhPerTime">energy_100nWh_in_kWh_per_time=0</string>
+    <string name="energy_100nWh_in_kWh_per_time">layout=dial_port_row_noslider;icon=powermeter;label=Electric energy rate;formatString=%.3f kWh;denominator=10000000</string>
+    
+    <string name="energy_WhPerTime">energy_Wh_in_kWh_per_time=0</string>
+    <string name="energy_Wh_in_kWh_per_time">layout=dial_port_row_noslider;icon=powermeter;label=Electric energy rate;formatString=%.3f kWh;denominator=1000</string>
     
 </resources>

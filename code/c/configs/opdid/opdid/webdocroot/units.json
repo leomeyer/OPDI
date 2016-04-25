@@ -27,7 +27,7 @@
       },
       {
         "-name": "electricEnergy_Wh_in_kWh",
-        "#text": "layout=dial_port_row_noslider;icon=energymeter;formatString=%.3f kWh;denominator=1000"
+        "#text": "layout=dial_port_row_noslider;icon=energymeter;formatString=%.3f Wh;denominator=10000000"
       },
       {
         "-name": "electricEnergy_100nWh",
@@ -144,19 +144,27 @@
       },
       {
         "-name": "gas_lPerTime",
-        "#text": "gas_m3_per_time=0"
+        "#text": "gas_l_in_m3_per_time=0"
       },
       {
-        "-name": "gas_m3_per_time",
+        "-name": "gas_l_in_m3_per_time",
         "#text": "layout=dial_port_row_noslider;icon=powermeter;label=Gas rate;formatString=%.3f m³;denominator=1000"
       },
       {
         "-name": "energy_100nWhPerTime",
-        "#text": "energy_kWh_per_time=0"
+        "#text": "energy_100nWh_in_kWh_per_time=0"
       },
       {
-        "-name": "energy_kWh_per_time",
+        "-name": "energy_100nWh_in_kWh_per_time",
         "#text": "layout=dial_port_row_noslider;icon=powermeter;label=Electric energy rate;formatString=%.3f kWh;denominator=10000000"
+      },
+      {
+        "-name": "energy_WhPerTime",
+        "#text": "energy_Wh_in_kWh_per_time=0"
+      },
+      {
+        "-name": "energy_Wh_in_kWh_per_time",
+        "#text": "layout=dial_port_row_noslider;icon=powermeter;label=Electric energy rate;formatString=%.3f kWh;denominator=1000"
       }
     ]
   }
