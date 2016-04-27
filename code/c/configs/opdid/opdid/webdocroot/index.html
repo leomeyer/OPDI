@@ -579,18 +579,20 @@ var DialPort = Port.extend({
         return imageURLPrefix + "dial_port.png";
     },
 
+	getTextValue: function(value) {
+		// unit defined?
+		if (this.unit != null) {
+			return this.unit.format(value);
+		}
+		// no unit defined, use plain numeric value
+		return "" + value;
+    },
+	
     getPortValue: function() {
         if (this.port.state.error != null || (typeof this.port.state.position == "undefined"))
             return "";
-        else {
-            // unit defined?
-            if (this.unit != null) {
-                var value = this.port.state.position;
-				return this.unit.format(value);
-            }
-            // no unit defined, use plain numeric value
-            return "" + this.port.state.position;
-        }
+        else 
+			return this.getTextValue(this.port.state.position);
     },
 
     createWidget: function() {
@@ -645,6 +647,7 @@ var DialPort = Port.extend({
                 // for the non-two-rows layout, draw the canvas
                 var canvas = document.getElementById("Port_" + this.port.id + "_Canvas");
                 if (canvas.getContext) {
+					var title = "";
                     var ctx = canvas.getContext('2d');
                     ctx.globalAlpha = 1;
                     ctx.fillStyle = "black";
@@ -658,7 +661,7 @@ var DialPort = Port.extend({
                     } while (ctx.measureText(label).width > canvas.width);
                     ctx.fillText(label, 0, canvas.height / 2);
                     // draw history if available
-                    if (this.history != null) {
+                    if ((this.history != null) && this.history.values) {
                         ctx.globalAlpha = 0.2;
                         var my_gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
                         my_gradient.addColorStop(0, "#e6faff");
@@ -676,9 +679,20 @@ var DialPort = Port.extend({
                             if (Number(values[i]) > max)
                                 max = Number(values[i]);
                         }
+						title = "Min: " + this.getTextValue(min) + "; Max: " + this.getTextValue(max);
                         // draw history graph line
                         ctx.strokeStyle = "#00ace6";
-                        ctx.lineWidth = 4;
+						// the line width depends on the number of total values; less values => thicker lines
+						if (this.history.maxCount > 500)
+							ctx.lineWidth = 1;
+						else
+						if (this.history.maxCount > 100)
+							ctx.lineWidth = 2;
+						else
+						if (this.history.maxCount > 50)
+							ctx.lineWidth = 3;
+						else
+							ctx.lineWidth = 4;
                         ctx.lineJoin = "round";
                         ctx.globalAlpha = 0.5;
                         ctx.beginPath();
@@ -691,13 +705,14 @@ var DialPort = Port.extend({
                             var y = (min == max ? canvas.height / 2 
                                 // standard case: scaled value
                                 : -5 + canvas.height - (canvas.height - 10) * ((values[values.length - i - 1] - min) / (max - min)));
-                            if (i == 0)
+                            if (i == 0) 
                                 ctx.moveTo(x, y);
                             else
                                 ctx.lineTo(x, y);
                         }
                         ctx.stroke();
                     }
+					canvas.title = title;
                 }
             }
         }
