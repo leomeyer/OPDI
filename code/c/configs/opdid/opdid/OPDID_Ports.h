@@ -498,6 +498,7 @@ protected:
 	int32_t multiplier;
 	int64_t minDelta;
 	int64_t maxDelta;
+	bool setHistory;
 
 	std::vector<int64_t> values;
 	uint64_t lastQueryTime;

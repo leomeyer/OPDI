@@ -1444,9 +1444,14 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 	if ((aggregator->values.size() < aggregator->totalValues) && !this->allowIncomplete)
 		aggregator->logDebug(this->ID() + ": Cannot compute result because not all values have been collected and AllowIncomplete is false");
 	else {
+		// copy values, multiply if necessary
+		std::vector<int64_t> values = aggregator->values;
+		if (aggregator->multiplier != 1) {
+			std::transform(values.begin(), values.end(), values.begin(), std::bind1st(std::multiplies<int64_t>(), aggregator->multiplier));
+		}
 		switch (this->algorithm) {
 		case DELTA: {
-			int64_t newValue = aggregator->values.at(aggregator->values.size() - 1) - aggregator->values.at(0);
+			int64_t newValue = values.at(values.size() - 1) - values.at(0);
 			aggregator->logDebug(this->ID() + ": New value according to Delta algorithm: " + this->to_string(newValue));
 			if ((newValue >= this->getMin()) && (newValue <= this->getMax()))
 				this->setPosition(newValue);
@@ -1455,8 +1460,8 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 			break;
 		}
 		case ARITHMETIC_MEAN: {
-			int64_t sum = std::accumulate(aggregator->values.begin(), aggregator->values.end(), 0);
-			int64_t mean = sum / aggregator->values.size();
+			int64_t sum = std::accumulate(values.begin(), values.end(), 0);
+			int64_t mean = sum / values.size();
 			aggregator->logDebug(this->ID() + ": New value according to ArithmeticMean algorithm: " + this->to_string(mean));
 			if ((mean >= this->getMin()) && (mean <= this->getMax()))
 				this->setPosition(mean);
@@ -1465,8 +1470,8 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 			break;
 		}
 		case MINIMUM: {
-			auto minimum = std::min_element(aggregator->values.begin(), aggregator->values.end());
-			if (minimum == aggregator->values.end())
+			auto minimum = std::min_element(values.begin(), values.end());
+			if (minimum == values.end())
 				this->setError(VALUE_NOT_AVAILABLE);
 			int64_t min = *minimum;
 			aggregator->logDebug(this->ID() + ": New value according to Minimum algorithm: " + this->to_string(min));
@@ -1477,8 +1482,8 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 			break;
 		}
 		case MAXIMUM: {
-			auto maximum = std::max_element(aggregator->values.begin(), aggregator->values.end());
-			if (maximum == aggregator->values.end())
+			auto maximum = std::max_element(values.begin(), values.end());
+			if (maximum == values.end())
 				this->setError(VALUE_NOT_AVAILABLE);
 			int64_t max = *maximum;
 			aggregator->logDebug(this->ID() + ": New value according to Maximum algorithm: " + this->to_string(max));
@@ -1505,6 +1510,8 @@ void OPDID_AggregatorPort::resetValues() {
 		++it;
 	}
 	this->values.clear();
+	if (this->setHistory && this->sourcePort != nullptr)
+		this->sourcePort->clearHistory();
 }
 
 uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
@@ -1531,7 +1538,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			return OPDI_STATUS_OK;
 		}
 
-		int64_t longValue = (int64_t)(value * this->multiplier);
+		int64_t longValue = (int64_t)(value);
 
 		this->logDebug(this->ID() + ": Newly aggregated value: " + this->to_string(longValue));
 		
@@ -1553,6 +1560,8 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			// value is ok
 		}
 		this->values.push_back(longValue);
+		if (this->setHistory)
+			this->sourcePort->setHistory(this->queryInterval, this->totalValues, this->values);
 
 		// perform all calculations
 		auto it = this->calculations.begin();
@@ -1575,6 +1584,7 @@ OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id)
 	this->sourcePort = nullptr;
 	this->queryInterval = 0;
 	this->totalValues = 0;
+	this->setHistory = true;
 	// an aggregator is an output only port
 	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
 	// an aggregator is enabled by default
@@ -1599,6 +1609,8 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 	this->multiplier = config->getInt("Multiplier", this->multiplier);
 	this->minDelta = config->getInt64("MinDelta", this->minDelta);
 	this->maxDelta = config->getInt64("MaxDelta", this->maxDelta);
+
+	this->setHistory = config->getBool("SetHistory", this->setHistory);
 
 	// enumerate calculations
 	this->logVerbose(std::string("Enumerating Aggregator calculations: ") + this->ID() + ".Calculations");

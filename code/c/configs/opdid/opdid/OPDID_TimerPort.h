@@ -154,7 +154,6 @@ protected:
 	// manual schedule port class for input of date value
 	class ManualSchedulePort: public OPDI_DialPort {
 		OPDID_TimerPort* timerPort;
-		Schedule* schedule;
 	public:
 		ManualSchedulePort(const char* id, OPDID_TimerPort* timerPort): OPDI_DialPort(id) {
 			this->timerPort = timerPort;
@@ -162,7 +161,6 @@ protected:
 
 		virtual void setPosition(int64_t position) override;
 	};
-
 
 	class ScheduleNotification : public Poco::Notification {
 	public:

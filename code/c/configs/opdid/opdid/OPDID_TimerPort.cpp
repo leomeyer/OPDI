@@ -181,7 +181,7 @@ void OPDID_TimerPort::ManualSchedulePort::setPosition(int64_t position) {
 	OPDI_DialPort::setPosition(position);
 
 	// notify timer port: schedule has changed
-	this->timerPort->recalculateSchedules(this->schedule);
+	this->timerPort->recalculateSchedules();
 }
 
 
@@ -850,14 +850,17 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 }
 
 std::string OPDID_TimerPort::getExtendedState(void) {
-	std::string result;
+	std::string result = OPDI_DigitalPort::getExtendedState();
+	std::string myText;
 	if (this->line != 1) {
-		result = this->deactivatedText;
+		myText = this->deactivatedText;
 	} else {
 		if (this->nextOccurrenceStr == "")
-			result = this->notScheduledText;
+			myText = this->notScheduledText;
 		else
-			result = this->nextOccurrenceStr;
+			myText = this->nextOccurrenceStr;
 	}
-	return "text=" + this->escapeKeyValueText(result);
+	myText = "text=" + this->escapeKeyValueText(myText);
+	// append own text to base class text if available
+	return result.empty() ? myText : result + ";" + myText;
 }

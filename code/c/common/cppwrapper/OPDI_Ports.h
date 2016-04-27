@@ -70,6 +70,9 @@ protected:
 	// total extended info string
 	std::string extendedInfo;
 
+	// extended state historic values
+	std::string history;
+
 	// utility function for string conversion 
 	template <class T> std::string to_string(const T& t);
 
@@ -207,6 +210,10 @@ public:
 	virtual void setIcon(const std::string& icon);
 
 	virtual void setGroup(const std::string& group);
+
+	virtual void setHistory(int intervalSeconds, int maxCount, const std::vector<int64_t>& values);
+
+	virtual void clearHistory(void);
 
 	virtual std::string getExtendedState(void);
 

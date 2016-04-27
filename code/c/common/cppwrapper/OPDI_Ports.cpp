@@ -220,12 +220,36 @@ void OPDI_Port::setGroup(const std::string& group) {
 	}
 }
 
+void OPDI_Port::setHistory(int intervalSeconds, int maxCount, const std::vector<int64_t>& values) {
+	this->history = "interval=" + this->to_string(intervalSeconds);
+	this->history.append(";maxCount=" + this->to_string(maxCount));
+	this->history.append(";values=");
+	auto it = values.begin();
+	while (it != values.end()) {
+		if (it != values.begin())
+			this->history.append(",");
+		this->history.append(this->to_string(*it));
+		++it;
+	}
+	if (this->refreshMode == REFRESH_AUTO)
+		this->refreshRequired = true;
+}
+
+void OPDI_Port::clearHistory(void) {
+	this->history.clear();
+	if (this->refreshMode == REFRESH_AUTO)
+		this->refreshRequired = true;
+}
+
 std::string OPDI_Port::getExtendedInfo() {
 	return this->extendedInfo;
 }
 
 std::string OPDI_Port::getExtendedState() {
-	return "";
+	if (this->history.empty())
+		return "";
+	else
+		return "history=" + this->escapeKeyValueText(history);
 }
 
 std::string OPDI_Port::escapeKeyValueText(const std::string& str) {

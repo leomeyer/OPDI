@@ -272,12 +272,16 @@ var Port = Class.extend({
         this.port = port;
         this.id = port.id;  // shortcut
         this.extendedInfo = getProperties(port.extendedInfo);
-        this.groupID = this.extendedInfo.group;
-        this.extendedState = getProperties(port.extendedState);
         this.unit = null;
         if (typeof this.extendedInfo.unit != "undefined") {
             this.unit = getUnitSettings(this.extendedInfo.unit);
 		}
+        this.groupID = this.extendedInfo.group;
+        this.extendedState = getProperties(port.extendedState);
+        this.history = null;
+        if (typeof this.extendedState.history != "undefined") {
+            this.history = getProperties(this.extendedState.history);
+        }
     },
 
     refresh: function() {
@@ -346,15 +350,19 @@ var Port = Class.extend({
             if (len > maxlen)
                 maxlen = len;
         }
-        return maxlen * 10;
+        return maxlen * 8;
     },
 
     updatePort: function(port) {
         this.setPort(port);
-        $("#Port_" + port.id + "_Label").html("<nobr>" + this.getLabel());
+        this.updateUI();
+    },
+
+    updateUI: function() {
+        $("#Port_" + this.port.id + "_Label").html("<nobr>" + this.getLabel());
         var text = this.extendedState.text;
         if (typeof text != "undefined")
-            $("#Port_" + port.id + "_Text").html(text);
+            $("#Port_" + this.port.id + "_Text").html(text);
     }
 });
 
@@ -416,10 +424,10 @@ var DigitalPort = Port.extend({
         return widget;
     },
 
-    updatePort: function(port) {
-        this._super(port);
-        $("#Port_" + port.id + "_Icon").attr("src", this.getPortIconSrc());
-        $("#Port_" + port.id + "_State").attr("src", this.getPortStateSrc());
+    updateUI: function() {
+        this._super();
+        $("#Port_" + this.port.id + "_Icon").attr("src", this.getPortIconSrc());
+        $("#Port_" + this.port.id + "_State").attr("src", this.getPortStateSrc());
     },
 
     stateClicked: function() {
@@ -494,8 +502,8 @@ var AnalogPort = Port.extend({
         return widget;
     },
 
-    updatePort: function(port) {
-        this._super(port);
+    updateUI: function() {
+        this._super();
         $("#Port_" + this.port.id + "_Icon").attr("src", this.getPortIconSrc());
         // avoid triggering a slider change if set programmatically (refresh loop)
         this.port.noRefresh = true;
@@ -589,9 +597,16 @@ var DialPort = Port.extend({
         + "<td class='OPDIDPortIconCell'>" + "<img class='OPDIDPortIcon' src='" + this.getPortIconSrc() + "' id='Port_" + this.port.id + "_Icon'>" + "</td>"
         + "<td width='5px'>&nbsp;</td>"
             + (this.noSlider 
-                ? "<td>" + this.createLabel()
-                + (this.twoRows ? "" : "</td><td width='5px'>&nbsp;</td><td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>")
+                ? 
+                    (this.twoRows 
+                        ? "<td>" + this.createLabel()
+                        // a no-slider single row uses a canvas to draw history and text (provide fallback)
+                        : "<td><canvas id='Port_" + this.port.id + "_Canvas' width='" + (200 - this.getMaxLengthInPixels([this.port.min, this.port.max])) + "' height='50'>" 
+                            // fallback content
+                            + this.createLabel() + "</canvas></td><td width='5px'>&nbsp;</td><td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>"
+                    )
                     + "<div class='OPDIDDialPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td>"
+                // with slider, standard appearance
                 : "<td align='right'><table width='220px'>"
                 + "<tr><td>" + this.createLabel() + "</td></tr>"
                 + "<tr><td class='OPDIDPortState'><div id='Port_" + this.port.id + "_Slider'></div></td>"
@@ -612,14 +627,74 @@ var DialPort = Port.extend({
         }
     },
 
-    updatePort: function(port) {
-        this._super(port);
+    updateUI: function() {
+        this._super();
         $("#Port_" + this.port.id + "_Icon").attr("src", this.getPortIconSrc());
         if (!this.noSlider) {
             // avoid triggering a slider change if set programmatically (refresh loop)
             this.port.noRefresh = true;
             $("#Port_" + this.port.id + "_Slider").slider("value", this.port.state.position);
             this.port.noRefresh = false;
+        } else {
+            if (!this.twoRows) {
+                // for the non-two-rows layout, draw the canvas
+                var canvas = document.getElementById("Port_" + this.port.id + "_Canvas");
+                if (canvas.getContext) {
+                    var ctx = canvas.getContext('2d');
+                    ctx.globalAlpha = 1;
+                    ctx.fillStyle = "black";
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    // determine text size
+                    var label = this.getLabel();
+                    var i = -1;
+                    do {
+                        ++i;
+                        ctx.font = "" + (16 - i) + "px Verdana";
+                    } while (ctx.measureText(label).width > canvas.width);
+                    ctx.fillText(label, 0, canvas.height / 2);
+                    // draw history if available
+                    if (this.history != null) {
+                        ctx.globalAlpha = 0.2;
+                        var my_gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                        my_gradient.addColorStop(0, "#e6faff");
+                        my_gradient.addColorStop(1, "#4ddbff");
+                        ctx.fillStyle = my_gradient;
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                        var values = this.history.values.split(",");
+                        // determine minimum and maximum
+                        var min = Number.MAX_VALUE;
+                        var max = Number.MIN_VALUE;
+                        for (var i = 0; i < values.length; i++) {
+                            if (Number(values[i]) < min)
+                                min = Number(values[i]);
+                            if (Number(values[i]) > max)
+                                max = Number(values[i]);
+                        }
+                        // draw history graph line
+                        ctx.strokeStyle = "#00ace6";
+                        ctx.lineWidth = 4;
+                        ctx.lineJoin = "round";
+                        ctx.globalAlpha = 0.5;
+                        ctx.beginPath();
+                        for (var i = 0; i < this.history.maxCount; i++) {
+                            if (i >= values.length)
+                                break;
+                            // start from the right
+                            var x = canvas.width - (canvas.width / (this.history.maxCount - 1)) * i;
+                            // special case: flat line (no meaningful calculation possible)
+                            var y = (min == max ? canvas.height / 2 
+                                // standard case: scaled value
+                                : -5 + canvas.height - (canvas.height - 10) * ((values[values.length - i - 1] - min) / (max - min)));
+                            if (i == 0)
+                                ctx.moveTo(x, y);
+                            else
+                                ctx.lineTo(x, y);
+                        }
+                        ctx.stroke();
+                    }
+                }
+            }
         }
         $("#Port_" + this.port.id + "_Value").html("<nobr>" + this.getPortValue());
     },
@@ -873,10 +948,10 @@ var SelectPort = Port.extend({
         return widget;
     },
 
-    updatePort: function(port) {
+    updateUI: function(port) {
         this._super(port);
-        $("#Port_" + port.id + "_Icon").attr("src", this.getPortIconSrc());
-        $("#Port_" + port.id + "_Position").html("<nobr>" + this.getPositionText());
+        $("#Port_" + this.port.id + "_Icon").attr("src", this.getPortIconSrc());
+        $("#Port_" + this.port.id + "_Position").html("<nobr>" + this.getPositionText());
     },
 
     showMenu: function(ev) {
@@ -949,7 +1024,6 @@ var OPDI_PORTTYPE_DIAL = "3";
 var OPDI_PORTTYPE_STREAMING = "4";
 
 function createPort(port) {
-    var widget = null;
     var portObject = null;
     if (port.type == OPDI_PORTTYPE_DIGITAL) {
         portObject = new DigitalPort(port);
@@ -963,7 +1037,6 @@ function createPort(port) {
     if (port.type == OPDI_PORTTYPE_SELECT) {
         portObject = new SelectPort(port);
     }
-
     return portObject;
 }
 
@@ -1014,14 +1087,15 @@ function buildPortView(group) {
         if (portObject != null) {
             ports.push(portObject);
 
-            widget = portObject.createWidget();
+            var widget = portObject.createWidget();
             if (widget != null)
                 gridster.add_widget.apply(gridster, widget);
         }
     }
-    // go through ports, register events on UI
+    // go through ports, register events on UI and update
     $(ports).each(function(i, port) {
         port.registerCommands();
+        port.updateUI();
     });
 }
 

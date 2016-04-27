@@ -30,7 +30,7 @@ extern void protocol_callback(uint8_t state);
 /** The abstract plugin interface. */
 struct IOPDIDPlugin {
 	// config is the parent configuration. Implementations should use createView to get the node configuration.
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, const std::string& nodeName, Poco::Util::AbstractConfiguration *config) = 0;
+	virtual void setupPlugin(AbstractOPDID* abstractOPDID, const std::string& nodeName, Poco::Util::AbstractConfiguration* config) = 0;
 
 	// virtual destructor (called when the plugin is deleted)
 	virtual ~IOPDIDPlugin() {}
@@ -65,12 +65,12 @@ protected:
 
 	// configuration file for port state persistence
 	std::string persistentConfigFile;
-	Poco::Util::PropertyFileConfiguration *persistentConfig;
+	Poco::Util::PropertyFileConfiguration* persistentConfig;
 
 	Poco::Mutex mutex;
 	Poco::Logger* logger;
 
-	typedef std::list<IOPDIDConnectionListener *> ConnectionListenerList;
+	typedef std::list<IOPDIDConnectionListener*> ConnectionListenerList;
 	ConnectionListenerList connectionListeners;
 
 	typedef std::map<uint8_t, std::string> OPDICodeTexts;
@@ -96,7 +96,7 @@ protected:
 
 	virtual uint8_t idleTimeoutReached(void) override;
 
-	virtual Poco::Util::AbstractConfiguration *readConfiguration(const std::string& fileName, const std::map<std::string, std::string>& parameters);
+	virtual Poco::Util::AbstractConfiguration* readConfiguration(const std::string& fileName, const std::map<std::string, std::string>& parameters);
 
 	/** Outputs a log message with a timestamp. */
 	virtual void log(const std::string& text);
@@ -128,9 +128,9 @@ public:
 
 	virtual void disconnected(void);
 
-	virtual void addConnectionListener(IOPDIDConnectionListener *listener);
+	virtual void addConnectionListener(IOPDIDConnectionListener* listener);
 
-	virtual void removeConnectionListener(IOPDIDConnectionListener *listener);
+	virtual void removeConnectionListener(IOPDIDConnectionListener* listener);
 
 	/** Outputs a hello message. */
 	virtual void sayHello(void);
@@ -148,16 +148,16 @@ public:
 	virtual std::string getOPDIResult(uint8_t code);
 
 	/** Returns the key's value from the configuration or the default value, if it is missing. If missing and isRequired is true, throws an exception. */
-	virtual std::string getConfigString(Poco::Util::AbstractConfiguration *config, const std::string &key, const std::string &defaultValue, const bool isRequired);
+	virtual std::string getConfigString(Poco::Util::AbstractConfiguration* config, const std::string &key, const std::string &defaultValue, const bool isRequired);
 
 	/** Outputs the specified text to an implementation-dependent output with an appended line break. */
-	virtual void println(const char *text) = 0;
+	virtual void println(const char* text) = 0;
 
 	/** Outputs the specified text to an implementation-dependent output with an appended line break. */
 	virtual void println(const std::string& text);
 
 	/** Outputs the specified error text to an implementation-dependent error output with an appended line break. */
-	virtual void printlne(const char *text) = 0;
+	virtual void printlne(const char* text) = 0;
 
 	/** Outputs the specified error text to an implementation-dependent error output with an appended line break. */
 	virtual void printlne(const std::string& text);
@@ -185,90 +185,90 @@ public:
 	 *  Use this mechanism to avoid resource conflicts. */
 	virtual void lockResource(const std::string& resourceID, const std::string& lockerID);
 
-	virtual LogVerbosity getConfigLogVerbosity(Poco::Util::AbstractConfiguration *config, LogVerbosity defaultVerbosity);
+	virtual LogVerbosity getConfigLogVerbosity(Poco::Util::AbstractConfiguration* config, LogVerbosity defaultVerbosity);
 
 	/** Returns the configuration that should be used for querying a port's state. This is the baseConfig if no 
 	 *  persistent configuration has been specified, or a layered configuration otherwise. 
 	 *	This configuration must be freed after use. The view name is optional. */
-	virtual Poco::Util::AbstractConfiguration *getConfigForState(Poco::Util::AbstractConfiguration *baseConfig, const std::string& viewName);
+	virtual Poco::Util::AbstractConfiguration* getConfigForState(Poco::Util::AbstractConfiguration* baseConfig, const std::string& viewName);
 
-	virtual void setGeneralConfiguration(Poco::Util::AbstractConfiguration *general);
+	virtual void setGeneralConfiguration(Poco::Util::AbstractConfiguration* general);
 
-	virtual void configureEncryption(Poco::Util::AbstractConfiguration *config);
+	virtual void configureEncryption(Poco::Util::AbstractConfiguration* config);
 
-	virtual void configureAuthentication(Poco::Util::AbstractConfiguration *config);
+	virtual void configureAuthentication(Poco::Util::AbstractConfiguration* config);
 
 	/** Reads common properties from the configuration and configures the port group. */
-	virtual void configureGroup(Poco::Util::AbstractConfiguration *groupConfig, OPDI_PortGroup *group, int defaultFlags);
+	virtual void configureGroup(Poco::Util::AbstractConfiguration* groupConfig, OPDI_PortGroup* group, int defaultFlags);
 
-	virtual void setupGroup(Poco::Util::AbstractConfiguration *groupConfig, const std::string& group);
+	virtual void setupGroup(Poco::Util::AbstractConfiguration* groupConfig, const std::string& group);
 
-	virtual void setupInclude(Poco::Util::AbstractConfiguration *groupConfig, Poco::Util::AbstractConfiguration *parentConfig, const std::string& node);
+	virtual void setupInclude(Poco::Util::AbstractConfiguration* groupConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& node);
 
 	/** Reads common properties from the configuration and configures the port. */
-	virtual void configurePort(Poco::Util::AbstractConfiguration *portConfig, OPDI_Port *port, int defaultFlags);
+	virtual void configurePort(Poco::Util::AbstractConfiguration* portConfig, OPDI_Port* port, int defaultFlags);
 
 	/** Reads special properties from the configuration and configures the digital port. */
-	virtual void configureDigitalPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DigitalPort *port, bool stateOnly = false);
+	virtual void configureDigitalPort(Poco::Util::AbstractConfiguration* portConfig, OPDI_DigitalPort* port, bool stateOnly = false);
 
-	virtual void setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the analog port. */
-	virtual void configureAnalogPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_AnalogPort *port, bool stateOnly = false);
+	virtual void configureAnalogPort(Poco::Util::AbstractConfiguration* portConfig, OPDI_AnalogPort* port, bool stateOnly = false);
 
-	virtual void setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the select port. */
-	virtual void configureSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, OPDI_SelectPort *port, bool stateOnly = false);
+	virtual void configureSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, OPDI_SelectPort* port, bool stateOnly = false);
 
-	virtual void setupEmulatedSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, const std::string& port);
+	virtual void setupEmulatedSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the dial port. */
-	virtual void configureDialPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_DialPort *port, bool stateOnly = false);
+	virtual void configureDialPort(Poco::Util::AbstractConfiguration* portConfig, OPDI_DialPort* port, bool stateOnly = false);
 
-	virtual void setupEmulatedDialPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupEmulatedDialPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the streaming port. */
-	virtual void configureStreamingPort(Poco::Util::AbstractConfiguration *portConfig, OPDI_StreamingPort *port);
+	virtual void configureStreamingPort(Poco::Util::AbstractConfiguration* portConfig, OPDI_StreamingPort* port);
 
-	virtual void setupSerialStreamingPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupSerialStreamingPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
-	virtual void setupLoggerPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupLoggerPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
-	virtual void setupLogicPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupLogicPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
-	virtual void setupPulsePort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupPulsePort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
-	virtual void setupSelectorPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupSelectorPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
 #ifdef OPDID_USE_EXPRTK
-	virtual void setupExpressionPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupExpressionPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 #endif	// def OPDID_USE_EXPRTK
 
-	virtual void setupTimerPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, const std::string& port);
+	virtual void setupTimerPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port);
 
-	virtual void setupErrorDetectorPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupErrorDetectorPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
-	virtual void setupFaderPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupFaderPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
-	virtual void setupExecPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupExecPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
-	virtual void setupSceneSelectPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, const std::string& port);
+	virtual void setupSceneSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port);
 
-	virtual void setupFileInputPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, const std::string& port);
+	virtual void setupFileInputPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port);
 
-	virtual void setupAggregatorPort(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig, const std::string& port);
+	virtual void setupAggregatorPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port);
 
-	virtual void setupTriggerPort(Poco::Util::AbstractConfiguration *portConfig, const std::string& port);
+	virtual void setupTriggerPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
 	/** Configures the specified node. */
-	virtual void setupNode(Poco::Util::AbstractConfiguration *config, const std::string& node);
+	virtual void setupNode(Poco::Util::AbstractConfiguration* config, const std::string& node);
 
 	/** Starts enumerating the nodes of the Root section and configures the nodes. */
-	virtual void setupRoot(Poco::Util::AbstractConfiguration *config);
+	virtual void setupRoot(Poco::Util::AbstractConfiguration* config);
 
 	/** Sets up the connection from the specified configuration. */
-	virtual int setupConnection(Poco::Util::AbstractConfiguration *config, bool testMode);
+	virtual int setupConnection(Poco::Util::AbstractConfiguration* config, bool testMode);
 
 	/** Sets up a TCP listener and listens for incoming requests. This method does not return unless the program should exit. */
 	virtual int setupTCP(std::string interface_, int port) = 0;
@@ -277,7 +277,7 @@ public:
 	virtual void warnIfPluginMoreRecent(const std::string& driver);
 
 	/** Returns a pointer to the plugin object instance specified by the given driver. */
-	virtual IOPDIDPlugin *getPlugin(std::string driver) = 0;
+	virtual IOPDIDPlugin* getPlugin(std::string driver) = 0;
 
 	virtual uint8_t waiting(uint8_t canSend) override;
 
@@ -287,10 +287,10 @@ public:
 	virtual std::string getExtendedDeviceInfo(void) override;
 
 	/** This implementation also logs the refreshed ports. */
-	virtual uint8_t refresh(OPDI_Port **ports) override;
+	virtual uint8_t refresh(OPDI_Port** ports) override;
 
 	/** Implements a persistence mechanism for port states. */
-	virtual void persist(OPDI_Port *port) override;
+	virtual void persist(OPDI_Port* port) override;
 
 	/** Returns a string representing the port state; empty in case of errors. */
 	virtual std::string getPortStateStr(OPDI_Port* port);
@@ -311,4 +311,4 @@ template <class T> inline std::string AbstractOPDID::to_string(const T& t) {
 }
 
 /** Define external singleton instance */
-extern AbstractOPDID *Opdi;
+extern AbstractOPDID* Opdi;
