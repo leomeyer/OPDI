@@ -32,6 +32,8 @@
 // Global variables and constants
 
 var imageURLPrefix = "images/";
+var portWidgetWidth = 350;
+var portWidgetHeight = 60;
 
 // Units
 var units = {};         // a hash that maps unit names to a list of display units
@@ -310,13 +312,13 @@ var Port = Class.extend({
     createLabel: function() {
         var label = this.getLabel();
         // use different CSS classes for different lengths of labels
-        if (label.length < 15)
+        if (label.length < 25)
             var labelDiv = "<div class='OPDIDPortLabelShort' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
         else
-        if (label.length < 20)
+        if (label.length < 35)
             var labelDiv = "<div class='OPDIDPortLabelMedium' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
         else
-        if (label.length < 25)
+        if (label.length < 45)
             var labelDiv = "<div class='OPDIDPortLabelLonger' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
         else
             var labelDiv = "<div class='OPDIDPortLabelLong' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
@@ -490,7 +492,7 @@ var AnalogPort = Port.extend({
         + "<table><tr>"
         + "<td class='OPDIDPortIconCell'>" + "<img class='OPDIDPortIcon' src='" + this.getPortIconSrc() + "' id='Port_" + this.port.id + "_Icon'>" + "</td>"
         + "<td width='5px'>&nbsp;</td>"
-            + "<td align='right'><table width='220px'>"
+            + "<td align='left'><table width='" + (portWidgetWidth - 100) + "px'>"
             + "<tr><td>" + this.createLabel() + "</td></tr>"
             + "<tr><td><div id='Port_" + this.port.id + "_Slider'></div></td>"
             + "<td width='5px'>&nbsp;</td>"
@@ -592,6 +594,9 @@ var DialPort = Port.extend({
     },
 
     createWidget: function() {
+		var canvasWidth = portWidgetWidth - 100 - this.getMaxLengthInPixels([this.port.min, this.port.max]);
+		if (canvasWidth < 120)
+			canvasWidth = 120;
         var widget = ["<div class='OPDIDPort' id='Port_" + this.port.id + "'>"
         + "<table><tr>"
         + "<td class='OPDIDPortIconCell'>" + "<img class='OPDIDPortIcon' src='" + this.getPortIconSrc() + "' id='Port_" + this.port.id + "_Icon'>" + "</td>"
@@ -601,13 +606,13 @@ var DialPort = Port.extend({
                     (this.twoRows 
                         ? "<td>" + this.createLabel()
                         // a no-slider single row uses a canvas to draw history and text (provide fallback)
-                        : "<td><canvas id='Port_" + this.port.id + "_Canvas' width='" + (200 - this.getMaxLengthInPixels([this.port.min, this.port.max])) + "' height='50'>" 
+                        : "<td><canvas id='Port_" + this.port.id + "_Canvas' width='" + canvasWidth + "' height='50'>" 
                             // fallback content
                             + this.createLabel() + "</canvas></td><td width='5px'>&nbsp;</td><td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>"
                     )
                     + "<div class='OPDIDDialPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td>"
                 // with slider, standard appearance
-                : "<td align='right'><table width='220px'>"
+                : "<td align='left'><table width='" + (portWidgetWidth - 100) + "px'>"
                 + "<tr><td>" + this.createLabel() + "</td></tr>"
                 + "<tr><td class='OPDIDPortState'><div id='Port_" + this.port.id + "_Slider'></div></td>"
                 + "<td width='5px'>&nbsp;</td>"
@@ -1270,7 +1275,7 @@ function startup() {
 
         gridster = $(".gridster > ul").gridster({
             widget_margins: [10, 10],
-            widget_base_dimensions: [300, 60]
+            widget_base_dimensions: [portWidgetWidth, portWidgetHeight]
         }).data('gridster');
 
     });

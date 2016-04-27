@@ -1510,8 +1510,8 @@ void OPDID_AggregatorPort::resetValues() {
 		++it;
 	}
 	this->values.clear();
-	if (this->setHistory && this->sourcePort != nullptr)
-		this->sourcePort->clearHistory();
+	if (this->setHistory && this->historyPort != nullptr)
+		this->historyPort->clearHistory();
 }
 
 uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
@@ -1560,8 +1560,8 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			// value is ok
 		}
 		this->values.push_back(longValue);
-		if (this->setHistory)
-			this->sourcePort->setHistory(this->queryInterval, this->totalValues, this->values);
+		if (this->setHistory && this->historyPort != nullptr)
+			this->historyPort->setHistory(this->queryInterval, this->totalValues, this->values);
 
 		// perform all calculations
 		auto it = this->calculations.begin();
@@ -1585,6 +1585,7 @@ OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id)
 	this->queryInterval = 0;
 	this->totalValues = 0;
 	this->setHistory = true;
+	this->historyPort = nullptr;
 	// an aggregator is an output only port
 	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
 	// an aggregator is enabled by default
@@ -1611,6 +1612,7 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 	this->maxDelta = config->getInt64("MaxDelta", this->maxDelta);
 
 	this->setHistory = config->getBool("SetHistory", this->setHistory);
+	this->historyPortID = this->opdid->getConfigString(config, "HistoryPort", "", false);
 
 	// enumerate calculations
 	this->logVerbose(std::string("Enumerating Aggregator calculations: ") + this->ID() + ".Calculations");
@@ -1644,8 +1646,8 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 		orderedItems.insert(nli, item);
 	}
 
-	if (orderedItems.size() == 0) {
-		this->logWarning(std::string("No calculations configured in node ") + this->ID() + ".Calculations; is this intended?");
+	if (!this->setHistory && orderedItems.size() == 0) {
+		this->logWarning(std::string("No calculations configured in node ") + this->ID() + ".Calculations and history is disabled; is this intended?");
 	}
 
 	// go through items, create calculation objects
@@ -1718,7 +1720,10 @@ void OPDID_AggregatorPort::prepare() {
 	OPDI_DigitalPort::prepare();
 
 	// find source port; throws errors if something required is missing
-	this->sourcePort = this->findPort(this->getID(), "InputPorts", this->sourcePortID, true);
+	this->sourcePort = this->findPort(this->getID(), "SourcePort", this->sourcePortID, true);
+	this->historyPort = this->sourcePort;
+	if (!this->historyPortID.empty())
+		this->historyPort = this->findPort(this->getID(), "HistoryPort", this->historyPortID, true);
 }
 
 void OPDID_AggregatorPort::setLine(uint8_t newLine) {

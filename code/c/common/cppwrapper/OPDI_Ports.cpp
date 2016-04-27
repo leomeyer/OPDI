@@ -231,13 +231,13 @@ void OPDI_Port::setHistory(int intervalSeconds, int maxCount, const std::vector<
 		this->history.append(this->to_string(*it));
 		++it;
 	}
-	if (this->refreshMode == REFRESH_AUTO)
+	//if (this->refreshMode == REFRESH_AUTO)
 		this->refreshRequired = true;
 }
 
 void OPDI_Port::clearHistory(void) {
 	this->history.clear();
-	if (this->refreshMode == REFRESH_AUTO)
+	//if (this->refreshMode == REFRESH_AUTO)
 		this->refreshRequired = true;
 }
 

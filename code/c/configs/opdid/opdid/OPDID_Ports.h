@@ -492,13 +492,15 @@ protected:
 	};
 
 	std::string sourcePortID;
-	OPDI_Port *sourcePort;
+	OPDI_Port* sourcePort;
 	uint64_t queryInterval;
 	uint16_t totalValues;
 	int32_t multiplier;
 	int64_t minDelta;
 	int64_t maxDelta;
 	bool setHistory;
+	std::string historyPortID;
+	OPDI_Port* historyPort;
 
 	std::vector<int64_t> values;
 	uint64_t lastQueryTime;
