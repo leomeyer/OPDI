@@ -292,12 +292,12 @@ void FritzDECT200Power::configure(Poco::Util::AbstractConfiguration *portConfig)
 		this->setFlags(flags);
 	}
 
-		int time = portConfig->getInt("PowerRefreshTime", portConfig->getInt("RefreshTime", -1));
-		if (time >= 0) {
-			this->setRefreshTime(time);
-		} else {
-			throw Poco::DataException("A PowerRefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
-		}
+	int time = portConfig->getInt("PowerRefreshTime", portConfig->getInt("RefreshTime", 30000));
+	if (time >= 0) {
+		this->setRefreshTime(time);
+	} else {
+		throw Poco::DataException(this->ID() + ": A PowerRefreshTime > 0 must be specified: " + to_string(time));
+	}
 
 	// extended properties
 	std::string unit = portConfig->getString("PowerUnit", "");
@@ -371,12 +371,12 @@ void FritzDECT200Energy::configure(Poco::Util::AbstractConfiguration *portConfig
 		this->setFlags(flags);
 	}
 
-		int time = portConfig->getInt("EnergyRefreshTime", portConfig->getInt("RefreshTime", -1));
-		if (time >= 0) {
-			this->setRefreshTime(time);
-		} else {
-			throw Poco::DataException("An EnergyRefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
-		}
+	int time = portConfig->getInt("EnergyRefreshTime", portConfig->getInt("RefreshTime", 30000));
+	if (time >= 0) {
+		this->setRefreshTime(time);
+	} else {
+		throw Poco::DataException(this->ID() + ": An EnergyRefreshTime > 0 must be specified: " + to_string(time));
+	}
 
 	// extended properties
 	std::string unit = portConfig->getString("EnergyUnit", "");
