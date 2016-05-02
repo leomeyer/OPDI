@@ -922,6 +922,27 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 		port->setMin(min);
 		port->setMax(max);
 		port->setStep(step);
+
+		// a dial port can have an automatically generated, hidden aggregator port that provides it with history values
+		std::string history = portConfig->getString("History", "");
+		if (!history.empty()) {
+			// create aggregator port with internal ID
+			std::string aggPortID = port->ID() + "_OPDIDAutoAggregator";
+			OPDID_AggregatorPort* aggPort = new OPDID_AggregatorPort(this, aggPortID.c_str());
+			aggPort->sourcePortID = port->ID();
+			// default interval is one minute
+			aggPort->queryInterval = 60;
+			if (history == "Hour") {
+				aggPort->totalValues = 60;
+			} else
+			if (history == "Day") {
+				aggPort->totalValues = 1440;
+			} else
+				throw Poco::DataException(port->ID() + ": Value for 'History' not supported, expected 'Hour' or 'Day': " + history);
+			aggPort->setHidden(true);
+			// add the port
+			this->addPort(aggPort);
+		}
 	}
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());

@@ -472,6 +472,7 @@ public:
 * and maximum in the specified range. 
 */
 class OPDID_AggregatorPort : public OPDI_DigitalPort, public OPDID_PortFunctions {
+friend class AbstractOPDID;
 protected:
 	enum Algorithm {
 		UNKNOWN,
