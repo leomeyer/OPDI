@@ -76,34 +76,7 @@
     <None Include="webdocroot\index.html">
       <Filter>Ressourcendateien\webdocroot</Filter>
     </None>
-    <None Include="webdocroot\jquery.jsonrpc.js">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\jquery-1.12.2.js">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\jquery-ui.css">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\jquery-ui.js">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\jquery-ui.structure.css">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\jquery-ui.theme.css">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\jquery.gridster.js">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\jquery.gridster.css">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
     <None Include="webdocroot\opdid.css">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\simple-js-inheritance.js">
       <Filter>Ressourcendateien\webdocroot</Filter>
     </None>
     <None Include="webdocroot\strings.js">
@@ -112,25 +85,7 @@
     <None Include="webdocroot\utils.js">
       <Filter>Ressourcendateien\webdocroot</Filter>
     </None>
-    <None Include="webdocroot\jquery.fancytree.js">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\ui.fancytree.css">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\jquery.formatter.js">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
     <None Include="webdocroot\units.json">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\jquery-ui-timepicker-addon.css">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\jquery-ui-timepicker-addon.js">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\date.js">
       <Filter>Ressourcendateien\webdocroot</Filter>
     </None>
   </ItemGroup>
