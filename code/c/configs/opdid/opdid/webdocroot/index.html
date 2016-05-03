@@ -15,6 +15,7 @@
 <script type="text/javascript" src="jquery-1.12.2.js"></script>
 <script type="text/javascript" src="jquery.jsonrpc.js"></script>
 <script type="text/javascript" src="jquery-ui.min.js"></script>
+<script type="text/javascript" src="jquery-ui.min.js"></script>
 <script type="text/javascript" src="jquery.gridster.js" charset="utf-8"></script>
 <script type="text/javascript" src="contextMenu.js"></script>
 <script type="text/javascript" src="simple-js-inheritance.js"></script>
@@ -876,15 +877,16 @@ var DialPort = Port.extend({
         // append form dialog to end of document
         var dialogHtml = '<div id="' + this.port.id + '_dialog" title="' + this.port.label + '">'
             + '<p id="' + this.port.id + '_validateTips">Please enter a value in range: '
-               + (this.unit != null ? this.unit.format(this.port.min) : this.port.min)
-               + '..' 
-               + (this.unit != null ? this.unit.format(this.port.max) : this.port.max) + '</p>'
+               + '<nobr>' + (this.unit != null ? this.unit.format(this.port.min) : this.port.min) + '</nobr>'
+               + '<wbr>..<wbr>' 
+               + '<nobr>' + (this.unit != null ? this.unit.format(this.port.max) : this.port.max) + '</nobr></p>'
             + '<form>'
-            + '<fieldset>'
-            + '<label for="' + this.port.id + '_Value">New value:&nbsp;&nbsp;</label>'
-            + '<input type="text" name="' + this.port.id + '_Value" id="' + this.port.id + '_Value" class="text ui-widget-content ui-corner-all">'
+            + '<fieldset><table>'
+            + '<tr><td><label for="' + this.port.id + '_Value">New value:&nbsp;&nbsp;</label></td>'
+            + '<td><input type="text" name="' + this.port.id + '_Value" id="' + this.port.id + '_Value" class="text ui-widget-content ui-corner-all"></td>'
             + (this.unit != null && this.unit.editor == "DateTimeEditor" ? 
-                '<select id="' + this.port.id + '_datetime_select" name="' + this.port.id + '_datetime_select">'
+                '</tr><tr><td><label for="' + this.port.id + '_datetime_select">Shortcut:&nbsp;&nbsp;</label></td>'
+                + '<td><select id="' + this.port.id + '_datetime_select" name="' + this.port.id + '_datetime_select">'
                     + '<option>Select...</option>'
                     + '<option>In 30 seconds</option>'
                     + '<option>In one minute</option>'
@@ -894,9 +896,9 @@ var DialPort = Port.extend({
                     + '<option>In two hours</option>'
                     + '<option>In six hours</option>'
                     + '<option>In one day</option>'
-                + '</select>'
+                + '</select></td>'
                 : "")
-            + '<input type="submit" tabindex="-1" style="position:absolute; top:-1000px">'
+            + '</tr></table><input type="submit" tabindex="-1" style="position:absolute; top:-1000px">'
             + '</fieldset>'
             + '</form>'
             + '</div>';
@@ -911,7 +913,7 @@ var DialPort = Port.extend({
 
         this.dialog = $("#" + this.port.id + "_dialog").dialog({
             autoOpen: false,
-            height: 300,
+            height: 280,
             width: 450,
             modal: true,
             buttons: {
