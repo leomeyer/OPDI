@@ -571,6 +571,13 @@ var AnalogPort = Port.extend({
 
 var DialPort = Port.extend({
 
+    init: function(port) {
+        this._super(port);
+		
+		// set defaults
+		this.showHistoryLegend = true;
+    },
+
     getPortIconSrc: function() {
         if (this.port.state.error != null)
             return imageURLPrefix + "dial_port_error.png";
@@ -650,9 +657,19 @@ var DialPort = Port.extend({
                 if (canvas.getContext) {
 					var title = "";
                     var ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    // draw background if history available
+                    if ((this.history != null) && this.history.values) {
+                        ctx.globalAlpha = 0.2;
+                        var my_gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                        my_gradient.addColorStop(0, "#e6faff");
+                        my_gradient.addColorStop(1, "#4ddbff");
+                        ctx.fillStyle = my_gradient;
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+                    // draw port label
                     ctx.globalAlpha = 1;
                     ctx.fillStyle = "black";
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
                     // determine text size
                     var label = this.getLabel();
                     var i = -1;
@@ -663,13 +680,6 @@ var DialPort = Port.extend({
                     ctx.fillText(label, 0, canvas.height / 2);
                     // draw history if available
                     if ((this.history != null) && this.history.values) {
-                        ctx.globalAlpha = 0.2;
-                        var my_gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-                        my_gradient.addColorStop(0, "#e6faff");
-                        my_gradient.addColorStop(1, "#4ddbff");
-                        ctx.fillStyle = my_gradient;
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
                         var values = this.history.values.split(",");
                         // determine minimum and maximum
                         var min = Number.MAX_VALUE;
@@ -680,6 +690,47 @@ var DialPort = Port.extend({
                             if (Number(values[i]) > max)
                                 max = Number(values[i]);
                         }
+                        // history legend?
+                        if (this.showHistoryLegend) {
+                            ctx.font = "8px Verdana";
+                            var minLabelStart = canvas.width;
+                            // maximum: top right
+                            if (typeof max != "undefined") {
+                                var label = this.getTextValue(max);
+                                var labelExtent = ctx.measureText(label);
+                                var labelWidth = labelExtent.width;
+                                var labelHeight = 10;
+                                ctx.fillText(label, canvas.width - labelWidth - 1, labelHeight - 3);
+                            }
+                            // minimum: bottom right
+                            if (typeof min != "undefined") {
+                                var label = this.getTextValue(min);
+                                var labelExtent = ctx.measureText(label);
+                                var labelWidth = labelExtent.width;
+                                var labelHeight = 10;
+                                minLabelStart = canvas.width - labelWidth - 1;
+                                ctx.fillText(label, minLabelStart, canvas.height - 3);
+                            }
+                            // hourly lines
+                            var totalSeconds = this.history.interval * this.history.maxCount;
+                            var x = 4;  // first hour line to draw
+                            ctx.globalAlpha = 0.5;
+                            ctx.strokeStyle = "grey";
+                            while (x < totalSeconds / 3600) {
+                                var px = canvas.width - canvas.width / totalSeconds * x * 3600;
+                                ctx.beginPath();
+                                ctx.moveTo(px, 0);
+                                ctx.lineTo(px, canvas.height);
+                                ctx.stroke();
+                                // draw hour text?
+                                if (px < minLabelStart) {
+                                    var txt = "-" + x;
+                                    ctx.fillText(txt, px - 5 * txt.length, canvas.height - 3);
+                                }
+                                x += 4;
+                            }
+                        }
+
 						title = "Min: " + this.getTextValue(min) + "; Max: " + this.getTextValue(max);
                         // draw history graph line
                         ctx.strokeStyle = "#00ace6";
@@ -840,6 +891,14 @@ var DialPort = Port.extend({
         $('#' + this.port.id + '_Value').val(this.unit.format(date.getTime() / 1000));
     },
 
+    toggleShowHistoryLegend: function() {
+        if (this.showHistoryLegend)
+            this.showHistoryLegend = false;
+        else
+            this.showHistoryLegend = true;
+        this.updateUI();
+    },
+
     registerCommands: function() {
         var instance = this;
         $("#Port_" + this.port.id + "_Icon").click(function() {
@@ -874,6 +933,10 @@ var DialPort = Port.extend({
                 }
             });
         }
+        $("#Port_" + this.port.id + "_Canvas").click(function() {
+            instance.toggleShowHistoryLegend();
+        }); 
+
         // append form dialog to end of document
         var dialogHtml = '<div id="' + this.port.id + '_dialog" title="' + this.port.label + '">'
             + '<p id="' + this.port.id + '_validateTips">Please enter a value in range: '
