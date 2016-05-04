@@ -1640,7 +1640,7 @@ uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char* buffer, siz
 	// so the returned string is set to empty
 	if (buffer[bufLength - 1] != '\0') {
 		buffer[0] = '\0';
-		Opdi->logWarning("Slave callback buffer overflow, cleared the result; requested function = " + Opdi->to_string(opdiFunctionCode));
+		Opdi->logDebug("WARNING: Slave callback buffer overflow, cleared the result; requested function = " + Opdi->to_string(opdiFunctionCode));
 	}
 	return OPDI_STATUS_OK;
 }

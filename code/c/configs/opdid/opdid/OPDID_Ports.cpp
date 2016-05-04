@@ -1501,8 +1501,8 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 
 // OPDID_AggregatorPort class implementation
 
-void OPDID_AggregatorPort::resetValues() {
-	this->logVerbose(this->ID() + ": Resetting aggregator; values are now unavailable");
+void OPDID_AggregatorPort::resetValues(std::string reason) {
+	this->logDebug(this->ID() + ": Resetting aggregator; values are now unavailable because: " + reason);
 	// indicate errors on all calculations
 	auto it = this->calculations.begin();
 	while (it != this->calculations.end()) {
@@ -1534,7 +1534,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			value = this->opdid->getPortValue(this->sourcePort);
 		} catch (Poco::Exception &e) {
 			this->logDebug(this->ID() + ": Error querying source port " + this->sourcePort->ID() + ": " + e.message());
-			this->resetValues();
+			this->resetValues("Querying the source port " + this->sourcePort->ID() + " resulted in an error: " + e.message());
 			return OPDI_STATUS_OK;
 		}
 
@@ -1554,7 +1554,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			if ((diff < this->minDelta) || (diff > this->maxDelta)) {
 				this->logWarning(this->ID() + ": The new source port value of " + this->to_string(longValue) + " is outside of the specified limits (diff = " + this->to_string(diff) + ")");
 				// an invalid value invalidates the whole calculation
-				this->resetValues();
+				this->resetValues("The value was outside of the specified limits");
 				return OPDI_STATUS_OK;
 			}
 			// value is ok
@@ -1712,7 +1712,7 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 	this->values.reserve(this->totalValues);
 
 	// set initial state
-	this->resetValues();
+	this->resetValues("Setting initial state");
 }
 
 void OPDID_AggregatorPort::prepare() {
@@ -1729,7 +1729,7 @@ void OPDID_AggregatorPort::prepare() {
 void OPDID_AggregatorPort::setLine(uint8_t newLine) {
 	// if being deactivated, reset values and ports to error
 	if ((this->line == 1) && (newLine == 0))
-		this->resetValues();
+		this->resetValues("Aggregator was deactivated");
 	OPDI_DigitalPort::setLine(newLine);
 }
 

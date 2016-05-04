@@ -510,7 +510,7 @@ protected:
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
-	void resetValues(void);
+	void resetValues(std::string reason);
 
 public:
 	OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id);
