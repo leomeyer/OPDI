@@ -130,13 +130,15 @@ public class DialPortDateTimeEditor extends DialogFragment {
 			dateTime = new LocalDateTime().plusMinutes(5); break;
 		case 4:	// 15 minutes
 			dateTime = new LocalDateTime().plusMinutes(15); break;
-		case 5:	// one hour
+		case 5:	// 30 minutes
+			dateTime = new LocalDateTime().plusMinutes(30); break;
+		case 6:	// one hour
 			dateTime = new LocalDateTime().plusHours(1); break;
-		case 6:	// two hours
+		case 7:	// two hours
 			dateTime = new LocalDateTime().plusHours(2); break;
-		case 7:	// six hours
+		case 8:	// six hours
 			dateTime = new LocalDateTime().plusHours(6); break;
-		case 8:	// one day
+		case 9:	// one day
 			dateTime = new LocalDateTime().plusDays(1); break;
 		default:
 			return;
