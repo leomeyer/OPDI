@@ -21,7 +21,12 @@
 #ifndef __OPDI_PLATFORMTYPES_H
 #define __OPDI_PLATFORMTYPES_H
 
-// basic types on Windows
+// basic types on Windows, conditionally dependent on compiler version
+#if _MSC_VER >= 1900
+
+#include <stdint.h>
+
+#else
 
 #define uint8_t		unsigned char
 #define int8_t		signed char
@@ -31,6 +36,8 @@
 #define int32_t		signed __int32
 #define uint64_t	unsigned __int64
 #define int64_t		__int64
+
+#endif
 
 // channel number data type bit length
 // It's important to define it this way because the C preprocessor can't compare strings.

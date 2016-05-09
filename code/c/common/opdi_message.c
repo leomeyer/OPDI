@@ -154,7 +154,7 @@ static uint8_t decode(opdi_Message *message, uint8_t bytes[]) {
 */
 static uint8_t encode(opdi_Message *message, uint16_t *length) {
 	char channelBuf[CHANNEL_MAXBUF + 1] = {'\0'};
-	size_t pos = 0;
+	uint16_t pos = 0;
 	uint16_t checksum = 0;
 	size_t i;
 	uint8_t err;

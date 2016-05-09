@@ -94,22 +94,22 @@ uint8_t opdi_str_to_int64(const char *str, int64_t *result) {
 
 uint8_t opdi_uint8_to_str(uint8_t value, char* msgBuf) {
 	_itoa(value, msgBuf, 10);
-	return strlen(msgBuf);
+	return (uint8_t)strlen(msgBuf);
 }
 
 uint8_t opdi_uint16_to_str(uint16_t value, char* msgBuf) {
 	_itoa(value, msgBuf, 10);
-	return strlen(msgBuf);
+	return (uint8_t)strlen(msgBuf);
 }
 
 uint8_t opdi_int32_to_str(int32_t value, char* msgBuf) {
 	_itoa(value, msgBuf, 10);
-	return strlen(msgBuf);
+	return (uint8_t)strlen(msgBuf);
 }
 
 uint8_t opdi_int64_to_str(int64_t value, char* msgBuf) {
 	_i64toa(value, msgBuf, 10);
-	return strlen(msgBuf);
+	return (uint8_t)strlen(msgBuf);
 }
 
 uint8_t opdi_bytes_to_string(uint8_t bytes[], uint16_t offset, uint16_t length, char *dest, uint16_t dest_length) {

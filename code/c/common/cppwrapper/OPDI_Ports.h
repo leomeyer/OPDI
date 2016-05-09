@@ -211,7 +211,7 @@ public:
 
 	virtual void setGroup(const std::string& group);
 
-	virtual void setHistory(int intervalSeconds, int maxCount, const std::vector<int64_t>& values);
+	virtual void setHistory(uint64_t intervalSeconds, int maxCount, const std::vector<int64_t>& values);
 
 	virtual void clearHistory(void);
 

@@ -186,7 +186,7 @@ Poco::JSON::Object WebServerPlugin::jsonGetPortInfo(OPDI_Port* port) {
 		if (0 == strcmp(port->getType(), OPDI_PORTTYPE_SELECT)) {
 		OPDI_SelectPort* sport = (OPDI_SelectPort*)port;
 		Poco::JSON::Array positions;
-		for (size_t i = 0; i <= sport->getMaxPosition(); i++) {
+		for (uint16_t i = 0; i <= sport->getMaxPosition(); i++) {
 			positions.add(sport->getPositionLabel(i));
 		}
 		result.set("positions", positions);

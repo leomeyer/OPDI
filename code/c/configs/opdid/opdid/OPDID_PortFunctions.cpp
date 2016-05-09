@@ -189,8 +189,8 @@ void ValueResolver::initialize(OPDID_PortFunctions* origin, const std::string& p
 				defaultStr = value.substr(matches[2].offset, matches[2].length);
 			} else {
 				// try to match scale value syntax
-				Poco::RegularExpression reDefault("(.*)\\((.*)\\)");
-				if (reDefault.match(value, 0, matches) == 3) {
+				Poco::RegularExpression reScale("(.*)\\((.*)\\)");
+				if (reScale.match(value, 0, matches) == 3) {
 					portName = value.substr(matches[1].offset, matches[1].length);
 					scaleStr = value.substr(matches[2].offset, matches[2].length);
 				} else {

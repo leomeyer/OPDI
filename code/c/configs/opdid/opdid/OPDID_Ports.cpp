@@ -2,6 +2,7 @@
 #define _USE_MATH_DEFINES // for C++
 #include <math.h>
 #include <numeric>
+#include <functional>
 
 #include "Poco/String.h"
 #include "Poco/Tuple.h"
@@ -1460,7 +1461,7 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 			break;
 		}
 		case ARITHMETIC_MEAN: {
-			int64_t sum = std::accumulate(values.begin(), values.end(), 0);
+			int64_t sum = std::accumulate(values.begin(), values.end(), (int64_t)0);
 			int64_t mean = sum / values.size();
 			aggregator->logDebug(this->ID() + ": New value according to ArithmeticMean algorithm: " + this->to_string(mean));
 			if ((mean >= this->getMin()) && (mean <= this->getMax()))

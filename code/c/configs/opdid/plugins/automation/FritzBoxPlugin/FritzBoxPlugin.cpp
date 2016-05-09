@@ -519,7 +519,7 @@ std::string FritzBoxPlugin::getSessionID(const std::string& user, const std::str
 	if (sid == INVALID_SID) {
 		std::string challenge = getXMLValue(loginPage, "Challenge");
 		std::string uri = "/login_sid.lua?username=" + user + "&response=" + this->getResponse(challenge, password);
-		std::string loginPage = this->httpGet(uri);
+		loginPage = this->httpGet(uri);
 		if (loginPage.empty())
 			return INVALID_SID;
 		sid = getXMLValue(loginPage,  "SID");
@@ -584,7 +584,7 @@ void FritzBoxPlugin::getSwitchState(FritzPort* port) {
 	this->checkLogin();
 	// problem?
 	if (this->sid == INVALID_SID) {
-		switchPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
+		switchPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -592,7 +592,7 @@ void FritzBoxPlugin::getSwitchState(FritzPort* port) {
 	std::string result = httpGet("/webservices/homeautoswitch.lua?ain=" + switchPort->ain + "&switchcmd=getswitchstate&sid=" + this->sid);
 	// problem?
 	if (result.empty()) {
-		switchPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
+		switchPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -612,7 +612,7 @@ void FritzBoxPlugin::setSwitchState(FritzPort* port, uint8_t line) {
 	this->checkLogin();
 	// problem?
 	if (this->sid == INVALID_SID) {
-		switchPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
+		switchPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -620,7 +620,7 @@ void FritzBoxPlugin::setSwitchState(FritzPort* port, uint8_t line) {
 	std::string result = this->httpGet("/webservices/homeautoswitch.lua?ain=" + switchPort->ain + "&switchcmd=" + cmd + "&sid=" + this->sid);
 	// problem?
 	if (result.empty()) {
-		switchPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
+		switchPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -641,7 +641,7 @@ void FritzBoxPlugin::getSwitchEnergy(FritzPort* port) {
 
 	// problem?
 	if (this->sid == INVALID_SID) {
-		energyPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
+		energyPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -649,7 +649,7 @@ void FritzBoxPlugin::getSwitchEnergy(FritzPort* port) {
 	std::string result = httpGet("/webservices/homeautoswitch.lua?ain=" + energyPort->ain + "&switchcmd=getswitchenergy&sid=" + this->sid);
 	// problem?
 	if (result.empty()) {
-		energyPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
+		energyPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -667,7 +667,7 @@ void FritzBoxPlugin::getSwitchPower(FritzPort* port) {
 	this->checkLogin();
 	// problem?
 	if (this->sid == INVALID_SID) {
-		powerPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
+		powerPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -675,7 +675,7 @@ void FritzBoxPlugin::getSwitchPower(FritzPort* port) {
 	std::string result = httpGet("/webservices/homeautoswitch.lua?ain=" + powerPort->ain + "&switchcmd=getswitchpower&sid=" + this->sid);
 	// problem?
 	if (result.empty()) {
-		powerPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
+		powerPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
 		return;
 	}
 

@@ -45,8 +45,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	strcpy(this->type, type);
 }
 
-OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const char *dircaps, int32_t flags, void* ptr):
-    OPDI_Port(id, type) {
+OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const char *dircaps, int32_t flags, void* ptr): OPDI_Port(id, type) {
 	this->flags = flags;
 	this->ptr = ptr;
 	this->setLabel(label);
@@ -204,7 +203,7 @@ void OPDI_Port::setGroup(const std::string& group) {
 	}
 }
 
-void OPDI_Port::setHistory(int intervalSeconds, int maxCount, const std::vector<int64_t>& values) {
+void OPDI_Port::setHistory(uint64_t intervalSeconds, int maxCount, const std::vector<int64_t>& values) {
 	this->history = "interval=" + this->to_string(intervalSeconds);
 	this->history.append(";maxCount=" + this->to_string(maxCount));
 	this->history.append(";values=");
