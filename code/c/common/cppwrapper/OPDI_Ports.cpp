@@ -40,31 +40,15 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->orderID = -1;
 	this->persistent = false;
 	this->error = VALUE_OK;
-	
+
 	this->setID(id);
 	strcpy(this->type, type);
 }
 
-OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const char *dircaps, int32_t flags, void* ptr) {
-	this->data = nullptr;
-	this->id = nullptr;
-	this->label = nullptr;
-	this->opdi = nullptr;
+OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const char *dircaps, int32_t flags, void* ptr):
+    OPDI_Port(id, type) {
 	this->flags = flags;
 	this->ptr = ptr;
-	this->hidden = false;
-	this->readonly = false;
-	this->refreshMode = REFRESH_NOT_SET;
-	this->refreshRequired = false;
-	this->selfRefreshTime = 0;
-	this->lastRefreshTime = 0;
-	this->orderID = -1;
-	this->persistent = false;
-	this->error = VALUE_OK;
-
-	this->setID(id);
-	strcpy(this->type, type);
-
 	this->setLabel(label);
 	this->setDirCaps(dircaps);
 }
@@ -438,7 +422,7 @@ OPDI_DigitalPort::OPDI_DigitalPort(const char *id) : OPDI_Port(id, OPDI_PORTTYPE
 
 OPDI_DigitalPort::OPDI_DigitalPort(const char *id, const char *label, const char *dircaps, const int32_t flags) :
 	// call base constructor; mask unsupported flags (?)
-	OPDI_Port(id, label, OPDI_PORTTYPE_DIGITAL, dircaps, flags, nullptr) { // & (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) & (OPDI_DIGITAL_PORT_HAS_PULLDN | OPDI_DIGITAL_PORT_PULLDN_ALWAYS)) 
+	OPDI_Port(id, label, OPDI_PORTTYPE_DIGITAL, dircaps, flags, nullptr) { // & (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) & (OPDI_DIGITAL_PORT_HAS_PULLDN | OPDI_DIGITAL_PORT_PULLDN_ALWAYS))
 
 	this->mode = 0;
 	this->line = 0;
@@ -703,7 +687,7 @@ OPDI_SelectPort::OPDI_SelectPort(const char *id) : OPDI_Port(id, nullptr, OPDI_P
 	this->position = 0;
 }
 
-OPDI_SelectPort::OPDI_SelectPort(const char *id, const char *label, const char *items[]) 
+OPDI_SelectPort::OPDI_SelectPort(const char *id, const char *label, const char *items[])
 	: OPDI_Port(id, label, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	this->setItems(items);
 	this->position = 0;
@@ -810,7 +794,7 @@ OPDI_DialPort::OPDI_DialPort(const char *id) : OPDI_Port(id, nullptr, OPDI_PORTT
 	this->position = 0;
 }
 
-OPDI_DialPort::OPDI_DialPort(const char *id, const char *label, int64_t minValue, int64_t maxValue, uint64_t step) 
+OPDI_DialPort::OPDI_DialPort(const char *id, const char *label, int64_t minValue, int64_t maxValue, uint64_t step)
 	: OPDI_Port(id, label, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	if (minValue >= maxValue) {
 		throw Poco::DataException("Dial port minValue must be < maxValue");
@@ -892,7 +876,7 @@ bool OPDI_DialPort::hasError(void) {
 
 void OPDI_StreamingPort::doSelfRefresh(void) {}
 
-OPDI_StreamingPort::OPDI_StreamingPort(const char *id) : 
+OPDI_StreamingPort::OPDI_StreamingPort(const char *id) :
 	OPDI_Port(id, OPDI_PORTTYPE_STREAMING) {
 }
 

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="opdid_linux" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/opdid_linux" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-std=c++11" />
+					<Add option="-g" />
+					<Add option="-Dlinux" />
+					<Add directory="../../common" />
+					<Add directory="../../platforms" />
+					<Add directory="../../platforms/linux" />
+					<Add directory="../../common/cppwrapper" />
+					<Add directory="opdid" />
+					<Add directory="../../libraries/libctb/include/" />
+					<Add directory="../../libraries/ExprTk" />
+				</Compiler>
+				<Linker>
+					<Add library="../../libraries/POCO/lib/Linux/i686/libPocoFoundationd.so" />
+					<Add library="../../libraries/POCO/lib/Linux/i686/libPocoJSONd.so" />
+					<Add library="../../libraries/POCO/lib/Linux/i686/libPocoNetd.so" />
+					<Add library="../../libraries/POCO/lib/Linux/i686/libPocoUtild.so" />
+					<Add library="../../libraries/POCO/lib/Linux/i686/libPocoXMLd.so" />
+					<Add library="libdl" />
+					<Add library="libpthread" />
+					<Add directory="../../libraries/POCO/lib/Linux/i686" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/opdid_linux" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="../../common/cppwrapper/OPDI.cpp" />
+		<Unit filename="../../common/cppwrapper/OPDI.h" />
+		<Unit filename="../../common/cppwrapper/OPDI_Ports.cpp" />
+		<Unit filename="../../common/cppwrapper/OPDI_Ports.h" />
+		<Unit filename="../../common/opdi_aes.cpp" />
+		<Unit filename="../../common/opdi_config.h" />
+		<Unit filename="../../common/opdi_constants.h" />
+		<Unit filename="../../common/opdi_message.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../common/opdi_message.h" />
+		<Unit filename="../../common/opdi_port.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../common/opdi_port.h" />
+		<Unit filename="../../common/opdi_protocol.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../common/opdi_protocol.h" />
+		<Unit filename="../../common/opdi_protocol_constants.h" />
+		<Unit filename="../../common/opdi_rijndael.cpp" />
+		<Unit filename="../../common/opdi_rijndael.h" />
+		<Unit filename="../../common/opdi_slave_protocol.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../common/opdi_slave_protocol.h" />
+		<Unit filename="../../common/opdi_strings.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../common/opdi_strings.h" />
+		<Unit filename="../../libraries/libctb/include/ctb-0.16/ctb.h" />
+		<Unit filename="../../libraries/libctb/include/ctb-0.16/fifo.h" />
+		<Unit filename="../../libraries/libctb/include/ctb-0.16/getopt.h" />
+		<Unit filename="../../libraries/libctb/include/ctb-0.16/gpib.h" />
+		<Unit filename="../../libraries/libctb/include/ctb-0.16/iobase.h" />
+		<Unit filename="../../libraries/libctb/include/ctb-0.16/kbhit.h" />
+		<Unit filename="../../libraries/libctb/include/ctb-0.16/portscan.h" />
+		<Unit filename="../../libraries/libctb/include/ctb-0.16/serport.h" />
+		<Unit filename="../../libraries/libctb/include/ctb-0.16/serportx.h" />
+		<Unit filename="../../libraries/libctb/include/ctb-0.16/timer.h" />
+		<Unit filename="../../libraries/libctb/src/fifo.cpp" />
+		<Unit filename="../../libraries/libctb/src/getopt.cpp" />
+		<Unit filename="../../libraries/libctb/src/iobase.cpp" />
+		<Unit filename="../../libraries/libctb/src/kbhit.cpp" />
+		<Unit filename="../../libraries/libctb/src/linux/serport.cpp" />
+		<Unit filename="../../libraries/libctb/src/linux/timer.cpp" />
+		<Unit filename="../../libraries/libctb/src/portscan.cpp" />
+		<Unit filename="../../libraries/libctb/src/serportx.cpp" />
+		<Unit filename="../../platforms/linux/opdi_platformfuncs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../platforms/linux/opdi_platformtypes.h" />
+		<Unit filename="opdid/AbstractOPDID.cpp" />
+		<Unit filename="opdid/AbstractOPDID.h" />
+		<Unit filename="opdid/LinuxOPDID.cpp" />
+		<Unit filename="opdid/LinuxOPDID.h" />
+		<Unit filename="opdid/OPDIDConfigurationFile.cpp" />
+		<Unit filename="opdid/OPDIDConfigurationFile.h" />
+		<Unit filename="opdid/OPDID_ExecPort.cpp" />
+		<Unit filename="opdid/OPDID_ExecPort.h" />
+		<Unit filename="opdid/OPDID_ExpressionPort.cpp" />
+		<Unit filename="opdid/OPDID_ExpressionPort.h" />
+		<Unit filename="opdid/OPDID_PortFunctions.cpp" />
+		<Unit filename="opdid/OPDID_PortFunctions.h" />
+		<Unit filename="opdid/OPDID_Ports.cpp" />
+		<Unit filename="opdid/OPDID_Ports.h" />
+		<Unit filename="opdid/OPDID_TimerPort.cpp" />
+		<Unit filename="opdid/OPDID_TimerPort.h" />
+		<Unit filename="opdid/SunRiseSet.cpp" />
+		<Unit filename="opdid/SunRiseSet.h" />
+		<Unit filename="opdid/opdid_linux.cpp" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

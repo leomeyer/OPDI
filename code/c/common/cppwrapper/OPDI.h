@@ -22,6 +22,8 @@
 #ifndef __OPDI_H__
 #define __OPDI_H__
 
+#include "Poco/Exception.h"
+
 #include "OPDI_Ports.h"
 
 #include "opdi_config.h"
@@ -127,7 +129,7 @@ public:
 	/** Sorts the added ports by their OrderID. */
 	virtual void sortPorts(void);
 
-	/** Iterates through all ports and calls their prepare() methods. 
+	/** Iterates through all ports and calls their prepare() methods.
 	Also, adds the ports to the OPDI subsystem. */
 	virtual void preparePorts(void);
 
