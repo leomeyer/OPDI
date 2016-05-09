@@ -8,9 +8,12 @@ See the README file for advanced instructions.
 On Windows (extract from README):
 
 To build from the command line, start the
-Visual Studio .NET 2003 (or 2005/2008/2010/2012) Command Prompt and cd to the directory 
+Visual Studio .NET 2003 (or 2005/2008/2010/2012/2013/2015) Command Prompt and cd to the directory 
 where you have extracted the POCO C++ Libraries sources. Then, simply start the buildwin.cmd 
-script and pass as argument the version of visual studio (71, 80, 90, 100 or 110).
+script and pass as argument the version of visual studio (71, 80, 90, 100, 110, 120 or 140).
+
+The following command (for Visual Studio 2015) speeds up the compilation:
+> buildwin 140 build all both Win32 nosamples notests
 
 The Windows configs should link the POCO libraries statically. This avoids the need to deploy the DLLs as well.
 If you want to use the DLLs remove the POCO_STATIC compiler directive from the project settings and copy the DLLs to the resulting exe's folder.
