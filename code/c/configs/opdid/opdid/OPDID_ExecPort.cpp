@@ -18,6 +18,7 @@ OPDID_ExecPort::OPDID_ExecPort(AbstractOPDID *opdid, const char *id) : OPDI_Digi
 	// default: Low
 	this->line = 0;
 	this->lastTriggerTime = 0;
+	this->changeType = CHANGED_TO_HIGH;
 }
 
 OPDID_ExecPort::~OPDID_ExecPort() {
@@ -27,19 +28,32 @@ void OPDID_ExecPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
+	std::string changeTypeStr = config->getString("ChangeType", "");
+	if (changeTypeStr == "ChangedToHigh") {
+        this->changeType = CHANGED_TO_HIGH;
+	} else
+	if (changeTypeStr == "ChangedToLow") {
+        this->changeType = CHANGED_TO_LOW;
+	} else
+	if (changeTypeStr == "AnyChange") {
+        this->changeType = ANY_CHANGE;
+	} else
+	if (!changeTypeStr.empty())
+        throw Poco::DataException(this->ID() + ": Illegal value for 'ChangeType', expected: 'ChangedToHigh', 'ChangedToLow', or 'AnyChange': " + changeTypeStr);
+
 	this->programName = config->getString("Program", "");
 	if (this->programName == "")
-		throw Poco::DataException("You have to specify a Program parameter");
+		throw Poco::DataException(this->ID() + ": You have to specify a Program parameter");
 
 	this->parameters = config->getString("Parameters", "");
 
 	this->waitTimeMs = config->getInt64("WaitTime", 0);
 	if (this->waitTimeMs < 0)
-		throw Poco::DataException("Please specify a positive value for WaitTime: ", this->to_string(this->waitTimeMs));
+		throw Poco::DataException(this->ID() + ": Please specify a positive value for WaitTime: ", this->to_string(this->waitTimeMs));
 
 	this->resetTimeMs = config->getInt64("ResetTime", 0);
 	if (this->resetTimeMs < 0)
-		throw Poco::DataException("Please specify a positive value for ResetTime: ", this->to_string(this->resetTimeMs));
+		throw Poco::DataException(this->ID() + ": Please specify a positive value for ResetTime: ", this->to_string(this->resetTimeMs));
 
 	this->forceKill = config->getBool("ForceKill", false);
 }
@@ -60,12 +74,21 @@ void OPDID_ExecPort::prepare() {
 uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
 	OPDI_DigitalPort::doWork(canSend);
 
-	if (this->line == 1) {
-		// port state switched to High? wait time must be up if specified
+	uint8_t lastLine = this->lastState;
+	this->lastState = this->line;
+
+    // state changed since last check?
+	if (this->line != lastLine) {
+        // check state change condition
+        if ((this->line == 0) && (this->changeType == CHANGED_TO_HIGH))
+            return OPDI_STATUS_OK;
+        if ((this->line == 1) && (this->changeType == CHANGED_TO_LOW))
+            return OPDI_STATUS_OK;
+
+		// relevant change detected - wait time must be up if specified
 		Poco::Timestamp::TimeDiff timeDiff = (Poco::Timestamp() - this->lastTriggerTime);
-		if (this->wasLow && ((this->waitTimeMs == 0) || (timeDiff / 1000 > this->waitTimeMs))) { // Poco TimeDiff is in microseconds
+		if ((this->waitTimeMs == 0) || (timeDiff / 1000 > this->waitTimeMs)) { // Poco TimeDiff is in microseconds
 			// trigger detected
-			this->wasLow = false;
 
 			// program still running?
 			if (Poco::Process::isRunning(this->processPID) && forceKill) {
@@ -118,9 +141,12 @@ uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
 					argList.push_back(item);
 			}
 
-			// execute program
-			this->lastTriggerTime = Poco::Timestamp();
+            // for automatic reset logic, if set high...
+            if (this->line == 1)
+                // ... remember start time
+                this->lastTriggerTime = Poco::Timestamp();
 
+            // execute program
 			try {
 				Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList));
 				this->processPID = ph.id();
@@ -129,16 +155,13 @@ uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
 				this->opdid->logError(this->ID() + ": Unable to start program '" + this->programName + "': " + e.message());
 			}
 		}
-
-		// reset time up?
-		if ((this->resetTimeMs > 0) && ((Poco::Timestamp() - this->lastTriggerTime) / 1000 > this->resetTimeMs)) {
-			// set back to Low
-			this->setLine(0);
-		}
-	} else {
-		// state is Low
-		this->wasLow = true;
 	}
+
+    // set High and reset time up?
+    if ((this->line == 1) && (this->resetTimeMs > 0) && ((Poco::Timestamp() - this->lastTriggerTime) / 1000 > this->resetTimeMs)) {
+        // set back to Low; this may trigger an execution as well
+        this->setLine(0);
+    }
 
 	return OPDI_STATUS_OK;
 }

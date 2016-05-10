@@ -300,7 +300,7 @@ void AbstractOPDID::logExtreme(const std::string& message) {
 int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<std::string, std::string>& environment) {
 	this->environment = environment;
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> configuration = nullptr;
-	
+
 	bool testMode = false;
 
 	// add default environment parameters
@@ -335,7 +335,7 @@ int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<
 		} else
 		if (args.at(i) == "-t") {
 			testMode = true;
-		} else		
+		} else
 		if (args.at(i) == "-c") {
 			i++;
 			if (args.size() == i) {
@@ -356,7 +356,7 @@ int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<
 				Poco::Logger::root().setChannel(pChannel);
 				this->logger = Poco::Logger::has("");
 			}
-		} else		
+		} else
 		if (args.at(i) == "-p") {
 			i++;
 			if (args.size() == i) {
@@ -373,7 +373,7 @@ int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<
 			}
 		} else {
 			throw Poco::SyntaxException("Invalid argument", args.at(i));
-		} 
+		}
 	}
 
 	// no configuration?
@@ -404,13 +404,13 @@ int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<
 
 	this->sortPorts();
 	this->preparePorts();
-	
+
 	// startup has been done using the process owner
 	// if specified, change process privileges to a different user
 	if (general->hasProperty("SwitchToUser")) {
 		this->switchToUser(general->getString("SwitchToUser"));
 	}
-	
+
 	// create view to "Connection" section
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> connection = configuration->createView("Connection");
 
@@ -610,17 +610,13 @@ void AbstractOPDID::setupGroup(Poco::Util::AbstractConfiguration* groupConfig, c
 	this->addPortGroup(portGroup);
 }
 
-void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig, const std::string& node) {
-	this->logVerbose("Setting up include: " + node);
-
-	// filename must be present
-	std::string filename = this->getConfigString(config, "Filename", "", true);
-
+std::string AbstractOPDID::resolveRelativePath(Poco::Util::AbstractConfiguration* config, const std::string& path) {
 	// determine path type; default: relative to parent config file
 	std::string relativeTo = this->getConfigString(config, "RelativeTo", "Config", false);
 
 	if (relativeTo == "Application") {
 		// nothing to do
+		return path;
 	} else
 	if (relativeTo == "Config") {
 		// determine application-relative path depending on location of previous config file
@@ -628,14 +624,24 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration* config, Poco
 		if (configFilePath == "")
 			throw Poco::DataException("Programming error: Configuration file path not specified in config settings");
 
-		Poco::Path filePath(configFilePath);
+		Poco::Path filePath(path);
 		Poco::Path absPath(filePath.absolute());
 		Poco::Path parentPath = absPath.parent();
 		// append or replace new config file path to path of previous config file
-		Poco::Path finalPath = parentPath.resolve(filename);
-		filename = finalPath.toString();
+		Poco::Path finalPath = parentPath.resolve(path);
+		return finalPath.toString();
 	} else
-		throw Poco::DataException("Unknown RelativeTo property specified; expected 'Application' or 'Config'", relativeTo);
+        if (relativeTo.empty())
+            return path;
+
+    throw Poco::DataException("Unknown RelativeTo property specified; expected 'Application' or 'Config'", relativeTo);
+}
+
+void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig, const std::string& node) {
+	this->logVerbose("Setting up include: " + node);
+
+	// filename must be present
+	std::string filename = this->resolveRelativePath(config, this->getConfigString(config, "Filename", "", true));
 
 	// read parameters and build a map, based on the environment parameters
 	std::map<std::string, std::string> parameters;
@@ -661,7 +667,7 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration* config, Poco
 		this->logNormal(node + ": No parameters for include in section " + node + ".Parameters found, is this intended?");
 
 	this->logVerbose(node + ": Processing include file: " + filename);
-	
+
 	if (this->logVerbosity >= AbstractOPDID::DEBUG) {
 		this->logDebug(node + ": Include file parameters:");
 		std::map<std::string, std::string>::const_iterator it = parameters.begin();
@@ -1121,7 +1127,9 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration* config, const s
 
 	// driver specified?
 	if (nodeDriver != "") {
-		this->logVerbose("Loading plugin driver: " + nodeDriver);
+		nodeDriver = this->resolveRelativePath(config, nodeDriver);
+
+        this->logVerbose("Loading plugin driver: " + nodeDriver);
 
 		// try to load the plugin; the driver name is the (platform dependent) library file name
 		IOPDIDPlugin* plugin = this->getPlugin(nodeDriver);
@@ -1136,7 +1144,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration* config, const s
 
 		if (nodeType == "Group") {
 			this->setupGroup(nodeConfig, node);
-		} else 
+		} else
 		if (nodeType == "Include") {
 			this->setupInclude(nodeConfig, config, node);
 		} else
@@ -1259,7 +1267,7 @@ int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration* config, bo
 	if (connectionType == "TCP") {
 		std::string interface_ = this->getConfigString(config, "Interface", "*", false);
 		int port = config->getInt("Port", DEFAULT_TCP_PORT);
-		
+
 		if (testMode)
 			return OPDI_STATUS_OK;
 
@@ -1271,7 +1279,7 @@ int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration* config, bo
 
 void AbstractOPDID::warnIfPluginMoreRecent(const std::string& driver) {
 	// parse compile date and time
-    std::stringstream compiled; 
+    std::stringstream compiled;
     compiled << __DATE__ << " " << __TIME__;
 
 	Poco::DateTime buildTime;
@@ -1594,21 +1602,21 @@ void AbstractOPDID::getEnvironment(std::map<std::string, std::string>& mapToFill
 uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char* buffer, size_t bufLength) {
 
 	switch (opdiFunctionCode) {
-	case OPDI_FUNCTION_GET_CONFIG_NAME: 
-		strncpy(buffer, Opdi->getSlaveName().c_str(), bufLength); 
+	case OPDI_FUNCTION_GET_CONFIG_NAME:
+		strncpy(buffer, Opdi->getSlaveName().c_str(), bufLength);
 		break;
-	case OPDI_FUNCTION_SET_MASTER_NAME: 
+	case OPDI_FUNCTION_SET_MASTER_NAME:
 		return Opdi->setMasterName(buffer);
-	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS: 
-		strncpy(buffer, OPDID_SUPPORTED_PROTOCOLS, bufLength); 
+	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS:
+		strncpy(buffer, OPDID_SUPPORTED_PROTOCOLS, bufLength);
 		break;
-	case OPDI_FUNCTION_GET_ENCODING: 
-		strncpy(buffer, Opdi->getEncoding().c_str(), bufLength); 
+	case OPDI_FUNCTION_GET_ENCODING:
+		strncpy(buffer, Opdi->getEncoding().c_str(), bufLength);
 		break;
-	case OPDI_FUNCTION_SET_LANGUAGES: 
+	case OPDI_FUNCTION_SET_LANGUAGES:
 		return Opdi->setLanguages(buffer);
 	case OPDI_FUNCTION_GET_EXTENDED_DEVICEINFO:
-		strncpy(buffer, Opdi->getExtendedDeviceInfo().c_str(), bufLength); 
+		strncpy(buffer, Opdi->getExtendedDeviceInfo().c_str(), bufLength);
 		break;
 	case OPDI_FUNCTION_GET_EXTENDED_PORTINFO: {
 		uint8_t code;

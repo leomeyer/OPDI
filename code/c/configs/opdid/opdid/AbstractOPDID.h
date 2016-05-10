@@ -117,7 +117,7 @@ public:
 
 	Poco::BasicEvent<void> allPortsRefreshed;
 	Poco::BasicEvent<OPDI_Port*> portRefreshed;
-	
+
 	AbstractOPDID(void);
 
 	virtual ~AbstractOPDID(void);
@@ -136,7 +136,7 @@ public:
 	virtual void sayHello(void);
 
 	virtual void showHelp(void);
-	
+
 	/** Returns the current user ID or name. */
 	virtual std::string getCurrentUser(void) = 0;
 
@@ -187,8 +187,8 @@ public:
 
 	virtual LogVerbosity getConfigLogVerbosity(Poco::Util::AbstractConfiguration* config, LogVerbosity defaultVerbosity);
 
-	/** Returns the configuration that should be used for querying a port's state. This is the baseConfig if no 
-	 *  persistent configuration has been specified, or a layered configuration otherwise. 
+	/** Returns the configuration that should be used for querying a port's state. This is the baseConfig if no
+	 *  persistent configuration has been specified, or a layered configuration otherwise.
 	 *	This configuration must be freed after use. The view name is optional. */
 	virtual Poco::Util::AbstractConfiguration* getConfigForState(Poco::Util::AbstractConfiguration* baseConfig, const std::string& viewName);
 
@@ -202,6 +202,8 @@ public:
 	virtual void configureGroup(Poco::Util::AbstractConfiguration* groupConfig, OPDI_PortGroup* group, int defaultFlags);
 
 	virtual void setupGroup(Poco::Util::AbstractConfiguration* groupConfig, const std::string& group);
+
+	virtual std::string resolveRelativePath(Poco::Util::AbstractConfiguration* config, const std::string& path);
 
 	virtual void setupInclude(Poco::Util::AbstractConfiguration* groupConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& node);
 

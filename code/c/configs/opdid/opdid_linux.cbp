@@ -11,6 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters="-c opdid/lin_opdid.ini" />
 				<Compiler>
 					<Add option="-std=c++11" />
 					<Add option="-g" />
@@ -120,6 +121,7 @@
 		<Unit filename="opdid/OPDID_TimerPort.h" />
 		<Unit filename="opdid/SunRiseSet.cpp" />
 		<Unit filename="opdid/SunRiseSet.h" />
+		<Unit filename="opdid/lin_opdid.ini" />
 		<Unit filename="opdid/opdid_linux.cpp" />
 		<Extensions>
 			<code_completion />

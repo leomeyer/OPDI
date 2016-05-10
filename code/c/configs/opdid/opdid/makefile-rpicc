@@ -77,8 +77,8 @@ CINCS =
 CDEFINES = -Dlinux
 
 # Compiler flags.
-CFLAGS = -Wall -Wextra $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES) -Wno-unused-parameter
-CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -Wno-narrowing
+CFLAGS = -Wall -Wextra $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES) -Wno-unused-parameter -Wno-narrowing
+CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11
 
 # Debug flags
 CFLAGS += -ggdb -O0 -fbuiltin
