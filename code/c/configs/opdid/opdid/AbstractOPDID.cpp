@@ -615,20 +615,33 @@ std::string AbstractOPDID::resolveRelativePath(Poco::Util::AbstractConfiguration
 	std::string relativeTo = this->getConfigString(config, "RelativeTo", defaultValue, false);
 
 	if (relativeTo == "CWD") {
-		// nothing to do
+		Poco::Path filePath(path);
+		Poco::Path absPath(filePath.absolute());
+		// absolute path specified?
+		if (filePath.toString() == absPath.toString()) {
+			this->logWarning("Path specified as relative to CWD, but absolute path given: '" + path + "'");
+			return absPath.toString();
+		}
 		return path;
 	} else
 	if (relativeTo == "Config") {
-		// determine configuration-relative path depending on location of previous config file
-		std::string configFilePath = config->getString(OPDID_CONFIG_FILE_SETTING, "");
-		if (configFilePath == "")
-			throw Poco::DataException("Programming error: Configuration file path not specified in config settings");
-
 		Poco::Path filePath(path);
 		Poco::Path absPath(filePath.absolute());
-		Poco::Path parentPath = absPath.parent();
+		// absolute path specified?
+		if (filePath.toString() == absPath.toString()) {
+			this->logWarning("Path specified as relative to Config, but absolute path given: '" + path + "'");
+			return absPath.toString();
+		}
+		// determine configuration-relative path depending on location of previous config file
+		std::string configFile = config->getString(OPDID_CONFIG_FILE_SETTING, "");
+		if (configFile == "")
+			throw Poco::DataException("Programming error: Configuration file path not specified in config settings");
+		Poco::Path configFilePath(configFile);
+		Poco::Path parentPath = configFilePath.parent();
+        this->logDebug("Resolving path '" + path + "' relative to configuration file path '" + parentPath.toString() + "'");
 		// append or replace new config file path to path of previous config file
 		Poco::Path finalPath = parentPath.resolve(path);
+		this->logDebug("Resolved path: '" + finalPath.toString() + "'");
 		return finalPath.toString();
 	} else
         if (relativeTo.empty())
@@ -1127,7 +1140,7 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration* config, const s
 		// get driver information
 		std::string nodeDriver = this->getConfigString(nodeConfig, "Driver", "", true);
 		// plugins are by default relative to the current working directory
-		nodeDriver = this->resolveRelativePath(config, nodeDriver, "CWD");
+		nodeDriver = this->resolveRelativePath(nodeConfig, nodeDriver, "CWD");
 
 		this->logVerbose("Loading plugin driver: " + nodeDriver);
 
