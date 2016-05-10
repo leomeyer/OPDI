@@ -203,7 +203,7 @@ public:
 
 	virtual void setupGroup(Poco::Util::AbstractConfiguration* groupConfig, const std::string& group);
 
-	virtual std::string resolveRelativePath(Poco::Util::AbstractConfiguration* config, const std::string& path);
+	virtual std::string resolveRelativePath(Poco::Util::AbstractConfiguration* config, const std::string& path, const std::string defaultValue);
 
 	virtual void setupInclude(Poco::Util::AbstractConfiguration* groupConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& node);
 

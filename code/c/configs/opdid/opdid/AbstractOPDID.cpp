@@ -480,7 +480,7 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration* g
 	// initialize persistent configuration if specified
 	std::string persistentFile = this->getConfigString(general, "PersistentConfig", "", false);
 	if (persistentFile != "") {
-		// determine application-relative path depending on location of config file
+		// determine CWD-relative path depending on location of config file
 		std::string configFilePath = general->getString(OPDID_CONFIG_FILE_SETTING, "");
 		if (configFilePath == "")
 			throw Poco::DataException("Programming error: Configuration file path not specified in config settings");
@@ -610,16 +610,16 @@ void AbstractOPDID::setupGroup(Poco::Util::AbstractConfiguration* groupConfig, c
 	this->addPortGroup(portGroup);
 }
 
-std::string AbstractOPDID::resolveRelativePath(Poco::Util::AbstractConfiguration* config, const std::string& path) {
-	// determine path type; default: relative to parent config file
-	std::string relativeTo = this->getConfigString(config, "RelativeTo", "Config", false);
+std::string AbstractOPDID::resolveRelativePath(Poco::Util::AbstractConfiguration* config, const std::string& path, const std::string defaultValue) {
+	// determine path type
+	std::string relativeTo = this->getConfigString(config, "RelativeTo", defaultValue, false);
 
-	if (relativeTo == "Application") {
+	if (relativeTo == "CWD") {
 		// nothing to do
 		return path;
 	} else
 	if (relativeTo == "Config") {
-		// determine application-relative path depending on location of previous config file
+		// determine configuration-relative path depending on location of previous config file
 		std::string configFilePath = config->getString(OPDID_CONFIG_FILE_SETTING, "");
 		if (configFilePath == "")
 			throw Poco::DataException("Programming error: Configuration file path not specified in config settings");
@@ -634,14 +634,14 @@ std::string AbstractOPDID::resolveRelativePath(Poco::Util::AbstractConfiguration
         if (relativeTo.empty())
             return path;
 
-    throw Poco::DataException("Unknown RelativeTo property specified; expected 'Application' or 'Config'", relativeTo);
+    throw Poco::DataException("Unknown RelativeTo property specified; expected 'CWD' or 'Config'", relativeTo);
 }
 
 void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig, const std::string& node) {
 	this->logVerbose("Setting up include: " + node);
 
-	// filename must be present
-	std::string filename = this->resolveRelativePath(config, this->getConfigString(config, "Filename", "", true));
+	// filename must be present; include files are by default relative to the current configuration file
+	std::string filename = this->resolveRelativePath(config, this->getConfigString(config, "Filename", "", true), "Config");
 
 	// read parameters and build a map, based on the environment parameters
 	std::map<std::string, std::string> parameters;
@@ -1122,14 +1122,14 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration* config, const s
 	// create node section view
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
 
-	// get node information
-	std::string nodeDriver = this->getConfigString(nodeConfig, "Driver", "", false);
+	std::string nodeType = this->getConfigString(nodeConfig, "Type", "", true);
+	if (nodeType == "Plugin") {
+		// get driver information
+		std::string nodeDriver = this->getConfigString(nodeConfig, "Driver", "", true);
+		// plugins are by default relative to the current working directory
+		nodeDriver = this->resolveRelativePath(config, nodeDriver, "CWD");
 
-	// driver specified?
-	if (nodeDriver != "") {
-		nodeDriver = this->resolveRelativePath(config, nodeDriver);
-
-        this->logVerbose("Loading plugin driver: " + nodeDriver);
+		this->logVerbose("Loading plugin driver: " + nodeDriver);
 
 		// try to load the plugin; the driver name is the (platform dependent) library file name
 		IOPDIDPlugin* plugin = this->getPlugin(nodeDriver);
@@ -1139,76 +1139,74 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration* config, const s
 
 		// init the plugin
 		plugin->setupPlugin(this, node, config);
-	} else {
-		std::string nodeType = this->getConfigString(nodeConfig, "Type", "", true);
 
-		if (nodeType == "Group") {
-			this->setupGroup(nodeConfig, node);
-		} else
-		if (nodeType == "Include") {
-			this->setupInclude(nodeConfig, config, node);
-		} else
-		// standard driver (internal ports)
-		if (nodeType == "DigitalPort") {
-			this->setupEmulatedDigitalPort(nodeConfig, node);
-		} else
-		if (nodeType == "AnalogPort") {
-			this->setupEmulatedAnalogPort(nodeConfig, node);
-		} else
-		if (nodeType == "SelectPort") {
-			this->setupEmulatedSelectPort(nodeConfig, config, node);
-		} else
-		if (nodeType == "DialPort") {
-			this->setupEmulatedDialPort(nodeConfig, node);
-		} else
-		if (nodeType == "SerialStreamingPort") {
-			this->setupSerialStreamingPort(nodeConfig, node);
-		} else
-		if (nodeType == "Logger") {
-			this->setupLoggerPort(nodeConfig, node);
-		} else
-		if (nodeType == "Logic") {
-			this->setupLogicPort(nodeConfig, node);
-		} else
-		if (nodeType == "Pulse") {
-			this->setupPulsePort(nodeConfig, node);
-		} else
-		if (nodeType == "Selector") {
-			this->setupSelectorPort(nodeConfig, node);
+	} else
+	if (nodeType == "Group") {
+		this->setupGroup(nodeConfig, node);
+	} else
+	if (nodeType == "Include") {
+		this->setupInclude(nodeConfig, config, node);
+	} else
+	// standard driver (internal ports)
+	if (nodeType == "DigitalPort") {
+		this->setupEmulatedDigitalPort(nodeConfig, node);
+	} else
+	if (nodeType == "AnalogPort") {
+		this->setupEmulatedAnalogPort(nodeConfig, node);
+	} else
+	if (nodeType == "SelectPort") {
+		this->setupEmulatedSelectPort(nodeConfig, config, node);
+	} else
+	if (nodeType == "DialPort") {
+		this->setupEmulatedDialPort(nodeConfig, node);
+	} else
+	if (nodeType == "SerialStreamingPort") {
+		this->setupSerialStreamingPort(nodeConfig, node);
+	} else
+	if (nodeType == "Logger") {
+		this->setupLoggerPort(nodeConfig, node);
+	} else
+	if (nodeType == "Logic") {
+		this->setupLogicPort(nodeConfig, node);
+	} else
+	if (nodeType == "Pulse") {
+		this->setupPulsePort(nodeConfig, node);
+	} else
+	if (nodeType == "Selector") {
+		this->setupSelectorPort(nodeConfig, node);
 #ifdef OPDID_USE_EXPRTK
-		} else
-		if (nodeType == "Expression") {
-			this->setupExpressionPort(nodeConfig, node);
+	} else
+	if (nodeType == "Expression") {
+		this->setupExpressionPort(nodeConfig, node);
 #else
 #pragma message( "Expression library not included, cannot use the Expression node type" )
 #endif	// def OPDID_USE_EXPRTK
-		} else
-		if (nodeType == "Timer") {
-			this->setupTimerPort(nodeConfig, config, node);
-		} else
-		if (nodeType == "ErrorDetector") {
-			this->setupErrorDetectorPort(nodeConfig, node);
-		} else
-		if (nodeType == "Fader") {
-			this->setupFaderPort(nodeConfig, node);
-		} else
-		if (nodeType == "Exec") {
-			this->setupExecPort(nodeConfig, node);
-		} else
-		if (nodeType == "SceneSelect") {
-			this->setupSceneSelectPort(nodeConfig, config, node);
-		} else
-		if (nodeType == "FileInput") {
-			this->setupFileInputPort(nodeConfig, config, node);
-		} else
-		if (nodeType == "Aggregator") {
-			this->setupAggregatorPort(nodeConfig, config, node);
-		} else
-		if (nodeType == "Trigger") {
-			this->setupTriggerPort(nodeConfig, node);
-		} else
-			throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
-	}
+	} else
+	if (nodeType == "Timer") {
+		this->setupTimerPort(nodeConfig, config, node);
+	} else
+	if (nodeType == "ErrorDetector") {
+		this->setupErrorDetectorPort(nodeConfig, node);
+	} else
+	if (nodeType == "Fader") {
+		this->setupFaderPort(nodeConfig, node);
+	} else
+	if (nodeType == "Exec") {
+		this->setupExecPort(nodeConfig, node);
+	} else
+	if (nodeType == "SceneSelect") {
+		this->setupSceneSelectPort(nodeConfig, config, node);
+	} else
+	if (nodeType == "FileInput") {
+		this->setupFileInputPort(nodeConfig, config, node);
+	} else
+	if (nodeType == "Aggregator") {
+		this->setupAggregatorPort(nodeConfig, config, node);
+	} else
+	if (nodeType == "Trigger") {
+		this->setupTriggerPort(nodeConfig, node);
+	} else
+		throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 }
 
 void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration* config) {
