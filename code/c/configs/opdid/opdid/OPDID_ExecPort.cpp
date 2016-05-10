@@ -56,6 +56,9 @@ void OPDID_ExecPort::configure(Poco::Util::AbstractConfiguration *config) {
 		throw Poco::DataException(this->ID() + ": Please specify a positive value for ResetTime: ", this->to_string(this->resetTimeMs));
 
 	this->forceKill = config->getBool("ForceKill", false);
+	
+	if ((this->waitTimeMs > 0) && (this->resetTimeMs > 0) && (this->waitTimeMs > this->resetTimeMs))
+		this->opdid->logWarning(this->ID() + ": The specified wait time is larger than the reset time; reset will not execute!");
 }
 
 void OPDID_ExecPort::setDirCaps(const char * /*dirCaps*/) {
@@ -80,82 +83,85 @@ uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
     // state changed since last check?
 	if (this->line != lastLine) {
         // check state change condition
+        bool stateChanged = true;
         if ((this->line == 0) && (this->changeType == CHANGED_TO_HIGH))
-            return OPDI_STATUS_OK;
+            stateChanged = false;
         if ((this->line == 1) && (this->changeType == CHANGED_TO_LOW))
-            return OPDI_STATUS_OK;
+            stateChanged = false;
 
-		// relevant change detected - wait time must be up if specified
-		Poco::Timestamp::TimeDiff timeDiff = (Poco::Timestamp() - this->lastTriggerTime);
-		if ((this->waitTimeMs == 0) || (timeDiff / 1000 > this->waitTimeMs)) { // Poco TimeDiff is in microseconds
-			// trigger detected
+		if (stateChanged) {
+			// relevant change detected - wait time must be up if specified
+			Poco::Timestamp::TimeDiff timeDiff = (Poco::Timestamp() - this->lastTriggerTime);
+			if ((this->waitTimeMs == 0) || (timeDiff / 1000 > this->waitTimeMs)) { // Poco TimeDiff is in microseconds
+				// trigger detected
 
-			// program still running?
-			if (Poco::Process::isRunning(this->processPID) && forceKill) {
-				this->logDebug(this->ID() + ": Trying to kill previously started process with PID " + this->to_string(this->processPID));
+				// program still running?
+				if (Poco::Process::isRunning(this->processPID) && forceKill) {
+					this->logDebug(this->ID() + ": Trying to kill previously started process with PID " + this->to_string(this->processPID));
 
-				// kill process
-				Poco::Process::kill(this->processPID);
-			}
-
-			// build parameter string
-			std::string params(this->parameters);
-
-			typedef std::map<std::string, std::string> PortValues;
-			PortValues portValues;
-			std::string allPorts;
-			// go through all ports
-			OPDI::PortList pl = this->opdid->getPorts();
-			OPDI::PortList::const_iterator pli = pl.begin();
-			while (pli != pl.end()) {
-				std::string val = this->opdid->getPortStateStr(*pli);
-				if (val.empty())
-					val = "<error>";
-				// store value
-				portValues[std::string("$") + (*pli)->ID()] = val;
-				allPorts += (*pli)->ID() + "=" + val + " ";
-				++pli;
-			}
-			portValues["$ALL_PORTS"] = allPorts;
-
-			// replace parameters in content
-			for (PortValues::iterator iterator = portValues.begin(); iterator != portValues.end(); ++iterator) {
-				std::string key = iterator->first;
-				std::string value = iterator->second;
-
-				size_t start = 0;
-				while ((start = params.find(key, start)) != std::string::npos) {
-					params.replace(start, key.length(), value);
+					// kill process
+					Poco::Process::kill(this->processPID);
 				}
-			}
 
-			this->logDebug(this->ID() + ": Preparing start of program '" + this->programName + "'");
-			this->logDebug(this->ID() + ": Parameters: " + params);
+				// build parameter string
+				std::string params(this->parameters);
 
-			// split parameters
-			std::vector<std::string> argList;
-			std::stringstream ss(params);
-			std::string item;
-			while (std::getline(ss, item, ' ')) {
-				if (!item.empty())
-					argList.push_back(item);
-			}
+				typedef std::map<std::string, std::string> PortValues;
+				PortValues portValues;
+				std::string allPorts;
+				// go through all ports
+				OPDI::PortList pl = this->opdid->getPorts();
+				OPDI::PortList::const_iterator pli = pl.begin();
+				while (pli != pl.end()) {
+					std::string val = this->opdid->getPortStateStr(*pli);
+					if (val.empty())
+						val = "<error>";
+					// store value
+					portValues[std::string("$") + (*pli)->ID()] = val;
+					allPorts += (*pli)->ID() + "=" + val + " ";
+					++pli;
+				}
+				portValues["$ALL_PORTS"] = allPorts;
 
-            // for automatic reset logic, if set high...
-            if (this->line == 1)
-                // ... remember start time
-                this->lastTriggerTime = Poco::Timestamp();
+				// replace parameters in content
+				for (PortValues::iterator iterator = portValues.begin(); iterator != portValues.end(); ++iterator) {
+					std::string key = iterator->first;
+					std::string value = iterator->second;
 
-            // execute program
-			try {
-				Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList));
-				this->processPID = ph.id();
-				this->logVerbose(this->ID() + ": Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
-			} catch (Poco::Exception &e) {
-				this->opdid->logError(this->ID() + ": Unable to start program '" + this->programName + "': " + e.message());
-			}
-		}
-	}
+					size_t start = 0;
+					while ((start = params.find(key, start)) != std::string::npos) {
+						params.replace(start, key.length(), value);
+					}
+				}
+
+				this->logDebug(this->ID() + ": Preparing start of program '" + this->programName + "'");
+				this->logDebug(this->ID() + ": Parameters: " + params);
+
+				// split parameters
+				std::vector<std::string> argList;
+				std::stringstream ss(params);
+				std::string item;
+				while (std::getline(ss, item, ' ')) {
+					if (!item.empty())
+						argList.push_back(item);
+				}
+
+				// for automatic reset logic, if set high...
+				if (this->line == 1)
+					// ... remember start time
+					this->lastTriggerTime = Poco::Timestamp();
+
+				// execute program
+				try {
+					Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList));
+					this->processPID = ph.id();
+					this->logVerbose(this->ID() + ": Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
+				} catch (Poco::Exception &e) {
+					this->opdid->logError(this->ID() + ": Unable to start program '" + this->programName + "': " + e.message());
+				}
+			}		// not blocked by wait time
+		}		// stateChanged
+	}		// line != lastLine
 
     // set High and reset time up?
     if ((this->line == 1) && (this->resetTimeMs > 0) && ((Poco::Timestamp() - this->lastTriggerTime) / 1000 > this->resetTimeMs)) {

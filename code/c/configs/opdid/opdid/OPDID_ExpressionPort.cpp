@@ -1,4 +1,6 @@
 
+#include "Poco/Timestamp.h"
+
 #include "OPDID_ExpressionPort.h"
 
 #include "opdi_constants.h"
@@ -32,6 +34,8 @@ void OPDID_ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) 
 	this->outputPortStr = config->getString("OutputPorts", "");
 	if (this->outputPortStr == "")
 		throw Poco::DataException("You have to specify at least one output port in the OutputPorts setting");
+
+	this->numIterations = config->getInt64("Iterations", 0);
 }
 
 void OPDID_ExpressionPort::setDirCaps(const char * /*dirCaps*/) {
@@ -42,11 +46,22 @@ void OPDID_ExpressionPort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of an ExpressionPort cannot be changed");
 }
 
+void OPDID_ExpressionPort::setLine(uint8_t line) {
+	OPDI_DigitalPort::setLine(line);
+
+	// if the line has been set to High, start the iterations
+	if (line == 1) {
+		this->iterations = this->numIterations;
+	}
+}
+
 bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 	// clear symbol table and values
 	this->symbol_table.clear();
-	this->portValues.clear();
 
+	this->symbol_table.add_function("timestamp", this->timestampFunc);
+
+	this->portValues.clear();
 	this->portValues.reserve(this->symbol_list.size());
 
 	// go through dependent entities (variables) of the expression
@@ -90,11 +105,12 @@ bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 			return false;
 	}
 
+	this->symbol_table.add_constants();
+
 	return true;
 }
 
 void OPDID_ExpressionPort::prepare() {
-//	this->logDebug(this->ID() + ": Preparing port");
 	OPDI_DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -123,6 +139,10 @@ void OPDID_ExpressionPort::prepare() {
 
 	if (!parser.compile(this->expressionStr, expression))
 		throw Poco::Exception(this->ID() + ": Error in expression: " + parser.error());
+
+	// initialize the number of iterations
+	// if the port is Low this has no effect; if it is High it will disable after the evaluation
+	this->iterations = this->numIterations;
 }
 
 uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
@@ -145,15 +165,15 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 							((OPDI_DigitalPort *)(*it))->setLine(0);
 						else
 							((OPDI_DigitalPort *)(*it))->setLine(1);
-					} else 
+					} else
 					if ((*it)->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
 						// analog port: relative value (0..1)
 						((OPDI_AnalogPort *)(*it))->setRelativeValue(value);
-					} else 
+					} else
 					if ((*it)->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
 						// dial port: absolute value
 						((OPDI_DialPort *)(*it))->setPosition((int64_t)value);
-					} else 
+					} else
 					if ((*it)->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
 						// select port: current position number
 						((OPDI_SelectPort *)(*it))->setPosition((uint16_t)value);
@@ -165,6 +185,12 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 
 				++it;
 			}
+		}
+
+		// maximum number of iterations specified and reached?
+		if ((this->numIterations > 0) && (--this->iterations <= 0)) {
+			// disable this expression
+			this->setLine(0);
 		}
 	}
 

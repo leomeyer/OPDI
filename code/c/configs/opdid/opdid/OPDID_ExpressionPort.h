@@ -18,6 +18,7 @@
 
 /** An ExpressionPort is a DigitalPort that sets the value of other ports
 *   depending on the result of a calculation expression.
+*   Expression syntax documentation: http://partow.net/programming/exprtk/index.html
 *   The expression is evaluated in each doWork iteration if the ExpressionPort is enabled,
 *   i. e. its digital state is High (default).
 *   The expression can refer to port IDs (input variables). Although these port IDs are case-
@@ -37,8 +38,28 @@
 *      If the value is < 0, it is assumed as 0. If the value is > 1, it is assumed as 1.
 *    - A dial port's value is set by casting the value to a 64-bit signed integer.
 *    - A select port's position is set by casting the value to a 16-bit unsigned int.
+*   An expression port continuously evaluates its expression and sets the value of the output ports
+*   accordingly. Sometimes it is useful to limit the number of evaluations such that the value is
+*   calculated only once. The ExpressionPort supports an iterations counter which will be decreased
+*   each time the value is evaluated. If the iterations counter reaches 0 the ExpressionPort is
+*   disabled, i. e. set to 0. The counter starts running again when the ExpressionPort is again set
+*   to High.
 */
 #ifdef OPDID_USE_EXPRTK
+
+/// ExprTk function extensions
+struct timestamp_func : public exprtk::ifunction<double>
+{
+	timestamp_func()
+	: exprtk::ifunction<double>(0)
+	{}
+
+	inline double operator()()
+	{
+		// return epoch time since midnight, 1 January 1970, in seconds
+		return Poco::Timestamp().epochTime();
+	}
+};
 
 class OPDID_ExpressionPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
@@ -49,6 +70,9 @@ protected:
 
 	std::string outputPortStr;
 	OPDI::PortList outputPorts;
+	int64_t numIterations;
+
+	timestamp_func timestampFunc;
 
 	typedef exprtk::symbol_table<double> symbol_table_t;
 	typedef exprtk::expression<double> expression_t;
@@ -58,6 +82,7 @@ protected:
 
 	symbol_table_t symbol_table;
 	expression_t expression;
+	int64_t iterations;
 
 	virtual bool prepareVariables(bool duringSetup);
 
@@ -73,6 +98,8 @@ public:
 	virtual void setDirCaps(const char *dirCaps) override;
 
 	virtual void setMode(uint8_t mode) override;
+
+	virtual void setLine(uint8_t line) override;
 
 	virtual void prepare() override;
 };
