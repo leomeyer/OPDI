@@ -883,10 +883,11 @@ var DialPort = Port.extend({
             case 2: date.addMinutes(1); break;
             case 3: date.addMinutes(5); break;
             case 4: date.addMinutes(15); break;
-            case 5: date.addHours(1); break;
-            case 6: date.addHours(2); break;
-            case 7: date.addHours(6); break;
-            case 6: date.addDays(1); break;
+            case 5: date.addMinutes(30); break;
+            case 6: date.addHours(1); break;
+            case 7: date.addHours(2); break;
+            case 8: date.addHours(6); break;
+            case 9: date.addDays(1); break;
         }
         $('#' + this.port.id + '_Value').val(this.unit.format(date.getTime() / 1000));
     },
@@ -955,6 +956,7 @@ var DialPort = Port.extend({
                     + '<option>In one minute</option>'
                     + '<option>In five minutes</option>'
                     + '<option>In 15 minutes</option>'
+                    + '<option>In 30 minutes</option>'
                     + '<option>In one hour</option>'
                     + '<option>In two hours</option>'
                     + '<option>In six hours</option>'
