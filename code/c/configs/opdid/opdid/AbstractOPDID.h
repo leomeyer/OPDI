@@ -263,6 +263,8 @@ public:
 
 	virtual void setupTriggerPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
+	virtual void setupCounterPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
+
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration* config, const std::string& node);
 

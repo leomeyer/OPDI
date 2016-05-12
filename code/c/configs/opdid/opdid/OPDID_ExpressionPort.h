@@ -44,6 +44,9 @@
 *   each time the value is evaluated. If the iterations counter reaches 0 the ExpressionPort is
 *   disabled, i. e. set to 0. The counter starts running again when the ExpressionPort is again set
 *   to High.
+*
+*   The ExpressionPort supports the following custom functions:
+*    - timestamp(): Returns the number of seconds since 1/1/1970 00:00 UTC.
 */
 #ifdef OPDID_USE_EXPRTK
 
@@ -57,7 +60,7 @@ struct timestamp_func : public exprtk::ifunction<double>
 	inline double operator()()
 	{
 		// return epoch time since midnight, 1 January 1970, in seconds
-		return Poco::Timestamp().epochTime();
+		return (double)Poco::Timestamp().epochTime();
 	}
 };
 
@@ -83,6 +86,8 @@ protected:
 	symbol_table_t symbol_table;
 	expression_t expression;
 	int64_t iterations;
+
+	virtual bool prepareSymbols(bool duringSetup);
 
 	virtual bool prepareVariables(bool duringSetup);
 

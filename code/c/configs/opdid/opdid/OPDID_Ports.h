@@ -98,8 +98,8 @@ public:
 class OPDID_PulsePort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
 protected:
 	bool negate;
-	ValueResolver period;
-	ValueResolver dutyCycle;
+	ValueResolver<int32_t> period;
+	ValueResolver<double> dutyCycle;
 	int8_t disabledState;
 	std::string enablePortStr;
 	std::string outputPortStr;
@@ -305,12 +305,12 @@ protected:
 	};
 
 	FaderMode mode;
-	ValueResolver leftValue;
-	ValueResolver rightValue;
-	ValueResolver durationMsValue;
+	ValueResolver<double> leftValue;
+	ValueResolver<double> rightValue;
+	ValueResolver<int> durationMsValue;
 	double left;
 	double right;
-	double durationMs;
+	int durationMs;
 	double expA;
 	double expB;
 	double expMax;
@@ -523,6 +523,35 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// Counter Port
+///////////////////////////////////////////////////////////////////////////////
+
+/** A CounterPort is a dial port whose value increments linearly with time.
+*   You can specify the period (in milliseconds) and the increment value.
+*   A CounterPort can also count the events detected by a TriggerPort.
+*   In this case, set the period to a value below 0 to only count the detected state changes.
+*/
+class OPDID_CounterPort : public OPDI_DialPort, public OPDID_PortFunctions {
+
+protected:
+	ValueResolver<int64_t> increment;
+	ValueResolver<int64_t> periodMs;
+
+	uint64_t lastActionTime;
+public:
+
+	OPDID_CounterPort(AbstractOPDID *opdid, const char *id);
+
+	virtual void configure(Poco::Util::AbstractConfiguration *nodeConfig);
+
+	virtual void prepare() override;
+
+	virtual void doIncrement();
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // Trigger Port
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -569,6 +598,8 @@ protected:
 	DigitalPortList inverseOutputPorts;
 	TriggerType triggerType;
 	ChangeType changeType;
+	OPDID_CounterPort* counterPort;
+	std::string counterPortStr;
 
 	PortDataList portDataList;
 

@@ -263,13 +263,13 @@ void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
 
 	this->period.initialize(this, "Period", config->getString("Period", "-1"));
-	if (!this->period.validateAsInt(0, INT_MAX))
-		throw Poco::DataException("Specify a positive integer value for the Period setting of a PulsePort: " + this->to_string(this->period));
+	if (!this->period.validate(0, INT_MAX))
+		throw Poco::DataException("Specify a positive integer value for the Period setting of a PulsePort: " + this->to_string(this->period.value()));
 
 	// duty cycle is specified in percent
 	this->dutyCycle.initialize(this, "DutyCycle", config->getString("DutyCycle", "50"));
 	if (!this->dutyCycle.validate(0, 100))
-		throw Poco::DataException("Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + this->to_string(this->dutyCycle));
+		throw Poco::DataException("Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + this->to_string(this->dutyCycle.value()));
 }
 
 void OPDID_PulsePort::setDirCaps(const char * /*dirCaps*/) {
@@ -316,13 +316,13 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 		enabled |= highCount > 0;
 	}
 
-	int32_t period = static_cast<int32_t>(this->period);
+	int32_t period = this->period.value();
 	if (period < 0) {
 		this->logWarning(this->ID() + ": Period may not be negative: " + to_string(period));
 		return OPDI_STATUS_OK;
 	}
 
-	double dutyCycle = this->dutyCycle;
+	double dutyCycle = this->dutyCycle.value();
 	if (dutyCycle < 0) {
 		this->logWarning(this->ID() + ": DutyCycle may not be negative: " + to_string(dutyCycle));
 		return OPDI_STATUS_OK;
@@ -809,7 +809,7 @@ void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 	if (!this->rightValue.validate(0.0, 100.0))
 		throw Poco::DataException(this->ID() + ": Value for 'Right' must be between 0 and 100 percent");
 	this->durationMsValue.initialize(this, "Duration", config->getString("Duration", "-1"));
-	if (!this->durationMsValue.validateAsInt(0, INT_MAX))
+	if (!this->durationMsValue.validate(0, INT_MAX))
 		throw Poco::DataException(this->ID() + ": 'Duration' must be a positive non-zero value (in milliseconds)");
 
 	if (this->mode == EXPONENTIAL) {
@@ -855,9 +855,9 @@ void OPDID_FaderPort::setLine(uint8_t line) {
 	if ((oldline == 0) && (line == 1)) {
 		// store current values on start (might be resolved by ValueResolvers, and we don't want them to change during fading
 		// because each value might again refer to the output port - not an uncommon scenario for e.g. dimmers)
-		this->left = this->leftValue;
-		this->right = this->rightValue;
-		this->durationMs = this->durationMsValue;
+		this->left = this->leftValue.value();
+		this->right = this->rightValue.value();
+		this->durationMs = this->durationMsValue.value();
 
 		// don't fade if the duration is impracticably low
 		if (this->durationMs < 5) {
@@ -876,8 +876,8 @@ void OPDID_FaderPort::setLine(uint8_t line) {
 			this->logVerbose(this->ID() + ": Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
 			this->actionToPerform = this->switchOffAction;
 			// resolve values again for the switch off action
-			this->left = this->leftValue;
-			this->right = this->rightValue;
+			this->left = this->leftValue.value();
+			this->right = this->rightValue.value();
 		}
 	}
 }
@@ -1734,6 +1734,49 @@ void OPDID_AggregatorPort::setLine(uint8_t newLine) {
 	OPDI_DigitalPort::setLine(newLine);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// CounterPort
+///////////////////////////////////////////////////////////////////////////////
+
+OPDID_CounterPort::OPDID_CounterPort(AbstractOPDID *opdid, const char *id) : OPDI_DialPort(id), OPDID_PortFunctions(id) {
+	this->opdid = opdid;
+	// default: increment by one
+	this->increment = { 1 };
+	// default: period is one second
+	this->periodMs = { 1000 };
+}
+
+void OPDID_CounterPort::configure(Poco::Util::AbstractConfiguration *nodeConfig) {
+	this->opdid->configureDialPort(nodeConfig, this);
+
+	this->periodMs.initialize(this, "Period", nodeConfig->getString("Period", this->to_string(this->periodMs.value())));
+	this->increment.initialize(this, "Increment", nodeConfig->getString("Increment", this->to_string(this->increment.value())));
+}
+
+void OPDID_CounterPort::prepare() {
+	// start incrementing from now
+	this->lastActionTime = opdi_get_time_ms();
+}
+
+void OPDID_CounterPort::doIncrement() {
+	// get current increment from value resolver
+	int64_t increment = this->increment.value();
+	this->lastActionTime = opdi_get_time_ms();
+	this->setPosition(this->position + increment);
+}
+
+uint8_t OPDID_CounterPort::doWork(uint8_t canSend) {
+	OPDI_DialPort::doWork(canSend);
+
+	// get current period from value resolver
+	int64_t period = this->periodMs.value();
+	// time up? negative periods disable periodic increments
+	if ((period > 0) && (opdi_get_time_ms() - this->lastActionTime > period)) {
+		this->doIncrement();
+	}
+
+	return OPDI_STATUS_OK;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // TriggerPort
@@ -1744,6 +1787,8 @@ OPDID_TriggerPort::OPDID_TriggerPort(AbstractOPDID *opdid, const char *id) : OPD
 
 	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	this->line = 1;	// default: active
+
+	this->counterPort = nullptr;
 }
 
 void OPDID_TriggerPort::configure(Poco::Util::AbstractConfiguration *config) {
@@ -1782,6 +1827,7 @@ void OPDID_TriggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 
 	this->outputPortStr = config->getString("OutputPorts", "");
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
+	this->counterPortStr = config->getString("CounterPort", "");
 }
 
 void OPDID_TriggerPort::setLine(uint8_t line) {
@@ -1815,6 +1861,10 @@ void OPDID_TriggerPort::prepare() {
 
 	this->findDigitalPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
 	this->findDigitalPorts(this->getID(), "InverseOutputPorts", this->inverseOutputPortStr, this->inverseOutputPorts);
+	if (!this->counterPortStr.empty()) {
+		// find port and cast to CounterPort; if type does not match this will be nullptr
+		this->counterPort = dynamic_cast<OPDID_CounterPort*>(this->findPort(this->getID(), "CounterPort", this->counterPortStr, false));
+	}
 }
 
 uint8_t OPDID_TriggerPort::doWork(uint8_t canSend)  {
@@ -1901,7 +1951,11 @@ uint8_t OPDID_TriggerPort::doWork(uint8_t canSend)  {
 			}
 			++it;
 		}
+		// increment optional counter port
+		if (this->counterPort != nullptr)
+			this->counterPort->doIncrement();
 	}
 
 	return OPDI_STATUS_OK;
 }
+

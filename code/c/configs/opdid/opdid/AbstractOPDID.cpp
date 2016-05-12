@@ -1116,6 +1116,15 @@ void AbstractOPDID::setupTriggerPort(Poco::Util::AbstractConfiguration* portConf
 	this->addPort(tPort);
 }
 
+void AbstractOPDID::setupCounterPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
+	this->logVerbose("Setting up Counter: " + port);
+
+	OPDID_CounterPort* cPort = new OPDID_CounterPort(this, port.c_str());
+	cPort->configure(portConfig);
+
+	this->addPort(cPort);
+}
+
 void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration* config, const std::string& node) {
 	this->logVerbose("Setting up node: " + node);
 
@@ -1219,6 +1228,10 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration* config, const s
 	if (nodeType == "Trigger") {
 		this->setupTriggerPort(nodeConfig, node);
 	} else
+	if (nodeType == "Counter") {
+		this->setupCounterPort(nodeConfig, node);
+	}
+	else
 		throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
 }
 

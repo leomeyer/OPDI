@@ -7,12 +7,14 @@
 
 #include "AbstractOPDID.h"
 
+template<typename T>
 class ValueResolver;
 
 class OPDID_PortFunctions {
 friend class AbstractOPDID;
-friend class ValueResolver;
-friend std::ostream& operator<<(std::ostream& os, const ValueResolver& vr);
+friend class ValueResolver<double>;
+friend class ValueResolver<int32_t>;
+friend class ValueResolver<int64_t>;
 
 protected:
 	typedef std::vector<OPDI_Port*> PortList;
@@ -68,8 +70,8 @@ protected:
 *   MyPort1/0        - dynamic value of MyPort1, 0 in case of an error
 *   MyPort1(100)/0   - dynamic value of MyPort1, multiplied by 100, 0 in case of an error
 **/
+template<typename T>
 class ValueResolver {
-friend std::ostream& operator<<(std::ostream& os, const ValueResolver& vr);
 
 	OPDID_PortFunctions* origin;
 	std::string paramName;
@@ -77,27 +79,140 @@ friend std::ostream& operator<<(std::ostream& os, const ValueResolver& vr);
 	bool useScaleValue;
 	double scaleValue;
 	bool useErrorDefault;
-	double errorDefault;
+	T errorDefault;
 	OPDI_Port* port;
 	bool isFixed;
-	double fixedValue;
+	T fixedValue;
 
 public:
-	ValueResolver();
+	ValueResolver() {
+		this->isFixed = false;
+	}
 
-	void initialize(OPDID_PortFunctions* origin, const std::string& paramName, const std::string& value, bool allowErrorDefault = true);
+	ValueResolver(T initialValue) {
+		this->isFixed = true;
+		this->fixedValue = initialValue;
+	}
 
-	bool validate(double min, double max);
+	void initialize(OPDID_PortFunctions* origin, const std::string& paramName, const std::string& value, bool allowErrorDefault = true) {
+		this->origin = origin;
+		this->useScaleValue = false;
+		this->useErrorDefault = false;
+		this->port = nullptr;
 
-	bool validateAsInt(int min, int max);
+		this->origin->logDebug(origin->portFunctionID + ": Parsing ValueResolver expression of parameter '" + paramName + "': " + value);
+		// try to convert the value to a double
+		double d;
+		if (Poco::NumberParser::tryParseFloat(value, d)) {
+			this->fixedValue = (T)d;
+			this->isFixed = true;
+			this->origin->logDebug(origin->portFunctionID + ": ValueResolver expression resolved to fixed value: " + this->origin->opdid->to_string(value));
+		}
+		else {
+			this->isFixed = false;
+			Poco::RegularExpression::MatchVec matches;
+			std::string portName;
+			std::string scaleStr;
+			std::string defaultStr;
+			// try to match full syntax
+			Poco::RegularExpression reFull("(.*)\\((.*)\\)\\/(.*)");
+			if (reFull.match(value, 0, matches) == 4) {
+				if (!allowErrorDefault)
+					throw Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": Specifying an error default value is not allowed: " + value);
+				portName = value.substr(matches[1].offset, matches[1].length);
+				scaleStr = value.substr(matches[2].offset, matches[2].length);
+				defaultStr = value.substr(matches[3].offset, matches[3].length);
+			}
+			else {
+				// try to match default value syntax
+				Poco::RegularExpression reDefault("(.*)\\/(.*)");
+				if (reDefault.match(value, 0, matches) == 3) {
+					if (!allowErrorDefault)
+						throw Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": Specifying an error default value is not allowed: " + value);
+					portName = value.substr(matches[1].offset, matches[1].length);
+					defaultStr = value.substr(matches[2].offset, matches[2].length);
+				}
+				else {
+					// try to match scale value syntax
+					Poco::RegularExpression reScale("(.*)\\((.*)\\)");
+					if (reScale.match(value, 0, matches) == 3) {
+						portName = value.substr(matches[1].offset, matches[1].length);
+						scaleStr = value.substr(matches[2].offset, matches[2].length);
+					}
+					else {
+						// could not match a pattern - use value as port name
+						portName = value;
+					}
+				}
+			}
+			// parse values if specified
+			if (scaleStr != "") {
+				if (Poco::NumberParser::tryParseFloat(scaleStr, this->scaleValue)) {
+					this->useScaleValue = true;
+				}
+				else
+					throw Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": Invalid scale value specified; must be numeric: " + scaleStr);
+			}
+			if (defaultStr != "") {
+				double e;
+				if (Poco::NumberParser::tryParseFloat(defaultStr, e)) {
+					this->errorDefault = (T)e;
+					this->useErrorDefault = true;
+				}
+				else
+					throw Poco::ApplicationException(origin->portFunctionID + ": Parameter " + paramName + ": Invalid error default value specified; must be numeric: " + defaultStr);
+			}
 
-	operator double();
+			this->portID = portName;
+
+			this->origin->logDebug(origin->portFunctionID + ": ValueResolver expression resolved to port ID: " + this->portID
+				+ (this->useScaleValue ? ", scale by " + this->origin->opdid->to_string(this->scaleValue) : "")
+				+ (this->useErrorDefault ? ", error default is " + this->origin->opdid->to_string(this->errorDefault) : ""));
+		}
+	}
+
+	bool validate(T min, T max) {
+		// no fixed value? assume it's valid
+		if (!this->isFixed)
+			return true;
+
+		return ((this->fixedValue >= min) && (this->fixedValue <= max));
+	}
+
+	T value() {
+		if (isFixed)
+			return fixedValue;
+		else {
+			// port not yet resolved?
+			if (this->port == nullptr) {
+				if (this->portID == "")
+					throw Poco::ApplicationException(this->origin->portFunctionID + ": Parameter " + paramName + ": ValueResolver not initialized (programming error)");
+				// try to resolve the port
+				this->port = this->origin->findPort(this->origin->portFunctionID, this->paramName, this->portID, true);
+			}
+			// resolve port value to a double
+			double result = 0;
+
+			try {
+				result = origin->opdid->getPortValue(this->port);
+			}
+			catch (Poco::Exception &pe) {
+				origin->logExtreme(this->origin->portFunctionID + ": Unable to get the value of the port " + port->ID() + ": " + pe.message());
+				if (this->useErrorDefault) {
+					return this->errorDefault;
+				}
+				else
+					// propagate exception
+					throw Poco::ApplicationException(this->origin->portFunctionID + ": Unable to get the value of the port " + port->ID() + ": " + pe.message());
+			}
+
+			// scale?
+			if (this->useScaleValue) {
+				result *= this->scaleValue;
+			}
+
+			return (T)result;
+		}
+	}
 };
-
-inline std::ostream& operator<<(std::ostream& os, const ValueResolver& vr)
-{
-	double d = (ValueResolver&)vr;
-	os << vr.origin->opdid->to_string(d);
-	return os;
-}
 

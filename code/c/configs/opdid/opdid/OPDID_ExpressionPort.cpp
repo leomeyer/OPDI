@@ -55,12 +55,16 @@ void OPDID_ExpressionPort::setLine(uint8_t line) {
 	}
 }
 
-bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
-	// clear symbol table and values
-	this->symbol_table.clear();
-
+bool OPDID_ExpressionPort::prepareSymbols(bool duringSetup) {
 	this->symbol_table.add_function("timestamp", this->timestampFunc);
 
+	this->symbol_table.add_constants();
+
+	return true;
+}
+
+
+bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 	this->portValues.clear();
 	this->portValues.reserve(this->symbol_list.size());
 
@@ -105,8 +109,6 @@ bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 			return false;
 	}
 
-	this->symbol_table.add_constants();
-
 	return true;
 }
 
@@ -116,9 +118,11 @@ void OPDID_ExpressionPort::prepare() {
 	// find ports; throws errors if something required is missing
 	this->findPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
 
-	// prepare the expression
-	symbol_table.add_constants();
+	// clear symbol table and values
+	this->symbol_table.clear();
+
 	expression.register_symbol_table(symbol_table);
+	this->prepareSymbols(true);
 
 	parser_t parser;
 	parser.enable_unknown_symbol_resolver();
@@ -132,6 +136,8 @@ void OPDID_ExpressionPort::prepare() {
 	// store symbol list (input variables)
 	parser.dec().symbols(this->symbol_list);
 
+	this->symbol_table.clear();
+	this->prepareSymbols(true);
 	if (!this->prepareVariables(true)) {
 		throw Poco::Exception(this->ID() + ": Unable to resolve variables");
 	}
@@ -149,6 +155,11 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 	OPDI_DigitalPort::doWork(canSend);
 
 	if (this->line == 1) {
+		// clear symbol table and values
+		this->symbol_table.clear();
+
+		this->prepareSymbols(false);
+
 		// prepareVariables will return false in case of errors
 		if (this->prepareVariables(false)) {
 
