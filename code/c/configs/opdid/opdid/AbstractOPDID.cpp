@@ -1546,7 +1546,7 @@ void AbstractOPDID::persist(OPDI_Port* port) {
 	this->persistentConfig->save(this->persistentConfigFile);
 }
 
-std::string AbstractOPDID::getPortStateStr(OPDI_Port* port) {
+std::string AbstractOPDID::getPortStateStr(OPDI_Port* port) const {
 	try {
 		if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
 			uint8_t line;
@@ -1578,7 +1578,7 @@ std::string AbstractOPDID::getPortStateStr(OPDI_Port* port) {
 	}
 }
 
-double AbstractOPDID::getPortValue(OPDI_Port* port) {
+double AbstractOPDID::getPortValue(OPDI_Port* port) const {
 	double value = 0;
 
 	// evaluation depends on port type

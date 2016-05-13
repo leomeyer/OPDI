@@ -153,7 +153,7 @@ public:
 
 	virtual void setLine(uint8_t line) override;
 
-	virtual void getState(uint8_t* mode, uint8_t* line) override;
+	virtual void getState(uint8_t* mode, uint8_t* line) const override;
 };
 
 class FritzDECT200Power : public OPDI_DialPort, public FritzPort {
@@ -174,7 +174,7 @@ public:
 
 	virtual void query() override;
 
-	virtual void getState(int64_t* position) override;
+	virtual void getState(int64_t* position) const override;
 
 	virtual void doSelfRefresh(void) override;
 };
@@ -198,7 +198,7 @@ public:
 
 	virtual void query() override;
 
-	virtual void getState(int64_t* position) override;
+	virtual void getState(int64_t* position) const override;
 
 	virtual void doSelfRefresh(void) override;
 };
@@ -240,7 +240,7 @@ void FritzDECT200Switch::setLine(uint8_t line) {
 		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::SETSWITCHSTATEHIGH, this));
 }
 
-void FritzDECT200Switch::getState(uint8_t* mode, uint8_t* line) {
+void FritzDECT200Switch::getState(uint8_t* mode, uint8_t* line) const {
 	if (this->switchState < 0) {
 		// this->plugin->nodeID + "/" + this->id + " (" + this->ain + ") : 
 		throw PortError(this->ID() + ": The switch state is unknown");
@@ -316,7 +316,7 @@ void FritzDECT200Power::query() {
 	this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETSWITCHPOWER, this));
 }
 
-void FritzDECT200Power::getState(int64_t* position) {
+void FritzDECT200Power::getState(int64_t* position) const {
 	if (this->power < 0) {
 		throw PortError(this->ID() + ": The power state is unknown");
 	}
@@ -396,7 +396,7 @@ void FritzDECT200Energy::query() {
 	this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETSWITCHENERGY, this));
 }
 
-void FritzDECT200Energy::getState(int64_t* position) {
+void FritzDECT200Energy::getState(int64_t* position) const {
 	if (this->energy < 0) {
 		throw PortError(this->ID() + ": The energy state is unknown");
 	}

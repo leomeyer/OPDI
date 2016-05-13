@@ -228,7 +228,7 @@ public:
 
 	virtual int read(char *result) override;
 
-	virtual bool hasError(void) override;
+	virtual bool hasError(void) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -274,7 +274,7 @@ public:
 
 	virtual int read(char *result) override;
 
-	virtual bool hasError(void) override;
+	virtual bool hasError(void) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

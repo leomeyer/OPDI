@@ -74,7 +74,7 @@ protected:
 	std::string history;
 
 	// utility function for string conversion 
-	template <class T> std::string to_string(const T& t);
+	template <class T> std::string to_string(const T& t) const;
 
 	/** Called regularly by the OPDI system. Enables the port to do work.
 	 * Override this in subclasses to implement more complex functionality.
@@ -123,11 +123,11 @@ protected:
 
 	virtual void updateExtendedInfo(void);
 
-	std::string escapeKeyValueText(const std::string& str);
+	std::string escapeKeyValueText(const std::string& str) const;
 
 	// checks the error state and throws an exception
 	// should be used by subclasses in getState() methods
-	virtual void checkError(void);
+	virtual void checkError(void) const;
 	
 	virtual void setID(const char* newID);
 
@@ -172,38 +172,38 @@ public:
 	/** Virtual destructor for the port. */
 	virtual ~OPDI_Port();
 
-	virtual const char *getID(void);
+	virtual const char *getID(void) const;
 
-	std::string ID();
+	std::string ID() const;
 
-	virtual const char *getType(void);
+	virtual const char *getType(void) const;
 
 	virtual void setHidden(bool hidden);
 
-	virtual bool isHidden(void);
+	virtual bool isHidden(void) const;
 
 	virtual void setReadonly(bool readonly);
 
-	virtual bool isReadonly(void);
+	virtual bool isReadonly(void) const;
 
 	virtual void setPersistent(bool persistent);
 
-	virtual bool isPersistent(void);
+	virtual bool isPersistent(void) const;
 
 	/** Sets the label of the port. */
 	virtual void setLabel(const char *label);
 
-	virtual const char *getLabel(void);
+	virtual const char *getLabel(void) const;
 
 	/** Sets the direction capabilities of the port. */
 	virtual void setDirCaps(const char *dirCaps);
 
-	virtual const char* getDirCaps(void);
+	virtual const char* getDirCaps(void) const;
 
 	/** Sets the flags of the port. */
 	virtual void setFlags(int32_t flags);
 
-	virtual int32_t getFlags(void);
+	virtual int32_t getFlags(void) const;
 
 	virtual void setUnit(const std::string& unit);
 
@@ -215,9 +215,9 @@ public:
 
 	virtual void clearHistory(void);
 
-	virtual std::string getExtendedState(void);
+	virtual std::string getExtendedState(void) const;
 
-	virtual std::string getExtendedInfo(void);
+	virtual std::string getExtendedInfo(void) const;
 
 	/** Causes the port to be refreshed by sending a refresh message to a connected master.
 	*   Only if the port is not hidden and canSend is true. */
@@ -243,15 +243,15 @@ public:
 	virtual void setError(Error error);
 
 	/** Gets the error state of this port. */
-	virtual OPDI_Port::Error getError(void);
+	virtual OPDI_Port::Error getError(void) const;
 
 	/** This method returns true if the port is in an error state. This will likely be the case
 	*   when the getState() method of the port throws an exception.
 	*/
-	virtual bool hasError(void) = 0;
+	virtual bool hasError(void) const = 0;
 };
 
-template <class T> inline std::string OPDI_Port::to_string(const T& t) {
+template <class T> inline std::string OPDI_Port::to_string(const T& t) const {
 	std::stringstream ss;
 	ss << t;
 	return ss.str();
@@ -349,11 +349,11 @@ public:
 	virtual void setLine(uint8_t line);
 
 	// function that fills in the current port state
-	virtual void getState(uint8_t *mode, uint8_t *line);
+	virtual void getState(uint8_t *mode, uint8_t *line) const;
 
 	virtual uint8_t getMode(void);
 
-	virtual bool hasError(void) override;
+	virtual bool hasError(void) const override;
 };
 
 /** Defines an analog port.
@@ -392,7 +392,7 @@ public:
 	// value: an integer value ranging from 0 to 2^resolution - 1
 	virtual void setValue(int32_t value);
 
-	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value);
+	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) const;
 
 	// returns the value as a factor between 0 and 1 of the maximum resolution
 	virtual double getRelativeValue(void);
@@ -402,7 +402,7 @@ public:
 
 	virtual uint8_t getMode(void);
 
-	virtual bool hasError(void) override;
+	virtual bool hasError(void) const override;
 };
 
 /** Defines a select port.
@@ -439,13 +439,13 @@ public:
 	virtual void setPosition(uint16_t position);
 
 	// function that fills in the current port state
-	virtual void getState(uint16_t *position);
+	virtual void getState(uint16_t *position) const;
 
 	virtual const char *getPositionLabel(uint16_t position);
 
 	virtual uint16_t getMaxPosition(void);
 
-	virtual bool hasError(void) override;
+	virtual bool hasError(void) const override;
 };
 
 /** Defines a dial port.
@@ -483,9 +483,9 @@ public:
 	virtual void setPosition(int64_t position);
 
 	// function that fills in the current port state
-	virtual void getState(int64_t *position);
+	virtual void getState(int64_t *position) const;
 
-	virtual bool hasError(void) override;
+	virtual bool hasError(void) const override;
 };
 
 /** Defines a streaming port.

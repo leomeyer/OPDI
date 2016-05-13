@@ -74,7 +74,7 @@ uint8_t OPDI_Port::doWork(uint8_t /* canSend */) {
 	return OPDI_STATUS_OK;
 }
 
-const char *OPDI_Port::getID(void) {
+const char *OPDI_Port::getID(void) const {
 	return this->id;
 }
 
@@ -85,15 +85,15 @@ void OPDI_Port::setID(const char* newID) {
 	strcpy(this->id, newID);
 }
 
-std::string OPDI_Port::ID() {
+std::string OPDI_Port::ID() const {
 	return std::string(this->getID());
 }
 
-const char *OPDI_Port::getType(void) {
+const char *OPDI_Port::getType(void) const {
 	return this->type;
 }
 
-const char *OPDI_Port::getLabel(void) {
+const char *OPDI_Port::getLabel(void) const {
 	return this->label;
 }
 
@@ -101,7 +101,7 @@ void OPDI_Port::setHidden(bool hidden) {
 	this->hidden = hidden;
 }
 
-bool OPDI_Port::isHidden(void) {
+bool OPDI_Port::isHidden(void) const {
 	return this->hidden;
 }
 
@@ -109,7 +109,7 @@ void OPDI_Port::setReadonly(bool readonly) {
 	this->readonly = readonly;
 }
 
-bool OPDI_Port::isReadonly(void) {
+bool OPDI_Port::isReadonly(void) const {
 	return this->readonly;
 }
 
@@ -117,7 +117,7 @@ void OPDI_Port::setPersistent(bool persistent) {
 	this->persistent = persistent;
 }
 
-bool OPDI_Port::isPersistent(void) {
+bool OPDI_Port::isPersistent(void) const {
 	return this->persistent;
 }
 
@@ -143,7 +143,7 @@ void OPDI_Port::setDirCaps(const char *dirCaps) {
 		this->opdi->updatePortData(this);
 }
 
-const char* OPDI_Port::getDirCaps() {
+const char* OPDI_Port::getDirCaps() const {
 	return this->caps;
 }
 
@@ -158,7 +158,7 @@ void OPDI_Port::setFlags(int32_t flags) {
 		this->opdi->updatePortData(this);
 }
 
-int32_t OPDI_Port::getFlags() {
+int32_t OPDI_Port::getFlags() const {
 	return this->flags;
 }
 
@@ -224,18 +224,18 @@ void OPDI_Port::clearHistory(void) {
 		this->refreshRequired = true;
 }
 
-std::string OPDI_Port::getExtendedInfo() {
+std::string OPDI_Port::getExtendedInfo() const {
 	return this->extendedInfo;
 }
 
-std::string OPDI_Port::getExtendedState() {
+std::string OPDI_Port::getExtendedState() const {
 	if (this->history.empty())
 		return "";
 	else
 		return "history=" + this->escapeKeyValueText(history);
 }
 
-std::string OPDI_Port::escapeKeyValueText(const std::string& str) {
+std::string OPDI_Port::escapeKeyValueText(const std::string& str) const {
 	std::string result = str;
     size_t start_pos;
 	start_pos = 0;
@@ -286,7 +286,7 @@ void OPDI_Port::prepare() {
 	this->updateExtendedInfo();
 }
 
-void OPDI_Port::checkError() {
+void OPDI_Port::checkError() const {
 	if (this->error == VALUE_EXPIRED)
 		throw ValueExpired();
 	if (this->error == VALUE_NOT_AVAILABLE)
@@ -299,7 +299,7 @@ void OPDI_Port::setError(Error error) {
 	this->error = error;
 }
 
-OPDI_Port::Error OPDI_Port::getError() {
+OPDI_Port::Error OPDI_Port::getError() const {
 	return this->error;
 }
 
@@ -518,7 +518,7 @@ void OPDI_DigitalPort::setLine(uint8_t line) {
 		this->opdi->persist(this);
 }
 
-void OPDI_DigitalPort::getState(uint8_t *mode, uint8_t *line) {
+void OPDI_DigitalPort::getState(uint8_t *mode, uint8_t *line) const {
 	this->checkError();
 
 	*mode = this->mode;
@@ -529,7 +529,7 @@ uint8_t OPDI_DigitalPort::getMode() {
 	return this->mode;
 }
 
-bool OPDI_DigitalPort::hasError(void) {
+bool OPDI_DigitalPort::hasError(void) const {
 	uint8_t mode;
 	uint8_t line;
 	try {
@@ -634,7 +634,7 @@ void OPDI_AnalogPort::setValue(int32_t value) {
 		this->opdi->persist(this);
 }
 
-void OPDI_AnalogPort::getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) {
+void OPDI_AnalogPort::getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) const {
 	this->checkError();
 
 	*mode = this->mode;
@@ -663,7 +663,7 @@ uint8_t OPDI_AnalogPort::getMode() {
 	return this->mode;
 }
 
-bool OPDI_AnalogPort::hasError(void) {
+bool OPDI_AnalogPort::hasError(void) const {
 	uint8_t mode;
 	uint8_t resolution;
 	uint8_t reference;
@@ -758,7 +758,7 @@ void OPDI_SelectPort::setPosition(uint16_t position) {
 		this->opdi->persist(this);
 }
 
-void OPDI_SelectPort::getState(uint16_t *position) {
+void OPDI_SelectPort::getState(uint16_t *position) const {
 	this->checkError();
 
 	*position = this->position;
@@ -772,7 +772,7 @@ uint16_t OPDI_SelectPort::getMaxPosition(void) {
 	return this->count;
 }
 
-bool OPDI_SelectPort::hasError(void) {
+bool OPDI_SelectPort::hasError(void) const {
 	uint16_t position;
 	try {
 		this->getState(&position);
@@ -851,13 +851,13 @@ void OPDI_DialPort::setPosition(int64_t position) {
 		this->opdi->persist(this);
 }
 
-void OPDI_DialPort::getState(int64_t *position) {
+void OPDI_DialPort::getState(int64_t *position) const {
 	this->checkError();
 
 	*position = this->position;
 }
 
-bool OPDI_DialPort::hasError(void) {
+bool OPDI_DialPort::hasError(void) const {
 	int64_t position;
 	try {
 		this->getState(&position);

@@ -647,7 +647,7 @@ int OPDID_SerialStreamingPort::read(char *result) {
 	return 0;
 }
 
-bool OPDID_SerialStreamingPort::hasError(void) {
+bool OPDID_SerialStreamingPort::hasError(void) const {
 	return false;
 }
 
@@ -769,7 +769,7 @@ int OPDID_LoggerPort::read(char * /*result*/) {
 	return 0;
 }
 
-bool OPDID_LoggerPort::hasError(void) {
+bool OPDID_LoggerPort::hasError(void) const {
 	return false;
 }
 

@@ -80,7 +80,7 @@ class ValueResolver {
 	double scaleValue;
 	bool useErrorDefault;
 	T errorDefault;
-	OPDI_Port* port;
+	mutable OPDI_Port* port;
 	bool isFixed;
 	T fixedValue;
 
@@ -171,7 +171,7 @@ public:
 		}
 	}
 
-	bool validate(T min, T max) {
+	bool validate(T min, T max) const {
 		// no fixed value? assume it's valid
 		if (!this->isFixed)
 			return true;
@@ -179,7 +179,7 @@ public:
 		return ((this->fixedValue >= min) && (this->fixedValue <= max));
 	}
 
-	T value() {
+	T value() const {
 		if (isFixed)
 			return fixedValue;
 		else {

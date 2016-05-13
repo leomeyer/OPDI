@@ -141,7 +141,7 @@ public:
 
 	virtual void setPosition(uint16_t position) override;
 	
-	virtual void getState(uint16_t *position) override;
+	virtual void getState(uint16_t *position) const override;
 };
 
 WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(id), OPDID_PortFunctions(id) {
@@ -205,7 +205,7 @@ void WindowPort::setPosition(uint16_t position) {
 	}
 }
 
-void WindowPort::getState(uint16_t *position) {
+void WindowPort::getState(uint16_t *position) const {
 	if (this->currentState == ERR && !this->positionNewlySet)
 		throw PortError(this->ID() + ": Sensor or motor failure or misconfiguration");
 	OPDI_SelectPort::getState(position);

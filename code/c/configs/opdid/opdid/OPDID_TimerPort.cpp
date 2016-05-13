@@ -849,7 +849,7 @@ void OPDID_TimerPort::setLine(uint8_t line) {
 	this->refreshRequired = true;
 }
 
-std::string OPDID_TimerPort::getExtendedState(void) {
+std::string OPDID_TimerPort::getExtendedState(void) const {
 	std::string result = OPDI_DigitalPort::getExtendedState();
 	std::string myText;
 	if (this->line != 1) {

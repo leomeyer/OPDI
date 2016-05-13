@@ -220,5 +220,5 @@ public:
 
 	virtual void prepare() override;
 
-	virtual std::string getExtendedState(void) override;
+	virtual std::string getExtendedState(void) const override;
 };

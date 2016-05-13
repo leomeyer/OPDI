@@ -163,7 +163,7 @@ public:
 	virtual void printlne(const std::string& text);
 
 	/** Converts a given object to a string. */
-	template <class T> inline std::string to_string(const T& t);
+	template <class T> inline std::string to_string(const T& t) const;
 
 	virtual void logWarning(const std::string& text);
 
@@ -297,10 +297,10 @@ public:
 	virtual void persist(OPDI_Port* port) override;
 
 	/** Returns a string representing the port state; empty in case of errors. */
-	virtual std::string getPortStateStr(OPDI_Port* port);
+	virtual std::string getPortStateStr(OPDI_Port* port) const;
 
 	/** Returns a double representing the port value; throws errors if they occur. */
-	virtual double getPortValue(OPDI_Port* port);
+	virtual double getPortValue(OPDI_Port* port) const;
 
 	virtual std::string getDeviceInfo(void);
 
@@ -308,7 +308,7 @@ public:
 };
 
 
-template <class T> inline std::string AbstractOPDID::to_string(const T& t) {
+template <class T> inline std::string AbstractOPDID::to_string(const T& t) const {
 	std::stringstream ss;
 	ss << t;
 	return ss.str();

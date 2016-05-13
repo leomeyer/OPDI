@@ -62,7 +62,7 @@ class WeatherGaugePort : public OPDI_DialPort, public WeatherPort {
 
 protected:
 	bool isValid;
-	bool lastRequestedValidState;
+	mutable bool lastRequestedValidState;
 	std::string dataElement;
 	std::string regexMatch;
 	std::string regexReplace;
@@ -72,7 +72,7 @@ protected:
 
 	std::string rawValue;	// stores the value for in-thread processing
 
-	Poco::Mutex mutex;	// mutex for thread-safe accessing
+	mutable Poco::Mutex mutex;	// mutex for thread-safe accessing
 
 public:
 
@@ -90,12 +90,12 @@ public:
 
 	virtual void prepare(void) override;
 
-	virtual void getState(int64_t *position) override;
+	virtual void getState(int64_t *position) const override;
 
 	// important! Override this method and use isValid directly because
 	// the standard method will continuously query the state, thus rendering the
 	// lastRequestedValidState flag useless and cause perpetual self-refreshes!
-	virtual bool hasError(void) override;
+	virtual bool hasError(void) const override;
 };
 
 WeatherGaugePort::WeatherGaugePort(AbstractOPDID *opdid, const char *id) : OPDI_DialPort(id), WeatherPort(id) {
@@ -138,7 +138,7 @@ void WeatherGaugePort::invalidate(void) {
 	this->isValid = false;
 }
 
-bool WeatherGaugePort::hasError(void) {
+bool WeatherGaugePort::hasError(void) const {
 	Poco::Mutex::ScopedLock lock(this->mutex);
 	return !this->isValid;
 }
@@ -226,7 +226,7 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 }
 
 // function that fills in the current port state
-void WeatherGaugePort::getState(int64_t *position) {
+void WeatherGaugePort::getState(int64_t *position) const {
 
 	// ensure thread safety for this block
 	// also ensures that the doWork method and getState do not cross
