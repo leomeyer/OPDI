@@ -1771,7 +1771,7 @@ uint8_t OPDID_CounterPort::doWork(uint8_t canSend) {
 	// get current period from value resolver
 	int64_t period = this->periodMs.value();
 	// time up? negative periods disable periodic increments
-	if ((period > 0) && (opdi_get_time_ms() - this->lastActionTime > period)) {
+	if ((period > 0) && (opdi_get_time_ms() - this->lastActionTime > (uint64_t)period)) {
 		this->doIncrement();
 	}
 
