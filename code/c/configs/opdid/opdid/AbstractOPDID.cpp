@@ -752,7 +752,7 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration* portConfig,
 	if (port->getRefreshMode() == OPDI_Port::REFRESH_PERIODIC) {
 		int time = portConfig->getInt("RefreshTime", -1);
 		if (time >= 0) {
-			port->setRefreshTime(time);
+			port->setPeriodicRefreshTime(time);
 		} else {
 			throw Poco::DataException("A RefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
 		}
@@ -961,6 +961,10 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 			aggPort->setHidden(true);
 			// add the port
 			this->addPort(aggPort);
+			// if a history port is used and the RefreshMode has not been set manually, the RefreshMode is set to Automatic
+			// this provides expected behavior without the need to specify RefreshMode for the port manually.
+			if (portConfig->getString("RefreshMode", "").empty())
+				port->setRefreshMode(OPDI_Port::REFRESH_AUTO);
 		}
 	}
 

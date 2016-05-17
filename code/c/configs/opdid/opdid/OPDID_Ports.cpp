@@ -534,7 +534,7 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 	if (this->line != newState) {
 		this->logDebug(this->ID() + ": Changing line state to: " + (newState == 1 ? "High" : "Low"));
 		this->line = newState;
-		this->doSelfRefresh();
+		this->doRefresh();
 	}
 
 	return OPDI_STATUS_OK;
@@ -861,19 +861,19 @@ void OPDID_FaderPort::setLine(uint8_t line) {
 
 		// don't fade if the duration is impracticably low
 		if (this->durationMs < 5) {
-			this->logVerbose(this->ID() + ": Refusing to fade because duration is impracticably low: " + to_string(this->durationMs));
+			this->logDebug(this->ID() + ": Refusing to fade because duration is impracticably low: " + to_string(this->durationMs));
 		} else {
 			OPDI_DigitalPort::setLine(line);
 			this->startTime = Poco::Timestamp();
 			// cause correct log output
 			this->lastValue = -1;
-			this->logVerbose(this->ID() + ": Start fading at " + to_string(this->left) + "% with a duration of " + to_string(this->durationMs) + " ms");
+			this->logDebug(this->ID() + ": Start fading at " + to_string(this->left) + "% with a duration of " + to_string(this->durationMs) + " ms");
 		}
 	} else {
 		OPDI_DigitalPort::setLine(line);
 		// switched off?
 		if (oldline != this->line) {
-			this->logVerbose(this->ID() + ": Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
+			this->logDebug(this->ID() + ": Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
 			this->actionToPerform = this->switchOffAction;
 			// resolve values again for the switch off action
 			this->left = this->leftValue.value();
@@ -1502,8 +1502,9 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 
 // OPDID_AggregatorPort class implementation
 
-void OPDID_AggregatorPort::resetValues(std::string reason) {
-	this->logDebug(this->ID() + ": Resetting aggregator; values are now unavailable because: " + reason);
+void OPDID_AggregatorPort::resetValues(std::string reason, LogFunction logFunction) {
+	if (logFunction != nullptr)
+		(this->*logFunction)(this->ID() + ": Resetting aggregator; values are now unavailable because: " + reason);
 	// indicate errors on all calculations
 	auto it = this->calculations.begin();
 	while (it != this->calculations.end()) {
@@ -1535,7 +1536,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			value = this->opdid->getPortValue(this->sourcePort);
 		} catch (Poco::Exception &e) {
 			this->logDebug(this->ID() + ": Error querying source port " + this->sourcePort->ID() + ": " + e.message());
-			this->resetValues("Querying the source port " + this->sourcePort->ID() + " resulted in an error: " + e.message());
+			this->resetValues("Querying the source port " + this->sourcePort->ID() + " resulted in an error: " + e.message(), this->logVerbose);
 			return OPDI_STATUS_OK;
 		}
 
@@ -1713,7 +1714,7 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 	this->values.reserve(this->totalValues);
 
 	// set initial state
-	this->resetValues("Setting initial state");
+	this->resetValues("Setting initial state", this->logVerbose);
 }
 
 void OPDID_AggregatorPort::prepare() {
@@ -1730,7 +1731,7 @@ void OPDID_AggregatorPort::prepare() {
 void OPDID_AggregatorPort::setLine(uint8_t newLine) {
 	// if being deactivated, reset values and ports to error
 	if ((this->line == 1) && (newLine == 0))
-		this->resetValues("Aggregator was deactivated");
+		this->resetValues("Aggregator was deactivated", this->logVerbose);
 	OPDI_DigitalPort::setLine(newLine);
 }
 

@@ -176,7 +176,7 @@ public:
 
 	virtual void getState(int64_t* position) const override;
 
-	virtual void doSelfRefresh(void) override;
+	virtual void doRefresh(void) override;
 };
 
 
@@ -200,7 +200,7 @@ public:
 
 	virtual void getState(int64_t* position) const override;
 
-	virtual void doSelfRefresh(void) override;
+	virtual void doRefresh(void) override;
 };
 
 
@@ -296,7 +296,7 @@ void FritzDECT200Power::configure(Poco::Util::AbstractConfiguration* portConfig)
 
 	int time = portConfig->getInt("PowerRefreshTime", portConfig->getInt("RefreshTime", 30000));
 	if (time >= 0) {
-		this->setRefreshTime(time);
+		this->setPeriodicRefreshTime(time);
 	} else {
 		throw Poco::DataException(this->ID() + ": A PowerRefreshTime > 0 must be specified: " + to_string(time));
 	}
@@ -336,7 +336,8 @@ void FritzDECT200Power::setPower(int32_t power) {
 	this->refreshRequired = true;
 }
 
-void FritzDECT200Power::doSelfRefresh(void) {
+void FritzDECT200Power::doRefresh(void) {
+	// cause a query to be performed before actually refreshing
 	this->query();
 }
 
@@ -376,7 +377,7 @@ void FritzDECT200Energy::configure(Poco::Util::AbstractConfiguration* portConfig
 
 	int time = portConfig->getInt("EnergyRefreshTime", portConfig->getInt("RefreshTime", 30000));
 	if (time >= 0) {
-		this->setRefreshTime(time);
+		this->setPeriodicRefreshTime(time);
 	} else {
 		throw Poco::DataException(this->ID() + ": An EnergyRefreshTime > 0 must be specified: " + to_string(time));
 	}
@@ -416,7 +417,8 @@ void FritzDECT200Energy::setEnergy(int32_t energy) {
 	this->refreshRequired = true;
 }
 
-void FritzDECT200Energy::doSelfRefresh(void) {
+void FritzDECT200Energy::doRefresh(void) {
+	// cause a query to be performed before actually refreshing
 	this->query();
 }
 
