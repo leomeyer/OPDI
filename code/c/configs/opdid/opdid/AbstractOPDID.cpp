@@ -247,7 +247,7 @@ void AbstractOPDID::log(const std::string& text) {
 	}
 }
 
-void AbstractOPDID::logWarning(const std::string& text) {
+void AbstractOPDID::logWarning(const std::string& message) {
 	// suppress warnings?
 	if (this->logVerbosity == QUIET)
 		return;
@@ -255,44 +255,52 @@ void AbstractOPDID::logWarning(const std::string& text) {
 	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
 
-	std::string msg = "[" + this->getTimestampStr() + "] WARNING: " + text;
+	std::string msg = "[" + this->getTimestampStr() + "] WARNING: " + message;
 	if (this->logger != nullptr) {
 		this->logger->warning(msg);
 	}
 	this->printlne(msg);
 }
 
-void AbstractOPDID::logError(const std::string& text) {
+void AbstractOPDID::logError(const std::string& message) {
 	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
 
-	std::string msg = "ERROR: " + text;
+	std::string msg = "ERROR: " + message;
 	if (this->logger != nullptr) {
 		this->logger->error(msg);
 	}
 	this->printlne("[" + this->getTimestampStr() + "] " + msg);
 }
 
-void AbstractOPDID::logNormal(const std::string& message) {
-	if (this->logVerbosity >= AbstractOPDID::NORMAL) {
+void AbstractOPDID::logNormal(const std::string& message, AbstractOPDID::LogVerbosity verbosity) {
+	// supplied log verbosity takes precedence
+	AbstractOPDID::LogVerbosity lv = (verbosity != AbstractOPDID::UNKNOWN ? verbosity : this->logVerbosity);
+	if (lv >= AbstractOPDID::NORMAL) {
 		this->log(message);
 	}
 }
 
-void AbstractOPDID::logVerbose(const std::string& message) {
-	if (this->logVerbosity >= AbstractOPDID::VERBOSE) {
+void AbstractOPDID::logVerbose(const std::string& message, LogVerbosity verbosity) {
+	// supplied log verbosity takes precedence
+	AbstractOPDID::LogVerbosity lv = (verbosity != AbstractOPDID::UNKNOWN ? verbosity : this->logVerbosity);
+	if (lv >= AbstractOPDID::VERBOSE) {
 		this->log(message);
 	}
 }
 
-void AbstractOPDID::logDebug(const std::string& message) {
-	if (this->logVerbosity >= AbstractOPDID::DEBUG) {
+void AbstractOPDID::logDebug(const std::string& message, LogVerbosity verbosity) {
+	// supplied log verbosity takes precedence
+	AbstractOPDID::LogVerbosity lv = (verbosity != AbstractOPDID::UNKNOWN ? verbosity : this->logVerbosity);
+	if (lv >= AbstractOPDID::DEBUG) {
 		this->log(message);
 	}
 }
 
-void AbstractOPDID::logExtreme(const std::string& message) {
-	if (this->logVerbosity >= AbstractOPDID::EXTREME) {
+void AbstractOPDID::logExtreme(const std::string& message, LogVerbosity verbosity) {
+	// supplied log verbosity takes precedence
+	AbstractOPDID::LogVerbosity lv = (verbosity != AbstractOPDID::UNKNOWN ? verbosity : this->logVerbosity);
+	if (lv >= AbstractOPDID::EXTREME) {
 		this->log(message);
 	}
 }

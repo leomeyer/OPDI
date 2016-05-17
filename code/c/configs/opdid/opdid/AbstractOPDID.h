@@ -112,7 +112,7 @@ public:
 		EXTREME
 	};
 
-	int logVerbosity;
+	AbstractOPDID::LogVerbosity logVerbosity;
 	std::string timestampFormat;
 
 	Poco::BasicEvent<void> allPortsRefreshed;
@@ -165,17 +165,21 @@ public:
 	/** Converts a given object to a string. */
 	template <class T> inline std::string to_string(const T& t) const;
 
-	virtual void logWarning(const std::string& text);
+	virtual void logWarning(const std::string& message);
 
-	virtual void logError(const std::string& text);
+	virtual void logError(const std::string& message);
 
-	virtual void logNormal(const std::string& message);
+	// log if this object's verbosity is greater or equal than normal (supplied verbosity takes precedence)
+	virtual void logNormal(const std::string& message, AbstractOPDID::LogVerbosity verbosity = UNKNOWN);
 
-	virtual void logVerbose(const std::string& message);
+	// log if this object's verbosity is greater or equal than verbose (supplied verbosity takes precedence)
+	virtual void logVerbose(const std::string& message, AbstractOPDID::LogVerbosity verbosity = UNKNOWN);
 
-	virtual void logDebug(const std::string& message);
+	// log if this object's verbosity is greater or equal than debug (supplied verbosity takes precedence)
+	virtual void logDebug(const std::string& message, AbstractOPDID::LogVerbosity verbosity = UNKNOWN);
 
-	virtual void logExtreme(const std::string& message);
+	// log if this object's verbosity is greater or equal than extreme (supplied verbosity takes precedence)
+	virtual void logExtreme(const std::string& message, AbstractOPDID::LogVerbosity verbosity = UNKNOWN);
 
 	/** Starts processing the supplied arguments. */
 	virtual int startup(const std::vector<std::string>& args, const std::map<std::string, std::string>& environment);
