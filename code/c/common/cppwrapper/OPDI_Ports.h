@@ -77,16 +77,16 @@ protected:
 	template <class T> std::string to_string(const T& t) const;
 
 	/** Called regularly by the OPDI system. Enables the port to do work.
-	 * Override this in subclasses to implement more complex functionality.
+	 * Override this method in subclasses to implement more complex functionality.
 	 * In this method, an implementation may send asynchronous messages to the master ONLY if canSend is true.
 	 * This includes messages like Resync, Refresh, Debug etc.
 	 * If canSend is 0 (= false), it means that there is no master is connected or the system is in the middle
 	 * of sending a message of its own. It is not safe to send messages if canSend = 0!
 	 * Returning any other value than OPDI_STATUS_OK causes the message processing to exit.
 	 * This will usually signal a device error to the master or cause the master to time out.
-	 * This base class uses doWork to implement the self refresh timer. It calls doSelfRefresh when the 
-	 * periodic self refresh time has been reached. Implementations can decide in doSelfRefresh whether
-	 * they want to cause a self refresh (set refreshRequired = true) or not.
+	 * This base class uses doWork to implement the refresh timer. It calls doRefresh when the 
+	 * periodic refresh time has been reached. Implementations can decide in doRefresh whether
+	 * they want to cause a refresh (set refreshRequired = true) or not.
 	 */
 	virtual uint8_t doWork(uint8_t canSend);
 
@@ -97,29 +97,28 @@ protected:
 	// this pointer is managed by the OPDI class
 	void* data;
 
-	// A list of ports that should automatically refresh when the port state changes.
-	// How this state change is handled depends on the port implementation.
-	//std::vector<std::string> autoRefreshPorts;
-
 	// Specifies when this port sends refresh messages to a connected master.
-	// Default is OFF.
+	// Default is off (REFRESH_NOT_SET).
 	RefreshMode refreshMode;
 
-	// Can be set to true if a refresh is necessary (due to a state change or the timer).
-	// The port will be refreshed in the doWork method as soon as canSend is true.
-	// If the port is hidden it will not be refreshed.
+	// Is set to true if the need for a refresh is detected (due to a state change or the timer).
+	// The port will be refreshed in the doWork method.
 	bool refreshRequired;
 
-	// the minimum time in milliseconds between self-refresh messages
-	uint32_t selfRefreshTime;
+	// for refresh mode Periodic, the time in milliseconds between self-refresh messages
+	uint32_t periodicRefreshTime;
 	uint64_t lastRefreshTime;
 
 	// indicates whether port state should be written to a persistent storage
 	bool persistent;
 
-	// Called when a periodic self-refresh is due. If a refresh is necessary, implementations
-	// should set this->refreshRequired = true.
-	virtual void doSelfRefresh(void) = 0;
+	/** Causes the port to be refreshed by sending a refresh message to a connected master.
+	*   Only if the port is not hidden. */
+	virtual uint8_t refresh();
+
+	/* Called when the port should send a refresh message to the master.
+	*  This implementation sets this->refreshRequired = true. */
+	virtual void doRefresh(void);
 
 	virtual void updateExtendedInfo(void);
 
@@ -219,10 +218,6 @@ public:
 
 	virtual std::string getExtendedInfo(void) const;
 
-	/** Causes the port to be refreshed by sending a refresh message to a connected master.
-	*   Only if the port is not hidden and canSend is true. */
-	virtual uint8_t refresh();
-
 	virtual RefreshMode getRefreshMode(void);
 
 	virtual void setRefreshMode(RefreshMode refreshMode);
@@ -233,7 +228,7 @@ public:
 
 	/** Sets the minimum time in milliseconds between self-refresh messages. If this time is 0 (default),
 	* the self-refresh is disabled. */
-	virtual void setRefreshTime(uint32_t timeInMs);
+	virtual void setPeriodicRefreshTime(uint32_t timeInMs);
 
 	/** This method should be called just before the OPDI system is ready to start.
 	* It gives the port the chance to do necessary initializations. */
@@ -322,9 +317,6 @@ protected:
 	uint8_t mode;
 	uint8_t line;
 
-	/** A digital port performs a self refresh only if it is in input mode.	*/
-	virtual void doSelfRefresh(void) override;
-
 public:
 	explicit OPDI_DigitalPort(const char *id);
 
@@ -366,9 +358,6 @@ protected:
 	uint8_t reference;
 	uint8_t resolution;
 	int32_t value;
-
-	/** An analog port performs a self refresh only if it is in input mode.	*/
-	virtual void doSelfRefresh(void) override;
 
 	virtual int32_t validateValue(int32_t value);
 
@@ -419,9 +408,6 @@ protected:
 	// frees the internal items memory
 	void freeItems();
 
-	/** A select port does not support self refreshing. */
-	virtual void doSelfRefresh(void) override;
-
 public:
 	explicit OPDI_SelectPort(const char *id);
 
@@ -460,9 +446,6 @@ protected:
 	uint64_t step;
 	int64_t position;
 
-	/** A select port does not support self refreshing. */
-	virtual void doSelfRefresh(void) override;
-
 public:
 	explicit OPDI_DialPort(const char *id);
 
@@ -500,10 +483,6 @@ public:
  */
 class OPDI_StreamingPort : public OPDI_Port {
 friend class OPDI;
-
-protected:
-	/** A streaming port does not support self refreshing. */
-	virtual void doSelfRefresh(void) override;
 
 public:
 	// Initialize a streaming port. A streaming port is always bidirectional.

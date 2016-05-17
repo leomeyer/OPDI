@@ -35,7 +35,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->readonly = false;
 	this->refreshMode = REFRESH_NOT_SET;
 	this->refreshRequired = false;
-	this->selfRefreshTime = 0;
+	this->periodicRefreshTime = 0;
 	this->lastRefreshTime = 0;
 	this->orderID = -1;
 	this->persistent = false;
@@ -53,6 +53,7 @@ OPDI_Port::OPDI_Port(const char *id, const char *label, const char *type, const 
 }
 
 uint8_t OPDI_Port::doWork(uint8_t /* canSend */) {
+	// there's no refresh as long as the port is not a part of a running OPDI instance
 	if (this->opdi == nullptr)
 		this->refreshRequired = false;
 
@@ -63,10 +64,10 @@ uint8_t OPDI_Port::doWork(uint8_t /* canSend */) {
 	}
 
 	// determine whether periodic self refresh is necessary
-	if ((this->refreshMode == REFRESH_PERIODIC) && (this->selfRefreshTime > 0)) {
+	if ((this->refreshMode == REFRESH_PERIODIC) && (this->periodicRefreshTime > 0)) {
 		// self refresh timer reached?
-		if (opdi_get_time_ms() - this->lastRefreshTime > this->selfRefreshTime) {
-			this->doSelfRefresh();
+		if (opdi_get_time_ms() - this->lastRefreshTime > this->periodicRefreshTime) {
+			this->doRefresh();
 			this->lastRefreshTime = opdi_get_time_ms();
 		}
 	}
@@ -214,13 +215,13 @@ void OPDI_Port::setHistory(uint64_t intervalSeconds, int maxCount, const std::ve
 		this->history.append(this->to_string(*it));
 		++it;
 	}
-	//if (this->refreshMode == REFRESH_AUTO)
+	if (this->refreshMode == REFRESH_AUTO)
 		this->refreshRequired = true;
 }
 
 void OPDI_Port::clearHistory(void) {
 	this->history.clear();
-	//if (this->refreshMode == REFRESH_AUTO)
+	if (this->refreshMode == REFRESH_AUTO)
 		this->refreshRequired = true;
 }
 
@@ -264,8 +265,12 @@ OPDI_Port::RefreshMode OPDI_Port::getRefreshMode(void) {
 	return this->refreshMode;
 }
 
-void OPDI_Port::setRefreshTime(uint32_t timeInMs) {
-	this->selfRefreshTime = timeInMs;
+void OPDI_Port::setPeriodicRefreshTime(uint32_t timeInMs) {
+	this->periodicRefreshTime = timeInMs;
+}
+
+void OPDI_Port::doRefresh(void) {
+	this->refreshRequired = true;
 }
 
 uint8_t OPDI_Port::refresh() {
@@ -431,11 +436,6 @@ OPDI_DigitalPort::OPDI_DigitalPort(const char *id, const char *label, const char
 OPDI_DigitalPort::~OPDI_DigitalPort() {
 }
 
-void OPDI_DigitalPort::doSelfRefresh(void) {
-	// set flag
-	this->refreshRequired = true;
-}
-
 void OPDI_DigitalPort::setDirCaps(const char *dirCaps) {
 	OPDI_Port::setDirCaps(dirCaps);
 
@@ -568,10 +568,6 @@ OPDI_AnalogPort::OPDI_AnalogPort(const char *id, const char *label, const char *
 OPDI_AnalogPort::~OPDI_AnalogPort() {
 }
 
-void OPDI_AnalogPort::doSelfRefresh(void) {
-	this->refreshRequired = true;
-}
-
 void OPDI_AnalogPort::setMode(uint8_t mode) {
 	if (mode > 2)
 		throw PortError(this->ID() + ": Analog port mode not supported: " + this->to_string((int)mode));
@@ -696,10 +692,6 @@ OPDI_SelectPort::~OPDI_SelectPort() {
 	this->freeItems();
 }
 
-void OPDI_SelectPort::doSelfRefresh(void) {
-	this->refreshRequired = true;
-}
-
 void OPDI_SelectPort::freeItems() {
 	if (this->items != nullptr) {
 		int i = 0;
@@ -806,10 +798,6 @@ OPDI_DialPort::OPDI_DialPort(const char *id, const char *label, int64_t minValue
 
 OPDI_DialPort::~OPDI_DialPort() {}
 
-void OPDI_DialPort::doSelfRefresh(void) {
-	this->refreshRequired = true;
-}
-
 int64_t OPDI_DialPort::getMin(void) {
 	return this->minValue;
 }
@@ -872,8 +860,6 @@ bool OPDI_DialPort::hasError(void) const {
 ///////////////////////////////////////////////////////////////////////////////
 // Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
-
-void OPDI_StreamingPort::doSelfRefresh(void) {}
 
 OPDI_StreamingPort::OPDI_StreamingPort(const char *id) :
 	OPDI_Port(id, OPDI_PORTTYPE_STREAMING) {

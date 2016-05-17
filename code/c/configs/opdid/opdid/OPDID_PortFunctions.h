@@ -20,6 +20,8 @@ protected:
 	typedef std::vector<OPDI_Port*> PortList;
 	typedef std::vector<OPDI_DigitalPort*> DigitalPortList;
 	typedef std::vector<OPDI_AnalogPort*> AnalogPortList;
+	// pointer to member log function
+	typedef void (OPDID_PortFunctions::*LogFunction)(const std::string& message);
 
 	AbstractOPDID *opdid;
 	AbstractOPDID::LogVerbosity logVerbosity;
