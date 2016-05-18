@@ -58,11 +58,12 @@ void OPDID_ExpressionPort::setLine(uint8_t line) {
 bool OPDID_ExpressionPort::prepareSymbols(bool duringSetup) {
 	this->symbol_table.add_function("timestamp", this->timestampFunc);
 
-	this->symbol_table.add_constants();
+	// Adding constants leads to a memory leak; furthermore, constants are not detected as known symbols.
+	// As there are only three constants (pi, epsilon, infinity) we can well do without this function.
+	//	this->symbol_table.add_constants();
 
 	return true;
 }
-
 
 bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 	this->portValues.clear();
