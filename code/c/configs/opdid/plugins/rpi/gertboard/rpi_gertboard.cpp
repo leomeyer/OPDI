@@ -81,7 +81,7 @@ public:
 	virtual ~DigitalGertboardPort(void);
 	virtual void setLine(uint8_t line) override;
 	virtual void setMode(uint8_t mode) override;
-	virtual void getState(uint8_t *mode, uint8_t *line) override;
+	virtual void getState(uint8_t *mode, uint8_t *line) const override;
 };
 
 DigitalGertboardPort::DigitalGertboardPort(AbstractOPDID *opdid, const char *ID, int pin) : OPDI_DigitalPort(ID,
@@ -151,7 +151,7 @@ void DigitalGertboardPort::setMode(uint8_t mode) {
 	}
 }
 
-void DigitalGertboardPort::getState(uint8_t *mode, uint8_t *line) {
+void DigitalGertboardPort::getState(uint8_t *mode, uint8_t *line) const {
 	*mode = this->mode;
 
 	// read line
@@ -177,7 +177,7 @@ public:
 	virtual void setReference(uint8_t reference) override;
 	// value: an integer value ranging from 0 to 2^resolution - 1
 	virtual void setValue(int32_t value) override;
-	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) override;
+	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) const override;
 };
 
 AnalogGertboardOutput::AnalogGertboardOutput(AbstractOPDID *opdid, const char *id, int output) : OPDI_AnalogPort(id, 
@@ -234,7 +234,7 @@ void AnalogGertboardOutput::setValue(int32_t value) {
 }
 
 // function that fills in the current port state
-void AnalogGertboardOutput::getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) {
+void AnalogGertboardOutput::getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) const {
 	*mode = this->mode;
 	*resolution = this->resolution;
 	*reference = this->reference;
@@ -259,7 +259,7 @@ public:
 	virtual void setReference(uint8_t reference) override;
 	// value: an integer value ranging from 0 to 2^resolution - 1
 	virtual void setValue(int32_t value) override;
-	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) override;
+	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) const override;
 };
 
 AnalogGertboardInput::AnalogGertboardInput(AbstractOPDID *opdid, const char *id, int input) : OPDI_AnalogPort(id, 
@@ -312,14 +312,12 @@ void AnalogGertboardInput::setValue(int32_t value) {
 }
 
 // function that fills in the current port state
-void AnalogGertboardInput::getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) {
+void AnalogGertboardInput::getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) const {
 	*mode = this->mode;
 	*resolution = this->resolution;
 	*reference = this->reference;
 	// read value from ADC; correct range
-	this->value = OPDI_AnalogPort::validateValue(read_adc(this->input));
-	// set remembered value
-	*value = this->value;
+	*value = OPDI_AnalogPort::validateValue(read_adc(this->input));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -346,7 +344,7 @@ public:
 	virtual void setMode(uint8_t mode) override;
 	virtual void setDirCaps(const char *dirCaps) override;
 	virtual void setFlags(int32_t flags) override;
-	virtual void getState(uint8_t *mode, uint8_t *line) override;
+	virtual void getState(uint8_t *mode, uint8_t *line) const override;
 };
 
 GertboardButton::GertboardButton(AbstractOPDID *opdid, const char *ID, int pin) : OPDI_DigitalPort(ID, 
@@ -438,7 +436,7 @@ void GertboardButton::setFlags(int32_t flags) {
 	OPDI_DigitalPort::setFlags(flags);
 }
 
-void GertboardButton::getState(uint8_t *mode, uint8_t *line) {
+void GertboardButton::getState(uint8_t *mode, uint8_t *line) const {
 	*mode = this->mode;
 	// remember queried line state
 	*line = this->lastQueriedState;
@@ -553,7 +551,7 @@ public:
 	virtual ~DigitalExpansionPort(void);
 	virtual void setLine(uint8_t line) override;
 	virtual void setMode(uint8_t mode) override;
-	virtual void getState(uint8_t *mode, uint8_t *line) override;
+	virtual void getState(uint8_t *mode, uint8_t *line) const override;
 };
 
 DigitalExpansionPort::DigitalExpansionPort(AbstractOPDID *opdid, GertboardPlugin *gbPlugin, const char *ID, int pin) : OPDI_DigitalPort(ID, 
@@ -660,7 +658,7 @@ void DigitalExpansionPort::setMode(uint8_t mode) {
 		throw PortError("Expansion port communication failure");
 }
 
-void DigitalExpansionPort::getState(uint8_t *mode, uint8_t *line) {
+void DigitalExpansionPort::getState(uint8_t *mode, uint8_t *line) const {
 	*mode = this->mode;
 
 	if (this->mode == OPDI_DIGITAL_MODE_OUTPUT) {
