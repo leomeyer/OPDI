@@ -359,7 +359,7 @@ protected:
 	uint8_t resolution;
 	int32_t value;
 
-	virtual int32_t validateValue(int32_t value);
+	virtual int32_t validateValue(int32_t value) const;
 
 public:
 	explicit OPDI_AnalogPort(const char *id);

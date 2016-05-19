@@ -578,7 +578,7 @@ void OPDI_AnalogPort::setMode(uint8_t mode) {
 		this->opdi->persist(this);
 }
 
-int32_t OPDI_AnalogPort::validateValue(int32_t value) {
+int32_t OPDI_AnalogPort::validateValue(int32_t value) const {
 	if (value < 0)
 		return 0;
 	if (value > (1 << this->resolution) - 1)
