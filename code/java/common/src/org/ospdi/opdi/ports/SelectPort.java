@@ -6,7 +6,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.ospdi.opdi.devices.DeviceException;
 import org.ospdi.opdi.interfaces.IBasicProtocol;
-import org.ospdi.opdi.interfaces.IProtocol;
 import org.ospdi.opdi.protocol.DisconnectedException;
 import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.PortErrorException;

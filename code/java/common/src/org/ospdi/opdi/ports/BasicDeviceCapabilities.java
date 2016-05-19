@@ -24,7 +24,7 @@ public class BasicDeviceCapabilities implements IDeviceCapabilities {
 	
 	private static final String MAGIC = "BDC";
 
-	private BasicProtocol protocol;
+	protected BasicProtocol protocol;
 	protected List<Port> ports = new ArrayList<Port>();
 	
 	public static IDeviceCapabilities makeInstance(String name, String address) {
