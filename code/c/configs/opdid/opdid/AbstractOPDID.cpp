@@ -967,8 +967,9 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 			} else
 				throw Poco::DataException(port->ID() + ": Value for 'History' not supported, expected 'Hour' or 'Day': " + history);
 			aggPort->setHidden(true);
-			// reduce the standard log verbosity of hidden automatic aggregators because they can often generate a log of log spam
-			aggPort->logVerbosity = NORMAL;
+			// set the standard log verbosity of hidden automatic aggregators to "Normal" because they can sometimes generate a log of log spam
+			// if the dial port's log verbosity is defined, the aggregator uses the same value
+			aggPort->logVerbosity = this->getConfigLogVerbosity(portConfig, NORMAL);
 			// add the port
 			this->addPort(aggPort);
 			// if a history port is used and the RefreshMode has not been set manually, the RefreshMode is set to Automatic
