@@ -81,7 +81,8 @@ CFLAGS = -Wall -Wextra $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES) -Wno-unus
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11
 
 # Debug flags
-CFLAGS += -ggdb -O0 -fbuiltin
+CFLAGS += -O2 -fbuiltin
+#-ggdb 
 
 OBJECTS = $(SRC)
 

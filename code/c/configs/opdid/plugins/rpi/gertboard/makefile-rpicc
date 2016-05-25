@@ -64,14 +64,14 @@ CDEFINES = -Dlinux
 
 # Compiler flags.
 CFLAGS = -fpermissive $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
-CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -O3 -std=c++11 -static-libstdc++
+CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -O2 -std=c++11 -static-libstdc++
 
 OBJECTS = $(SRC)
 
 all: $(SRC) $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -shared -fPIC -O3 -o $@.so $(POCOLIBS) $(LIBS)
+	$(CC) $(CFLAGS) $(OBJECTS) -shared -fPIC -o $@.so $(POCOLIBS) $(LIBS)
 
 .cpp.o:
 	@echo

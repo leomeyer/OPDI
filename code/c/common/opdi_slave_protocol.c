@@ -735,6 +735,7 @@ static uint8_t send_all_port_states(channel_t channel) {
 	// go through list of device ports
 	port = opdi_get_ports();
 	while (port != NULL) {
+		result = OPDI_PORTTYPE_UNKNOWN;
 
 #ifndef OPDI_NO_DIGITAL_PORTS
 		if (strcmp(port->type, OPDI_PORTTYPE_DIGITAL) == 0) {
