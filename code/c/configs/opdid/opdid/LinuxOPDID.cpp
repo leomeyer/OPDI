@@ -353,11 +353,10 @@ int LinuxOPDID::setupTCP(std::string /*interface_*/, int port) {
 					int64_t proctime = 1000000LL * tv.tv_sec + tv.tv_usec;
 
 					// not yet connected; process housekeeping about once a millisecond
-/*					
 					uint8_t waitResult = this->waiting(false);
 					if (waitResult != OPDI_STATUS_OK)
 						return waitResult;
-*/
+
 					gettimeofday(&tv, NULL);
 					int64_t elapsed = 1000000LL * tv.tv_sec + tv.tv_usec - proctime;
 
@@ -376,6 +375,7 @@ int LinuxOPDID::setupTCP(std::string /*interface_*/, int port) {
 						sleepRemainderAdjustCount++;
 
 					if (elapsed < sleepRemainderBase) {
+						this->logExtreme(std::string("Sleeping for ") + this->to_string(sleepRemainderBase - elapsed) + " microseconds");
 						usleep(sleepRemainderBase - elapsed);
 					}
 				} else

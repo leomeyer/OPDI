@@ -37,7 +37,8 @@ void signal_handler_abrt(int signum) {
 	const int BACKTRACE_LEVELS = 10;
 	void* array[BACKTRACE_LEVELS];
 	size_t size;
-	
+
+	// retrieve backtrace information
 	size = backtrace(array, BACKTRACE_LEVELS);
 
 	std::cout << "Received ABRT signal, generating stack trace" << std::endl;
