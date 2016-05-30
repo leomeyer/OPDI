@@ -17,6 +17,7 @@
 #include <syslog.h>
 #include <sys/types.h>
 #include <pwd.h>
+#include <sys/prctl.h>
 
 #include "Poco/Exception.h"
 #include "Poco/NumberParser.h"
@@ -231,6 +232,9 @@ void LinuxOPDID::switchToUser(std::string newUser) {
 	// change effective user ID
 	if (setuid(uid) == -1)
 		throw Poco::DataException(std::string("Unable to switch process context to new user: ") + newUser);
+		
+	// enable core dumps (disabled by setuid)
+	prctl(PR_SET_DUMPABLE, 1);
 
 	this->logNormal("Switched to user: " + this->getCurrentUser());	
 }
