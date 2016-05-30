@@ -4,7 +4,7 @@
   <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
   <meta name="viewport" content="width=720"/>
     
-<title>WebServer Test Page</title>
+<title>OPDID Web Access</title>
 
 <link rel="stylesheet" href="jquery-ui.min.css"/>
 <link rel="stylesheet" type="text/css" href="jquery.gridster.css"/>
@@ -53,9 +53,9 @@ var ports = Array();
 
 function handleError(error) {
     if (typeof error == "object")
-        alert("Error " + error.code + ": " + error.message);
+        $('<div/>').html("Error " + error.code + ": " + error.message).dialog();
     else
-        alert("Error: " + error);
+        $('<div/>').html("Error: " + error).dialog();
 }
 
 function getParameterByName(name, url) {
@@ -1239,6 +1239,7 @@ function buildUI(deviceP) {
     if (typeof device.info != "undefined")
         device.startGroup = device.info.startGroup;
 
+    window.document.title = device.name;
     $("#deviceName").html(device.name);
 
     // determine initial group
@@ -1297,11 +1298,16 @@ function setupRPC() {
 }
 
 function setupWebsocket() {
+
     var ws = new WebSocket('ws://' + location.host + '/ws');
     if (!window.console) { window.console = { log: function() {} } };
     ws.onopen = function(ev) {};
-    ws.onerror = function(ev) {};
-    ws.onclose = function(ev) {};
+    ws.onerror = function(ev) {
+        // reload automatically if there's a problem with the connection
+        setTimeout(function () { location.reload(); }, 5000);
+        $('<div/>').html("WebSocket connection error, reloading automatically...").dialog();
+    };
+    ws.onclose = function (ev) {};
     ws.onmessage = function(ev) {
         // examine message
         var parts = ev.data.split(" ");
