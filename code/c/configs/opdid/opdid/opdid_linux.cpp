@@ -1,8 +1,9 @@
+#include <stdio.h>
+#include <execinfo.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <iostream>
 #include <cstdio>
@@ -32,6 +33,21 @@ void signal_handler_term(int) {
 		Opdi->shutdown();
 }
 
+void signal_handler_abrt(int signum) {
+	const int BACKTRACE_LEVELS = 10;
+	void* array[BACKTRACE_LEVELS];
+	size_t size;
+	
+	size = backtrace(array, BACKTRACE_LEVELS);
+
+	std::cout << "Received ABRT signal, generating stack trace" << std::endl;
+	backtrace_symbols_fd(array, size, STDERR_FILENO);
+
+	// generate core file
+	signal(signum, SIG_DFL);
+	kill(getpid(), signum);
+}
+
 int main(int argc, char *argv[], char *envp[])
 {
 	Opdi = new LinuxOPDID();
@@ -48,6 +64,11 @@ int main(int argc, char *argv[], char *envp[])
 	sigemptyset(&sigIntHandler.sa_mask);
 	sigIntHandler.sa_flags = 0;
 	sigaction(SIGTERM, &sigIntHandler, NULL);
+
+	sigIntHandler.sa_handler = signal_handler_abrt;
+	sigemptyset(&sigIntHandler.sa_mask);
+	sigIntHandler.sa_flags = 0;
+	sigaction(SIGABRT, &sigIntHandler, NULL);
 
 	// convert arguments to vector list
 	std::vector<std::string> args;
