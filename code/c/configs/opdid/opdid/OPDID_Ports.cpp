@@ -1505,7 +1505,7 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 void OPDID_AggregatorPort::persist() {
 	// update persistent storage?
 	if (this->isPersistent() && (this->opdid->persistentConfig != nullptr)) {
-		this->logVerbose("Trying to persist aggregator values for: " + this->ID());
+		this->logDebug(this->ID() + "Trying to persist aggregator values");
 		if (this->values.size() == 0) {
 			this->opdid->persistentConfig->remove(this->ID() + ".Time");
 			this->opdid->persistentConfig->remove(this->ID() + ".Values");
@@ -1573,7 +1573,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 
 		// try to read values from persistent storage?
 		if (this->isPersistent() && (this->opdid->persistentConfig != nullptr)) {
-			this->logVerbose(this->ID() + ": Trying to read persisted aggregator values for: ");
+			this->logVerbose(this->ID() + ": Trying to read persisted aggregator values");
 			// read timestamp
 			uint64_t persistTime = this->opdid->persistentConfig->getUInt64(this->ID() + ".Time", 0);
 			// timestamp acceptable? must be in the past and within the query interval
@@ -1600,6 +1600,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 					}
 				}	// read values
 				valuesAvailable = true;
+				this->logVerbose(this->ID() + ": Total persisted aggregator values read: " + this->to_string(this->values.size()));
 			}	// timestamp valid
 			else
 				this->logVerbose(this->ID() + ": Persisted aggregator values not found or outdated, timestamp was: " + to_string(persistTime));
