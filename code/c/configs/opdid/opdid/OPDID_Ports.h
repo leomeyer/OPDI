@@ -502,7 +502,7 @@ protected:
 
 	std::string sourcePortID;
 	OPDI_Port* sourcePort;
-	uint64_t queryInterval;
+	int64_t queryInterval;
 	uint16_t totalValues;
 	int32_t multiplier;
 	int64_t minDelta;
@@ -521,10 +521,14 @@ protected:
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
+	void persist(void);
+
 	void resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity, bool clearPersistent = true);
 
 public:
 	OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id);
+
+	~OPDID_AggregatorPort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig);
 

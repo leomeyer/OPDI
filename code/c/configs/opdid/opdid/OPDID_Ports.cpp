@@ -1502,6 +1502,29 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 
 // OPDID_AggregatorPort class implementation
 
+void OPDID_AggregatorPort::persist() {
+	// update persistent storage?
+	if (this->isPersistent() && (this->opdid->persistentConfig != nullptr)) {
+		this->logDebug("Trying to persist aggregator values for: " + this->ID());
+		if (this->values.size() == 0) {
+			this->opdid->persistentConfig->remove(this->ID() + ".Time");
+			this->opdid->persistentConfig->remove(this->ID() + ".Values");
+		} else {
+			this->opdid->persistentConfig->setUInt64(this->ID() + ".Time", this->lastQueryTime);
+			std::stringstream ss;
+			auto vit = this->values.cbegin();
+			while (vit != this->values.cend()) {
+				if (vit != this->values.cbegin())
+					ss << ",";
+				ss << this->to_string(*vit);
+				++vit;
+			}
+			this->opdid->persistentConfig->setString(this->ID() + ".Values", ss.str());
+		}
+		this->opdid->savePersistentConfig();
+	}
+}
+
 void OPDID_AggregatorPort::resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity, bool clearPersistent) {
 	switch (logVerbosity) {
 	case AbstractOPDID::EXTREME:
@@ -1631,21 +1654,8 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			// value is ok
 		}
 		this->values.push_back(longValue);
-		// update persistent storage?
-		if (this->isPersistent() && (this->opdid->persistentConfig != nullptr)) {
-			this->logDebug("Trying to persist aggregator values for: " + this->ID());
-			this->opdid->persistentConfig->setUInt64(this->ID() + ".Time", this->lastQueryTime);
-			std::stringstream ss;
-			auto vit = this->values.cbegin();
-			while (vit != this->values.cend()) {
-				if (vit != this->values.cbegin())
-					ss << ",";
-				ss << this->to_string(*vit);
-				++vit;
-			}
-			this->opdid->persistentConfig->setString(this->ID() + ".Values", ss.str());
-			this->opdid->savePersistentConfig();
-		}
+		// persist values
+		this->persist();
 		valuesAvailable = true;
 	}
 
@@ -1681,6 +1691,15 @@ OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id)
 	this->setLine(1);
 	this->errors = 0;
 	this->firstRun = true;
+}
+
+OPDID_AggregatorPort::~OPDID_AggregatorPort() {
+	// destructor functionality: if the port ist persistent, try to persist values
+	// ignore any errors during this process
+	try {
+		this->persist();
+	}
+	catch (...) {}
 }
 
 void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
