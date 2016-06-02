@@ -454,7 +454,7 @@ public:
 * the last collected value. If the difference exceeds the specified bounds the
 * whole collection is invalidated as a safeguard against implausible results.
 * Each calculation presents its result as a DialPort. At startup all such ports
-* will signal an error (invalid value). The port values will also become invalid 
+* will signal an error (value unavailable). The port values will also become invalid 
 * if delta values are exceeded or if the source port signals an error.
 * A typical example for using this port is with a gas counter. Such a counter
 * emits impulses corresponding to a certain consumed gas value. If consumption
@@ -473,6 +473,11 @@ public:
 * The allowedErrors setting specifies how many errors querying a port's value
 * may occur in a row until the data is invalidated. In case of an error the last value
 * is repeated if it exists.
+* If the Persistent property of an AggregatorPort is true, the list of aggregated
+* values as well as the last timestamp of the aggregator is stored in the persistent
+* file. On startup, if there is a persisted state that is younger than the
+* specified interval the values are read into the list.
+* This behavior can be used to preserve values in between OPDID restarts.
 */
 class OPDID_AggregatorPort : public OPDI_DigitalPort, public OPDID_PortFunctions {
 friend class AbstractOPDID;
@@ -510,12 +515,13 @@ protected:
 	std::vector<int64_t> values;
 	uint64_t lastQueryTime;
 	int32_t errors;
+	bool firstRun;
 
 	std::vector<Calculation*> calculations;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
-	void resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity);
+	void resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity, bool clearPersistent = true);
 
 public:
 	OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id);

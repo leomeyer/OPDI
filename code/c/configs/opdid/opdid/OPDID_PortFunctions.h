@@ -87,6 +87,10 @@ class ValueResolver {
 public:
 	ValueResolver() {
 		this->isFixed = false;
+		this->useScaleValue = false;
+		this->scaleValue = 0;
+		this->useErrorDefault = false;
+		this->errorDefault = 0;
 	}
 
 	ValueResolver(T initialValue) {

@@ -1186,7 +1186,6 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration* config, const s
 	if (nodeType == "Include") {
 		this->setupInclude(nodeConfig, config, node);
 	} else
-	// standard driver (internal ports)
 	if (nodeType == "DigitalPort") {
 		this->setupEmulatedDigitalPort(nodeConfig, node);
 	} else
@@ -1477,6 +1476,14 @@ uint8_t AbstractOPDID::refresh(OPDI_Port** ports) {
 	return OPDI_STATUS_OK;
 }
 
+void AbstractOPDID::savePersistentConfig() {
+	if (this->persistentConfig == nullptr)
+		return;
+
+	this->persistentConfig->setString("LastChange", this->getTimestampStr());
+	this->persistentConfig->save(this->persistentConfigFile);
+}
+
 void AbstractOPDID::persist(OPDI_Port* port) {
 	if (this->persistentConfig == nullptr) {
 		this->logWarning(std::string("Unable to persist state for port ") + port->getID() + ": No configuration file specified; use 'PersistentConfig' in the General configuration section");
@@ -1559,8 +1566,7 @@ void AbstractOPDID::persist(OPDI_Port* port) {
 		this->logWarning("Unable to persist state of port " + port->ID() + ": " + e.message());
 		return;
 	}
-	this->persistentConfig->setString("LastChange", this->getTimestampStr());
-	this->persistentConfig->save(this->persistentConfigFile);
+	this->savePersistentConfig();
 }
 
 std::string AbstractOPDID::getPortStateStr(OPDI_Port* port) const {

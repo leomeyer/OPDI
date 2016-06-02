@@ -1502,7 +1502,7 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 
 // OPDID_AggregatorPort class implementation
 
-void OPDID_AggregatorPort::resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity) {
+void OPDID_AggregatorPort::resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity, bool clearPersistent) {
 	switch (logVerbosity) {
 	case AbstractOPDID::EXTREME:
 		this->logExtreme(this->ID() + ": Resetting aggregator; values are now unavailable because: " + reason); break;
@@ -1521,6 +1521,13 @@ void OPDID_AggregatorPort::resetValues(std::string reason, AbstractOPDID::LogVer
 		++it;
 	}
 	this->values.clear();
+	// remove values from persistent storage
+	if (clearPersistent && this->isPersistent() && (this->opdid->persistentConfig != nullptr)) {
+		this->opdid->persistentConfig->remove(this->ID() + ".Time");
+		this->opdid->persistentConfig->remove(this->ID() + ".Values");
+		this->opdid->savePersistentConfig();
+	}
+	// clear history of associated port
 	if (this->setHistory && this->historyPort != nullptr)
 		this->historyPort->clearHistory();
 }
@@ -1535,6 +1542,47 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 		// this->logExtreme(this->ID() + ": Aggregator is disabled");
 		return OPDI_STATUS_OK;
 	}
+
+	bool valuesAvailable = false;
+
+	if (this->firstRun) {
+		this->firstRun = false;
+
+		// try to read values from persistent storage?
+		if (this->isPersistent() && (this->opdid->persistentConfig != nullptr)) {
+			this->logDebug("Trying to read persisted aggregator values for: " + this->ID());
+			// read timestamp
+			uint64_t persistTime = this->opdid->persistentConfig->getUInt64(this->ID() + ".Time", 0);
+			// timestamp acceptable? must be in the past and within the query interval
+			int64_t elapsed = opdi_get_time_ms() - persistTime;
+			if ((elapsed > 0) && (elapsed < this->queryInterval * 1000)) {
+				// remember persistent time as last query time
+				this->lastQueryTime = persistTime;
+				// read values
+				std::string persistedValues = this->opdid->persistentConfig->getString(this->ID() + ".Values", "");
+				// tokenize along commas
+				std::stringstream ss(persistedValues);
+				std::string item;
+				while (std::getline(ss, item, ',')) {
+					// parse item and store it
+					try {
+						int64_t value = Poco::NumberParser::parse64(item);
+						this->values.push_back(value);
+					}
+					catch (Poco::Exception& e) {
+						// any error causes a reset and aborts processing
+						this->lastQueryTime = 0;
+						this->resetValues("An error occurred deserializing persisted values: " + e.message(), AbstractOPDID::NORMAL);
+						break;
+					}
+				}	// read values
+				valuesAvailable = true;
+			}	// timestamp valid
+			else
+				this->logDebug(this->ID() + ": Persisted aggregator values not found or outdated, timestamp was: " + to_string(persistTime));
+		}	// persistence enabled
+	}
+
 	// time to read the next value?
 	if (opdi_get_time_ms() - this->lastQueryTime > (uint64_t)this->queryInterval * 1000) {
 		this->lastQueryTime = opdi_get_time_ms();
@@ -1545,7 +1593,8 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			value = this->opdid->getPortValue(this->sourcePort);
 			// reset error counter
 			this->errors = 0;
-		} catch (Poco::Exception &e) {
+		}
+		catch (Poco::Exception &e) {
 			this->logDebug(this->ID() + ": Error querying source port " + this->sourcePort->ID() + ": " + e.message());
 			// error occurred; check whether there's a last value and an error tolerance
 			if ((this->values.size() > 0) && (this->allowedErrors > 0) && (this->errors < this->allowedErrors)) {
@@ -1563,7 +1612,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 		int64_t longValue = (int64_t)(value);
 
 		this->logDebug(this->ID() + ": Newly aggregated value: " + this->to_string(longValue));
-		
+
 		// use first value without check
 		if (this->values.size() > 0) {
 			// vector overflow?
@@ -1582,9 +1631,27 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			// value is ok
 		}
 		this->values.push_back(longValue);
+		// update persistent storage?
+		if (this->isPersistent() && (this->opdid->persistentConfig != nullptr)) {
+			this->logDebug("Trying to persist aggregator values for: " + this->ID());
+			this->opdid->persistentConfig->setUInt64(this->ID() + ".Time", this->lastQueryTime);
+			std::stringstream ss;
+			auto vit = this->values.cbegin();
+			while (vit != this->values.cend()) {
+				if (vit != this->values.cbegin())
+					ss << ",";
+				ss << this->to_string(*vit);
+				++vit;
+			}
+			this->opdid->persistentConfig->setString(this->ID() + ".Values", ss.str());
+			this->opdid->savePersistentConfig();
+		}
+		valuesAvailable = true;
+	}
+
+	if (valuesAvailable) {
 		if (this->setHistory && this->historyPort != nullptr)
 			this->historyPort->setHistory(this->queryInterval, this->totalValues, this->values);
-
 		// perform all calculations
 		auto it = this->calculations.begin();
 		while (it != this->calculations.end()) {
@@ -1592,7 +1659,6 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			++it;
 		}
 	}
-	
 	return OPDI_STATUS_OK;
 }
 
@@ -1614,6 +1680,7 @@ OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id)
 	// an aggregator is enabled by default
 	this->setLine(1);
 	this->errors = 0;
+	this->firstRun = true;
 }
 
 void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
@@ -1737,7 +1804,7 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 	this->values.reserve(this->totalValues);
 
 	// set initial state
-	this->resetValues("Setting initial state", AbstractOPDID::VERBOSE);
+	this->resetValues("Setting initial state", AbstractOPDID::VERBOSE, false);
 }
 
 void OPDID_AggregatorPort::prepare() {
@@ -1768,6 +1835,7 @@ OPDID_CounterPort::OPDID_CounterPort(AbstractOPDID *opdid, const char *id) : OPD
 	this->increment = { 1 };
 	// default: period is one second
 	this->periodMs = { 1000 };
+	this->lastActionTime = 0;
 }
 
 void OPDID_CounterPort::configure(Poco::Util::AbstractConfiguration *nodeConfig) {

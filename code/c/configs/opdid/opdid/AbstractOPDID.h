@@ -63,10 +63,6 @@ protected:
 	// environment variables for config file substitution (keys prefixed with $)
 	std::map<std::string, std::string> environment;
 
-	// configuration file for port state persistence
-	std::string persistentConfigFile;
-	Poco::Util::PropertyFileConfiguration* persistentConfig;
-
 	Poco::Mutex mutex;
 	Poco::Logger* logger;
 
@@ -117,6 +113,10 @@ public:
 
 	Poco::BasicEvent<void> allPortsRefreshed;
 	Poco::BasicEvent<OPDI_Port*> portRefreshed;
+
+	// configuration file for port state persistence
+	std::string persistentConfigFile;
+	Poco::Util::PropertyFileConfiguration* persistentConfig;
 
 	AbstractOPDID(void);
 
@@ -296,6 +296,8 @@ public:
 
 	/** This implementation also logs the refreshed ports. */
 	virtual uint8_t refresh(OPDI_Port** ports) override;
+
+	virtual void savePersistentConfig();
 
 	/** Implements a persistence mechanism for port states. */
 	virtual void persist(OPDI_Port* port) override;
