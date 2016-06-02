@@ -972,6 +972,8 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 			// set the standard log verbosity of hidden automatic aggregators to "Normal" because they can sometimes generate a log of log spam
 			// if the dial port's log verbosity is defined, the aggregator uses the same value
 			aggPort->logVerbosity = this->getConfigLogVerbosity(portConfig, NORMAL);
+			// Auto-Aggregators are persistent to not lose values over a restart
+			aggPort->setPersistent(true);
 			// add the port
 			this->addPort(aggPort);
 			// if a history port is used and the RefreshMode has not been set manually, the RefreshMode is set to Automatic
