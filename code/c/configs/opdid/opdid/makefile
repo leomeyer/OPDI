@@ -84,7 +84,7 @@ CFLAGS += -ggdb -ftrapv
 
 OBJECTS = $(SRC)
 
-all: $(SRC) $(TARGET) plugins
+all: $(SRC) plugins $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(POCOLIBS) $(LIBS)
