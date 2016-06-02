@@ -470,6 +470,9 @@ public:
 * the default is True, while for the Delta algorithm the default is false.
 * In the case of temperature it might be interesting to determine the minimum
 * and maximum in the specified range. 
+* The allowedErrors setting specifies how many errors querying a port's value
+* may occur in a row until the data is invalidated. In case of an error the last value
+* is repeated if it exists.
 */
 class OPDID_AggregatorPort : public OPDI_DigitalPort, public OPDID_PortFunctions {
 friend class AbstractOPDID;
@@ -502,9 +505,11 @@ protected:
 	bool setHistory;
 	std::string historyPortID;
 	OPDI_Port* historyPort;
+	int32_t allowedErrors;
 
 	std::vector<int64_t> values;
 	uint64_t lastQueryTime;
+	int32_t errors;
 
 	std::vector<Calculation*> calculations;
 

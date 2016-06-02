@@ -959,6 +959,8 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 			aggPort->sourcePortID = port->ID();
 			// default interval is one minute
 			aggPort->queryInterval = 60;
+			// allow some error tolerance (in case a port value is temporarily unavailable)
+			aggPort->allowedErrors = 3;
 			if (history == "Hour") {
 				aggPort->totalValues = 60;
 			} else

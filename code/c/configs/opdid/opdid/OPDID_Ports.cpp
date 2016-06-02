@@ -1543,10 +1543,21 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 		try {
 			// get the port's value
 			value = this->opdid->getPortValue(this->sourcePort);
+			// reset error counter
+			this->errors = 0;
 		} catch (Poco::Exception &e) {
 			this->logDebug(this->ID() + ": Error querying source port " + this->sourcePort->ID() + ": " + e.message());
-			this->resetValues("Querying the source port " + this->sourcePort->ID() + " resulted in an error: " + e.message(), AbstractOPDID::VERBOSE);
-			return OPDI_STATUS_OK;
+			// error occurred; check whether there's a last value and an error tolerance
+			if ((this->values.size() > 0) && (this->allowedErrors > 0) && (this->errors < this->allowedErrors)) {
+				++errors;
+				// fallback to last value
+				value = (double)this->values.at(this->values.size() - 1);
+				this->logDebug(this->ID() + ": Fallback to last read value, remaining allowed errors: " + this->to_string(this->allowedErrors - this->errors));
+			}
+			else {
+				this->resetValues("Querying the source port " + this->sourcePort->ID() + " resulted in an error: " + e.message(), AbstractOPDID::VERBOSE);
+				return OPDI_STATUS_OK;
+			}
 		}
 
 		int64_t longValue = (int64_t)(value);
@@ -1597,10 +1608,12 @@ OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id)
 	this->totalValues = 0;
 	this->setHistory = true;
 	this->historyPort = nullptr;
+	this->allowedErrors = 0;		// default setting allows no errors
 	// an aggregator is an output only port
 	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
 	// an aggregator is enabled by default
 	this->setLine(1);
+	this->errors = 0;
 }
 
 void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
@@ -1621,6 +1634,7 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 	this->multiplier = config->getInt("Multiplier", this->multiplier);
 	this->minDelta = config->getInt64("MinDelta", this->minDelta);
 	this->maxDelta = config->getInt64("MaxDelta", this->maxDelta);
+	this->allowedErrors = config->getInt("AllowedErrors", this->allowedErrors);
 
 	this->setHistory = config->getBool("SetHistory", this->setHistory);
 	this->historyPortID = this->opdid->getConfigString(config, "HistoryPort", "", false);
