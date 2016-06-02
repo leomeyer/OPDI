@@ -502,7 +502,7 @@ protected:
 
 	std::string sourcePortID;
 	OPDI_Port* sourcePort;
-	uint64_t queryInterval;
+	int64_t queryInterval;
 	uint16_t totalValues;
 	int32_t multiplier;
 	int64_t minDelta;
