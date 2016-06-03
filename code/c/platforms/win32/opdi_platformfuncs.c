@@ -152,5 +152,5 @@ int8_t opdi_string_cmp(const char *s1, const char *s2) {
 }
 
 uint64_t opdi_get_time_ms(void) {
-   	return GetTickCount();
+   	return GetTickCount64();
 }
