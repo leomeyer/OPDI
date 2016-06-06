@@ -13,6 +13,9 @@
 
 OPDID_ExpressionPort::OPDID_ExpressionPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
+	this->numIterations = 0;
+	this->fallbackSpecified = false;
+	this->fallbackValue = 0;
 
 	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 
@@ -36,6 +39,11 @@ void OPDID_ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) 
 		throw Poco::DataException("You have to specify at least one output port in the OutputPorts setting");
 
 	this->numIterations = config->getInt64("Iterations", 0);
+
+	if (config->hasProperty("FallbackValue")) {
+		this->fallbackValue = config->getDouble("FallbackValue");
+		this->fallbackSpecified = true;
+	}
 }
 
 void OPDID_ExpressionPort::setDirCaps(const char * /*dirCaps*/) {
@@ -196,6 +204,51 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 				}
 
 				++it;
+			}
+		}
+		else {
+			// the variables could not be prepared, due to some error
+
+			// fallback value specified?
+			if (this->fallbackSpecified) {
+				double value = this->fallbackValue;
+
+				this->logExtreme(this->ID() + ": An error occurred, applying fallback value of: " + to_string(value));
+
+				// go through list of output ports
+				OPDI::PortList::iterator it = this->outputPorts.begin();
+				while (it != this->outputPorts.end()) {
+					try {
+						if ((*it)->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
+							if (value == 0)
+								((OPDI_DigitalPort *)(*it))->setLine(0);
+							else
+								((OPDI_DigitalPort *)(*it))->setLine(1);
+						}
+						else
+							if ((*it)->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+								// analog port: relative value (0..1)
+								((OPDI_AnalogPort *)(*it))->setRelativeValue(value);
+							}
+							else
+								if ((*it)->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+									// dial port: absolute value
+									((OPDI_DialPort *)(*it))->setPosition((int64_t)value);
+								}
+								else
+									if ((*it)->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+										// select port: current position number
+										((OPDI_SelectPort *)(*it))->setPosition((uint16_t)value);
+									}
+									else
+										throw PortError("");
+					}
+					catch (Poco::Exception &e) {
+						this->opdid->logNormal(this->ID() + ": Error setting output port value of port " + (*it)->getID() + ": " + e.message());
+					}
+
+					++it;
+				}
 			}
 		}
 

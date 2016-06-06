@@ -30,8 +30,9 @@
 *    - A select port's value is its current item position.
 *   The expression is evaluated using the ExprTk library. It queries the current state
 *   of all ports to make their values available to the expression formula.
-*   If a port state cannot be queried (e. g. due to an exception) the expression is not evaluated.
 *   The resulting value can be assigned to a number of output ports.
+*   If a port state cannot be queried (e. g. due to an exception) the expression is not evaluated,
+*   however, you can specify a fallback value that is assigned to the output ports.
 *   The rules for the different port types are:
 *    - A digital port is set to Low if the value is 0 and to High otherwise.
 *    - An analog port's relative value is set to the range 0..1.
@@ -40,7 +41,7 @@
 *    - A select port's position is set by casting the value to a 16-bit unsigned int.
 *   An expression port continuously evaluates its expression and sets the value of the output ports
 *   accordingly. Sometimes it is useful to limit the number of evaluations such that the value is
-*   calculated only once. The ExpressionPort supports an iterations counter which will be decreased
+*   calculated e. g. only once. The ExpressionPort supports an iterations counter which will be decreased
 *   each time the value is evaluated. If the iterations counter reaches 0 the ExpressionPort is
 *   disabled, i. e. set to 0. The counter starts running again when the ExpressionPort is again set
 *   to High.
@@ -74,6 +75,8 @@ protected:
 	std::string outputPortStr;
 	OPDI::PortList outputPorts;
 	int64_t numIterations;
+	double fallbackValue;
+	bool fallbackSpecified;
 
 	timestamp_func timestampFunc;
 
