@@ -1190,7 +1190,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 	if ((this->expiryMs > 0) && (this->lastReloadTime > 0) && (opdi_get_time_ms() - lastReloadTime > (uint64_t)this->expiryMs)) {
 		// only if the port's value is ok
 		if (this->port->getError() == VALUE_OK) {
-			this->logVerbose(ID() + ": Value of port '" + this->port->ID() + "' has expired");
+			this->logWarning(ID() + ": Value of port '" + this->port->ID() + "' has expired");
 			this->port->setError(OPDI_Port::VALUE_EXPIRED);
 		}
 	}

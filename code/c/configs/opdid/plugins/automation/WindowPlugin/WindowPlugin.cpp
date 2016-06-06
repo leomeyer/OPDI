@@ -360,7 +360,7 @@ std::string WindowPort::getStateText(WindowState state) {
 
 void WindowPort::setCurrentState(WindowState state) {
 	if (this->currentState != state) {
-		this->logVerbose(std::string(this->id) + ": Changing current state to: " + this->getStateText(state) + this->getMotorStateText());
+		this->logDebug(std::string(this->id) + ": Changing current state to: " + this->getStateText(state) + this->getMotorStateText());
 
 		// if set to ERR or ERR is cleared, notify the ErrorPorts
 		bool notifyErrorPorts = (this->currentState == ERR) || (state == ERR);
