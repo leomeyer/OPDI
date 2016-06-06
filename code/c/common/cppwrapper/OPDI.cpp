@@ -43,7 +43,7 @@ uint8_t OPDI::shutdownInternal(void) {
 	PortList::iterator it = this->ports.begin();
 	while (it != this->ports.end()) {
 		// free internal port memory
-		opdi_Port *oPort = (opdi_Port *)(*it)->data;
+		opdi_Port* oPort = (opdi_Port*)(*it)->data;
 		// release additional data structure memory
 		if ((oPort != nullptr) && (strcmp((*it)->type, OPDI_PORTTYPE_DIAL) == 0)) {
 			if (oPort->info.ptr != nullptr)
