@@ -1505,23 +1505,35 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 void OPDID_AggregatorPort::persist() {
 	// update persistent storage?
 	if (this->isPersistent() && (this->opdid->persistentConfig != nullptr)) {
-		this->logDebug(this->ID() + "Trying to persist aggregator values");
-		if (this->values.size() == 0) {
-			this->opdid->persistentConfig->remove(this->ID() + ".Time");
-			this->opdid->persistentConfig->remove(this->ID() + ".Values");
-		} else {
-			this->opdid->persistentConfig->setUInt64(this->ID() + ".Time", this->lastQueryTime);
-			std::stringstream ss;
-			auto vit = this->values.cbegin();
-			while (vit != this->values.cend()) {
-				if (vit != this->values.cbegin())
-					ss << ",";
-				ss << this->to_string(*vit);
-				++vit;
+		try {
+			if (this->opdid->shutdownRequested)
+				this->logVerbose(this->ID() + ": Trying to persist aggregator values on shutdown");
+			else
+				this->logDebug(this->ID() + "Trying to persist aggregator values");
+			if (this->values.size() == 0) {
+				this->opdid->persistentConfig->remove(this->ID() + ".Time");
+				this->opdid->persistentConfig->remove(this->ID() + ".Values");
 			}
-			this->opdid->persistentConfig->setString(this->ID() + ".Values", ss.str());
+			else {
+				this->opdid->persistentConfig->setUInt64(this->ID() + ".Time", this->lastQueryTime);
+				std::stringstream ss;
+				auto vit = this->values.cbegin();
+				while (vit != this->values.cend()) {
+					if (vit != this->values.cbegin())
+						ss << ",";
+					ss << this->to_string(*vit);
+					++vit;
+				}
+				this->opdid->persistentConfig->setString(this->ID() + ".Values", ss.str());
+			}
+			this->opdid->savePersistentConfig();
 		}
-		this->opdid->savePersistentConfig();
+		catch (Poco::Exception& e) {
+			this->logWarning(this->ID() + ": Error persisting aggregator values: " + e.message());
+		}
+		catch (std::exception& e) {
+			this->logWarning(this->ID() + ": Error persisting aggregator values: " + e.what());
+		}
 	}
 }
 
