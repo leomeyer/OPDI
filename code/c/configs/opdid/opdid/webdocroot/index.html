@@ -590,6 +590,11 @@ var DialPort = Port.extend({
 	getTextValue: function(value) {
 		// unit defined?
 		if (this.unit != null) {
+			// special case: for date conversions, if the value is 0, display nothing
+			if ((("unixSeconds" === this.unit.conversion) || ("unixSecondsLocal" === this.unit.conversion))
+				&& (value == 0)) {
+				return "";
+			}
 			return this.unit.format(value);
 		}
 		// no unit defined, use plain numeric value
@@ -1362,6 +1367,16 @@ function startup() {
     $(function() {
 
         gridster = $(".gridster > ul").gridster({
+            widget_margins: [10, 10],
+            widget_base_dimensions: [portWidgetWidth, portWidgetHeight]
+        }).data('gridster');
+
+    });
+//-->
+</script>
+</body>
+</html>
+ = $(".gridster > ul").gridster({
             widget_margins: [10, 10],
             widget_base_dimensions: [portWidgetWidth, portWidgetHeight]
         }).data('gridster');
