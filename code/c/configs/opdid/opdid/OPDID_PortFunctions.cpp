@@ -52,7 +52,7 @@ OPDI_DigitalPort* OPDID_PortFunctions::findDigitalPort(const std::string& config
 		return nullptr;
 	}
 
-	// port type must be Digital
+	// port type must be "digital"
 	if (port->getType()[0] != OPDI_PORTTYPE_DIGITAL[0])
 		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a digital port: " + portID);
 
@@ -83,7 +83,7 @@ OPDI_AnalogPort* OPDID_PortFunctions::findAnalogPort(const std::string& configPo
 		return nullptr;
 	}
 
-	// port type must be Digital
+	// port type must be "analog"
 	if (port->getType()[0] != OPDI_PORTTYPE_ANALOG[0])
 		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not an analog port: " + portID);
 
@@ -114,9 +114,9 @@ OPDI_SelectPort* OPDID_PortFunctions::findSelectPort(const std::string& configPo
 		return nullptr;
 	}
 
-	// port type must be Digital
+	// port type must be "select"
 	if (port->getType()[0] != OPDI_PORTTYPE_SELECT[0])
-		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a digital port: " + portID);
+		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a select port: " + portID);
 
 	return (OPDI_SelectPort*)port;
 }
@@ -129,24 +129,24 @@ void OPDID_PortFunctions::logWarning(const std::string& message) {
 
 void OPDID_PortFunctions::logNormal(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::NORMAL)) {
-		this->opdid->logNormal(message);
+		this->opdid->logNormal(message, this->logVerbosity);
 	}
 }
 
 void OPDID_PortFunctions::logVerbose(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::VERBOSE)) {
-		this->opdid->logVerbose(message);
+		this->opdid->logVerbose(message, this->logVerbosity);
 	}
 }
 
 void OPDID_PortFunctions::logDebug(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG)) {
-		this->opdid->logDebug(message);
+		this->opdid->logDebug(message, this->logVerbosity);
 	}
 }
 
 void OPDID_PortFunctions::logExtreme(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::EXTREME)) {
-		this->opdid->logExtreme(message);
+		this->opdid->logExtreme(message, this->logVerbosity);
 	}
 }
