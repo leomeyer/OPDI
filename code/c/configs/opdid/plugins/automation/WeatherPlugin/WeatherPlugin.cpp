@@ -262,7 +262,7 @@ protected:
 	std::string xpath;
 	int64_t dataValiditySeconds;
 
-	int refreshTimeMs;
+	int refreshTime;
 
 	std::string sid;
 
@@ -289,7 +289,7 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string&
 	this->opdid = abstractOPDID;
 	this->nodeID = node;
 	this->timeoutSeconds = 10;
-	this->refreshTimeMs = 30 * 1000;	// default: 30 seconds
+	this->refreshTime = 30;	// default: 30 seconds
 	this->dataValiditySeconds = 120;	// default: two minutes (JSON skin time resolution does not include seconds, allow extra time)
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
@@ -312,17 +312,19 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string&
 
 	// store main node's group (will become the default of ports)
 	std::string group = nodeConfig->getString("Group", "");
-	this->refreshTimeMs = nodeConfig->getInt("RefreshTime", this->refreshTimeMs);
-	if (this->refreshTimeMs <= 0)
-		throw Poco::DataException(node + "Please specify a non-negative meaningful RefreshTime in milliseconds");
+	this->refreshTime = nodeConfig->getInt("RefreshTime", this->refreshTime);
+	if (this->refreshTime <= 0)
+		throw Poco::DataException(node + ": Please specify a non-negative meaningful RefreshTime in seconds");
+	if (this->refreshTime > 600)
+		throw Poco::DataException(node + ": Please do not specify more than 10 minutes RefreshTime");
 
 	this->dataValiditySeconds = nodeConfig->getInt64("DataValidity", this->dataValiditySeconds);
 	if (this->dataValiditySeconds <= 0)
-		throw Poco::DataException(node + "Please specify a non-negative meaningful DataValidity in seconds");
+		throw Poco::DataException(node + ": Please specify a non-negative meaningful DataValidity in seconds");
 
 	// enumerate keys of the plugin's nodes (in specified order)
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::VERBOSE))
-		this->opdid->logVerbose("Enumerating Weather nodes: " + node + ".Nodes");
+		this->opdid->logVerbose(node + ": Enumerating Weather nodes: " + node + ".Nodes");
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodes = config->createView(node + ".Nodes");
 
@@ -608,8 +610,8 @@ void WeatherPlugin::run(void) {
 			this->opdid->logNormal(this->nodeID + ": Unhandled exception in worker thread: " + e.message());
 		}
 
-		// sleep for the specified refresh time
-		Poco::Thread::sleep(this->refreshTimeMs);
+		// sleep for the specified refresh time (milliseconds)
+		Poco::Thread::sleep(this->refreshTime * 1000);
 	}
 
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
