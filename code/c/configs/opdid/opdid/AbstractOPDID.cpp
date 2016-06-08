@@ -1401,7 +1401,7 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 				this->logExtreme("Processing load: " + this->to_string(load) + "%");
 			}
 			if (load > 90.0)
-				this->logWarning("Processing the doWork loop takes very long; load = " + this->to_string(load) + "%");
+				this->logDebug("Processing the doWork loop takes very long; load = " + this->to_string(load) + "%");
 		}
 
 		// reset counters

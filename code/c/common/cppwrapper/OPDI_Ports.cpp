@@ -313,6 +313,9 @@ OPDI_Port::~OPDI_Port() {
 		free(this->id);
 	if (this->label != nullptr)
 		free(this->label);
+	// free internal port memory
+	if (this->data != nullptr)
+		free(this->data);
 }
 
 
@@ -796,7 +799,13 @@ OPDI_DialPort::OPDI_DialPort(const char *id, const char *label, int64_t minValue
 	this->position = minValue;
 }
 
-OPDI_DialPort::~OPDI_DialPort() {}
+OPDI_DialPort::~OPDI_DialPort() {
+	// release additional data structure memory
+	opdi_Port *oPort = (opdi_Port *)this->data;
+
+	if (oPort->info.ptr != nullptr)
+		free(oPort->info.ptr);
+}
 
 int64_t OPDI_DialPort::getMin(void) {
 	return this->minValue;
