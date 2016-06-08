@@ -1515,7 +1515,8 @@ void OPDID_AggregatorPort::persist() {
 				this->opdid->persistentConfig->remove(this->ID() + ".Values");
 			}
 			else {
-				this->opdid->persistentConfig->setUInt64(this->ID() + ".Time", this->lastQueryTime);
+				// use current time as persistence timestamp
+				this->opdid->persistentConfig->setUInt64(this->ID() + ".Time", opdi_get_time_ms());
 				std::stringstream ss;
 				auto vit = this->values.cbegin();
 				while (vit != this->values.cend()) {
@@ -1585,7 +1586,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 
 		// try to read values from persistent storage?
 		if (this->isPersistent() && (this->opdid->persistentConfig != nullptr)) {
-			this->logVerbose(this->ID() + ": Trying to read persisted aggregator values");
+			this->logVerbose(this->ID() + ": Trying to read persisted aggregator values with current time being " + this->to_string(opdi_get_time_ms()));
 			// read timestamp
 			uint64_t persistTime = this->opdid->persistentConfig->getUInt64(this->ID() + ".Time", 0);
 			// timestamp acceptable? must be in the past and within the query interval
