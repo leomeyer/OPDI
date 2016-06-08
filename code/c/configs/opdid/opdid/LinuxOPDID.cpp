@@ -42,6 +42,14 @@ static char first_com_byte = 0;
 
 static LinuxOPDID *linuxOPDID;
 
+void throw_system_error(const char* what, const char* info = nullptr) {
+	std::stringstream fullWhatSS;
+	fullWhatSS << what << ": " << (info != nullptr ? info : "") << (info != nullptr ? ": " : "") << strerror(errno);
+	std::string fullWhat = fullWhatSS.str();
+	throw Poco::ApplicationException(fullWhat.c_str());
+}
+
+
 /** For TCP connections, receives a byte from the socket specified in info and places the result in byte.
 *   For serial connections, reads a byte from the file handle specified in info and places the result in byte.
 *   Blocks until data is available or the timeout expires.
@@ -154,8 +162,8 @@ sendloop:
 				Opdi->shutdown();
 			}
 			else {
-			linuxOPDID->logError(std::string("Socket send failed: " ) + strerror(errno));
-			return OPDI_DEVICE_ERROR;
+				linuxOPDID->logError(std::string("Socket send failed: " ) + strerror(errno));
+				return OPDI_DEVICE_ERROR;
 			}
 		} else
 		// incomplete send?
@@ -212,7 +220,7 @@ void LinuxOPDID::printlne(const char *text) {
 std::string LinuxOPDID::getCurrentUser(void) {
 	struct passwd* passwd_data = getpwuid(getuid());
 	if (passwd_data == nullptr)
-		throw Poco::DataException(std::string("Unable to resolve user ID"));	
+		throw_system_error("Unable to resolve user ID");
 	
 	return std::string(passwd_data->pw_name) + " (" + this->to_string(getuid()) + ")";
 }
@@ -225,17 +233,23 @@ void LinuxOPDID::switchToUser(std::string newUser) {
 		// try to map user name to UID
 		struct passwd* passwd_data = getpwnam(newUser.c_str());
 		if (passwd_data == nullptr)
-			throw Poco::DataException(std::string("Unable to resolve user name: ") + newUser);
+			throw_system_error("Unable to resolve user name", newUser.c_str());
 		uid = passwd_data->pw_uid;
+	}
+	
+	// if there is a persistent file, it needs to be chown'ed to the new user
+	if (!this->persistentConfigFile.empty()) {
+		if (chown(this->persistentConfigFile.c_str(), uid, -1) == -1)
+			throw_system_error("Unable to change persistent file owner to new user", newUser.c_str());
 	}
 
 	// change effective user ID
 	if (setuid(uid) == -1)
-		throw Poco::DataException(std::string("Unable to switch process context to new user: ") + newUser);
+		throw_system_error("Unable to switch process context to new user", newUser.c_str());
 		
 	// enable core dumps (disabled by setuid)
 	prctl(PR_SET_DUMPABLE, 1);
-
+	
 	this->logNormal("Switched to user: " + this->getCurrentUser());	
 }
 
@@ -310,7 +324,7 @@ int LinuxOPDID::setupTCP(std::string /*interface_*/, int port) {
 	// create socket (non-blocking)
 	sockfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | TCP_NODELAY, 0);
 	if (sockfd < 0) {
-		throw Poco::ApplicationException("ERROR opening socket", errno);
+		throw_system_error("Error opening socket");
 	}
 
 	// set TCP_NODELAY
@@ -332,7 +346,7 @@ int LinuxOPDID::setupTCP(std::string /*interface_*/, int port) {
 
 	// bind to specified port
 	if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-		throw Poco::ApplicationException("ERROR on binding", errno);
+		throw_system_error("Error binding to socket");
 	}
 
 	// listen for an incoming connection
