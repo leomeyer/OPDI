@@ -415,6 +415,8 @@ void OPDID_SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 	if (this->selectPortStr == "")
 		throw Poco::DataException("You have to specify the SelectPort");
 
+	this->outputPortStr = config->getString("OutputPorts", "");
+
 	int pos = config->getInt("Position", -1);
 	if ((pos < 0) || (pos > 65535))
 		throw Poco::DataException("You have to specify a SelectPort position that is greater than -1 and lower than 65536");
@@ -436,6 +438,10 @@ void OPDID_SelectorPort::setLine(uint8_t line) {
 		// set the specified select port to the specified position
 		this->selectPort->setPosition(this->position);
 	}
+	// set output ports' lines
+	auto it = this->outputPorts.cbegin();
+	while (it != this->outputPorts.cend())
+		(*it)->setLine(line);
 }
 
 void OPDID_SelectorPort::prepare() {
@@ -444,6 +450,7 @@ void OPDID_SelectorPort::prepare() {
 
 	// find port; throws errors if something required is missing
 	this->selectPort = this->findSelectPort(this->getID(), "SelectPort", this->selectPortStr, true);
+	this->findDigitalPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
 
 	// check position range
 	if (this->position > this->selectPort->getMaxPosition())
@@ -460,11 +467,19 @@ uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
 		if (this->line != 1) {
 			this->logDebug(this->ID() + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to High");
 			OPDI_DigitalPort::setLine(1);
+			// set output ports' lines
+			auto it = this->outputPorts.cbegin();
+			while (it != this->outputPorts.cend())
+				(*it)->setLine(1);
 		}
 	} else {
 		if (this->line != 0) {
 			this->logDebug(this->ID() + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to Low");
 			OPDI_DigitalPort::setLine(0);
+			// set output ports' lines
+			auto it = this->outputPorts.cbegin();
+			while (it != this->outputPorts.cend())
+				(*it)->setLine(0);
 		}
 	}
 

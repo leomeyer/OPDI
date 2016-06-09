@@ -141,6 +141,8 @@ class OPDID_SelectorPort : public OPDI_DigitalPort, protected OPDID_PortFunction
 protected:
 	std::string selectPortStr;
 	OPDI_SelectPort *selectPort;
+	std::string outputPortStr;
+	DigitalPortList outputPorts;
 	uint16_t position;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
