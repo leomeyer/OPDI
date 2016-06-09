@@ -16,6 +16,8 @@ OPDID_ExpressionPort::OPDID_ExpressionPort(AbstractOPDID *opdid, const char *id)
 	this->numIterations = 0;
 	this->fallbackSpecified = false;
 	this->fallbackValue = 0;
+	this->deactivationSpecified = false;
+	this->deactivationValue = 0;
 
 	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 
@@ -44,6 +46,11 @@ void OPDID_ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) 
 		this->fallbackValue = config->getDouble("FallbackValue");
 		this->fallbackSpecified = true;
 	}
+
+	if (config->hasProperty("DeactivationValue")) {
+		this->deactivationValue = config->getDouble("DeactivationValue");
+		this->deactivationSpecified = true;
+	}
 }
 
 void OPDID_ExpressionPort::setDirCaps(const char * /*dirCaps*/) {
@@ -60,6 +67,10 @@ void OPDID_ExpressionPort::setLine(uint8_t line) {
 	// if the line has been set to High, start the iterations
 	if (line == 1) {
 		this->iterations = this->numIterations;
+	}
+	// set to 0; check whether to set a deactivation value
+	else if (this->deactivationSpecified) {
+		this->setOutputPorts(this->deactivationValue);
 	}
 }
 
@@ -160,6 +171,43 @@ void OPDID_ExpressionPort::prepare() {
 	this->iterations = this->numIterations;
 }
 
+void OPDID_ExpressionPort::setOutputPorts(double value) {
+	// go through list of output ports
+	OPDI::PortList::iterator it = this->outputPorts.begin();
+	while (it != this->outputPorts.end()) {
+		try {
+			if ((*it)->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
+				if (value == 0)
+					((OPDI_DigitalPort *)(*it))->setLine(0);
+				else
+					((OPDI_DigitalPort *)(*it))->setLine(1);
+			}
+			else
+				if ((*it)->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+					// analog port: relative value (0..1)
+					((OPDI_AnalogPort *)(*it))->setRelativeValue(value);
+				}
+				else
+					if ((*it)->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+						// dial port: absolute value
+						((OPDI_DialPort *)(*it))->setPosition((int64_t)value);
+					}
+					else
+						if ((*it)->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+							// select port: current position number
+							((OPDI_SelectPort *)(*it))->setPosition((uint16_t)value);
+						}
+						else
+							throw PortError("");
+		}
+		catch (Poco::Exception &e) {
+			this->opdid->logNormal(this->ID() + ": Error setting output port value of port " + (*it)->getID() + ": " + e.message());
+		}
+
+		++it;
+	}
+}
+
 uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 	OPDI_DigitalPort::doWork(canSend);
 
@@ -176,35 +224,7 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 
 			this->logExtreme(this->ID() + ": Expression result: " + to_string(value));
 
-			// go through list of output ports
-			OPDI::PortList::iterator it = this->outputPorts.begin();
-			while (it != this->outputPorts.end()) {
-				try {
-					if ((*it)->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
-						if (value == 0)
-							((OPDI_DigitalPort *)(*it))->setLine(0);
-						else
-							((OPDI_DigitalPort *)(*it))->setLine(1);
-					} else
-					if ((*it)->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
-						// analog port: relative value (0..1)
-						((OPDI_AnalogPort *)(*it))->setRelativeValue(value);
-					} else
-					if ((*it)->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
-						// dial port: absolute value
-						((OPDI_DialPort *)(*it))->setPosition((int64_t)value);
-					} else
-					if ((*it)->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
-						// select port: current position number
-						((OPDI_SelectPort *)(*it))->setPosition((uint16_t)value);
-					} else
-						throw PortError("");
-				} catch (Poco::Exception &e) {
-					this->opdid->logNormal(this->ID() + ": Error setting output port value of port " + (*it)->getID() + ": " + e.message());
-				}
-
-				++it;
-			}
+			this->setOutputPorts(value);
 		}
 		else {
 			// the variables could not be prepared, due to some error
@@ -215,40 +235,7 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 
 				this->logExtreme(this->ID() + ": An error occurred, applying fallback value of: " + to_string(value));
 
-				// go through list of output ports
-				OPDI::PortList::iterator it = this->outputPorts.begin();
-				while (it != this->outputPorts.end()) {
-					try {
-						if ((*it)->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
-							if (value == 0)
-								((OPDI_DigitalPort *)(*it))->setLine(0);
-							else
-								((OPDI_DigitalPort *)(*it))->setLine(1);
-						}
-						else
-							if ((*it)->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
-								// analog port: relative value (0..1)
-								((OPDI_AnalogPort *)(*it))->setRelativeValue(value);
-							}
-							else
-								if ((*it)->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
-									// dial port: absolute value
-									((OPDI_DialPort *)(*it))->setPosition((int64_t)value);
-								}
-								else
-									if ((*it)->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
-										// select port: current position number
-										((OPDI_SelectPort *)(*it))->setPosition((uint16_t)value);
-									}
-									else
-										throw PortError("");
-					}
-					catch (Poco::Exception &e) {
-						this->opdid->logNormal(this->ID() + ": Error setting output port value of port " + (*it)->getID() + ": " + e.message());
-					}
-
-					++it;
-				}
+				this->setOutputPorts(value);
 			}
 		}
 

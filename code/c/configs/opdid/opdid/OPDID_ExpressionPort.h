@@ -45,7 +45,8 @@
 *   each time the value is evaluated. If the iterations counter reaches 0 the ExpressionPort is
 *   disabled, i. e. set to 0. The counter starts running again when the ExpressionPort is again set
 *   to High.
-*
+*	The expression port can set the output ports to an optional deactivation value when it becomes
+*   deactivated.
 *   The ExpressionPort supports the following custom functions:
 *    - timestamp(): Returns the number of seconds since 1/1/1970 00:00 UTC.
 */
@@ -77,6 +78,8 @@ protected:
 	int64_t numIterations;
 	double fallbackValue;
 	bool fallbackSpecified;
+	double deactivationValue;
+	bool deactivationSpecified;
 
 	timestamp_func timestampFunc;
 
@@ -95,6 +98,8 @@ protected:
 	virtual bool prepareVariables(bool duringSetup);
 
 	virtual uint8_t doWork(uint8_t canSend);
+
+	void setOutputPorts(double value);
 
 public:
 	OPDID_ExpressionPort(AbstractOPDID *opdid, const char *id);
