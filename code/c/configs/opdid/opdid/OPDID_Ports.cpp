@@ -440,8 +440,10 @@ void OPDID_SelectorPort::setLine(uint8_t line) {
 	}
 	// set output ports' lines
 	auto it = this->outputPorts.cbegin();
-	while (it != this->outputPorts.cend())
+	while (it != this->outputPorts.cend()) {
 		(*it)->setLine(line);
+		++it;
+	}
 }
 
 void OPDID_SelectorPort::prepare() {
@@ -469,8 +471,10 @@ uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
 			OPDI_DigitalPort::setLine(1);
 			// set output ports' lines
 			auto it = this->outputPorts.cbegin();
-			while (it != this->outputPorts.cend())
+			while (it != this->outputPorts.cend()) {
 				(*it)->setLine(1);
+				++it;
+			}
 		}
 	} else {
 		if (this->line != 0) {
@@ -478,8 +482,10 @@ uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
 			OPDI_DigitalPort::setLine(0);
 			// set output ports' lines
 			auto it = this->outputPorts.cbegin();
-			while (it != this->outputPorts.cend())
+			while (it != this->outputPorts.cend()) {
 				(*it)->setLine(0);
+				++it;
+			}
 		}
 	}
 
