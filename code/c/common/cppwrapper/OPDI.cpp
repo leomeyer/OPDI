@@ -410,6 +410,8 @@ uint8_t OPDI::messageHandled(channel_t channel, const char ** /*parts*/) {
 
 void OPDI::shutdown(void) {
 	// set flag to indicate that the message processing should stop
+	// this method may be called asynchronously by signal handlers or threads,
+	// so it is very important not to do any actual work here
 	this->shutdownRequested = true;
 }
 

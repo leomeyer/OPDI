@@ -66,11 +66,16 @@ void OPDID_ExpressionPort::setLine(uint8_t line) {
 
 	// if the line has been set to High, start the iterations
 	if (line == 1) {
+		this->logDebug(this->ID() + ": Expression activated, number of iterations: " + this->to_string(this->numIterations));
 		this->iterations = this->numIterations;
 	}
 	// set to 0; check whether to set a deactivation value
-	else if (this->deactivationSpecified) {
-		this->setOutputPorts(this->deactivationValue);
+	else {
+		this->logDebug(this->ID() + ": Expression deactivated");
+		if (this->deactivationSpecified) {
+			this->logDebug(this->ID() + ": Applying deactivation value: " + this->to_string(this->deactivationValue));
+			this->setOutputPorts(this->deactivationValue);
+		}
 	}
 }
 
