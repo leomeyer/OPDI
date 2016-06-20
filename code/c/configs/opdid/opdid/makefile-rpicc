@@ -45,7 +45,8 @@ POCOINCPATH = ../../../libraries/POCO/Util/include ../../../libraries/POCO/Found
 POCOLIBPATH = ../../../libraries/POCO/lib/Linux/ARM
 
 # POCO libraries
-POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation -lPocoXML -lPocoJSON
+#POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation -lPocoXML -lPocoJSON
+POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoFoundation.a $(POCOLIBPATH)/libPocoXML.a $(POCOLIBPATH)/libPocoJSON.a
 
 # ExprTk expression library path
 EXPRTK = ../../../libraries/ExprTk
