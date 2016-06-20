@@ -42,7 +42,8 @@ POCOINCPATH += $(OPDIDPATH)/../../../libraries/POCO/XML/include
 POCOLIBPATH = $(OPDIDPATH)/../../../libraries/POCO/lib/Linux/ARM
 
 # POCO libraries
-POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
+#POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
+POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoFoundation.a
 
 # Additional libraries
 LIBS = -lpthread 
