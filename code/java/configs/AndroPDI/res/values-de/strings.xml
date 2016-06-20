@@ -152,5 +152,20 @@
     <string name="device_error">{0} meldet Fehler: {1}</string>
     <string name="menuitem_port_reload">Neu laden</string>
 	<string name="device_port_group">Portgruppe:</string>
-    
+    <string name="date_time_editor_date_label">Datum</string>
+    <string name="date_time_editor_time_label">Uhrzeit</string>
+    <string-array name="date_time_editor_spinner_selections">
+        <item>Wählen&#8230;</item>
+        <item>In 30 Sekunden</item>
+        <item>In einer Minute</item>
+        <item>In fünf Minuten</item>
+        <item>In 15 Minuten</item>
+        <item>In 30 Minuten</item>
+        <item>In einer Stunde</item>
+        <item>In zwei Stunden</item>
+        <item>In sechs Stunden</item>
+        <item>In einem Tag</item>
+    </string-array>        
+    <string name="install_device_shortcut">Shortcut installieren</string>
+	
     </resources>

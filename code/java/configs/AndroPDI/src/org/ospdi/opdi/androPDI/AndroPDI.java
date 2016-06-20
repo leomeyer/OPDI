@@ -96,11 +96,11 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
 	public static final String DEVICE_SERIALIZATION = "device_serialization";
 	public static final String CURRENT_PORT_ID = "current_port_id";
 	public static final String CURRENT_DEVICE_ID = "current_device_id";
+	private static final String EXTRA_SHORTCUT_DEVICE_ADDRESS = "org.ospdi.opdi.androPDI.shortcut.DEVICENAME";
 	
 	public static AndroPDI instance;
 	
     protected DeviceManager deviceManager;
-        
     private Handler handler = new Handler();
     
 //    private WakeLock wakeLock; 		// the WakeLock is acquired while devices are connected
@@ -108,6 +108,7 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
 	private DeviceListAdapter deviceAdapter;
 	private ListView lvDevices;
 	private AndroPDIDevice selectedDevice;
+    protected AndroPDIDevice shortcutDevice;
 	private boolean dialogOk;
 
     BroadcastReceiver screenReceiver = new BroadcastReceiver() {
@@ -166,7 +167,7 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
     				final AndroPDIDevice selDevice = deviceManager.getDevices().get(position);
         			if (selDevice.isConnected())
         				// show capabilities for connected device
-        				showDeviceCapabilities(selDevice);
+        				showDevicePorts(selDevice);
         			else if (selDevice.getStatus() != DeviceStatus.CONNECTING) {
         				// not connected
         				connectToDevice(selDevice, false);
@@ -190,6 +191,22 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
         		return true;
         	}
 		});
+        
+        // started from shortcut?
+        String shortcutDeviceAddress = getIntent().getStringExtra(EXTRA_SHORTCUT_DEVICE_ADDRESS);
+        if (shortcutDeviceAddress != null) {
+        	// find the device
+        	AndroPDIDevice device = findDeviceByAddress(shortcutDeviceAddress);
+        	if (device == null) {
+        		Toast.makeText(this, "The device with the shortcut address: " + shortcutDeviceAddress + " could not be found, please remove the shortcut", Toast.LENGTH_SHORT).show();
+        		return;
+        	}
+
+        	// connect the device and display the device ports
+        	selectedDevice = device;
+        	shortcutDevice = device;
+        	connectSelectedDevice();        	
+        }
     }
 
 	private void connectToDevice(AndroPDIDevice selDevice, boolean noConfirmation) {
@@ -254,7 +271,7 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
 		// outState.putString(LOGTEXT, tvLog.getText().toString());
 	}
 
-	protected void showDeviceCapabilities(AndroPDIDevice device) {
+	protected void showDevicePorts(AndroPDIDevice device) {
 		if (device.getStatus() != DeviceStatus.CONNECTED) return;
 		
 		// Create an intent to start the showDevicePorts activity
@@ -358,6 +375,9 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
 		case R.id.menuitem_remove_device:
 			removeSelectedDevice();
 			return true;
+		case R.id.menuitem_install_device_shortcut:
+			installShortcutForSelectedDevice();
+			return true;
 		case R.id.menuitem_connect_device:
 			connectToDevice(selectedDevice, true);
 			return true;
@@ -422,6 +442,17 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
 		
 		selectedDevice.disconnect(false);
 		deviceStatusChanged();
+	}
+	
+	@Override
+	public void deviceConnected(AndroPDIDevice device) {
+		// shortcut device connected?
+		if (shortcutDevice == device) {
+			// automatically switch to port view
+			showDevicePorts(device);
+		}
+		
+		shortcutDevice = null;
 	}
 
 	private void deviceStatusChanged() {
@@ -497,6 +528,26 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
         })
         .setNegativeButton(R.string.no, null)
         .show();
+	}
+
+	private void installShortcutForSelectedDevice() {
+		if (selectedDevice == null) return;
+		Intent shortcutIntent = new Intent(getApplicationContext(), AndroPDI.class);
+	    shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+	    shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+	    shortcutIntent.putExtra(EXTRA_SHORTCUT_DEVICE_ADDRESS, selectedDevice.getAddress());
+
+	    Intent addIntent = new Intent();
+	    addIntent.putExtra("duplicate", false);
+	    addIntent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
+	    addIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, selectedDevice.getLabel());
+	    addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, Intent.ShortcutIconResource.fromContext(getApplicationContext(), R.drawable.device));
+	    addIntent.setAction("com.android.launcher.action.UNINSTALL_SHORTCUT");
+	    getApplicationContext().sendBroadcast(addIntent);
+	    addIntent.setAction("com.android.launcher.action.INSTALL_SHORTCUT");
+	    getApplicationContext().sendBroadcast(addIntent);
+	    
+	    Toast.makeText(this, "The shortcut has been created.", Toast.LENGTH_SHORT).show();
 	}
 
 	private void addBluetoothDevice() {
@@ -860,13 +911,17 @@ public class AndroPDI extends LoggingActivity implements DeviceManager.IDeviceSt
 		return dialogOk;
 	}
 
-	/** Returns the device with the given ID. null if the ID is null or not found.
+	/** Returns the device with the given address. null if the address is null or not found.
 	 * 
-	 * @param devId
+	 * @param devAddress
 	 * @return
 	 */
 	public synchronized AndroPDIDevice findDeviceByAddress(String devAddress) {
 		return deviceManager.findDeviceByAddress(devAddress);
+	}
+	
+	public synchronized AndroPDIDevice findDeviceById(String devId) {
+		return deviceManager.findDeviceById(devId);
 	}
 	
 	public boolean replaceDevice(String originalDeviceSerialization,
