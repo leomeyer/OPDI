@@ -32,22 +32,9 @@ Install the libraries:
 Reload LD cache:
 > sudo ldconfig
 
-The linux configs should link the POCO libraries dynamically. This avoids problems ("Using 'gethostbyname' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking").
+The Linux configs should link the POCO libraries dynamically. This avoids problems ("Using 'gethostbyname' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking").
 
 ------------------------------------------------------------------------------------------------------
-
-On Raspberry Pi, make sure that the libssl-dev library is installed:
-> sudo apt-get install libssl-dev
-
-Compile without ODBC and MySQL support:
-> ./configure --no-tests --no-samples --omit=Data/ODBC,Data/MySQL
-Then, compile POCO:
-> make -s
-Compiling can take quite a long time. Check for errors; install missing libraries if necessary.
-Install the libraries:
-> sudo make -s install
-Reload LD cache:
-> sudo ldconfig
 
 If you want to cross-compile for the Raspberry Pi, follow these steps:
 
@@ -58,6 +45,8 @@ Note: Currently it is not recommended to use the popular crosstools-ng for this 
 > cd build/config
 > cp ARM-Linux RaspberryPi
 Edit the file RaspberryPi:
+In general settings, set the LINKMODE variable to BOTH (to create .a files for static linking):
+LINKMODE		?= BOTH
 In general settings, remove the lines starting with "STLPORT" and "OPENSSL"
 In general settings, change the tool (Note: this assumes that you are using the RaspberryPi cross compiler from Github mentioned above):
 TOOL = arm-linux-gnueabihf 
@@ -73,3 +62,18 @@ Save and return to POCO root:
 
 4. Build:
 > make -s
+
+Cross-compiled Raspberry Pi binaries should link statically against POCO. This avoids the need to compile and install the POCO library binaries on the Raspberry.
+
+If you need to build POCO on Raspberry Pi, make sure that the libssl-dev library is installed:
+> sudo apt-get install libssl-dev
+
+Compile without ODBC and MySQL support:
+> ./configure --no-tests --no-samples --omit=Data/ODBC,Data/MySQL
+Then, compile POCO:
+> make -s
+Compiling can take quite a long time. Check for errors; install missing libraries if necessary.
+Install the libraries:
+> sudo make -s install
+Reload LD cache:
+> sudo ldconfig
