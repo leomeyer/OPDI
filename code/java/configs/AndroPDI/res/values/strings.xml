@@ -166,7 +166,8 @@
         <item>In six hours</item>
         <item>In one day</item>
     </string-array>    
-
+    <string name="install_device_shortcut">Install shortcut</string>
+    
     <!--  Unit specifications -->
     
     <string name="electricPower_mW">electricPower_mW_in_W=0;electricPower_mW_in_mW=1</string>

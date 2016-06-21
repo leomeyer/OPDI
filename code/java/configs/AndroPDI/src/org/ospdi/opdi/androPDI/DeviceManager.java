@@ -22,6 +22,9 @@ import android.os.Environment;
 public class DeviceManager implements IDeviceListener {
 	
 	public interface IDeviceStatusListener {
+		/** Notifies the listener that the device has been connected. */
+		void deviceConnected(AndroPDIDevice device);
+
 		/** Notifies attached device listeners that one or more devices have changed their status.
 		 * 
 		 * @param message
@@ -227,6 +230,7 @@ public class DeviceManager implements IDeviceListener {
 
 	@Override
 	public synchronized void connectionOpened(IDevice device) {
+		((AndroPDIDevice)device).getListener().deviceConnected((AndroPDIDevice)device);
 		notifyDevices((AndroPDIDevice)device, MessageFormat.format(ResourceFactory.getInstance().getString(R.string.connection_established_with_0_), device.getLabel()));
 	}
 
