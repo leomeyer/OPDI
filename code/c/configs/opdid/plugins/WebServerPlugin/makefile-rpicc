@@ -43,7 +43,7 @@ POCOLIBPATH = $(OPDIDPATH)/../../../libraries/POCO/lib/Linux/ARM
 
 # POCO libraries
 #POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
-POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoFoundation.a
+POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoFoundation.a $(POCOLIBPATH)/libPocoJSON.a
 
 # Mongoose web server library
 MONGOOSELIBPATH = $(OPDIDPATH)/../../../libraries/Mongoose/mongoose-master
