@@ -86,6 +86,7 @@ class ValueResolver {
 
 public:
 	ValueResolver() {
+		this->fixedValue = 0;
 		this->isFixed = false;
 		this->useScaleValue = false;
 		this->scaleValue = 0;
@@ -93,7 +94,7 @@ public:
 		this->errorDefault = 0;
 	}
 
-	ValueResolver(T initialValue) {
+	ValueResolver(T initialValue): ValueResolver() {
 		this->isFixed = true;
 		this->fixedValue = initialValue;
 	}

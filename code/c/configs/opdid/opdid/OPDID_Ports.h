@@ -75,9 +75,9 @@ public:
 
 	virtual void setDirCaps(const char *dirCaps) override;
 
-	virtual void setMode(uint8_t mode) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 
-	virtual void setLine(uint8_t line) override;
+	virtual void setLine(uint8_t line, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -100,6 +100,7 @@ protected:
 	bool negate;
 	ValueResolver<int32_t> period;
 	ValueResolver<double> dutyCycle;
+	ValueResolver<int32_t> pulses;
 	int8_t disabledState;
 	std::string enablePortStr;
 	std::string outputPortStr;
@@ -112,7 +113,7 @@ protected:
 	// state
 	uint8_t pulseState;
 	uint64_t lastStateChangeTime;
-
+	int32_t pulseCount;
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
@@ -124,7 +125,7 @@ public:
 
 	virtual void setDirCaps(const char *dirCaps) override;
 
-	virtual void setMode(uint8_t mode) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -189,7 +190,7 @@ public:
 
 	virtual void setDirCaps(const char *dirCaps) override;
 
-	virtual void setMode(uint8_t mode) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -340,9 +341,9 @@ public:
 
 	virtual void setDirCaps(const char *dirCaps) override;
 
-	virtual void setMode(uint8_t mode) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 
-	virtual void setLine(uint8_t line) override;
+	virtual void setLine(uint8_t line, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -374,7 +375,7 @@ public:
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig);
 
-	virtual void setPosition(uint16_t position) override;
+	virtual void setPosition(uint16_t position, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -536,7 +537,7 @@ public:
 
 	virtual void prepare() override;
 
-	virtual void setLine(uint8_t newLine) override;
+	virtual void setLine(uint8_t newLine, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -629,5 +630,5 @@ public:
 
 	virtual void prepare() override;
 
-	virtual void setLine(uint8_t newLine) override;
+	virtual void setLine(uint8_t newLine, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 };

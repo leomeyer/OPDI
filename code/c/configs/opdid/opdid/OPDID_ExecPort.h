@@ -55,7 +55,7 @@ public:
 
 	virtual void setDirCaps(const char *dirCaps) override;
 
-	virtual void setMode(uint8_t mode) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };

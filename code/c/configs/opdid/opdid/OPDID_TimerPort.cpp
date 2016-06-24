@@ -177,7 +177,7 @@ int OPDID_TimerPort::ScheduleComponent::getMaximum(void) {
 }
 
 
-void OPDID_TimerPort::ManualSchedulePort::setPosition(int64_t position) {
+void OPDID_TimerPort::ManualSchedulePort::setPosition(int64_t position, ChangeSource /*changeSource*/) {
 	OPDI_DialPort::setPosition(position);
 
 	// notify timer port: schedule has changed
@@ -404,7 +404,7 @@ void OPDID_TimerPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a TimerPort cannot be changed");
 }
 
-void OPDID_TimerPort::setMode(uint8_t mode) {
+void OPDID_TimerPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 	if (mode != OPDI_DIGITAL_MODE_OUTPUT)
 		throw PortError(this->ID() + ": The mode of a TimerPort cannot be set to anything other than 'Output'");
 }
@@ -825,7 +825,7 @@ void OPDID_TimerPort::recalculateSchedules(Schedule* activatingSchedule) {
 	this->refreshRequired = true;
 }
 
-void OPDID_TimerPort::setLine(uint8_t line) {
+void OPDID_TimerPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	bool wasLow = (this->line == 0);
 
 	OPDI_DigitalPort::setLine(line);

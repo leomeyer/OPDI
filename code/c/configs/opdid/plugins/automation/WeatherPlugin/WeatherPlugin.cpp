@@ -127,9 +127,9 @@ void WeatherGaugePort::configure(Poco::Util::AbstractConfiguration *nodeConfig, 
 void WeatherGaugePort::prepare(void) {
 	// cannot change weather parameters on the master; so better set this to readonly
 	this->setReadonly(true);
-	if (this->refreshMode == OPDI_Port::REFRESH_NOT_SET)
+	if (this->refreshMode == RefreshMode::REFRESH_NOT_SET)
 		// automatically refresh when the value changes
-		this->setRefreshMode(OPDI_Port::REFRESH_AUTO);
+		this->setRefreshMode(RefreshMode::REFRESH_AUTO);
 	OPDI_DialPort::prepare();
 }
 
@@ -219,7 +219,7 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 
 	// if the master's last state is invalid, and we're now valid, we should self-refresh
 	// to update the master (except it's disabled)
-	if (!this->lastRequestedValidState && (this->refreshMode != OPDI_Port::REFRESH_OFF))
+	if (!this->lastRequestedValidState && (this->refreshMode != RefreshMode::REFRESH_OFF))
 		this->refreshRequired = true;
 
 	return OPDI_STATUS_OK;

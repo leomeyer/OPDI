@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <ostream>
 #include <sstream>
 
 #include "Poco/Exception.h"
@@ -19,7 +20,12 @@ class OPDI_Port {
 friend class OPDI;
 
 public:
-	enum RefreshMode : unsigned int {
+	enum class ChangeSource {
+		CHANGESOURCE_INT,
+		CHANGESOURCE_USER
+	};
+
+	enum class RefreshMode : unsigned int {
 		REFRESH_NOT_SET,
 		// no automatic refresh
 		REFRESH_OFF,
@@ -29,7 +35,7 @@ public:
 		REFRESH_AUTO
 	};
 
-	enum Error {
+	enum class Error {
 		VALUE_OK,
 		VALUE_EXPIRED,
 		VALUE_NOT_AVAILABLE
@@ -246,6 +252,17 @@ public:
 	virtual bool hasError(void) const = 0;
 };
 
+inline std::ostream& operator<<(std::ostream& oStream, const OPDI_Port::Error error) {
+	switch (error) {
+	case OPDI_Port::Error::VALUE_OK: oStream << "VALUE_OK";
+	case OPDI_Port::Error::VALUE_EXPIRED: oStream << "VALUE_EXPIRED";
+	case OPDI_Port::Error::VALUE_NOT_AVAILABLE: oStream << "VALUE_NOT_AVAILABLE";
+	default: oStream << "<unknown error>";
+	}
+	return oStream;
+};
+
+
 template <class T> inline std::string OPDI_Port::to_string(const T& t) const {
 	std::stringstream ss;
 	ss << t;
@@ -333,12 +350,12 @@ public:
 	// mode = 1: input with pullup on
 	// mode = 2: not supported
 	// mode = 3: output
-	virtual void setMode(uint8_t mode);
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT);
 
 	// function that handles the set line command (opdi_set_digital_port_line)
 	// line = 0: state low
 	// line = 1: state high
-	virtual void setLine(uint8_t line);
+	virtual void setLine(uint8_t line, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT);
 
 	// function that fills in the current port state
 	virtual void getState(uint8_t *mode, uint8_t *line) const;
@@ -370,16 +387,16 @@ public:
 
 	// mode = 0: input
 	// mode = 1: output
-	virtual void setMode(uint8_t mode);
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT);
 
-	virtual void setResolution(uint8_t resolution);
+	virtual void setResolution(uint8_t resolution, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT);
 
 	// reference = 0: internal voltage reference
 	// reference = 1: external voltage reference
-	virtual void setReference(uint8_t reference);
+	virtual void setReference(uint8_t reference, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT);
 
 	// value: an integer value ranging from 0 to 2^resolution - 1
-	virtual void setValue(int32_t value);
+	virtual void setValue(int32_t value, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT);
 
 	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) const;
 
@@ -422,7 +439,7 @@ public:
 	virtual void setItems(const char **items);
 
 	// function that handles position setting; position may be in the range of 0..(items.length - 1)
-	virtual void setPosition(uint16_t position);
+	virtual void setPosition(uint16_t position, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT);
 
 	// function that fills in the current port state
 	virtual void getState(uint16_t *position) const;
@@ -463,7 +480,7 @@ public:
 	virtual void setStep(uint64_t step);
 
 	// function that handles position setting; position may be in the range of minValue..maxValue
-	virtual void setPosition(int64_t position);
+	virtual void setPosition(int64_t position, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT);
 
 	// function that fills in the current port state
 	virtual void getState(int64_t *position) const;

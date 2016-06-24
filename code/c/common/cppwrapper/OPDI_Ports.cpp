@@ -33,13 +33,13 @@ OPDI_Port::OPDI_Port(const char *id, const char *type) {
 	this->ptr = nullptr;
 	this->hidden = false;
 	this->readonly = false;
-	this->refreshMode = REFRESH_NOT_SET;
+	this->refreshMode = RefreshMode::REFRESH_NOT_SET;
 	this->refreshRequired = false;
 	this->periodicRefreshTime = 0;
 	this->lastRefreshTime = 0;
 	this->orderID = -1;
 	this->persistent = false;
-	this->error = VALUE_OK;
+	this->error = Error::VALUE_OK;
 
 	this->setID(id);
 	strcpy(this->type, type);
@@ -64,7 +64,7 @@ uint8_t OPDI_Port::doWork(uint8_t /* canSend */) {
 	}
 
 	// determine whether periodic self refresh is necessary
-	if ((this->refreshMode == REFRESH_PERIODIC) && (this->periodicRefreshTime > 0)) {
+	if ((this->refreshMode == RefreshMode::REFRESH_PERIODIC) && (this->periodicRefreshTime > 0)) {
 		// self refresh timer reached?
 		if (opdi_get_time_ms() - this->lastRefreshTime > this->periodicRefreshTime) {
 			this->doRefresh();
@@ -215,13 +215,13 @@ void OPDI_Port::setHistory(uint64_t intervalSeconds, int maxCount, const std::ve
 		this->history.append(this->to_string(*it));
 		++it;
 	}
-	if (this->refreshMode == REFRESH_AUTO)
+	if (this->refreshMode == RefreshMode::REFRESH_AUTO)
 		this->refreshRequired = true;
 }
 
 void OPDI_Port::clearHistory(void) {
 	this->history.clear();
-	if (this->refreshMode == REFRESH_AUTO)
+	if (this->refreshMode == RefreshMode::REFRESH_AUTO)
 		this->refreshRequired = true;
 }
 
@@ -292,15 +292,15 @@ void OPDI_Port::prepare() {
 }
 
 void OPDI_Port::checkError() const {
-	if (this->error == VALUE_EXPIRED)
+	if (this->error == Error::VALUE_EXPIRED)
 		throw ValueExpired();
-	if (this->error == VALUE_NOT_AVAILABLE)
+	if (this->error == Error::VALUE_NOT_AVAILABLE)
 		throw ValueUnavailable();
 }
 
 void OPDI_Port::setError(Error error) {
 	if (this->error != error)
-		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	this->error = error;
 }
 
@@ -460,7 +460,7 @@ void OPDI_DigitalPort::setDirCaps(const char *dirCaps) {
 		mode = 3;
 }
 
-void OPDI_DigitalPort::setMode(uint8_t mode) {
+void OPDI_DigitalPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 	if (mode > 3)
 		throw PortError(this->ID() + ": Digital port mode not supported: " + this->to_string((int)mode));
 
@@ -501,22 +501,22 @@ void OPDI_DigitalPort::setMode(uint8_t mode) {
 	}
 	if (newMode > -1) {
 		if (newMode != this->mode)
-			this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+			this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->mode = newMode;
 		if (persistent && (this->opdi != nullptr))
 			this->opdi->persist(this);
 	}
 }
 
-void OPDI_DigitalPort::setLine(uint8_t line) {
+void OPDI_DigitalPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	if (line > 1)
 		throw PortError(this->ID() + ": Digital port line not supported: " + this->to_string((int)line));
-	if (this->error != VALUE_OK)
-		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+	if (this->error != Error::VALUE_OK)
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	if (line != this->line)
-		this->refreshRequired |= (this->refreshMode == REFRESH_AUTO);
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	this->line = line;
-	this->error = VALUE_OK;
+	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }
@@ -571,11 +571,11 @@ OPDI_AnalogPort::OPDI_AnalogPort(const char *id, const char *label, const char *
 OPDI_AnalogPort::~OPDI_AnalogPort() {
 }
 
-void OPDI_AnalogPort::setMode(uint8_t mode) {
+void OPDI_AnalogPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 	if (mode > 2)
 		throw PortError(this->ID() + ": Analog port mode not supported: " + this->to_string((int)mode));
 	if (mode != this->mode)
-		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	this->mode = mode;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
@@ -589,7 +589,7 @@ int32_t OPDI_AnalogPort::validateValue(int32_t value) const {
 	return value;
 }
 
-void OPDI_AnalogPort::setResolution(uint8_t resolution) {
+void OPDI_AnalogPort::setResolution(uint8_t resolution, ChangeSource /*changeSource*/) {
 	if (resolution < 8 || resolution > 12)
 		throw PortError(this->ID() + ": Analog port resolution not supported; allowed values are 8..12 (bits): " + this->to_string((int)resolution));
 	// check whether the resolution is supported
@@ -600,7 +600,7 @@ void OPDI_AnalogPort::setResolution(uint8_t resolution) {
 		|| ((resolution == 12) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_12) != OPDI_ANALOG_PORT_RESOLUTION_12)))
 		throw PortError(this->ID() + ": Analog port resolution not supported (port flags): " + this->to_string((int)resolution));
 	if (resolution != this->resolution)
-		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	this->resolution = resolution;
 
 	if (this->mode != 0)
@@ -610,25 +610,25 @@ void OPDI_AnalogPort::setResolution(uint8_t resolution) {
 			this->opdi->persist(this);
 }
 
-void OPDI_AnalogPort::setReference(uint8_t reference) {
+void OPDI_AnalogPort::setReference(uint8_t reference, ChangeSource /*changeSource*/) {
 	if (reference > 2)
 		throw PortError(this->ID() + ": Analog port reference not supported: " + this->to_string((int)reference));
 	if (reference != this->reference)
-		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	this->reference = reference;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }
 
-void OPDI_AnalogPort::setValue(int32_t value) {
+void OPDI_AnalogPort::setValue(int32_t value, ChangeSource /*changeSource*/) {
 	// restrict value to possible range
 	int32_t newValue = this->validateValue(value);
-	if (this->error != VALUE_OK)
-		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+	if (this->error != Error::VALUE_OK)
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	if (newValue != this->value)
-		this->refreshRequired |= (this->refreshMode == REFRESH_AUTO);
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	this->value = newValue;
-	this->error = VALUE_OK;
+	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }
@@ -740,15 +740,15 @@ void OPDI_SelectPort::setItems(const char **items) {
 	this->count = itemCount - 1;
 }
 
-void OPDI_SelectPort::setPosition(uint16_t position) {
+void OPDI_SelectPort::setPosition(uint16_t position, ChangeSource /*changeSource*/) {
 	if (position > count)
 		throw PortError(this->ID() + ": Position must not exceed the number of items: " + to_string((int)this->count));
-	if (this->error != VALUE_OK)
-		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+	if (this->error != Error::VALUE_OK)
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	if (position != this->position)
-		this->refreshRequired |= (this->refreshMode == REFRESH_AUTO);
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	this->position = position;
-	this->error = VALUE_OK;
+	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }
@@ -831,19 +831,19 @@ void OPDI_DialPort::setStep(uint64_t step) {
 	this->step = step;
 }
 
-void OPDI_DialPort::setPosition(int64_t position) {
+void OPDI_DialPort::setPosition(int64_t position, ChangeSource /*changeSource*/) {
 	if (position < this->minValue)
 		throw PortError(this->ID() + ": Position must not be less than the minimum: " + to_string(this->minValue));
 	if (position > this->maxValue)
 		throw PortError(this->ID() + ": Position must not be greater than the maximum: " + to_string(this->maxValue));
 	// correct position to next possible step
 	int64_t newPosition = ((position - this->minValue) / this->step) * this->step + this->minValue;
-	if (this->error != VALUE_OK)
-		this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+	if (this->error != Error::VALUE_OK)
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	if (newPosition != this->position)
-		this->refreshRequired |= (this->refreshMode == REFRESH_AUTO);
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	this->position = position;
-	this->error = VALUE_OK;
+	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }

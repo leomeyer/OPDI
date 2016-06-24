@@ -151,7 +151,7 @@ public:
 
 	virtual void query() override;
 
-	virtual void setLine(uint8_t line) override;
+	virtual void setLine(uint8_t line, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void getState(uint8_t* mode, uint8_t* line) const override;
 };
@@ -207,7 +207,7 @@ public:
 FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin* plugin, const char* id) : OPDI_DigitalPort(id), FritzPort(id) {
 	this->plugin = plugin;
 	this->switchState = -1;	// unknown
-	this->refreshMode = REFRESH_PERIODIC;
+	this->refreshMode =RefreshMode::REFRESH_PERIODIC;
 
 	// output only
 	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
@@ -229,7 +229,7 @@ void FritzDECT200Switch::query() {
 	this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETSWITCHSTATE, this));
 }
 
-void FritzDECT200Switch::setLine(uint8_t line) {
+void FritzDECT200Switch::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	if (this->line == line)
 		return;
 
@@ -249,7 +249,7 @@ void FritzDECT200Switch::getState(uint8_t* mode, uint8_t* line) const {
 }
 
 void FritzDECT200Switch::setSwitchState(int8_t line) {
-	this->setError(VALUE_OK);
+	this->setError(Error::VALUE_OK);
 
 	if (this->switchState == line)
 		return;
@@ -264,7 +264,7 @@ void FritzDECT200Switch::setSwitchState(int8_t line) {
 FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin* plugin, const char* id) : OPDI_DialPort(id), FritzPort(id) {
 	this->plugin = plugin;
 	this->power = -1;	// unknown
-	this->refreshMode = REFRESH_PERIODIC;
+	this->refreshMode =RefreshMode::REFRESH_PERIODIC;
 
 	this->minValue = 0;
 	this->maxValue = 2300000;	// measured in mW; 2300 W is maximum power load for the DECT200
@@ -324,7 +324,7 @@ void FritzDECT200Power::getState(int64_t* position) const {
 }
 
 void FritzDECT200Power::setPower(int32_t power) {
-	this->setError(VALUE_OK);
+	this->setError(Error::VALUE_OK);
 
 	if (this->power == power)
 		return;
@@ -345,7 +345,7 @@ void FritzDECT200Power::doRefresh(void) {
 FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin* plugin, const char* id) : OPDI_DialPort(id), FritzPort(id) {
 	this->plugin = plugin;
 	this->energy = -1;	// unknown
-	this->refreshMode = REFRESH_PERIODIC;
+	this->refreshMode =RefreshMode::REFRESH_PERIODIC;
 
 	this->minValue = 0;
 	this->maxValue = 2147483647;	// measured in Wh
@@ -405,7 +405,7 @@ void FritzDECT200Energy::getState(int64_t* position) const {
 }
 
 void FritzDECT200Energy::setEnergy(int32_t energy) {
-	this->setError(VALUE_OK);
+	this->setError(Error::VALUE_OK);
 
 	if (this->energy == energy)
 		return;
@@ -586,7 +586,7 @@ void FritzBoxPlugin::getSwitchState(FritzPort* port) {
 	this->checkLogin();
 	// problem?
 	if (this->sid == INVALID_SID) {
-		switchPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+		switchPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -594,7 +594,7 @@ void FritzBoxPlugin::getSwitchState(FritzPort* port) {
 	std::string result = httpGet("/webservices/homeautoswitch.lua?ain=" + switchPort->ain + "&switchcmd=getswitchstate&sid=" + this->sid);
 	// problem?
 	if (result.empty()) {
-		switchPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+		switchPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -614,7 +614,7 @@ void FritzBoxPlugin::setSwitchState(FritzPort* port, uint8_t line) {
 	this->checkLogin();
 	// problem?
 	if (this->sid == INVALID_SID) {
-		switchPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+		switchPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -622,7 +622,7 @@ void FritzBoxPlugin::setSwitchState(FritzPort* port, uint8_t line) {
 	std::string result = this->httpGet("/webservices/homeautoswitch.lua?ain=" + switchPort->ain + "&switchcmd=" + cmd + "&sid=" + this->sid);
 	// problem?
 	if (result.empty()) {
-		switchPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+		switchPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -643,7 +643,7 @@ void FritzBoxPlugin::getSwitchEnergy(FritzPort* port) {
 
 	// problem?
 	if (this->sid == INVALID_SID) {
-		energyPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+		energyPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -651,7 +651,7 @@ void FritzBoxPlugin::getSwitchEnergy(FritzPort* port) {
 	std::string result = httpGet("/webservices/homeautoswitch.lua?ain=" + energyPort->ain + "&switchcmd=getswitchenergy&sid=" + this->sid);
 	// problem?
 	if (result.empty()) {
-		energyPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+		energyPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -669,7 +669,7 @@ void FritzBoxPlugin::getSwitchPower(FritzPort* port) {
 	this->checkLogin();
 	// problem?
 	if (this->sid == INVALID_SID) {
-		powerPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+		powerPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
 		return;
 	}
 
@@ -677,7 +677,7 @@ void FritzBoxPlugin::getSwitchPower(FritzPort* port) {
 	std::string result = httpGet("/webservices/homeautoswitch.lua?ain=" + powerPort->ain + "&switchcmd=getswitchpower&sid=" + this->sid);
 	// problem?
 	if (result.empty()) {
-		powerPort->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+		powerPort->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
 		return;
 	}
 

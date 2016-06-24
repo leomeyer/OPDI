@@ -103,11 +103,11 @@ void OPDID_LogicPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a LogicPort cannot be changed");
 }
 
-void OPDID_LogicPort::setMode(uint8_t /*mode*/) {
+void OPDID_LogicPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of a LogicPort cannot be changed");
 }
 
-void OPDID_LogicPort::setLine(uint8_t /*line*/) {
+void OPDID_LogicPort::setLine(uint8_t /*line*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The line of a LogicPort cannot be set directly");
 }
 
@@ -231,6 +231,7 @@ OPDID_PulsePort::OPDID_PulsePort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 	this->pulseState = -1;
 	this->lastStateChangeTime = 0;
 	this->disabledState = -1;
+	this->pulseCount = -1;
 }
 
 OPDID_PulsePort::~OPDID_PulsePort() {
@@ -263,20 +264,27 @@ void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
 
 	this->period.initialize(this, "Period", config->getString("Period", "-1"));
-	if (!this->period.validate(0, INT_MAX))
+	if (!this->period.validate(1, INT_MAX))
 		throw Poco::DataException("Specify a positive integer value for the Period setting of a PulsePort: " + this->to_string(this->period.value()));
 
 	// duty cycle is specified in percent
 	this->dutyCycle.initialize(this, "DutyCycle", config->getString("DutyCycle", "50"));
 	if (!this->dutyCycle.validate(0, 100))
 		throw Poco::DataException("Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + this->to_string(this->dutyCycle.value()));
+
+	// number of pulses
+	if (config->hasProperty("Pulses")) {
+		this->pulses.initialize(this, "Pulses", config->getString("Pulses", "-1"));
+		if (!this->pulses.validate(1, INT_MAX))
+			throw Poco::DataException("Specify a positive integer value for the Pulses setting of a PulsePort: " + this->to_string(this->pulses.value()));
+	}
 }
 
 void OPDID_PulsePort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a PulsePort cannot be changed");
 }
 
-void OPDID_PulsePort::setMode(uint8_t /*mode*/) {
+void OPDID_PulsePort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of a PulsePort cannot be changed");
 }
 
@@ -520,7 +528,7 @@ void OPDID_ErrorDetectorPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of an ErrorDetectorPort cannot be changed");
 }
 
-void OPDID_ErrorDetectorPort::setMode(uint8_t /*mode*/) {
+void OPDID_ErrorDetectorPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of an ErrorDetectorPort cannot be changed");
 }
 
@@ -867,11 +875,11 @@ void OPDID_FaderPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a FaderPort cannot be changed");
 }
 
-void OPDID_FaderPort::setMode(uint8_t /*mode*/) {
+void OPDID_FaderPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of a FaderPort cannot be changed");
 }
 
-void OPDID_FaderPort::setLine(uint8_t line) {
+void OPDID_FaderPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	uint8_t oldline = this->line;
 	if ((oldline == 0) && (line == 1)) {
 		// store current values on start (might be resolved by ValueResolvers, and we don't want them to change during fading
@@ -1190,7 +1198,7 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void OPDID_SceneSelectPort::setPosition(uint16_t position) {
+void OPDID_SceneSelectPort::setPosition(uint16_t position, ChangeSource /*changeSource*/) {
 	OPDI_SelectPort::setPosition(position);
 
 	this->positionSet = true;
@@ -1210,9 +1218,9 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 	// expiry time over?
 	if ((this->expiryMs > 0) && (this->lastReloadTime > 0) && (opdi_get_time_ms() - lastReloadTime > (uint64_t)this->expiryMs)) {
 		// only if the port's value is ok
-		if (this->port->getError() == VALUE_OK) {
+		if (this->port->getError() == Error::VALUE_OK) {
 			this->logWarning(ID() + ": Value of port '" + this->port->ID() + "' has expired");
-			this->port->setError(OPDI_Port::VALUE_EXPIRED);
+			this->port->setError(Error::VALUE_EXPIRED);
 		}
 	}
 
@@ -1433,7 +1441,7 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 	// can the file be loaded initially?
 	Poco::File file(this->filePath);
 	if (!file.exists())
-		this->port->setError(VALUE_NOT_AVAILABLE);
+		this->port->setError(Error::VALUE_NOT_AVAILABLE);
 	else {
 		// expiry time specified?
 		if (this->expiryMs > 0) {
@@ -1444,10 +1452,10 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 				// file is not yet expired, reload
 				this->needsReload = true;
 			else
-				this->port->setError(VALUE_NOT_AVAILABLE);
+				this->port->setError(Error::VALUE_NOT_AVAILABLE);
 		}
 		else
-			this->port->setError(VALUE_NOT_AVAILABLE);
+			this->port->setError(Error::VALUE_NOT_AVAILABLE);
 	}
 }
 
@@ -1494,7 +1502,7 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 		case MINIMUM: {
 			auto minimum = std::min_element(values.begin(), values.end());
 			if (minimum == values.end())
-				this->setError(VALUE_NOT_AVAILABLE);
+				this->setError(Error::VALUE_NOT_AVAILABLE);
 			int64_t min = *minimum;
 			aggregator->logDebug(this->ID() + ": New value according to Minimum algorithm: " + this->to_string(min));
 			if ((min >= this->getMin()) && (min <= this->getMax()))
@@ -1506,7 +1514,7 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 		case MAXIMUM: {
 			auto maximum = std::max_element(values.begin(), values.end());
 			if (maximum == values.end())
-				this->setError(VALUE_NOT_AVAILABLE);
+				this->setError(Error::VALUE_NOT_AVAILABLE);
 			int64_t max = *maximum;
 			aggregator->logDebug(this->ID() + ": New value according to Maximum algorithm: " + this->to_string(max));
 			if ((max >= this->getMin()) && (max <= this->getMax()))
@@ -1574,7 +1582,7 @@ void OPDID_AggregatorPort::resetValues(std::string reason, AbstractOPDID::LogVer
 	// indicate errors on all calculations
 	auto it = this->calculations.begin();
 	while (it != this->calculations.end()) {
-		(*it)->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+		(*it)->setError(Error::VALUE_NOT_AVAILABLE);
 		++it;
 	}
 	this->values.clear();
@@ -1872,7 +1880,7 @@ void OPDID_AggregatorPort::prepare() {
 		this->historyPort = this->findPort(this->getID(), "HistoryPort", this->historyPortID, true);
 }
 
-void OPDID_AggregatorPort::setLine(uint8_t newLine) {
+void OPDID_AggregatorPort::setLine(uint8_t newLine, ChangeSource /*changeSource*/) {
 	// if being deactivated, reset values and ports to error
 	if ((this->line == 1) && (newLine == 0))
 		this->resetValues("Aggregator was deactivated", AbstractOPDID::VERBOSE);
@@ -1976,7 +1984,7 @@ void OPDID_TriggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->counterPortStr = config->getString("CounterPort", "");
 }
 
-void OPDID_TriggerPort::setLine(uint8_t line) {
+void OPDID_TriggerPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	OPDI_DigitalPort::setLine(line);
 
 	// deactivated?

@@ -281,7 +281,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetDigitalState(struct mg_connection*
 	if ((newLine != OPDI_DIGITAL_LINE_LOW) && (newLine != OPDI_DIGITAL_LINE_HIGH))
 		throw Poco::InvalidArgumentException(std::string("Method setDigitalState: Illegal value for line: ") + this->to_string((int)newLine));
 
-	((OPDI_DigitalPort*)port)->setLine(newLine);
+	((OPDI_DigitalPort*)port)->setLine(newLine, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
 
 	return this->jsonGetPortInfo(port);
 }
@@ -308,7 +308,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetAnalogValue(struct mg_connection* 
 		throw Poco::InvalidArgumentException("Method setAnalogValue: parameter value is missing");
 	int32_t newValue = value.convert<int32_t>();
 
-	((OPDI_AnalogPort*)port)->setValue(newValue);
+	((OPDI_AnalogPort*)port)->setValue(newValue, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
 
 	return this->jsonGetPortInfo(port);
 }
@@ -335,7 +335,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetDialPosition(struct mg_connection*
 		throw Poco::InvalidArgumentException("Method setDialPosition: parameter position is missing");
 	int64_t newPosition = position.convert<int64_t>();
 
-	((OPDI_DialPort*)port)->setPosition(newPosition);
+	((OPDI_DialPort*)port)->setPosition(newPosition, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
 
 	return this->jsonGetPortInfo(port);
 }
@@ -362,7 +362,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetSelectPosition(struct mg_connectio
 		throw Poco::InvalidArgumentException("Method setSelectPosition: parameter position is missing");
 	uint16_t newPosition = position.convert<uint16_t>();
 
-	((OPDI_SelectPort*)port)->setPosition(newPosition);
+	((OPDI_SelectPort*)port)->setPosition(newPosition, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
 
 	return this->jsonGetPortInfo(port);
 }

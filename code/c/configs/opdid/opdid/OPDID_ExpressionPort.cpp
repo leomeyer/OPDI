@@ -57,11 +57,11 @@ void OPDID_ExpressionPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of an ExpressionPort cannot be changed");
 }
 
-void OPDID_ExpressionPort::setMode(uint8_t /*mode*/) {
+void OPDID_ExpressionPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of an ExpressionPort cannot be changed");
 }
 
-void OPDID_ExpressionPort::setLine(uint8_t line) {
+void OPDID_ExpressionPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	OPDI_DigitalPort::setLine(line);
 
 	// if the line has been set to High, start the iterations

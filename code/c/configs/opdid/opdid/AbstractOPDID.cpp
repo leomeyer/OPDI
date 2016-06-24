@@ -746,18 +746,18 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration* portConfig,
 
 	std::string refreshMode = this->getConfigString(portConfig, "RefreshMode", "", false);
 	if (refreshMode == "Off") {
-		port->setRefreshMode(OPDI_Port::REFRESH_OFF);
+		port->setRefreshMode(OPDI_Port::RefreshMode::REFRESH_OFF);
 	} else
 	if (refreshMode == "Periodic") {
-		port->setRefreshMode(OPDI_Port::REFRESH_PERIODIC);
+		port->setRefreshMode(OPDI_Port::RefreshMode::REFRESH_PERIODIC);
 	} else
 	if (refreshMode == "Auto") {
-		port->setRefreshMode(OPDI_Port::REFRESH_AUTO);
+		port->setRefreshMode(OPDI_Port::RefreshMode::REFRESH_AUTO);
 	} else
 		if (refreshMode != "")
 			throw Poco::DataException("Unknown RefreshMode specified; expected 'Off', 'Periodic' or 'Auto': " + refreshMode);
 
-	if (port->getRefreshMode() == OPDI_Port::REFRESH_PERIODIC) {
+	if (port->getRefreshMode() == OPDI_Port::RefreshMode::REFRESH_PERIODIC) {
 		int time = portConfig->getInt("RefreshTime", -1);
 		if (time >= 0) {
 			port->setPeriodicRefreshTime(time);
@@ -979,7 +979,7 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 			// if a history port is used and the RefreshMode has not been set manually, the RefreshMode is set to Automatic
 			// this provides expected behavior without the need to specify RefreshMode for the port manually.
 			if (portConfig->getString("RefreshMode", "").empty())
-				port->setRefreshMode(OPDI_Port::REFRESH_AUTO);
+				port->setRefreshMode(OPDI_Port::RefreshMode::REFRESH_AUTO);
 		}
 	}
 
@@ -988,7 +988,7 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 	int64_t position = stateConfig->getInt64("Position", port->getMin());
 	// set port error to invalid if the value is out of range
 	if ((position < port->getMin()) || (position > port->getMax()))
-		port->setError(OPDI_Port::VALUE_NOT_AVAILABLE);
+		port->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
 		//throw Poco::DataException("Wrong dial port setting: Position is out of range: " + to_string(position));
 	else
 		port->setPosition(position);
@@ -1771,7 +1771,7 @@ uint8_t opdi_set_digital_port_line(opdi_Port* port, const char line[]) {
 	else
 		dLine = 0;
 	try {
-		dPort->setLine(dLine);
+		dPort->setLine(dLine, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -1798,7 +1798,7 @@ uint8_t opdi_set_digital_port_mode(opdi_Port* port, const char mode[]) {
 		// mode not supported
 		return OPDI_PROTOCOL_ERROR;
 	try {
-		dPort->setMode(dMode);
+		dPort->setMode(dMode, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -1855,7 +1855,7 @@ uint8_t opdi_set_analog_port_value(opdi_Port* port, int32_t value) {
 		return OPDI_PORT_ACCESS_DENIED;
 
 	try {
-		aPort->setValue(value);
+		aPort->setValue(value, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -1883,7 +1883,7 @@ uint8_t opdi_set_analog_port_mode(opdi_Port* port, const char mode[]) {
 		return OPDI_PORT_ACCESS_DENIED;
 
 	try {
-		aPort->setMode(aMode);
+		aPort->setMode(aMode, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -1907,7 +1907,7 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port* port, const char res[]) {
 		return OPDI_PROTOCOL_ERROR;
 
 	try {
-		aPort->setResolution(aRes);
+		aPort->setResolution(aRes, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -1931,7 +1931,7 @@ uint8_t opdi_set_analog_port_reference(opdi_Port* port, const char ref[]) {
 		return OPDI_PROTOCOL_ERROR;
 
 	try {
-		aPort->setReference(aRef);
+		aPort->setReference(aRef, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -1980,7 +1980,7 @@ uint8_t opdi_set_select_port_position(opdi_Port* port, uint16_t position) {
 		return OPDI_PORT_ACCESS_DENIED;
 
 	try {
-		sPort->setPosition(position);
+		sPort->setPosition(position, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
@@ -2029,7 +2029,7 @@ uint8_t opdi_set_dial_port_position(opdi_Port* port, int64_t position) {
 		return OPDI_PORT_ACCESS_DENIED;
 
 	try {
-		dPort->setPosition(position);
+		dPort->setPosition(position, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
 	} catch (OPDI_Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;

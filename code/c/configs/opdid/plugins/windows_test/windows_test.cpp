@@ -8,12 +8,12 @@
 class DigitalTestPort : public OPDI_DigitalPort {
 public:
 	DigitalTestPort();
-	virtual void setLine(uint8_t line) override;
+	virtual void setLine(uint8_t line, ChangeSource /*changeSource*/) override;
 };
 
 DigitalTestPort::DigitalTestPort() : OPDI_DigitalPort("PluginPort", "Windows Test Plugin Port", OPDI_PORTDIRCAP_OUTPUT, 0) {}
 
-void DigitalTestPort::setLine(uint8_t line) {
+void DigitalTestPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	OPDI_DigitalPort::setLine(line);
 
 	AbstractOPDID *opdid = (AbstractOPDID *)this->opdi;

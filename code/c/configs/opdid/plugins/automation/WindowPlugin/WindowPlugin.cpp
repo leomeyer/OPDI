@@ -139,7 +139,7 @@ protected:
 public:
 	WindowPort(AbstractOPDID *opdid, const char *id);
 
-	virtual void setPosition(uint16_t position) override;
+	virtual void setPosition(uint16_t position, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 	
 	virtual void getState(uint16_t *position) const override;
 };
@@ -153,7 +153,7 @@ WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(i
 	this->positionNewlySet = false;
 	this->isMotorEnabled = false;
 	this->isMotorOn = false;
-	this->refreshMode = REFRESH_NOT_SET;
+	this->refreshMode =RefreshMode::REFRESH_NOT_SET;
 	this->sensorPort = nullptr;
 	this->enablePort = nullptr;
 	this->directionPort = nullptr;
@@ -174,7 +174,7 @@ WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(i
 	this->openTimer = 0;
 }
 
-void WindowPort::setPosition(uint16_t position) {
+void WindowPort::setPosition(uint16_t position, ChangeSource /*changeSource*/) {
 	// recovery from error state is always possible
 	if ((this->currentState == ERR) || this->position != position) {
 		// prohibit disabling the automatic mode by setting the position to the current state
@@ -244,8 +244,8 @@ void WindowPort::prepare() {
 	this->findDigitalPorts(this->ID(), "ResetPorts", this->resetPortStr, this->resetPorts);
 	
 	// a window port normally refreshes itself automatically unless specified otherwise
-	if (this->refreshMode == REFRESH_NOT_SET)
-		this->refreshMode = REFRESH_AUTO;
+	if (this->refreshMode ==RefreshMode::REFRESH_NOT_SET)
+		this->refreshMode =RefreshMode::REFRESH_AUTO;
 }
 
 uint8_t WindowPort::getPortLine(OPDI_DigitalPort *port) {
@@ -390,7 +390,7 @@ void WindowPort::setCurrentState(WindowState state) {
 			if ((this->targetState != UNKNOWN) && (state == OPEN) && (this->positionAfterOpen >= 0) && (this->position != POSITION_OFF))
 				this->setPosition(this->positionAfterOpen);
 
-			this->refreshRequired = (this->refreshMode == REFRESH_AUTO);
+			this->refreshRequired = (this->refreshMode ==RefreshMode::REFRESH_AUTO);
 		}
 		
 		// update status port?
