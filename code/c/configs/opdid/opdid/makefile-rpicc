@@ -80,6 +80,7 @@ CDEFINES = -Dlinux
 # Compiler flags.
 CFLAGS = -Wall -Wextra $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES) -Wno-unused-parameter -Wno-narrowing
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -O2
+CFLAGS += -Wl,-z,defs
 
 # Debug flags
 CFLAGS +=

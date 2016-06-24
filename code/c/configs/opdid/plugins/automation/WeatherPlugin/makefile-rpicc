@@ -44,10 +44,10 @@ POCOLIBPATH = $(OPDIDPATH)/../../../libraries/POCO/lib/Linux/ARM
 
 # POCO libraries
 #POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
-POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoFoundation.a
+POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoFoundation.a $(POCOLIBPATH)/libPocoXML.a $(POCOLIBPATH)/libPocoJSON.a
 
 # Additional libraries
-LIBS = -lpthread 
+LIBS = -lpthread -lrt
 
 # The compiler to be used.
 CC = arm-linux-gnueabihf-g++
@@ -65,6 +65,7 @@ CDEFINES = -Dlinux
 # Compiler flags.
 CFLAGS = -Wall -Wextra $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -O2 -std=c++11 -static-libstdc++
+CFLAGS += -Wl,-z,defs
 
 OBJECTS = $(SRC)
 
