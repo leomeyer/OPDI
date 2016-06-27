@@ -19,7 +19,8 @@
 /** OPDI C++ wrapper implementation
  */
 
-// #include <iostream>
+#include "OPDI.h"
+
 #include <cstdlib>
 #include <algorithm>    // std::sort
 #include <string.h>
@@ -32,16 +33,15 @@
 #include "opdi_configspecs.h"
 #include "opdi_platformfuncs.h"
 
-#include "OPDI.h"
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Main class for OPDI functionality
 //////////////////////////////////////////////////////////////////////////////////////////
 
 uint8_t OPDI::shutdownInternal(void) {
 	// free all ports
-	PortList::iterator it = this->ports.begin();
-	while (it != this->ports.end()) {
+	auto it = this->ports.begin();
+	auto ite = this->ports.end();
+	while (it != ite) {
 		delete *it;
 		++it;
 	}
@@ -196,8 +196,9 @@ void OPDI::updatePortData(OPDI_Port *port) {
 OPDI_Port *OPDI::findPort(opdi_Port *port) {
 	if (port == nullptr)
 		return *this->ports.begin();
-	PortList::iterator it = this->ports.begin();
-	while (it != this->ports.end()) {
+	auto it = this->ports.begin();
+	auto ite = this->ports.end();
+	while (it != ite) {
 		if ((opdi_Port*)(*it)->data == port)
 			return *it;
 		++it;
@@ -211,8 +212,9 @@ OPDI::PortList& OPDI::getPorts() {
 }
 
 OPDI_Port *OPDI::findPortByID(const char *portID, bool caseInsensitive) {
-	PortList::iterator it = this->ports.begin();
-	while (it != this->ports.end()) {
+	auto it = this->ports.begin();
+	auto ite = this->ports.end();
+	while (it != ite) {
 		opdi_Port *oPort = (opdi_Port *)(*it)->data;
 		if (caseInsensitive) {
 #ifdef linux
@@ -279,8 +281,9 @@ void OPDI::sortPorts(void) {
 }
 
 void OPDI::preparePorts(void) {
-	PortList::iterator it = this->ports.begin();
-	while (it != this->ports.end()) {
+	auto it = this->ports.begin();
+	auto ite = this->ports.end();
+	while (it != ite) {
 		(*it)->prepare();
 
 		// add ports to the OPDI C subsystem; ignore hidden ports
@@ -320,8 +323,9 @@ uint8_t OPDI::waiting(uint8_t canSend) {
 	this->canSend = canSend;
 
 	// call ports' doWork function
-	PortList::iterator it = this->ports.begin();
-	while (it != this->ports.end()) {
+	auto it = this->ports.begin();
+	auto ite = this->ports.end();
+	while (it != ite) {
 		uint8_t result = (*it)->doWork(canSend);
 		if (result != OPDI_STATUS_OK)
 			return result;

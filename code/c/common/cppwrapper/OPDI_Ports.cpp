@@ -209,7 +209,8 @@ void OPDI_Port::setHistory(uint64_t intervalSeconds, int maxCount, const std::ve
 	this->history.append(";maxCount=" + this->to_string(maxCount));
 	this->history.append(";values=");
 	auto it = values.begin();
-	while (it != values.end()) {
+	auto ite = values.end();
+	while (it != ite) {
 		if (it != values.begin())
 			this->history.append(",");
 		this->history.append(this->to_string(*it));

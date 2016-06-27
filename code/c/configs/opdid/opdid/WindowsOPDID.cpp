@@ -1,3 +1,4 @@
+#include "WindowsOPDID.h"
 
 #include <winsock2.h>
 #include <windows.h>
@@ -17,8 +18,6 @@
 #include "opdi_port.h"
 #include "opdi_message.h"
 #include "opdi_slave_protocol.h"
-
-#include "WindowsOPDID.h"
 
 // global connection mode (TCP or COM)
 #define MODE_TCP 1

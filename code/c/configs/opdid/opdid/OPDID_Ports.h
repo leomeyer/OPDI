@@ -7,14 +7,16 @@
 #include <fstream>
 #include <list>
 
-#include "Poco/Util/AbstractConfiguration.h"
-#include "Poco/TimedNotificationQueue.h"
 #include "Poco/DirectoryWatcher.h"
+#include "Poco/TimedNotificationQueue.h"
+#include "Poco/Tuple.h"
+#include "Poco/Util/AbstractConfiguration.h"
 
 // serial port library
 #include "ctb-0.16/ctb.h"
 
 #include "opdi_constants.h"
+#include "opdi_port.h"
 
 #include "OPDID_PortFunctions.h"
 

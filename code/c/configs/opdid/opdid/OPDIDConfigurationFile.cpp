@@ -1,9 +1,8 @@
+#include "OPDIDConfigurationFile.h"
 
 #include <sstream>
 
 #include "Poco/FileStream.h"
-
-#include "OPDIDConfigurationFile.h"
 
 bool OPDIDConfigurationFile::getRaw(const std::string & key, std::string & value) const {
 	bool result = Poco::Util::IniFileConfiguration::getRaw(key, value);

@@ -1,3 +1,5 @@
+#include "OPDID_Ports.h"
+
 #include <bitset>
 #define _USE_MATH_DEFINES // for C++
 #include <math.h>
@@ -5,7 +7,6 @@
 #include <functional>
 
 #include "Poco/String.h"
-#include "Poco/Tuple.h"
 #include "Poco/Timezone.h"
 #include "Poco/DateTimeFormatter.h"
 #include "Poco/NumberParser.h"
@@ -17,10 +18,7 @@
 #include "Poco/ScopedLock.h"
 #include "Poco/FileStream.h"
 
-#include "opdi_port.h"
 #include "opdi_platformfuncs.h"
-
-#include "OPDID_Ports.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Logic Port
