@@ -169,7 +169,7 @@ protected:
 		Schedule *schedule;
 		bool deactivate;
 
-		inline ScheduleNotification(Schedule *schedule, bool deactivate) {
+		ScheduleNotification(Schedule *schedule, bool deactivate) {
 			this->schedule = schedule;
 			this->deactivate = deactivate;
 		};

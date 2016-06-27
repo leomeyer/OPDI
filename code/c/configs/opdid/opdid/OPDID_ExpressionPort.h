@@ -59,7 +59,7 @@ struct timestamp_func : public exprtk::ifunction<double>
 	: exprtk::ifunction<double>(0)
 	{}
 
-	inline double operator()()
+	double operator()()
 	{
 		// return epoch time since midnight, 1 January 1970, in seconds
 		return (double)Poco::Timestamp().epochTime();
