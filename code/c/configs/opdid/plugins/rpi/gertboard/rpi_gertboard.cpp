@@ -79,8 +79,8 @@ protected:
 public:
 	DigitalGertboardPort(AbstractOPDID *opdid, const char *ID, int pin);
 	virtual ~DigitalGertboardPort(void);
-	virtual void setLine(uint8_t line) override;
-	virtual void setMode(uint8_t mode) override;
+	virtual void setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void getState(uint8_t *mode, uint8_t *line) const override;
 };
 
@@ -105,7 +105,7 @@ DigitalGertboardPort::~DigitalGertboardPort(void) {
 	GPIO_PULLCLK0 = 0;
 }
 
-void DigitalGertboardPort::setLine(uint8_t line) {
+void DigitalGertboardPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	OPDI_DigitalPort::setLine(line);
 
 	if (line == 0) {
@@ -115,7 +115,7 @@ void DigitalGertboardPort::setLine(uint8_t line) {
 	}
 }
 
-void DigitalGertboardPort::setMode(uint8_t mode) {
+void DigitalGertboardPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 
 	// cannot set pulldown mode
 	if (mode == OPDI_DIGITAL_MODE_INPUT_PULLDOWN)
@@ -172,11 +172,11 @@ public:
 	AnalogGertboardOutput(AbstractOPDID *opdid, const char *id, int output);
 
 	virtual void setFlags(int32_t flags) override;
-	virtual void setMode(uint8_t mode) override;
-	virtual void setResolution(uint8_t resolution) override;
-	virtual void setReference(uint8_t reference) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setResolution(uint8_t resolution, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setReference(uint8_t reference, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	// value: an integer value ranging from 0 to 2^resolution - 1
-	virtual void setValue(int32_t value) override;
+	virtual void setValue(int32_t value, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) const override;
 };
 
@@ -215,19 +215,19 @@ void AnalogGertboardOutput::setFlags(int32_t flags) {
 }
 
 // function that handles the set direction command (opdi_set_digital_port_mode)
-void AnalogGertboardOutput::setMode(uint8_t mode) {
+void AnalogGertboardOutput::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 	throw PortError("Gertboard analog output mode cannot be changed");
 }
 
-void AnalogGertboardOutput::setResolution(uint8_t resolution) {
+void AnalogGertboardOutput::setResolution(uint8_t resolution, ChangeSource /*changeSource*/) {
 	OPDI_AnalogPort::setResolution(resolution);
 }
 
-void AnalogGertboardOutput::setReference(uint8_t reference) {
+void AnalogGertboardOutput::setReference(uint8_t reference, ChangeSource /*changeSource*/) {
 	throw PortError("Gertboard analog output reference cannot be changed");
 }
 
-void AnalogGertboardOutput::setValue(int32_t value) {
+void AnalogGertboardOutput::setValue(int32_t value, ChangeSource /*changeSource*/) {
 	OPDI_AnalogPort::setValue(value);
 
 	write_dac(this->output, this->value);
@@ -254,11 +254,11 @@ public:
 	AnalogGertboardInput(AbstractOPDID *opdid, const char *id, int input);
 
 	virtual void setFlags(int32_t flags) override;
-	virtual void setMode(uint8_t mode) override;
-	virtual void setResolution(uint8_t resolution) override;
-	virtual void setReference(uint8_t reference) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setResolution(uint8_t resolution, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setReference(uint8_t reference, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	// value: an integer value ranging from 0 to 2^resolution - 1
-	virtual void setValue(int32_t value) override;
+	virtual void setValue(int32_t value, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) const override;
 };
 
@@ -295,19 +295,19 @@ void AnalogGertboardInput::setFlags(int32_t flags) {
 }
 
 // function that handles the set direction command (opdi_set_digital_port_mode)
-void AnalogGertboardInput::setMode(uint8_t mode) {
+void AnalogGertboardInput::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 	throw PortError("Gertboard analog input mode cannot be changed");
 }
 
-void AnalogGertboardInput::setResolution(uint8_t resolution) {
+void AnalogGertboardInput::setResolution(uint8_t resolution, ChangeSource /*changeSource*/) {
 	OPDI_AnalogPort::setResolution(resolution);
 }
 
-void AnalogGertboardInput::setReference(uint8_t reference) {
+void AnalogGertboardInput::setReference(uint8_t reference, ChangeSource /*changeSource*/) {
 	throw PortError("Gertboard analog input reference cannot be changed");
 }
 
-void AnalogGertboardInput::setValue(int32_t value) {
+void AnalogGertboardInput::setValue(int32_t value, ChangeSource /*changeSource*/) {
 	throw PortError("Gertboard analog input value cannot be set");
 }
 
@@ -340,8 +340,8 @@ protected:
 	virtual uint8_t queryState(void);
 public:
 	GertboardButton(AbstractOPDID *opdid, const char *ID, int pin);
-	virtual void setLine(uint8_t line) override;
-	virtual void setMode(uint8_t mode) override;
+	virtual void setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void setDirCaps(const char *dirCaps) override;
 	virtual void setFlags(int32_t flags) override;
 	virtual void getState(uint8_t *mode, uint8_t *line) const override;
@@ -419,11 +419,11 @@ uint8_t GertboardButton::queryState(void) {
 	return result;
 }
 
-void GertboardButton::setLine(uint8_t line) {
+void GertboardButton::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	opdid->logNormal("Warning: Gertboard Button has no output to be changed, ignoring");
 }
 
-void GertboardButton::setMode(uint8_t mode) {
+void GertboardButton::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 	opdid->logNormal("Warning: Gertboard Button mode cannot be changed, ignoring");
 }
 
@@ -455,7 +455,7 @@ protected:
 public:
 	GertboardPWM(AbstractOPDID *opdid, const int pin, const char *ID, bool inverse);
 	virtual ~GertboardPWM(void);
-	virtual void setPosition(int64_t position) override;
+	virtual void setPosition(int64_t position, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 };
 
 GertboardPWM::GertboardPWM(AbstractOPDID *opdid, const int pin, const char *ID, bool inverse) : OPDI_DialPort(ID),
@@ -483,7 +483,7 @@ GertboardPWM::~GertboardPWM(void) {
 	pwm_off();
 }
 
-void GertboardPWM::setPosition(int64_t position) {
+void GertboardPWM::setPosition(int64_t position, ChangeSource /*changeSource*/) {
 	// calculate nearest position according to step
 	OPDI_DialPort::setPosition(position);
 
@@ -549,8 +549,8 @@ protected:
 public:
 	DigitalExpansionPort(AbstractOPDID *opdid, GertboardPlugin *gbPlugin, const char *ID, int pin);
 	virtual ~DigitalExpansionPort(void);
-	virtual void setLine(uint8_t line) override;
-	virtual void setMode(uint8_t mode) override;
+	virtual void setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void getState(uint8_t *mode, uint8_t *line) const override;
 };
 
@@ -567,7 +567,7 @@ DigitalExpansionPort::DigitalExpansionPort(AbstractOPDID *opdid, GertboardPlugin
 DigitalExpansionPort::~DigitalExpansionPort(void) {
 }
 
-void DigitalExpansionPort::setLine(uint8_t line) {
+void DigitalExpansionPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	OPDI_DigitalPort::setLine(line);
 
 	uint8_t code = this->pin;
@@ -607,7 +607,7 @@ void DigitalExpansionPort::setLine(uint8_t line) {
 		throw PortError("Expansion port communication failure");
 }
 
-void DigitalExpansionPort::setMode(uint8_t mode) {
+void DigitalExpansionPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 	// cannot set pulldown mode
 	if (mode == OPDI_DIGITAL_MODE_INPUT_PULLDOWN)
 		throw PortError("Digital Expansion Port does not support pulldown mode");
