@@ -12,6 +12,8 @@
 
 #include "OPDID_PortFunctions.h"
 
+namespace {
+
 class WindowPort : public OPDI_SelectPort, OPDID_PortFunctions {
 friend class WindowPlugin;
 protected:
@@ -143,6 +145,24 @@ public:
 	
 	virtual void getState(uint16_t *position) const override;
 };
+
+////////////////////////////////////////////////////////////////////////
+// Plugin main class
+////////////////////////////////////////////////////////////////////////
+
+class WindowPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener {
+
+protected:
+	AbstractOPDID *opdid;
+
+public:
+	virtual void setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) override;
+
+	virtual void masterConnected(void) override;
+	virtual void masterDisconnected(void) override;
+};
+
+}	// end anonymous namespace
 
 WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(id), OPDID_PortFunctions(id) {
 	this->opdid = opdid;
@@ -948,21 +968,6 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-////////////////////////////////////////////////////////////////////////
-// Plugin main class
-////////////////////////////////////////////////////////////////////////
-
-class WindowPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener {
-
-protected:
-	AbstractOPDID *opdid;
-
-public:
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) override;
-
-	virtual void masterConnected(void) override;
-	virtual void masterDisconnected(void) override;
-};
 
 void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;

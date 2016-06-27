@@ -18,6 +18,8 @@
 #define OPDID_NO_INTTYPES
 #include <mongoose.h>
 
+namespace {
+
 ////////////////////////////////////////////////////////////////////////
 // Plugin main class
 ////////////////////////////////////////////////////////////////////////
@@ -113,6 +115,8 @@ public:
 	* It returns the port info object. */
 	Poco::JSON::Object jsonRpcSetSelectPosition(struct mg_connection* nc, struct http_message* hm, Poco::Dynamic::Var& params);
 };
+
+}	// end anonymous namespace
 
 static WebServerPlugin* instance;
 

@@ -32,176 +32,179 @@
 
 #define INVALID_SID		"0000000000000000"
 
-class FritzBoxPlugin;
+namespace {
 
-class FritzPort : protected OPDID_PortFunctions {
-public:
-	FritzPort(std::string id) : OPDID_PortFunctions(id) {};
+	class FritzBoxPlugin;
 
-	virtual void query() = 0;
-};
+	class FritzPort : protected OPDID_PortFunctions {
+	public:
+		FritzPort(std::string id) : OPDID_PortFunctions(id) {};
 
-class ActionNotification : public Poco::Notification {
-public:
-	typedef Poco::AutoPtr<ActionNotification> Ptr;
-
-	enum ActionType {
-		LOGIN,
-		LOGOUT,
-		GETSWITCHSTATE,
-		SETSWITCHSTATEHIGH,
-		SETSWITCHSTATELOW,
-		GETSWITCHPOWER,
-		GETSWITCHENERGY
+		virtual void query() = 0;
 	};
 
-	ActionType type;
-	FritzPort* port;
+	class ActionNotification : public Poco::Notification {
+	public:
+		typedef Poco::AutoPtr<ActionNotification> Ptr;
 
-	ActionNotification(ActionType type, FritzPort* port);
-};
+		enum ActionType {
+			LOGIN,
+			LOGOUT,
+			GETSWITCHSTATE,
+			SETSWITCHSTATEHIGH,
+			SETSWITCHSTATELOW,
+			GETSWITCHPOWER,
+			GETSWITCHENERGY
+		};
 
-ActionNotification::ActionNotification(ActionType type, FritzPort* port) {
-	this->type = type;
-	this->port = port;
-}
+		ActionType type;
+		FritzPort* port;
 
-////////////////////////////////////////////////////////////////////////
-// Plugin main class
-////////////////////////////////////////////////////////////////////////
+		ActionNotification(ActionType type, FritzPort* port);
+	};
 
-class FritzBoxPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener, public Poco::Runnable {
-friend class FritzDECT200Switch;
-friend class FritzDECT200Power;
-friend class FritzDECT200Energy;
+	ActionNotification::ActionNotification(ActionType type, FritzPort* port) {
+		this->type = type;
+		this->port = port;
+	}
 
-protected:
-	std::string nodeID;
+	////////////////////////////////////////////////////////////////////////
+	// Plugin main class
+	////////////////////////////////////////////////////////////////////////
 
-	std::string host;
-	int port;
-	std::string user;
-	std::string password;
-	int timeoutSeconds;
+	class FritzBoxPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener, public Poco::Runnable {
+		friend class FritzDECT200Switch;
+		friend class FritzDECT200Power;
+		friend class FritzDECT200Energy;
 
-	std::string sid;
+	protected:
+		std::string nodeID;
 
-	AbstractOPDID::LogVerbosity logVerbosity;
+		std::string host;
+		int port;
+		std::string user;
+		std::string password;
+		int timeoutSeconds;
 
-	typedef std::vector<FritzPort*> FritzPorts;
-	FritzPorts fritzPorts;
+		std::string sid;
 
-	Poco::NotificationQueue queue;
+		AbstractOPDID::LogVerbosity logVerbosity;
 
-	Poco::Thread workThread;
+		typedef std::vector<FritzPort*> FritzPorts;
+		FritzPorts fritzPorts;
 
-public:
-	AbstractOPDID* opdid;
+		Poco::NotificationQueue queue;
 
-	virtual std::string httpGet(const std::string& url);
+		Poco::Thread workThread;
 
-	virtual std::string getResponse(const std::string& challenge, const std::string& password);
+	public:
+		AbstractOPDID* opdid;
 
-	virtual std::string getSessionID(const std::string& user, const std::string& password);
+		virtual std::string httpGet(const std::string& url);
 
-	virtual std::string getXMLValue(const std::string& xml, const std::string& node);
+		virtual std::string getResponse(const std::string& challenge, const std::string& password);
 
-	virtual void login(void);
+		virtual std::string getSessionID(const std::string& user, const std::string& password);
 
-	virtual void checkLogin(void);
+		virtual std::string getXMLValue(const std::string& xml, const std::string& node);
 
-	virtual void logout(void);
+		virtual void login(void);
 
-	virtual void getSwitchState(FritzPort* port);
+		virtual void checkLogin(void);
 
-	virtual void setSwitchState(FritzPort* port, uint8_t line);
+		virtual void logout(void);
 
-	virtual void getSwitchEnergy(FritzPort* port);
+		virtual void getSwitchState(FritzPort* port);
 
-	virtual void getSwitchPower(FritzPort* port);
+		virtual void setSwitchState(FritzPort* port, uint8_t line);
 
-	virtual void masterConnected(void) override;
-	virtual void masterDisconnected(void) override;
+		virtual void getSwitchEnergy(FritzPort* port);
 
-	virtual void run(void);
+		virtual void getSwitchPower(FritzPort* port);
 
-	virtual void setupPlugin(AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration* nodeConfig) override;
-};
+		virtual void masterConnected(void) override;
+		virtual void masterDisconnected(void) override;
 
-////////////////////////////////////////////////////////////////////////
-// Plugin ports
-////////////////////////////////////////////////////////////////////////
+		virtual void run(void);
 
-class FritzDECT200Switch : public OPDI_DigitalPort, public FritzPort {
-friend class FritzBoxPlugin;
-protected:
+		virtual void setupPlugin(AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration* nodeConfig) override;
+	};
 
-	FritzBoxPlugin* plugin;
-	std::string ain;
+	////////////////////////////////////////////////////////////////////////
+	// Plugin ports
+	////////////////////////////////////////////////////////////////////////
 
-	int8_t switchState;
+	class FritzDECT200Switch : public OPDI_DigitalPort, public FritzPort {
+		friend class FritzBoxPlugin;
+	protected:
 
-	virtual void setSwitchState(int8_t line);
+		FritzBoxPlugin* plugin;
+		std::string ain;
 
-public:
-	FritzDECT200Switch(FritzBoxPlugin* plugin, const char* id);
+		int8_t switchState;
 
-	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
+		virtual void setSwitchState(int8_t line);
 
-	virtual void query() override;
+	public:
+		FritzDECT200Switch(FritzBoxPlugin* plugin, const char* id);
 
-	virtual void setLine(uint8_t line, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+		virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
 
-	virtual void getState(uint8_t* mode, uint8_t* line) const override;
-};
+		virtual void query() override;
 
-class FritzDECT200Power : public OPDI_DialPort, public FritzPort {
-friend class FritzBoxPlugin;
-protected:
+		virtual void setLine(uint8_t line, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
 
-	FritzBoxPlugin* plugin;
-	std::string ain;
+		virtual void getState(uint8_t* mode, uint8_t* line) const override;
+	};
 
-	int32_t power;
+	class FritzDECT200Power : public OPDI_DialPort, public FritzPort {
+		friend class FritzBoxPlugin;
+	protected:
 
-	virtual void setPower(int32_t power);
+		FritzBoxPlugin* plugin;
+		std::string ain;
 
-public:
-	FritzDECT200Power(FritzBoxPlugin* plugin, const char* id);
+		int32_t power;
 
-	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
+		virtual void setPower(int32_t power);
 
-	virtual void query() override;
+	public:
+		FritzDECT200Power(FritzBoxPlugin* plugin, const char* id);
 
-	virtual void getState(int64_t* position) const override;
+		virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
 
-	virtual void doRefresh(void) override;
-};
+		virtual void query() override;
+
+		virtual void getState(int64_t* position) const override;
+
+		virtual void doRefresh(void) override;
+	};
 
 
-class FritzDECT200Energy : public OPDI_DialPort, public FritzPort {
-friend class FritzBoxPlugin;
-protected:
+	class FritzDECT200Energy : public OPDI_DialPort, public FritzPort {
+		friend class FritzBoxPlugin;
+	protected:
 
-	FritzBoxPlugin* plugin;
-	std::string ain;
+		FritzBoxPlugin* plugin;
+		std::string ain;
 
-	int32_t energy;
+		int32_t energy;
 
-	virtual void setEnergy(int32_t energy);
+		virtual void setEnergy(int32_t energy);
 
-public:
-	FritzDECT200Energy(FritzBoxPlugin* plugin, const char* id);
+	public:
+		FritzDECT200Energy(FritzBoxPlugin* plugin, const char* id);
 
-	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
+		virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
 
-	virtual void query() override;
+		virtual void query() override;
 
-	virtual void getState(int64_t* position) const override;
+		virtual void getState(int64_t* position) const override;
 
-	virtual void doRefresh(void) override;
-};
+		virtual void doRefresh(void) override;
+	};
 
+}	// end anonymous namespace
 
 FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin* plugin, const char* id) : OPDI_DigitalPort(id), FritzPort(id) {
 	this->plugin = plugin;

@@ -37,6 +37,8 @@
 #include "AbstractOPDID.h"
 #include "OPDID_PortFunctions.h"
 
+namespace {
+
 /** Interface for weather ports */
 class WeatherPort : protected OPDID_PortFunctions {
 public:
@@ -96,6 +98,8 @@ public:
 	// lastRequestedValidState flag useless and cause perpetual self-refreshes!
 	virtual bool hasError(void) const override;
 };
+
+}	// end anonymous namespace
 
 WeatherGaugePort::WeatherGaugePort(AbstractOPDID *opdid, const char *id) : OPDI_DialPort(id), WeatherPort(id) {
 	this->opdid = opdid;

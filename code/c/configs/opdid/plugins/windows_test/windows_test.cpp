@@ -5,6 +5,8 @@
 
 #include "WindowsOPDID.h"
 
+namespace {
+
 class DigitalTestPort : public OPDI_DigitalPort {
 public:
 	DigitalTestPort();
@@ -35,6 +37,9 @@ public:
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
 };
+
+}	// end anonymous namespace
+
 
 void WindowsTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
