@@ -368,8 +368,9 @@ void WindowPort::setCurrentState(WindowState state) {
 
 		if (notifyErrorPorts) {
 			// go through error ports
-			DigitalPortList::iterator pi = this->errorPorts.begin();
-			while (pi != this->errorPorts.end()) {
+			auto pi = this->errorPorts.begin();
+			auto pie = this->errorPorts.end();
+			while (pi != pie) {
 				this->logDebug(std::string(this->id) + ": Notifying error port: " + (*pi)->getID() + ": " + (state == ERR ? "Entering" : "Leaving") + " error state");
 				this->setPortLine((*pi), (state == ERR ? 1 : 0));
 				++pi;
@@ -843,8 +844,9 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 	// if the window has detected an error, do not automatically open or close
 	if (this->currentState != ERR) {
 		// if one of the ForceOpen ports is High, the window must be opened
-		pi = this->forceOpenPorts.begin();
-		while (pi != this->forceOpenPorts.end()) {
+		auto pi = this->forceOpenPorts.begin();
+		auto pie = this->forceOpenPorts.end();
+		while (pi != pie) {
 			if (this->getPortLine(*pi) == 1) {
 				this->logExtreme(std::string(this->id) + ": ForceOpen detected from port: " + (*pi)->getID());
 				forceOpen = true;
@@ -854,7 +856,8 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		}
 		// if one of the ForceClose ports is High, the window must be closed
 		pi = this->forceClosePorts.begin();
-		while (pi != this->forceClosePorts.end()) {
+		pie = this->forceClosePorts.end();
+		while (pi != pie) {
 			if (this->getPortLine(*pi) == 1) {
 				this->logExtreme(std::string(this->id) + ": ForceClose detected from port: " + (*pi)->getID());
 				forceClose = true;
@@ -865,7 +868,8 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 	} else {
 		// if one of the Reset ports is High, the window should be reset to the defined state
 		pi = this->resetPorts.begin();
-		while (pi != this->resetPorts.end()) {
+		auto pie = this->resetPorts.end();
+		while (pi != pie) {
 			if (this->getPortLine(*pi) == 1) {
 				this->logExtreme(std::string(this->id) + ": Reset detected from port: " + (*pi)->getID());
 				this->setCurrentState(UNKNOWN);
@@ -890,7 +894,8 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		if ((this->currentState != ERR) && (this->position >= POSITION_AUTO)) {
 			// if one of the AutoClose ports is High, the window should be closed (takes precedence)
 			pi = this->autoClosePorts.begin();
-			while (pi != this->autoClosePorts.end()) {
+			auto pie = this->autoClosePorts.end();
+			while (pi != pie) {
 				if (this->getPortLine(*pi) == 1) {
 					// avoid repeating messages
 					if (this->targetState != CLOSED) {
@@ -904,7 +909,8 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			if (target == UNKNOWN) {
 				// if one of the AutoOpen ports is High, the window should be opened
 				pi = this->autoOpenPorts.begin();
-				while (pi != this->autoOpenPorts.end()) {
+				pie = this->autoOpenPorts.end();
+				while (pi != pie) {
 					if (this->getPortLine(*pi) == 1) {
 						// avoid repeating messages
 						if (this->targetState != OPEN) {

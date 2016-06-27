@@ -178,8 +178,9 @@ void OPDID_ExpressionPort::prepare() {
 
 void OPDID_ExpressionPort::setOutputPorts(double value) {
 	// go through list of output ports
-	OPDI::PortList::iterator it = this->outputPorts.begin();
-	while (it != this->outputPorts.end()) {
+	auto it = this->outputPorts.begin();
+	auto ite = this->outputPorts.end();
+	while (it != ite) {
 		try {
 			if ((*it)->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
 				if (value == 0)

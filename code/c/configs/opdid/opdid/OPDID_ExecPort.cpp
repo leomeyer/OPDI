@@ -111,8 +111,9 @@ uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
 				std::string allPorts;
 				// go through all ports
 				OPDI::PortList pl = this->opdid->getPorts();
-				OPDI::PortList::const_iterator pli = pl.begin();
-				while (pli != pl.end()) {
+				auto pli = pl.begin();
+				auto plie = pl.end();
+				while (pli != plie) {
 					std::string val = this->opdid->getPortStateStr(*pli);
 					if (val.empty())
 						val = "<error>";
@@ -124,7 +125,7 @@ uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
 				portValues["$ALL_PORTS"] = allPorts;
 
 				// replace parameters in content
-				for (PortValues::iterator iterator = portValues.begin(); iterator != portValues.end(); ++iterator) {
+				for (auto iterator = portValues.begin(), iteratorEnd = portValues.end(); iterator != iteratorEnd; ++iterator) {
 					std::string key = iterator->first;
 					std::string value = iterator->second;
 

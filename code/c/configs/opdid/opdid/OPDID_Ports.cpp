@@ -129,8 +129,9 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 
 	// count how many input ports are High
 	size_t highCount = 0;
-	DigitalPortList::iterator it = this->inputPorts.begin();
-	while (it != this->inputPorts.end()) {
+	auto it = this->inputPorts.begin();
+	auto ite = this->inputPorts.end();
+	while (it != ite) {
 		uint8_t mode;
 		uint8_t line;
 		try {
@@ -176,8 +177,9 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 		OPDI_DigitalPort::setLine(newLine);
 
 		// regular output ports
-		DigitalPortList::iterator it = this->outputPorts.begin();
-		while (it != this->outputPorts.end()) {
+		auto it = this->outputPorts.begin();
+		auto ite = this->outputPorts.end();
+		while (it != ite) {
 			try {
 				uint8_t mode;
 				uint8_t line;
@@ -195,7 +197,8 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 		}
 		// inverse output ports
 		it = this->inverseOutputPorts.begin();
-		while (it != this->inverseOutputPorts.end()) {
+		ite = this->inverseOutputPorts.end();
+		while (it != ite) {
 			try {
 				uint8_t mode;
 				uint8_t line;
@@ -306,8 +309,9 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 
 	if (!enabled && (this->enablePorts.size() > 0)) {
 		int highCount = 0;
-		DigitalPortList::iterator it = this->enablePorts.begin();
-		while (it != this->enablePorts.end()) {
+		auto it = this->enablePorts.begin();
+		auto ite = this->enablePorts.end();
+		while (it != ite) {
 			uint8_t mode;
 			uint8_t line;
 			try {
@@ -375,9 +379,10 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 		// set the new state
 		this->pulseState = newState;
 
-		DigitalPortList::iterator it = this->outputPorts.begin();
+		auto it = this->outputPorts.begin();
+		auto ite = this->outputPorts.end();
 		// regular output ports
-		while (it != this->outputPorts.end()) {
+		while (it != ite) {
 			try {
 				(*it)->setLine(newState);
 			} catch (Poco::Exception &e) {
@@ -387,7 +392,8 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 		}
 		// inverse output ports
 		it = this->inverseOutputPorts.begin();
-		while (it != this->inverseOutputPorts.end()) {
+		ite = this->inverseOutputPorts.end();
+		while (it != ite) {
 			try {
 				(*it)->setLine((newState == 0 ? 1 : 0));
 			} catch (Poco::Exception &e) {
@@ -546,8 +552,9 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 	int8_t newState = 0;
 
 	// if any port has an error, set the line state to 1
-	OPDI::PortList::iterator it = this->inputPorts.begin();
-	while (it != this->inputPorts.end()) {
+	auto it = this->inputPorts.begin();
+	auto ite = this->inputPorts.end();
+	while (it != ite) {
 		if ((*it)->hasError()) {
 			this->logExtreme(this->ID() + ": Detected error on port: " + (*it)->getID());
 			newState = 1;
@@ -725,11 +732,12 @@ uint8_t OPDID_LoggerPort::doWork(uint8_t canSend)  {
 		if (this->writeHeader) {
 			entry = "Timestamp" + this->separator;
 			// go through port list, build header
-			OPDI::PortList::iterator it = this->portsToLog.begin();
-			while (it != this->portsToLog.end()) {
+			auto it = this->portsToLog.begin();
+			auto ite = this->portsToLog.end();
+			while (it != ite) {
 				entry += (*it)->getID();
 				// separator necessary?
-				if (it != this->portsToLog.end() - 1) 
+				if (it != ite - 1) 
 					entry += this->separator;
 				++it;
 			}
@@ -738,11 +746,12 @@ uint8_t OPDID_LoggerPort::doWork(uint8_t canSend)  {
 		}
 		entry = this->opdid->getTimestampStr() + this->separator;
 		// go through port list
-		OPDI::PortList::iterator it = this->portsToLog.begin();
-		while (it != this->portsToLog.end()) {
+		auto it = this->portsToLog.begin();
+		auto ite = this->portsToLog.end();
+		while (it != ite) {
 			entry += this->getPortStateStr(*it);
 			// separator necessary?
-			if (it != this->portsToLog.end() - 1) 
+			if (it != ite - 1) 
 				entry += this->separator;
 			++it;
 		}
@@ -947,8 +956,9 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 				this->refreshRequired = true;
 
 				// set end switches if specified
-				DigitalPortList::iterator it = this->endSwitches.begin();
-				while (it != this->endSwitches.end()) {
+				auto it = this->endSwitches.begin();
+				auto ite = this->endSwitches.end();
+				while (it != ite) {
 					try {
 						this->logDebug(this->ID() + ": Setting line of end switch port " + (*it)->ID() + " to High");
 						(*it)->setLine(1);
@@ -1006,8 +1016,9 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 		this->logExtreme(this->ID() + ": Setting current fader value to " + to_string(value * 100.0) + "%");
 
 		// regular output ports
-		PortList::iterator it = this->outputPorts.begin();
-		while (it != this->outputPorts.end()) {
+		auto it = this->outputPorts.begin();
+		auto ite = this->outputPorts.end();
+		while (it != ite) {
 			try {
 				if (0 == strcmp((*it)->getType(), OPDI_PORTTYPE_ANALOG)) {
 					((OPDI_AnalogPort*)(*it))->setRelativeValue(value);
@@ -1060,14 +1071,15 @@ void OPDID_SceneSelectPort::configure(Poco::Util::AbstractConfiguration *config,
 	ItemList orderedItems;
 
 	// create ordered list of items (by priority)
-	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = itemKeys.begin(); it != itemKeys.end(); ++it) {
+	for (auto it = itemKeys.begin(), ite = itemKeys.end(); it != ite; ++it) {
 		int itemNumber;
 		if (!Poco::NumberParser::tryParse(*it, itemNumber) || (itemNumber < 0)) {
 			throw Poco::DataException(this->ID() + ": Scene identifiers must be numeric integer values greater or equal than 0; got: " + this->to_string(itemNumber));
 		}
 		// insert at the correct position to create a sorted list of items
-		ItemList::iterator nli = orderedItems.begin();
-		while (nli != orderedItems.end()) {
+		auto nli = orderedItems.begin();
+		auto nlie = orderedItems.end();
+		while (nli != nlie) {
 			if (nli->get<0>() > itemNumber)
 				break;
 			++nli;
@@ -1080,8 +1092,9 @@ void OPDID_SceneSelectPort::configure(Poco::Util::AbstractConfiguration *config,
 		throw Poco::DataException(this->ID() + ": A scene select port requires at least one scene in its config section", this->ID() + ".Scenes");
 
 	// go through items, create ordered list of char* items
-	ItemList::const_iterator nli = orderedItems.begin();
-	while (nli != orderedItems.end()) {
+	auto nli = orderedItems.begin();
+	auto nlie = orderedItems.end();
+	while (nli != nlie) {
 		this->fileList.push_back(nli->get<1>());
 		++nli;
 	}
@@ -1099,8 +1112,9 @@ void OPDID_SceneSelectPort::prepare() {
 	OPDI_SelectPort::prepare();
 
 	// check files
-	FileList::iterator fi = this->fileList.begin();
-	while (fi != this->fileList.end()) {
+	auto fi = this->fileList.begin();
+	auto fie = this->fileList.begin();
+	while (fi != fie) {
 		std::string sceneFile = *fi;
 
 		this->logDebug(this->ID() + ": Checking scene file "+ sceneFile + " relative to configuration file: " + this->configFilePath);
@@ -1138,8 +1152,9 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 
 		if (this->logVerbosity >= AbstractOPDID::DEBUG) {
 			this->logDebug(this->ID() + ": Scene file parameters:");
-			std::map<std::string, std::string>::const_iterator it = parameters.begin();
-			while (it != parameters.end()) {
+			auto it = parameters.begin();
+			auto ite = parameters.end();
+			while (it != ite) {
 				this->logDebug(this->ID() + ":   " + (*it).first + " = " + (*it).second);
 				++it;
 			}
@@ -1157,7 +1172,7 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 		else
 			this->logDebug(this->ID() + ": Applying settings from scene file: " + sceneFile);
 
-		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = sectionKeys.begin(); it != sectionKeys.end(); ++it) {
+		for (auto it = sectionKeys.begin(), ite = sectionKeys.end(); it != ite; ++it) {
 			// find port corresponding to this section
 			OPDI_Port *port = this->opdid->findPortByID((*it).c_str());
 			if (port == nullptr)
@@ -1581,7 +1596,8 @@ void OPDID_AggregatorPort::resetValues(std::string reason, AbstractOPDID::LogVer
 	}
 	// indicate errors on all calculations
 	auto it = this->calculations.begin();
-	while (it != this->calculations.end()) {
+	auto ite = this->calculations.end();
+	while (it != ite) {
 		(*it)->setError(Error::VALUE_NOT_AVAILABLE);
 		++it;
 	}
@@ -1707,7 +1723,8 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 			this->historyPort->setHistory(this->queryInterval, this->totalValues, this->values);
 		// perform all calculations
 		auto it = this->calculations.begin();
-		while (it != this->calculations.end()) {
+		auto ite = this->calculations.end();
+		while (it != ite) {
 			(*it)->calculate(this);
 			++it;
 		}
@@ -1782,7 +1799,7 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 	ItemList orderedItems;
 
 	// create ordered list of calculations keys (by priority)
-	for (auto it = calculations.begin(); it != calculations.end(); ++it) {
+	for (auto it = calculations.begin(), ite = calculations.end(); it != ite; ++it) {
 
 		int itemNumber = nodes->getInt(*it, 0);
 		// check whether the item is active
@@ -1791,7 +1808,8 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 
 		// insert at the correct position to create a sorted list of items
 		auto nli = orderedItems.begin();
-		while (nli != orderedItems.end()) {
+		auto nlie = orderedItems.end();
+		while (nli != nlie) {
 			if (nli->get<0>() > itemNumber)
 				break;
 			++nli;
@@ -1806,7 +1824,8 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 
 	// go through items, create calculation objects
 	auto nli = orderedItems.begin();
-	while (nli != orderedItems.end()) {
+	auto nlie = orderedItems.end();
+	while (nli != nlie) {
 		std::string nodeName = nli->get<1>();
 		this->logVerbose("Setting up aggregator calculation for node: " + nodeName);
 
@@ -1990,8 +2009,9 @@ void OPDID_TriggerPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	// deactivated?
 	if (line == 0) {
 		// reset all input port states to "unknown"
-		PortDataList::iterator it = this->portDataList.begin();
-		while (it != this->portDataList.end()) {
+		auto it = this->portDataList.begin();
+		auto ite = this->portDataList.end();
+		while (it != ite) {
 			(*it).set<1>(UNKNOWN);
 			++it;
 		}
@@ -2006,8 +2026,9 @@ void OPDID_TriggerPort::prepare() {
 	DigitalPortList inputPorts;
 	this->findDigitalPorts(this->getID(), "InputPorts", this->inputPortStr, inputPorts);
 	// go through input ports, build port state list
-	DigitalPortList::const_iterator it = inputPorts.begin();
-	while (it != inputPorts.end()) {
+	auto it = inputPorts.begin();
+	auto ite = inputPorts.end();
+	while (it != ite) {
 		PortData pd(*it, UNKNOWN);
 		this->portDataList.push_back(pd);
 		++it;
@@ -2028,8 +2049,9 @@ uint8_t OPDID_TriggerPort::doWork(uint8_t canSend)  {
 		return OPDI_STATUS_OK;
 
 	bool changeDetected = false;
-	PortDataList::iterator it = this->portDataList.begin();
-	while (it != this->portDataList.end()) {
+	auto it = this->portDataList.begin();
+	auto ite = this->portDataList.end();
+	while (it != ite) {
 		uint8_t mode;
 		uint8_t line;
 		try {
@@ -2062,8 +2084,9 @@ uint8_t OPDID_TriggerPort::doWork(uint8_t canSend)  {
 		this->logDebug(this->ID() + ": Detected triggering change");
 
 		// regular output ports
-		DigitalPortList::iterator it = this->outputPorts.begin();
-		while (it != this->outputPorts.end()) {
+		auto it = this->outputPorts.begin();
+		auto ite = this->outputPorts.end();
+		while (it != ite) {
 			try {
 				if (this->changeType == SET_HIGH) {
 					(*it)->setLine(1);
@@ -2085,7 +2108,8 @@ uint8_t OPDID_TriggerPort::doWork(uint8_t canSend)  {
 		}
 		// inverse output ports
 		it = this->inverseOutputPorts.begin();
-		while (it != this->inverseOutputPorts.end()) {
+		ite = this->inverseOutputPorts.end();
+		while (it != ite) {
 			try {
 				if (this->changeType == SET_HIGH) {
 					(*it)->setLine(0);

@@ -216,8 +216,9 @@ Poco::JSON::Array WebServerPlugin::jsonGetPortList() {
 	// return an array of port objects
 	Poco::JSON::Array result;
 	OPDI::PortList pl = this->opdid->getPorts();
-	OPDI::PortList::const_iterator it = pl.begin();
-	while (it != pl.end()) {
+	auto it = pl.begin();
+	auto ite = pl.end();
+	while (it != ite) {
 		if (!(*it)->isHidden())
 			result.add(this->jsonGetPortInfo(*it));
 		++it;
@@ -230,8 +231,9 @@ Poco::JSON::Array WebServerPlugin::jsonGetPortGroups() {
 	// return an array of group objects
 	Poco::JSON::Array result;
 	OPDI::PortGroupList gl = this->opdid->getPortGroups();
-	OPDI::PortGroupList::const_iterator it = gl.begin();
-	while (it != gl.end()) {
+	auto it = gl.begin();
+	auto ite = gl.end();
+	while (it != ite) {
 		Poco::JSON::Object group;
 		group.set("id", std::string((*it)->getID()));
 		group.set("label", std::string((*it)->getLabel()));

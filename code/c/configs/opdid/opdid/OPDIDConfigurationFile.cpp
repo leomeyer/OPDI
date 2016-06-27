@@ -33,7 +33,7 @@ OPDIDConfigurationFile::OPDIDConfigurationFile(const std::string& path, std::map
 
 	// replace parameters in content
 	typedef std::map<std::string, std::string>::iterator it_type;
-	for (it_type iterator = parameters.begin(); iterator != parameters.end(); ++iterator) {
+	for (auto iterator = parameters.begin(), iteratorEnd = parameters.end(); iterator != iteratorEnd; ++iterator) {
 		std::string key = iterator->first;
 		std::string value = iterator->second;
 

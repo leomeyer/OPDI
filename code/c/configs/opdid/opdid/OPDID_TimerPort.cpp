@@ -234,7 +234,7 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 	ItemList orderedItems;
 
 	// create ordered list of schedule keys (by priority)
-	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = scheduleKeys.begin(); it != scheduleKeys.end(); ++it) {
+	for (auto it = scheduleKeys.begin(), ite = scheduleKeys.end(); it != ite; ++it) {
 
 		int itemNumber = nodes->getInt(*it, 0);
 		// check whether the item is active
@@ -242,8 +242,9 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 			continue;
 
 		// insert at the correct position to create a sorted list of items
-		ItemList::iterator nli = orderedItems.begin();
-		while (nli != orderedItems.end()) {
+		auto nli = orderedItems.begin();
+		auto nlie = orderedItems.end();
+		while (nli != nlie) {
 			if (nli->get<0>() > itemNumber)
 				break;
 			++nli;
@@ -257,8 +258,9 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 	}
 
 	// go through items, create schedules in specified order
-	ItemList::const_iterator nli = orderedItems.begin();
-	while (nli != orderedItems.end()) {
+	auto nli = orderedItems.begin();
+	auto nlie = orderedItems.end();
+	while (nli != nlie) {
 
 		std::string nodeName = nli->get<1>();
 
@@ -657,8 +659,9 @@ void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Po
 }
 
 void OPDID_TimerPort::setOutputs(int8_t outputLine) {
-	DigitalPortList::iterator it = this->outputPorts.begin();
-	while (it != this->outputPorts.end()) {
+	auto it = this->outputPorts.begin();
+	auto ite = this->outputPorts.end();
+	while (it != ite) {
 		try {
 			// toggle?
 			if (outputLine < 0) {
@@ -695,8 +698,9 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 
 	if (connectionStateChanged) {
 		// check whether a schedule is specified for this event
-		ScheduleList::iterator it = this->schedules.begin();
-		while (it != this->schedules.end()) {
+		auto it = this->schedules.begin();
+		auto ite = this->schedules.end();
+		while (it != ite) {
 			if ((*it).type == (connected ? ONLOGIN : ONLOGOUT)) {
 				this->logDebug(this->ID() + ": Connection status change detected; executing schedule " + (*it).nodeName + ((*it).type == ONLOGIN ? " (OnLogin)" : " (OnLogout)"));
 				// schedule found; create event notification
@@ -787,9 +791,10 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 		// go through schedules
 		Poco::Timestamp ts = Poco::Timestamp::TIMEVAL_MAX;
 		Poco::Timestamp now;
-		ScheduleList::iterator it = this->schedules.begin();
+		auto it = this->schedules.begin();
+		auto ite = this->schedules.end();
 		// select schedule with the earliest nextEvent timestamp
-		while (it != this->schedules.end()) {
+		while (it != ite) {
 			if (((*it).nextEvent > now) && ((*it).nextEvent < ts)) {
 				ts = (*it).nextEvent;
 			}
@@ -809,7 +814,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 void OPDID_TimerPort::recalculateSchedules(Schedule* activatingSchedule) {
 	// clear all schedules
 	this->queue.clear();
-	for (ScheduleList::iterator it = this->schedules.begin(); it != this->schedules.end(); ++it) {
+	for (auto it = this->schedules.begin(), ite = this->schedules.end(); it != ite; ++it) {
 		Schedule *schedule = &*it;
 		// calculate
 		Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(schedule);

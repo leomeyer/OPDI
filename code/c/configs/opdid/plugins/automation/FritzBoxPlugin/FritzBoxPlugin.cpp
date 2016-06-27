@@ -544,8 +544,9 @@ void FritzBoxPlugin::login(void) {
 		this->opdid->logDebug(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " successful; sid = " + this->sid);
 
 	// query ports (post notifications to query)
-	FritzPorts::iterator it = this->fritzPorts.begin();
-	while (it != this->fritzPorts.end()) {
+	auto it = this->fritzPorts.begin();
+	auto ite = this->fritzPorts.end();
+	while (it != ite) {
 		(*it)->query();
 		++it;
 	}
@@ -727,7 +728,7 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID* abstractOPDID, const std::string
 	ItemList orderedItems;
 
 	// create ordered list of port keys (by priority)
-	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = portKeys.begin(); it != portKeys.end(); ++it) {
+	for (auto it = portKeys.begin(), ite = portKeys.end(); it != ite; ++it) {
 
 		int itemNumber = nodes->getInt(*it, 0);
 		// check whether the item is active
@@ -735,8 +736,9 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID* abstractOPDID, const std::string
 			continue;
 
 		// insert at the correct position to create a sorted list of items
-		ItemList::iterator nli = orderedItems.begin();
-		while (nli != orderedItems.end()) {
+		auto nli = orderedItems.begin();
+		auto nlie = orderedItems.end();
+		while (nli != nlie) {
 			if (nli->get<0>() > itemNumber)
 				break;
 			++nli;
@@ -751,8 +753,9 @@ void FritzBoxPlugin::setupPlugin(AbstractOPDID* abstractOPDID, const std::string
 	}
 
 	// go through items, create ports in specified order
-	ItemList::const_iterator nli = orderedItems.begin();
-	while (nli != orderedItems.end()) {
+	auto nli = orderedItems.begin();
+	auto nlie = orderedItems.end();
+	while (nli != nlie) {
 
 		std::string nodeName = nli->get<1>();
 

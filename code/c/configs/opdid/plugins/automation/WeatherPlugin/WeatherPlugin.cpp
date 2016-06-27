@@ -337,7 +337,7 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string&
 	ItemList orderedItems;
 
 	// create ordered list of port keys (by priority)
-	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = portKeys.begin(); it != portKeys.end(); ++it) {
+	for (auto it = portKeys.begin(), ite = portKeys.end(); it != ite; ++it) {
 
 		int itemNumber = nodes->getInt(*it, 0);
 		// check whether the item is active
@@ -345,8 +345,9 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string&
 			continue;
 
 		// insert at the correct position to create a sorted list of items
-		ItemList::iterator nli = orderedItems.begin();
-		while (nli != orderedItems.end()) {
+		auto nli = orderedItems.begin();
+		auto nlie = orderedItems.end();
+		while (nli != nlie) {
 			if (nli->get<0>() > itemNumber)
 				break;
 			++nli;
@@ -361,8 +362,9 @@ void WeatherPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string&
 	}
 
 	// go through items, create ports in specified order
-	ItemList::const_iterator nli = orderedItems.begin();
-	while (nli != orderedItems.end()) {
+	auto nli = orderedItems.begin();
+	auto nlie = orderedItems.end();
+	while (nli != nlie) {
 
 		std::string nodeName = nli->get<1>();
 
@@ -438,8 +440,9 @@ static Poco::JSON::Object::Ptr GetJSONObject(Poco::JSON::Object::Ptr aoJsonObjec
 void WeatherPlugin::refreshData(void) {
 	try {
 		// invalidate all ports
-		WeatherPortList::iterator it = this->weatherPorts.begin();
-		while (it != this->weatherPorts.end()) {
+		auto it = this->weatherPorts.begin();
+		auto ite = this->weatherPorts.end();
+		while (it != ite) {
 			(*it)->invalidate();
 			++it;
 		}
@@ -495,8 +498,9 @@ void WeatherPlugin::refreshData(void) {
 				std::string dataElement = labelNode->innerText();
 
 				// find weather port for the data element
-				WeatherPortList::iterator it = this->weatherPorts.begin();
-				while (it != this->weatherPorts.end()) {
+				auto it = this->weatherPorts.begin();
+				auto ite = this->weatherPorts.end();
+				while (it != ite) {
 					if ((*it)->getDataElement() == dataElement) {
 						if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
 							this->opdid->logDebug(this->nodeID + ": Evaluating XML weather data element: " + dataElement + " with data: " + dataNode->innerText());
@@ -567,8 +571,9 @@ void WeatherPlugin::refreshData(void) {
 				std::string data = GetJSONStringValue(current, dataElement);
 
 				// find weather port for the data element
-				WeatherPortList::iterator it = this->weatherPorts.begin();
-				while (it != this->weatherPorts.end()) {
+				auto it = this->weatherPorts.begin();
+				auto ite = this->weatherPorts.end();
+				while (it != ite) {
 					if ((*it)->getDataElement() == dataElement) {
 						if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG))
 							this->opdid->logDebug(this->nodeID + ": Evaluating JSON weather data element: " + dataElement + " with data: " + data);

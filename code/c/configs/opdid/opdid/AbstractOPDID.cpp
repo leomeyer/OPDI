@@ -140,8 +140,9 @@ void AbstractOPDID::connected() {
 	this->logNormal("Connected to: " + this->masterName);
 
 	// notify registered listeners
-	ConnectionListenerList::iterator it = this->connectionListeners.begin();
-	while (it != this->connectionListeners.end()) {
+	auto it = this->connectionListeners.begin();
+	auto ite = this->connectionListeners.end();
+	while (it != ite) {
 		(*it)->masterConnected();
 		++it;
 	}
@@ -153,8 +154,9 @@ void AbstractOPDID::disconnected() {
 	this->masterName = std::string();
 
 	// notify registered listeners
-	ConnectionListenerList::iterator it = this->connectionListeners.begin();
-	while (it != this->connectionListeners.end()) {
+	auto it = this->connectionListeners.begin();
+	auto ite = this->connectionListeners.end();
+	while (it != ite) {
 		(*it)->masterDisconnected();
 		++it;
 	}
@@ -392,8 +394,9 @@ int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<
 
 	if (this->logVerbosity >= AbstractOPDID::DEBUG) {
 		this->logDebug("Using configuration file '" + configFile + "' with the following parameters:");
-		std::map<std::string, std::string>::const_iterator it = this->environment.begin();
-		while (it != this->environment.end()) {
+		auto it = this->environment.begin();
+		auto ite = this->environment.end();
+		while (it != ite) {
 			this->logDebug("  " + (*it).first + " = " + (*it).second);
 			++it;
 		}
@@ -677,7 +680,7 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration* config, Poco
 	Poco::Util::AbstractConfiguration::Keys paramKeys;
 	paramConfig->keys("", paramKeys);
 
-	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = paramKeys.begin(); it != paramKeys.end(); ++it) {
+	for (auto it = paramKeys.begin(), ite = paramKeys.end(); it != ite; ++it) {
 		std::string param = paramConfig->getString(*it, "");
 		// store in the map
 		parameters[*it] = param;
@@ -691,8 +694,9 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration* config, Poco
 
 	if (this->logVerbosity >= AbstractOPDID::DEBUG) {
 		this->logDebug(node + ": Include file parameters:");
-		std::map<std::string, std::string>::const_iterator it = parameters.begin();
-		while (it != parameters.end()) {
+		auto it = parameters.begin();
+		auto ite = parameters.end();
+		while (it != ite) {
 			this->logDebug(node + ":   " + (*it).first + " = " + (*it).second);
 			++it;
 		}
@@ -882,15 +886,16 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration* portC
 		ItemList orderedItems;
 
 		// create ordered list of items (by priority)
-		for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = itemKeys.begin(); it != itemKeys.end(); ++it) {
+		for (auto it = itemKeys.begin(), ite = itemKeys.end(); it != ite; ++it) {
 			int itemNumber = portItems->getInt(*it, 0);
 			// check whether the item is active
 			if (itemNumber < 0)
 				continue;
 
 			// insert at the correct position to create a sorted list of items
-			ItemList::iterator nli = orderedItems.begin();
-			while (nli != orderedItems.end()) {
+			auto nli = orderedItems.begin();
+			auto nlie = orderedItems.end();
+			while (nli != nlie) {
 				if (nli->get<0>() > itemNumber)
 					break;
 				++nli;
@@ -904,8 +909,9 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration* portC
 
 		// go through items, create ordered list of char* items
 		std::vector<const char*> charItems;
-		ItemList::const_iterator nli = orderedItems.begin();
-		while (nli != orderedItems.end()) {
+		auto nli = orderedItems.begin();
+		auto nlie = orderedItems.end();
+		while (nli != nlie) {
 			charItems.push_back(nli->get<1>().c_str());
 			++nli;
 		}
@@ -1266,15 +1272,16 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration* config) {
 	NodeList orderedNodes;
 
 	// create ordered list of nodes (by priority)
-	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = nodeKeys.begin(); it != nodeKeys.end(); ++it) {
+	for (auto it = nodeKeys.begin(), ite = nodeKeys.end(); it != ite; ++it) {
 		int nodeNumber = nodes->getInt(*it, 0);
 		// check whether the node is active
 		if (nodeNumber < 0)
 			continue;
 
 		// insert at the correct position to create a sorted list of nodes
-		NodeList::iterator nli = orderedNodes.begin();
-		while (nli != orderedNodes.end()) {
+		auto nli = orderedNodes.begin();
+		auto nlie = orderedNodes.end();
+		while (nli != nlie) {
 			if (nli->get<0>() > nodeNumber)
 				break;
 			++nli;
@@ -1293,8 +1300,9 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration* config) {
 	}
 
 	// go through ordered list, setup nodes by name
-	NodeList::const_iterator nli = orderedNodes.begin();
-	while (nli != orderedNodes.end()) {
+	auto nli = orderedNodes.begin();
+	auto nlie = orderedNodes.end();
+	while (nli != nlie) {
 		this->setupNode(config, nli->get<1>());
 		++nli;
 	}
