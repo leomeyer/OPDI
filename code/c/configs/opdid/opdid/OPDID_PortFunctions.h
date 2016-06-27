@@ -1,7 +1,5 @@
 #pragma once
 
-#include <iostream>
-
 #include "Poco/NumberParser.h"
 #include "Poco/RegularExpression.h"
 
