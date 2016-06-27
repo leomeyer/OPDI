@@ -1,3 +1,4 @@
+#include "WindowsOPDID.h"
 
 // OPDID main program entry point on Windows
 
@@ -11,8 +12,6 @@
 #include "stdafx.h"
 
 #include "opdi_constants.h"
-
-#include "WindowsOPDID.h"
 
 // the main OPDI instance is declared here
 AbstractOPDID *Opdi;

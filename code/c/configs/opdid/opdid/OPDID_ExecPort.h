@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Poco/Process.h"
+#include "Poco/Thread.h"
 #include "Poco/Util/AbstractConfiguration.h"
 
 #include "OPDID_PortFunctions.h"

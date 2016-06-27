@@ -1,7 +1,6 @@
+#include "OPDID_ExpressionPort.h"
 
 #include "Poco/Timestamp.h"
-
-#include "OPDID_ExpressionPort.h"
 
 #include "opdi_constants.h"
 

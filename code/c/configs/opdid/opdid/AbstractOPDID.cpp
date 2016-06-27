@@ -1,3 +1,4 @@
+#include "AbstractOPDID.h"
 
 #include <vector>
 #include <time.h>
@@ -21,7 +22,6 @@
 
 #include "opdi_constants.h"
 
-#include "AbstractOPDID.h"
 #include "OPDI_Ports.h"
 #include "OPDID_Ports.h"
 #include "OPDID_TimerPort.h"
