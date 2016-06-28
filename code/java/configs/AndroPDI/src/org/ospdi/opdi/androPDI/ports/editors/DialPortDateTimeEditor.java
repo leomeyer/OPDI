@@ -53,8 +53,9 @@ public class DialPortDateTimeEditor extends DialogFragment {
 	    }
 
 	    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-	        time = new LocalDateTime(1970, 1, 1, hourOfDay, minute, 0);
+	        time = new LocalDateTime(currentDate.getYear(), currentDate.getMonthOfYear(), currentDate.getDayOfMonth(), hourOfDay, minute, 0);
 	        textView.setText(DateTimeFormat.mediumTime().print(time));
+	        currentDate = time;
 	    }
 	}
 	
@@ -82,12 +83,13 @@ public class DialPortDateTimeEditor extends DialogFragment {
 
 		@Override
 		public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-			date = new LocalDateTime(year, monthOfYear, dayOfMonth, 0, 0, 0);
+			date = new LocalDateTime(year, monthOfYear, dayOfMonth, currentDate.getHourOfDay(), currentDate.getMinuteOfHour(), currentDate.getSecondOfMinute());
 			textView.setText(DateTimeFormat.mediumDate().print(date));
+			currentDate = date;
 		}
 	}
 	
-	LocalDateTime initialDate;
+	LocalDateTime currentDate;
 	DismissedListener dismissedListener;
 	
 	TextView tvDate;
@@ -102,7 +104,7 @@ public class DialPortDateTimeEditor extends DialogFragment {
 	
 	public DialPortDateTimeEditor(LocalDateTime date, DismissedListener dismissedListener) {
 		super();
-		this.initialDate = date;
+		this.currentDate = date;
 		this.dismissedListener = dismissedListener;
 	}
 	
@@ -146,15 +148,17 @@ public class DialPortDateTimeEditor extends DialogFragment {
 		
 		tvDate.setText(DateTimeFormat.mediumDate().print(dateTime));
         tvTime.setText(DateTimeFormat.mediumTime().print(dateTime));
+        
+        currentDate = dateTime;
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.date_time_editor, container);
         tvDate = (TextView)view.findViewById(R.id.date_time_editor_date);
-        tvDate.setText(DateTimeFormat.mediumDate().print(initialDate));
+        tvDate.setText(DateTimeFormat.mediumDate().print(currentDate));
         tvTime = (TextView)view.findViewById(R.id.date_time_editor_time);
-        tvTime.setText(DateTimeFormat.mediumTime().print(initialDate));
+        tvTime.setText(DateTimeFormat.mediumTime().print(currentDate));
         btnDate = (Button)view.findViewById(R.id.date_time_editor_select_date_button);
         btnTime = (Button)view.findViewById(R.id.date_time_editor_select_time_button);
         spSelect = (Spinner)view.findViewById(R.id.date_time_editor_spinner);
@@ -166,7 +170,7 @@ public class DialPortDateTimeEditor extends DialogFragment {
         btnTime.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				timePicker = new TimePickerDialogFragment(initialDate, tvTime);
+				timePicker = new TimePickerDialogFragment(currentDate, tvTime);
 			    timePicker.show(getFragmentManager(), "timePicker");
 			}
 		});
@@ -174,8 +178,9 @@ public class DialPortDateTimeEditor extends DialogFragment {
         btnDate.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				datePicker = new DatePickerDialogFragment(initialDate, tvDate);
+				datePicker = new DatePickerDialogFragment(currentDate, tvDate);
 			    datePicker.show(getFragmentManager(), "datePicker");
+			    
 			}
 		});
         
@@ -196,14 +201,14 @@ public class DialPortDateTimeEditor extends DialogFragment {
 				// parse date
 				LocalDate date = null;
 				LocalTime time = null;
-					date = DateTimeFormat.mediumDate().parseLocalDate(tvDate.getText().toString());
-					String t = tvTime.getText().toString();
-					/*
-					// add seconds to time if they're missing
-					if (t.split(":").length <= 2)
-						t += ":00";
-					*/
-					time = DateTimeFormat.mediumTime().parseLocalTime(t);
+				date = DateTimeFormat.mediumDate().parseLocalDate(tvDate.getText().toString());
+				String t = tvTime.getText().toString();
+				/*
+				// add seconds to time if they're missing
+				if (t.split(":").length <= 2)
+					t += ":00";
+				*/
+				time = DateTimeFormat.mediumTime().parseLocalTime(t);
 				LocalDateTime result = date.toLocalDateTime(time);
 				dismiss();
 				dismissedListener.dismissed(result);

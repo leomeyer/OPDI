@@ -126,9 +126,13 @@ public class UnitFormat {
 	public String format(int value) {
 		try {
 			if ("unixSeconds".equals(conversion)) {
+				if (value == 0)
+					return "";
 				return formatUnixSeconds(value);
 			}
 			if ("unixSecondsLocal".equals(conversion)) {
+				if (value == 0)
+					return "";
 				return formatUnixSecondsLocal(value);
 			}
 			// calculate value; format the result
@@ -145,9 +149,13 @@ public class UnitFormat {
 	public String format(long value) {
 		try {
 			if ("unixSeconds".equals(conversion)) {
+				if (value == 0)
+					return "";
 				return formatUnixSeconds(value);
 			}
 			if ("unixSecondsLocal".equals(conversion)) {
+				if (value == 0)
+					return "";
 				return formatUnixSecondsLocal(value);
 			}
 			// calculate value; format the result
@@ -159,5 +167,25 @@ public class UnitFormat {
 		} catch (Exception e) {
 			return e.getClass().getSimpleName() + " " + e.getMessage();
 		}
+	}
+	
+	public DisplayHint getDisplayHint(long value) {
+		DisplayHint result = new DisplayHint();
+		result.activityState = DisplayHint.ActivityState.ACTIVE;
+		
+		if ("unixSeconds".equals(conversion)) {
+			DateTime utc = new DateTime(DateTimeZone.UTC);
+			// time up? inactive
+			if (utc.getMillis() / 1000 > value)
+				result.activityState = DisplayHint.ActivityState.INACTIVE;
+		}
+		if ("unixSecondsLocal".equals(conversion)) {
+			DateTime local = new DateTime();
+			// time up? inactive
+			if (local.getMillis() / 1000 > value)
+				result.activityState = DisplayHint.ActivityState.INACTIVE;
+		}
+		
+		return result;
 	}
 }
