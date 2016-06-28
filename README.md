@@ -3,6 +3,7 @@ OPDI
 
 Open Protocol for Device Interaction
 
+*Please note: Code in this repository is under active development*
 
 Welcome to the OPDI project. The Open Protocol for Device Interaction defines
 a communication protocol that can be used to interact with a variety of devices
@@ -15,7 +16,7 @@ This repository provides a number of reference and example implementations as
 well as related projects. The most interesting project is probably OPDID, a 
 home automation server that is based on key concepts and implementations
 of the OPDI protocol. Please see:
-https://github.com/leomeyer/OPDI/code/c/configs/opdid
+https://github.com/leomeyer/OPDI/blob/master/code/c/configs/opdid/doc/index.md
 
 OPDID also provides an HTML GUI and a JSON-RPC API. Example screenshot:
 
