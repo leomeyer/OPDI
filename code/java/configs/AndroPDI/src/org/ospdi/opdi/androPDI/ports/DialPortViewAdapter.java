@@ -11,10 +11,12 @@ import org.ospdi.opdi.ports.Port;
 import org.ospdi.opdi.protocol.DisconnectedException;
 import org.ospdi.opdi.protocol.PortAccessDeniedException;
 import org.ospdi.opdi.protocol.ProtocolException;
+import org.ospdi.opdi.units.DisplayHint;
 
 import android.app.Dialog;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -212,7 +214,14 @@ class DialPortViewAdapter implements IPortViewAdapter {
 		if (tvBottomtext != null) tvBottomtext.setText("");
 		if (tvMax != null) tvMax.setText("" + maxValue);
 		if (tvMin != null) tvMin.setText("" + minValue);
-		if (tvCur != null) tvCur.setText(dPort.getUnitFormat().format(position));
+		if (tvCur != null) {
+			tvCur.setText(dPort.getUnitFormat().format(position));
+			DisplayHint dh = dPort.getUnitFormat().getDisplayHint(position);
+			if (dh.activityState == DisplayHint.ActivityState.ACTIVE)
+				tvCur.setTextColor(Color.BLACK);
+			else
+				tvCur.setTextColor(Color.LTGRAY);
+		}
 
 		if (sbSeek != null) sbSeek.setOnSeekBarChangeListener(null);
 		if (sbSeek != null) sbSeek.setMax((int)maxValue - (int)minValue);
