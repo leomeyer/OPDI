@@ -686,14 +686,16 @@ var DialPort = Port.extend({
                     // draw history if available
                     if ((this.history != null) && this.history.values) {
                         var values = this.history.values.split(",");
-                        // determine minimum and maximum
+                        // determine minimum, maximum and total sum
                         var min = Number.MAX_VALUE;
                         var max = Number.MIN_VALUE;
+                        var totalSum = 0;
                         for (var i = 0; i < values.length; i++) {
                             if (Number(values[i]) < min)
                                 min = Number(values[i]);
                             if (Number(values[i]) > max)
                                 max = Number(values[i]);
+                            totalSum += Number(values[i]);
                         }
                         // history legend?
                         if (this.showHistoryLegend) {
@@ -715,6 +717,13 @@ var DialPort = Port.extend({
                                 var labelHeight = 10;
                                 minLabelStart = canvas.width - labelWidth - 1;
                                 ctx.fillText(label, minLabelStart, canvas.height - 3);
+                            }
+                            // average: top left
+                            if (values.length > 0) {
+                                var avg = totalSum / values.length;
+                                var label = "Ø " + this.getTextValue(avg);
+                                var labelHeight = 10;
+                                ctx.fillText(label, 1, labelHeight - 3);
                             }
                             // hourly lines
                             var totalSeconds = this.history.interval * this.history.maxCount;
