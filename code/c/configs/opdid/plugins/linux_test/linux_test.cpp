@@ -5,18 +5,22 @@
 
 #include "LinuxOPDID.h"
 
+namespace {
+
 class DigitalTestPort : public OPDI_DigitalPort {
 public:
 	DigitalTestPort();
 	virtual void setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 };
 
+}
+
 DigitalTestPort::DigitalTestPort() : OPDI_DigitalPort("PluginPort", "Linux Test Plugin Port", OPDI_PORTDIRCAP_OUTPUT, 0) {}
 
 void DigitalTestPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	OPDI_DigitalPort::setLine(line);
 
-	AbstractOPDID *opdid = (AbstractOPDID *)this->opdi;
+	AbstractOPDID* opdid = (AbstractOPDID*)this->opdi;
 	if (line == 0) {
 		opdid->logNormal("DigitalTestPort line set to Low");
 	} else {
@@ -27,27 +31,27 @@ void DigitalTestPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 class LinuxTestOPDIDPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener {
 
 protected:
-	AbstractOPDID *opdid;
+	AbstractOPDID* opdid;
 
 public:
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config);
+	virtual void setupPlugin(AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration* config);
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
 };
 
 
-void LinuxTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) {
+void LinuxTestOPDIDPlugin::setupPlugin(AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration* config) {
 	this->opdid = abstractOPDID;
 
-	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
+	Poco::Util::AbstractConfiguration* nodeConfig = config->createView(node);
 
 	// get port type
 	std::string portType = nodeConfig->getString("Type", "");
 
 	if (portType == "DigitalPort") {
 		// add emulated test port
-		DigitalTestPort *port = new DigitalTestPort();
+		DigitalTestPort* port = new DigitalTestPort();
 		abstractOPDID->configureDigitalPort(nodeConfig, port);
 		abstractOPDID->addPort(port);
 	} else
