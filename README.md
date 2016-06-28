@@ -39,6 +39,9 @@ as follows:
 	root
 		code
 			java						- contains the JAVA master implementation
+				common					- JAVA OPDI library
+				configs
+					AndroPDI			- Android master control program
 			c							- contains C and C++ implementations
 				common					- OPDI base library (C, and C++ wrappers)
 				configs					- actual slave and master implementations
