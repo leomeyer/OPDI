@@ -56,18 +56,19 @@ You can think of ports as internal variables of the system. Ports can also be ex
 
 There are different types of ports in OPDID. To be able to model automation behavior with ports you'll have to understand these different types of ports and their properties and functions. The basic properties of all types of ports are:
 
-	- A unique ID which is a text string preferably without blanks and special characters, for example "Window1"
-	- A "Hidden" flag which decides whether to display this port on a user interface or not
-	- An optional label and icon specification to display on a user interface (if the port is not hidden)
-	- An optional unit specification which determines value conversions, formatting etc.
-	- A "Readonly" flag which decides whether a user may change this port's value
-	- A "Persistent" flag which decides whether the state of this port is remembered permanently
-	- An optional group ID (ports can be ordered into hierarchical groups)
-	- A refresh mode that decides how state changes affect the connected user interfaces
-	- Some port specific flags and capabilities settings
-	- A freely assignable tag value
 
-All ports share these properties but their use may differ.
+ - A unique ID which is a text string preferably without blanks and special characters, for example "Window1"
+ - A "Hidden" flag which decides whether to display this port on a user interface or not
+ - An optional label and icon specification to display on a user interface (if the port is not hidden)
+ - An optional unit specification which determines value conversions, formatting etc.
+ - A "Readonly" flag which decides whether a user may change this port's value
+ - A "Persistent" flag which decides whether the state of this port is remembered permanently
+ - An optional group ID (ports can be ordered into hierarchical groups)
+ - A refresh mode that decides how state changes affect the connected user interfaces
+ - Some port specific flags and capabilities settings
+ - A freely assignable tag value
+
+All ports share these properties but their meaning or use may depend on the specific port type.
 
 Basically, ports are of five different types:
 
@@ -113,12 +114,12 @@ All available ports in OPDID are built on one of the above fundamental port type
 Logic Port
 ----------
 
-The Logic port allows you to process the state of one or more Digital ports by applying a logic function (OR, AND, INVERT, ATLEAST(n), ATMOST(n), EXACT(n) and their inversions). The result can be sent to other Digital ports. A Logic port is itself a Digital port; it will do its processing only if its Line is High (i. e. active).
+The Logic port allows you to process the state of one or more Digital ports by applying a logic function (OR, AND, XOR, ATLEAST(n), ATMOST(n), EXACT(n) and their inversions). The result can be sent to other Digital ports. A Logic port is itself a Digital port; it will do its processing only if its Line is High (i. e. active).
 
 Pulse Port
 ----------
 
-A Pulse port is a Digital port that can generate periodic pulses with a defined period and duty cycle. Period and duty cycle can be detemined from other port's values at runtime. The output can be sent to Digital ports (inverted and non-inverted). Its maximum frequency depends on your system but in most cases would not exceed 100 Hz, so it's not really suitable for dimming lights or LEDs like a "real" PWM. It should be used for blinking lights (status indicators) or periodic actions that do not repeat very often.
+A Pulse port is a Digital port that can generate periodic pulses with a defined period and duty cycle. Period and duty cycle can be determined from other port's values at runtime. The output can be sent to Digital ports (inverted and non-inverted). Its maximum frequency depends on your system but in most cases would not exceed 100 Hz, so it's not really suitable for dimming lights or LEDs like a "real" PWM. It should be used for blinking lights (status indicators) or periodic actions that do not repeat very quickly.
 
 Selector Port
 -------------
@@ -128,17 +129,17 @@ A Selector port is a bridge between a Digital port and a designated Select port.
 Error Detector Port
 -------------------
 
-An Error Detector is a Digital Port that is High when at least one of a list of ports has an error. The different types of errors of ports, and what it exactly means if a port has an error, is explained below.
+An Error Detector is a Digital Port that is High when at least one of a list of ports has an error. The different types of errors of ports, and what it exactly means if a port has an error, are explained below.
 
 Fader Port
 ----------
 
-A Fader port can fade Analog or Dial ports in or out. You can specify a number of options such as the fader mode, the start and end values, and what happens when the Fader port is switched off. The Fader port is itself a Digital port, and it will begin its fading operation at the moment its state is set to High.
+A Fader port can fade Analog or Dial ports in or out. You can specify a number of options such as the fader mode (linear or exponential), the start and end values, and what happens when the Fader port is switched off. The Fader port is itself a Digital port, and it will begin its fading operation at the moment its state is set to High.
 
 Scene Select Port
 -----------------
 
-A Scene Select port lets you select one of several pre-defined so-called scenes. A scene is just a specification of the states of some ports in the system. It is specified as a configuration file that is being applied when the corresponding option is selected.
+A Scene Select port lets you select one of several pre-defined so-called scenes. A scene is just a specification of the states of some ports in the system. These can be defined in a configuration file that is being applied when the corresponding option is selected.
 
 File Input Port
 ---------------
@@ -150,7 +151,7 @@ The File Input port is an important port which allows the OPDID automation to re
 Exec Port
 ---------
 
-The Exec port is a Digital port which, when it is set to High, executes a predefined operating system command. As a File Input port provides input to an OPDID instance, the Exec port allows OPDID to interact with the environment in a generic way; for example, send an email, execute maintenance scripts, or interact with proprietary hardware via command line tools. 
+The Exec port is a Digital port which, when it is set to High, executes a predefined operating system command. As a File Input port provides input to an OPDID instance, the Exec port allows OPDID to interact with the environment in a generic way; for example, send an email, execute maintenance scripts, or interact with proprietary hardware via command line tools. The Exec port can pass information about the current state of ports to the called program.
 
 Aggregator Port
 ---------------
@@ -187,16 +188,16 @@ The basic port types do never signal an error. This makes sense if you think of 
 There are two main functions that port errors have:
 
 
-	- Signal the user (on a user interface) that something is not working as expected
-	- Tell dependent ports that something is wrong
+ - Signal the user (on a user interface) that something is not working as expected
+ - Tell dependent ports that something is wrong
 	
-The user interfaces support port errors by displaying an error symbol, hiding the port's value (because it is not available) and perhaps displaying an error message. If ports access the values of a port that has an error the reaction depends on the port's implementation or sometimes configuration. There are a variety of options:
+The user interfaces indicate port errors by displaying an error symbol, hiding the port's value (because it is not available) and perhaps displaying an error message. If ports access the values of a port that has an error the reaction depends on the port's implementation or sometimes configuration. There are a variety of options:
 
 
-	- Ignore the error and pretend that all is well
-	- Use a default value for calculations instead of the port's "real" value
-	- Enter an error state as well
-	- Output diagnostic information
+ - Ignore the error and pretend that all is well
+ - Use a default value for calculations instead of the port's "real" value
+ - Enter an error state as well
+ - Output diagnostic information
 	
 How a port reacts to other ports' errors is specified in the port's documentation.
 
@@ -206,20 +207,20 @@ Port Refreshes
 Refreshing port information is another important topic in OPDID. It serves two main purposes:
 
 
-	- A user interface must be updated if the value of an internal port changes
-	- Ports may regularly need to query external components to update their internal state
+ - A user interface must be updated if the value of an internal port changes
+ - Ports may regularly need to query external components to update their internal state
 	
 
 Persistence
 ===========
 
-Persistence is an important topic in OPDID. It allows you to store the state of certain ports in a separate configuration file. The state in this "dynamic" configuration file then takes precedence over the specifications in the "static" configuration files when the port states are initialized.
+Persistence deals with saving port state permanently. It allows you to store the state of certain ports in a separate configuration file. The state in this "dynamic" configuration file then takes precedence over the specifications in the "static" configuration files when the port states are initialized at startup. This effectively restores the last known state of the ports and is especially useful for user preferences like timer and other automation settings.
 
 Ports update the persistent configuration file whenever some relevant state changes occur. For a Digital port for example, this is the change of Mode and Line. For a Dial port it is the change of its value.
 
 Persistence is active if the General section of the configuration specifies a file in the PersistentConfig setting, and the Persistent setting of a port is set to true.
 
-Aggregator ports (special ports that collect historic values and perform calculations on them) can also persist their history in the persistent configuration file. This allows them not to lose their history over restarts of the server. In addition to persisting their history whenever a new value is collected they also persist it on shutdown of the server. Also, they store a timestamp to determine whether the history data is outdated or not. When the data is being read the timestamp must be within the specified interval period for the values to be accepted. There are two caveats, however: On shutdown, the values are saved with the current timestamp regardless of when the last value has been collected. When the data is being loaded, collection resumes with the persisted timestamp as start of the interval. This may cause the last persisted value and the next value being collected to have an interval that is larger than the specified interval. Second, the timestamp may not have a defined starting point, meaning that time can start running at server startup. This may cause a loss of historic data over server restarts because the new timestamps may be lower than those in the persisted configuration. This behavior may be OS-dependent.
+Aggregator ports (special ports that collect historic values and perform calculations on them) can also persist their history in the persistent configuration file. This allows them not to lose their history over restarts of the OPDID service. In addition to persisting their history whenever a new value is collected they also persist it on shutdown of the OPDID service. Also, they store a timestamp to determine whether the history data is outdated or not. When the data is being read the timestamp must be within the specified interval period for the values to be accepted. There are two caveats, however: On shutdown, the values are saved with the current timestamp regardless of when the last value has been collected. When the data is being loaded, collection resumes with the persisted timestamp as start of the interval. This may cause the last persisted value and the next value being collected to have an interval that is larger than the specified interval. Second, the timestamp may not have a defined starting point, meaning that time can start running at server startup. This may cause a loss of historic data over server restarts because the new timestamps may be lower than those in the persisted configuration. This behavior may be OS-dependent.
 
 Automatic aggregator ports, i. e. those that are automatically generated when a Dial port specifies a History setting, are automatically persisted.
 
