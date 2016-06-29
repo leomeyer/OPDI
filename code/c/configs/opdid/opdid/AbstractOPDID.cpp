@@ -31,7 +31,7 @@
 #define DEFAULT_IDLETIMEOUT_MS	180000
 #define DEFAULT_TCP_PORT		13110
 
-#define OPDID_SUPPORTED_PROTOCOLS	"EP,BP"
+#define SUPPORTED_PROTOCOLS	"EP,BP"
 
 // global device flags
 uint16_t opdi_device_flags = 0;
@@ -53,6 +53,8 @@ unsigned char opdi_encryption_buffer_2[OPDI_ENCRYPTION_BLOCKSIZE];
 void protocol_callback(uint8_t state) {
 	Opdi->protocolCallback(state);
 }
+
+namespace opdid {
 
 AbstractOPDID::AbstractOPDID(void) {
 	this->majorVersion = OPDID_MAJOR_VERSION;
@@ -587,7 +589,7 @@ void AbstractOPDID::configureAuthentication(Poco::Util::AbstractConfiguration* c
 }
 
 /** Reads common properties from the configuration and configures the port group. */
-void AbstractOPDID::configureGroup(Poco::Util::AbstractConfiguration* groupConfig, OPDI_PortGroup* group, int defaultFlags) {
+void AbstractOPDID::configureGroup(Poco::Util::AbstractConfiguration* groupConfig, opdi::PortGroup* group, int defaultFlags) {
 	// the default label is the port ID
 	std::string portLabel = this->getConfigString(groupConfig, "Label", group->getID(), false);
 	group->setLabel(portLabel.c_str());
@@ -615,7 +617,7 @@ void AbstractOPDID::configureGroup(Poco::Util::AbstractConfiguration* groupConfi
 void AbstractOPDID::setupGroup(Poco::Util::AbstractConfiguration* groupConfig, const std::string& group) {
 	this->logVerbose("Setting up group: " + group);
 
-	OPDI_PortGroup* portGroup = new OPDI_PortGroup(group.c_str());
+	opdi::PortGroup* portGroup = new opdi::PortGroup(group.c_str());
 	this->configureGroup(groupConfig, portGroup, 0);
 
 	this->addPortGroup(portGroup);
@@ -714,7 +716,7 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration* config, Poco
 	}
 }
 
-void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration* portConfig, OPDI_Port* port, int defaultFlags) {
+void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration* portConfig, opdi::Port* port, int defaultFlags) {
 	// ports can be hidden if allowed
 	if (this->allowHiddenPorts)
 		port->setHidden(portConfig->getBool("Hidden", false));
@@ -750,18 +752,18 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration* portConfig,
 
 	std::string refreshMode = this->getConfigString(portConfig, "RefreshMode", "", false);
 	if (refreshMode == "Off") {
-		port->setRefreshMode(OPDI_Port::RefreshMode::REFRESH_OFF);
+		port->setRefreshMode(opdi::Port::RefreshMode::REFRESH_OFF);
 	} else
 	if (refreshMode == "Periodic") {
-		port->setRefreshMode(OPDI_Port::RefreshMode::REFRESH_PERIODIC);
+		port->setRefreshMode(opdi::Port::RefreshMode::REFRESH_PERIODIC);
 	} else
 	if (refreshMode == "Auto") {
-		port->setRefreshMode(OPDI_Port::RefreshMode::REFRESH_AUTO);
+		port->setRefreshMode(opdi::Port::RefreshMode::REFRESH_AUTO);
 	} else
 		if (refreshMode != "")
 			throw Poco::DataException("Unknown RefreshMode specified; expected 'Off', 'Periodic' or 'Auto': " + refreshMode);
 
-	if (port->getRefreshMode() == OPDI_Port::RefreshMode::REFRESH_PERIODIC) {
+	if (port->getRefreshMode() == opdi::Port::RefreshMode::REFRESH_PERIODIC) {
 		int time = portConfig->getInt("RefreshTime", -1);
 		if (time >= 0) {
 			port->setPeriodicRefreshTime(time);
@@ -789,7 +791,7 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration* portConfig,
 	port->orderID = portConfig->getInt("OrderID", -1);
 }
 
-void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration* portConfig, OPDI_DigitalPort* port, bool stateOnly) {
+void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration* portConfig, opdi::DigitalPort* port, bool stateOnly) {
 	if (!stateOnly)
 		this->configurePort(portConfig, port, 0);
 
@@ -819,13 +821,13 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration* port
 void AbstractOPDID::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up emulated digital port: " + port);
 
-	OPDI_DigitalPort* digPort = new OPDI_DigitalPort(port.c_str());
+	opdi::DigitalPort* digPort = new opdi::DigitalPort(port.c_str());
 	this->configureDigitalPort(portConfig, digPort);
 
 	this->addPort(digPort);
 }
 
-void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration* portConfig, OPDI_AnalogPort* port, bool stateOnly) {
+void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration* portConfig, opdi::AnalogPort* port, bool stateOnly) {
 	if (!stateOnly)
 		this->configurePort(portConfig, port,
 			// default flags: assume everything is supported
@@ -864,13 +866,13 @@ void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration* portC
 void AbstractOPDID::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up emulated analog port: " + port);
 
-	OPDI_AnalogPort* anaPort = new OPDI_AnalogPort(port.c_str());
+	opdi::AnalogPort* anaPort = new opdi::AnalogPort(port.c_str());
 	this->configureAnalogPort(portConfig, anaPort);
 
 	this->addPort(anaPort);
 }
 
-void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, OPDI_SelectPort* port, bool stateOnly) {
+void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, opdi::SelectPort* port, bool stateOnly) {
 	if (!stateOnly) {
 		this->configurePort(portConfig, port, 0);
 
@@ -934,13 +936,13 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration* portC
 void AbstractOPDID::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
 	this->logVerbose("Setting up emulated select port: " + port);
 
-	OPDI_SelectPort* selPort = new OPDI_SelectPort(port.c_str());
+	opdi::SelectPort* selPort = new opdi::SelectPort(port.c_str());
 	this->configureSelectPort(portConfig, parentConfig, selPort);
 
 	this->addPort(selPort);
 }
 
-void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portConfig, OPDI_DialPort* port, bool stateOnly) {
+void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portConfig, opdi::DialPort* port, bool stateOnly) {
 	if (!stateOnly) {
 		this->configurePort(portConfig, port, 0);
 
@@ -961,7 +963,7 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 		if (!history.empty()) {
 			// create aggregator port with internal ID
 			std::string aggPortID = port->ID() + "_OPDIDAutoAggregator";
-			OPDID_AggregatorPort* aggPort = new OPDID_AggregatorPort(this, aggPortID.c_str());
+			AggregatorPort* aggPort = new AggregatorPort(this, aggPortID.c_str());
 			aggPort->sourcePortID = port->ID();
 			// default interval is one minute
 			aggPort->queryInterval = 60;
@@ -985,7 +987,7 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 			// if a history port is used and the RefreshMode has not been set manually, the RefreshMode is set to Automatic
 			// this provides expected behavior without the need to specify RefreshMode for the port manually.
 			if (portConfig->getString("RefreshMode", "").empty())
-				port->setRefreshMode(OPDI_Port::RefreshMode::REFRESH_AUTO);
+				port->setRefreshMode(opdi::Port::RefreshMode::REFRESH_AUTO);
 		}
 	}
 
@@ -994,7 +996,7 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 	int64_t position = stateConfig->getInt64("Position", port->getMin());
 	// set port error to invalid if the value is out of range
 	if ((position < port->getMin()) || (position > port->getMax()))
-		port->setError(OPDI_Port::Error::VALUE_NOT_AVAILABLE);
+		port->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
 		//throw Poco::DataException("Wrong dial port setting: Position is out of range: " + to_string(position));
 	else
 		port->setPosition(position);
@@ -1003,20 +1005,20 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 void AbstractOPDID::setupEmulatedDialPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up emulated dial port: " + port);
 
-	OPDI_DialPort* dialPort = new OPDI_DialPort(port.c_str());
+	opdi::DialPort* dialPort = new opdi::DialPort(port.c_str());
 	this->configureDialPort(portConfig, dialPort);
 
 	this->addPort(dialPort);
 }
 
-void AbstractOPDID::configureStreamingPort(Poco::Util::AbstractConfiguration* portConfig, OPDI_StreamingPort* port) {
+void AbstractOPDID::configureStreamingPort(Poco::Util::AbstractConfiguration* portConfig, opdi::StreamingPort* port) {
 	this->configurePort(portConfig, port, 0);
 }
 
 void AbstractOPDID::setupSerialStreamingPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up serial streaming port: " + port);
 
-	OPDID_SerialStreamingPort* ssPort = new OPDID_SerialStreamingPort(this, port.c_str());
+	SerialStreamingPort* ssPort = new SerialStreamingPort(this, port.c_str());
 	ssPort->configure(portConfig);
 
 	this->addPort(ssPort);
@@ -1025,7 +1027,7 @@ void AbstractOPDID::setupSerialStreamingPort(Poco::Util::AbstractConfiguration* 
 void AbstractOPDID::setupLoggerPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up Logger port: " + port);
 
-	OPDID_LoggerPort* logPort = new OPDID_LoggerPort(this, port.c_str());
+	LoggerPort* logPort = new LoggerPort(this, port.c_str());
 	logPort->configure(portConfig);
 
 	this->addPort(logPort);
@@ -1034,7 +1036,7 @@ void AbstractOPDID::setupLoggerPort(Poco::Util::AbstractConfiguration* portConfi
 void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up LogicPort: " + port);
 
-	OPDID_LogicPort* dlPort = new OPDID_LogicPort(this, port.c_str());
+	LogicPort* dlPort = new LogicPort(this, port.c_str());
 	dlPort->configure(portConfig);
 
 	this->addPort(dlPort);
@@ -1043,7 +1045,7 @@ void AbstractOPDID::setupLogicPort(Poco::Util::AbstractConfiguration* portConfig
 void AbstractOPDID::setupFaderPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up FaderPort: " + port);
 
-	OPDID_FaderPort* fPort = new OPDID_FaderPort(this, port.c_str());
+	FaderPort* fPort = new FaderPort(this, port.c_str());
 	fPort->configure(portConfig);
 
 	this->addPort(fPort);
@@ -1052,7 +1054,7 @@ void AbstractOPDID::setupFaderPort(Poco::Util::AbstractConfiguration* portConfig
 void AbstractOPDID::setupExecPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up ExecPort: " + port);
 
-	OPDID_ExecPort* ePort = new OPDID_ExecPort(this, port.c_str());
+	ExecPort* ePort = new ExecPort(this, port.c_str());
 	ePort->configure(portConfig);
 
 	this->addPort(ePort);
@@ -1061,7 +1063,7 @@ void AbstractOPDID::setupExecPort(Poco::Util::AbstractConfiguration* portConfig,
 void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up PulsePort: " + port);
 
-	OPDID_PulsePort* pulsePort = new OPDID_PulsePort(this, port.c_str());
+	PulsePort* pulsePort = new PulsePort(this, port.c_str());
 	pulsePort->configure(portConfig);
 
 	this->addPort(pulsePort);
@@ -1070,7 +1072,7 @@ void AbstractOPDID::setupPulsePort(Poco::Util::AbstractConfiguration* portConfig
 void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up SelectorPort: " + port);
 
-	OPDID_SelectorPort* selectorPort = new OPDID_SelectorPort(this, port.c_str());
+	SelectorPort* selectorPort = new SelectorPort(this, port.c_str());
 	selectorPort->configure(portConfig);
 
 	this->addPort(selectorPort);
@@ -1080,7 +1082,7 @@ void AbstractOPDID::setupSelectorPort(Poco::Util::AbstractConfiguration* portCon
 void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up Expression: " + port);
 
-	OPDID_ExpressionPort* expressionPort = new OPDID_ExpressionPort(this, port.c_str());
+	ExpressionPort* expressionPort = new ExpressionPort(this, port.c_str());
 	expressionPort->configure(portConfig);
 
 	this->addPort(expressionPort);
@@ -1090,7 +1092,7 @@ void AbstractOPDID::setupExpressionPort(Poco::Util::AbstractConfiguration* portC
 void AbstractOPDID::setupTimerPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
 	this->logVerbose("Setting up Timer: " + port);
 
-	OPDID_TimerPort* timerPort = new OPDID_TimerPort(this, port.c_str());
+	TimerPort* timerPort = new TimerPort(this, port.c_str());
 	timerPort->configure(portConfig, parentConfig);
 
 	this->addPort(timerPort);
@@ -1099,7 +1101,7 @@ void AbstractOPDID::setupTimerPort(Poco::Util::AbstractConfiguration* portConfig
 void AbstractOPDID::setupErrorDetectorPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up ErrorDetector: " + port);
 
-	OPDID_ErrorDetectorPort* edPort = new OPDID_ErrorDetectorPort(this, port.c_str());
+	ErrorDetectorPort* edPort = new ErrorDetectorPort(this, port.c_str());
 	edPort->configure(portConfig);
 
 	this->addPort(edPort);
@@ -1108,7 +1110,7 @@ void AbstractOPDID::setupErrorDetectorPort(Poco::Util::AbstractConfiguration* po
 void AbstractOPDID::setupSceneSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
 	this->logVerbose("Setting up SceneSelect: " + port);
 
-	OPDID_SceneSelectPort* ssPort = new OPDID_SceneSelectPort(this, port.c_str());
+	SceneSelectPort* ssPort = new SceneSelectPort(this, port.c_str());
 	ssPort->configure(portConfig, parentConfig);
 
 	this->addPort(ssPort);
@@ -1117,7 +1119,7 @@ void AbstractOPDID::setupSceneSelectPort(Poco::Util::AbstractConfiguration* port
 void AbstractOPDID::setupFileInputPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
 	this->logVerbose("Setting up FileInput: " + port);
 
-	OPDID_FileInputPort* fiPort = new OPDID_FileInputPort(this, port.c_str());
+	FileInputPort* fiPort = new FileInputPort(this, port.c_str());
 	fiPort->configure(portConfig, parentConfig);
 
 	this->addPort(fiPort);
@@ -1126,7 +1128,7 @@ void AbstractOPDID::setupFileInputPort(Poco::Util::AbstractConfiguration* portCo
 void AbstractOPDID::setupAggregatorPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
 	this->logVerbose("Setting up Aggregator: " + port);
 
-	OPDID_AggregatorPort* agPort = new OPDID_AggregatorPort(this, port.c_str());
+	AggregatorPort* agPort = new AggregatorPort(this, port.c_str());
 	agPort->configure(portConfig, parentConfig);
 
 	this->addPort(agPort);
@@ -1135,7 +1137,7 @@ void AbstractOPDID::setupAggregatorPort(Poco::Util::AbstractConfiguration* portC
 void AbstractOPDID::setupTriggerPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up Trigger: " + port);
 
-	OPDID_TriggerPort* tPort = new OPDID_TriggerPort(this, port.c_str());
+	TriggerPort* tPort = new TriggerPort(this, port.c_str());
 	tPort->configure(portConfig);
 
 	this->addPort(tPort);
@@ -1144,7 +1146,7 @@ void AbstractOPDID::setupTriggerPort(Poco::Util::AbstractConfiguration* portConf
 void AbstractOPDID::setupCounterPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
 	this->logVerbose("Setting up Counter: " + port);
 
-	OPDID_CounterPort* cPort = new OPDID_CounterPort(this, port.c_str());
+	CounterPort* cPort = new CounterPort(this, port.c_str());
 	cPort->configure(portConfig);
 
 	this->addPort(cPort);
@@ -1459,7 +1461,7 @@ std::string AbstractOPDID::getExtendedDeviceInfo(void) {
 	return this->deviceInfo;
 }
 
-uint8_t AbstractOPDID::refresh(OPDI_Port** ports) {
+uint8_t AbstractOPDID::refresh(opdi::Port** ports) {
 	// base class functionality handles a connected master
 	if (this->canSend) {
 		uint8_t result = OPDI::refresh(ports);
@@ -1474,7 +1476,7 @@ uint8_t AbstractOPDID::refresh(OPDI_Port** ports) {
 			return OPDI_STATUS_OK;
 		}
 
-		OPDI_Port* port = ports[0];
+		opdi::Port* port = ports[0];
 		uint8_t i = 0;
 		while (port != nullptr) {
 			this->portRefreshed(this, port);
@@ -1494,7 +1496,7 @@ void AbstractOPDID::savePersistentConfig() {
 	this->persistentConfig->save(this->persistentConfigFile);
 }
 
-void AbstractOPDID::persist(OPDI_Port* port) {
+void AbstractOPDID::persist(opdi::Port* port) {
 	if (this->persistentConfig == nullptr) {
 		this->logWarning(std::string("Unable to persist state for port ") + port->getID() + ": No configuration file specified; use 'PersistentConfig' in the General configuration section");
 		return;
@@ -1507,7 +1509,7 @@ void AbstractOPDID::persist(OPDI_Port* port) {
 		if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
 			uint8_t mode;
 			uint8_t line;
-			((OPDI_DigitalPort*)port)->getState(&mode, &line);
+			((opdi::DigitalPort*)port)->getState(&mode, &line);
 			std::string modeStr = "";
 			if (mode == OPDI_DIGITAL_MODE_INPUT_FLOATING)
 				modeStr = "Input";
@@ -1537,7 +1539,7 @@ void AbstractOPDID::persist(OPDI_Port* port) {
 			uint8_t resolution;
 			uint8_t reference;
 			int32_t value;
-			((OPDI_AnalogPort*)port)->getState(&mode, &resolution, &reference, &value);
+			((opdi::AnalogPort*)port)->getState(&mode, &resolution, &reference, &value);
 			std::string modeStr = "";
 			if (mode == OPDI_ANALOG_MODE_INPUT)
 				modeStr = "Input";
@@ -1557,14 +1559,14 @@ void AbstractOPDID::persist(OPDI_Port* port) {
 		} else
 		if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
 			int64_t position;
-			((OPDI_DialPort*)port)->getState(&position);
+			((opdi::DialPort*)port)->getState(&position);
 
 			this->logDebug("Writing port state for: " + port->ID() + "; position = " + this->to_string(position));
 			this->persistentConfig->setInt64(port->ID() + ".Position", position);
 		} else
 		if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
 			uint16_t position;
-			((OPDI_SelectPort*)port)->getState(&position);
+			((opdi::SelectPort*)port)->getState(&position);
 
 			this->logDebug("Writing port state for: " + port->ID() + "; position = " + this->to_string(position));
 			this->persistentConfig->setInt(port->ID() + ".Position", position);
@@ -1579,28 +1581,28 @@ void AbstractOPDID::persist(OPDI_Port* port) {
 	this->savePersistentConfig();
 }
 
-std::string AbstractOPDID::getPortStateStr(OPDI_Port* port) const {
+std::string AbstractOPDID::getPortStateStr(opdi::Port* port) const {
 	try {
 		if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
 			uint8_t line;
 			uint8_t mode;
-			((OPDI_DigitalPort*)port)->getState(&mode, &line);
+			((opdi::DigitalPort*)port)->getState(&mode, &line);
 			char c[] = " ";
 			c[0] = line + '0';
 			return std::string(c);
 		}
 		if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
-			double value = ((OPDI_AnalogPort*)port)->getRelativeValue();
+			double value = ((opdi::AnalogPort*)port)->getRelativeValue();
 			return this->to_string(value);
 		}
 		if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
 			uint16_t position;
-			((OPDI_SelectPort*)port)->getState(&position);
+			((opdi::SelectPort*)port)->getState(&position);
 			return this->to_string(position);
 		}
 		if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
 			int64_t position;
-			((OPDI_DialPort*)port)->getState(&position);
+			((opdi::DialPort*)port)->getState(&position);
 			return this->to_string(position);
 		}
 		// unknown port type
@@ -1611,7 +1613,7 @@ std::string AbstractOPDID::getPortStateStr(OPDI_Port* port) const {
 	}
 }
 
-double AbstractOPDID::getPortValue(OPDI_Port* port) const {
+double AbstractOPDID::getPortValue(opdi::Port* port) const {
 	double value = 0;
 
 	// evaluation depends on port type
@@ -1619,23 +1621,23 @@ double AbstractOPDID::getPortValue(OPDI_Port* port) const {
 		// digital port: Low = 0; High = 1
 		uint8_t mode;
 		uint8_t line;
-		((OPDI_DigitalPort*)port)->getState(&mode, &line);
+		((opdi::DigitalPort*)port)->getState(&mode, &line);
 		value = line;
 	} else
 	if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
 		// analog port: relative value (0..1)
-		value = ((OPDI_AnalogPort*)port)->getRelativeValue();
+		value = ((opdi::AnalogPort*)port)->getRelativeValue();
 	} else
 	if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
 		// dial port: absolute value
 		int64_t position;
-		((OPDI_DialPort*)port)->getState(&position);
+		((opdi::DialPort*)port)->getState(&position);
 		value = (double)position;
 	} else
 	if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
 		// select port: current position number
 		uint16_t position;
-		((OPDI_SelectPort*)port)->getState(&position);
+		((opdi::SelectPort*)port)->getState(&position);
 		value = position;
 	} else
 		// port type not supported
@@ -1652,6 +1654,8 @@ void AbstractOPDID::getEnvironment(std::map<std::string, std::string>& mapToFill
 	mapToFill.insert(this->environment.begin(), this->environment.end());
 }
 
+}		// namespace opdid
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The following functions implement the glue code between C and C++.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1665,7 +1669,7 @@ uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char* buffer, siz
 	case OPDI_FUNCTION_SET_MASTER_NAME:
 		return Opdi->setMasterName(buffer);
 	case OPDI_FUNCTION_GET_SUPPORTED_PROTOCOLS:
-		strncpy(buffer, OPDID_SUPPORTED_PROTOCOLS, bufLength);
+		strncpy(buffer, SUPPORTED_PROTOCOLS, bufLength);
 		break;
 	case OPDI_FUNCTION_GET_ENCODING:
 		strncpy(buffer, Opdi->getEncoding().c_str(), bufLength);
@@ -1714,7 +1718,7 @@ uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char* buffer, siz
  *
  */
 uint8_t opdi_debug_msg(const char* message, uint8_t direction) {
-	if (Opdi->logVerbosity < AbstractOPDID::DEBUG)
+	if (Opdi->logVerbosity < opdid::AbstractOPDID::DEBUG)
 		return OPDI_STATUS_OK;
 	std::string dirChar = "-";
 	if (direction == OPDI_DIR_INCOMING)
@@ -1738,7 +1742,7 @@ uint8_t opdi_debug_msg(const char* message, uint8_t direction) {
 uint8_t opdi_get_digital_port_state(opdi_Port* port, char mode[], char line[]) {
 	uint8_t dMode;
 	uint8_t dLine;
-	OPDI_DigitalPort* dPort = (OPDI_DigitalPort*)Opdi->findPort(port);
+	opdi::DigitalPort* dPort = (opdi::DigitalPort*)Opdi->findPort(port);
 	if (dPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
@@ -1746,18 +1750,18 @@ uint8_t opdi_get_digital_port_state(opdi_Port* port, char mode[], char line[]) {
 		dPort->getState(&dMode, &dLine);
 		mode[0] = '0' + dMode;
 		line[0] = '0' + dLine;
-	} catch (OPDI_Port::ValueUnavailable) {
+	} catch (opdi::Port::ValueUnavailable) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::ValueExpired) {
+	} catch (opdi::Port::ValueExpired) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::PortError &pe) {
+	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1767,7 +1771,7 @@ uint8_t opdi_get_digital_port_state(opdi_Port* port, char mode[], char line[]) {
 uint8_t opdi_set_digital_port_line(opdi_Port* port, const char line[]) {
 	uint8_t dLine;
 
-	OPDI_DigitalPort* dPort = (OPDI_DigitalPort*)Opdi->findPort(port);
+	opdi::DigitalPort* dPort = (opdi::DigitalPort*)Opdi->findPort(port);
 	if (dPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
@@ -1779,11 +1783,11 @@ uint8_t opdi_set_digital_port_line(opdi_Port* port, const char line[]) {
 	else
 		dLine = 0;
 	try {
-		dPort->setLine(dLine, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
-	} catch (OPDI_Port::PortError &pe) {
+		dPort->setLine(dLine, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1793,7 +1797,7 @@ uint8_t opdi_set_digital_port_line(opdi_Port* port, const char line[]) {
 uint8_t opdi_set_digital_port_mode(opdi_Port* port, const char mode[]) {
 	uint8_t dMode;
 
-	OPDI_DigitalPort* dPort = (OPDI_DigitalPort*)Opdi->findPort(port);
+	opdi::DigitalPort* dPort = (opdi::DigitalPort*)Opdi->findPort(port);
 	if (dPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
@@ -1806,11 +1810,11 @@ uint8_t opdi_set_digital_port_mode(opdi_Port* port, const char mode[]) {
 		// mode not supported
 		return OPDI_PROTOCOL_ERROR;
 	try {
-		dPort->setMode(dMode, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
-	} catch (OPDI_Port::PortError &pe) {
+		dPort->setMode(dMode, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1826,24 +1830,24 @@ uint8_t opdi_get_analog_port_state(opdi_Port* port, char mode[], char res[], cha
 	uint8_t aRef;
 	uint8_t aRes;
 
-	OPDI_AnalogPort* aPort = (OPDI_AnalogPort*)Opdi->findPort(port);
+	opdi::AnalogPort* aPort = (opdi::AnalogPort*)Opdi->findPort(port);
 	if (aPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	try {
 		aPort->getState(&aMode, &aRes, &aRef, value);
-	} catch (OPDI_Port::ValueUnavailable) {
+	} catch (opdi::Port::ValueUnavailable) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::ValueExpired) {
+	} catch (opdi::Port::ValueExpired) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::PortError &pe) {
+	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1855,7 +1859,7 @@ uint8_t opdi_get_analog_port_state(opdi_Port* port, char mode[], char res[], cha
 }
 
 uint8_t opdi_set_analog_port_value(opdi_Port* port, int32_t value) {
-	OPDI_AnalogPort* aPort = (OPDI_AnalogPort*)Opdi->findPort(port);
+	opdi::AnalogPort* aPort = (opdi::AnalogPort*)Opdi->findPort(port);
 	if (aPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
@@ -1863,11 +1867,11 @@ uint8_t opdi_set_analog_port_value(opdi_Port* port, int32_t value) {
 		return OPDI_PORT_ACCESS_DENIED;
 
 	try {
-		aPort->setValue(value, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
-	} catch (OPDI_Port::PortError &pe) {
+		aPort->setValue(value, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1877,7 +1881,7 @@ uint8_t opdi_set_analog_port_value(opdi_Port* port, int32_t value) {
 uint8_t opdi_set_analog_port_mode(opdi_Port* port, const char mode[]) {
 	uint8_t aMode;
 
-	OPDI_AnalogPort* aPort = (OPDI_AnalogPort*)Opdi->findPort(port);
+	opdi::AnalogPort* aPort = (opdi::AnalogPort*)Opdi->findPort(port);
 	if (aPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
@@ -1891,11 +1895,11 @@ uint8_t opdi_set_analog_port_mode(opdi_Port* port, const char mode[]) {
 		return OPDI_PORT_ACCESS_DENIED;
 
 	try {
-		aPort->setMode(aMode, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
-	} catch (OPDI_Port::PortError &pe) {
+		aPort->setMode(aMode, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1904,7 +1908,7 @@ uint8_t opdi_set_analog_port_mode(opdi_Port* port, const char mode[]) {
 
 uint8_t opdi_set_analog_port_resolution(opdi_Port* port, const char res[]) {
 	uint8_t aRes;
-	OPDI_AnalogPort* aPort = (OPDI_AnalogPort*)Opdi->findPort(port);
+	opdi::AnalogPort* aPort = (opdi::AnalogPort*)Opdi->findPort(port);
 	if (aPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
@@ -1915,11 +1919,11 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port* port, const char res[]) {
 		return OPDI_PROTOCOL_ERROR;
 
 	try {
-		aPort->setResolution(aRes, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
-	} catch (OPDI_Port::PortError &pe) {
+		aPort->setResolution(aRes, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1928,7 +1932,7 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port* port, const char res[]) {
 
 uint8_t opdi_set_analog_port_reference(opdi_Port* port, const char ref[]) {
 	uint8_t aRef;
-	OPDI_AnalogPort* aPort = (OPDI_AnalogPort*)Opdi->findPort(port);
+	opdi::AnalogPort* aPort = (opdi::AnalogPort*)Opdi->findPort(port);
 	if (aPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
@@ -1939,11 +1943,11 @@ uint8_t opdi_set_analog_port_reference(opdi_Port* port, const char ref[]) {
 		return OPDI_PROTOCOL_ERROR;
 
 	try {
-		aPort->setReference(aRef, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
-	} catch (OPDI_Port::PortError &pe) {
+		aPort->setReference(aRef, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1955,24 +1959,24 @@ uint8_t opdi_set_analog_port_reference(opdi_Port* port, const char ref[]) {
 #ifndef OPDI_NO_SELECT_PORTS
 
 uint8_t opdi_get_select_port_state(opdi_Port* port, uint16_t* position) {
-	OPDI_SelectPort* sPort = (OPDI_SelectPort*)Opdi->findPort(port);
+	opdi::SelectPort* sPort = (opdi::SelectPort*)Opdi->findPort(port);
 	if (sPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	try {
 		sPort->getState(position);
-	} catch (OPDI_Port::ValueUnavailable) {
+	} catch (opdi::Port::ValueUnavailable) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::ValueExpired) {
+	} catch (opdi::Port::ValueExpired) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::PortError &pe) {
+	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1980,7 +1984,7 @@ uint8_t opdi_get_select_port_state(opdi_Port* port, uint16_t* position) {
 }
 
 uint8_t opdi_set_select_port_position(opdi_Port* port, uint16_t position) {
-	OPDI_SelectPort* sPort = (OPDI_SelectPort*)Opdi->findPort(port);
+	opdi::SelectPort* sPort = (opdi::SelectPort*)Opdi->findPort(port);
 	if (sPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
@@ -1988,11 +1992,11 @@ uint8_t opdi_set_select_port_position(opdi_Port* port, uint16_t position) {
 		return OPDI_PORT_ACCESS_DENIED;
 
 	try {
-		sPort->setPosition(position, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
-	} catch (OPDI_Port::PortError &pe) {
+		sPort->setPosition(position, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -2004,24 +2008,24 @@ uint8_t opdi_set_select_port_position(opdi_Port* port, uint16_t position) {
 #ifndef OPDI_NO_DIAL_PORTS
 
 uint8_t opdi_get_dial_port_state(opdi_Port* port, int64_t* position) {
-	OPDI_DialPort* dPort = (OPDI_DialPort*)Opdi->findPort(port);
+	opdi::DialPort* dPort = (opdi::DialPort*)Opdi->findPort(port);
 	if (dPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	try {
 		dPort->getState(position);
-	} catch (OPDI_Port::ValueUnavailable) {
+	} catch (opdi::Port::ValueUnavailable) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::ValueExpired) {
+	} catch (opdi::Port::ValueExpired) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::PortError &pe) {
+	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -2029,7 +2033,7 @@ uint8_t opdi_get_dial_port_state(opdi_Port* port, int64_t* position) {
 }
 
 uint8_t opdi_set_dial_port_position(opdi_Port* port, int64_t position) {
-	OPDI_DialPort* dPort = (OPDI_DialPort*)Opdi->findPort(port);
+	opdi::DialPort* dPort = (opdi::DialPort*)Opdi->findPort(port);
 	if (dPort == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
@@ -2037,11 +2041,11 @@ uint8_t opdi_set_dial_port_position(opdi_Port* port, int64_t position) {
 		return OPDI_PORT_ACCESS_DENIED;
 
 	try {
-		dPort->setPosition(position, OPDI_Port::ChangeSource::CHANGESOURCE_USER);
-	} catch (OPDI_Port::PortError &pe) {
+		dPort->setPosition(position, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (OPDI_Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDenied &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}

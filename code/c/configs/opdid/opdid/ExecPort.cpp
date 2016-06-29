@@ -2,14 +2,16 @@
 
 #include "opdi_constants.h"
 
+namespace opdid {
+
 ///////////////////////////////////////////////////////////////////////////////
 // Exec Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_ExecPort::OPDID_ExecPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
+ExecPort::ExecPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 
-	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 
 	// default: Low
 	this->line = 0;
@@ -17,10 +19,10 @@ OPDID_ExecPort::OPDID_ExecPort(AbstractOPDID *opdid, const char *id) : OPDI_Digi
 	this->changeType = CHANGED_TO_HIGH;
 }
 
-OPDID_ExecPort::~OPDID_ExecPort() {
+ExecPort::~ExecPort() {
 }
 
-void OPDID_ExecPort::configure(Poco::Util::AbstractConfiguration *config) {
+void ExecPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -57,21 +59,21 @@ void OPDID_ExecPort::configure(Poco::Util::AbstractConfiguration *config) {
 		this->opdid->logWarning(this->ID() + ": The specified wait time is larger than the reset time; reset will not execute!");
 }
 
-void OPDID_ExecPort::setDirCaps(const char * /*dirCaps*/) {
+void ExecPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of an ExecPort cannot be changed");
 }
 
-void OPDID_ExecPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
+void ExecPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of an ExecPort cannot be changed");
 }
 
-void OPDID_ExecPort::prepare() {
+void ExecPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_DigitalPort::prepare();
+	opdi::DigitalPort::prepare();
 }
 
-uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
-	OPDI_DigitalPort::doWork(canSend);
+uint8_t ExecPort::doWork(uint8_t canSend)  {
+	opdi::DigitalPort::doWork(canSend);
 
 	uint8_t lastLine = this->lastState;
 	this->lastState = this->line;
@@ -106,7 +108,7 @@ uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
 				PortValues portValues;
 				std::string allPorts;
 				// go through all ports
-				OPDI::PortList pl = this->opdid->getPorts();
+				opdi::OPDI::PortList pl = this->opdid->getPorts();
 				auto pli = pl.begin();
 				auto plie = pl.end();
 				while (pli != plie) {
@@ -168,3 +170,6 @@ uint8_t OPDID_ExecPort::doWork(uint8_t canSend)  {
 
 	return OPDI_STATUS_OK;
 }
+
+}		// namespace opdid
+

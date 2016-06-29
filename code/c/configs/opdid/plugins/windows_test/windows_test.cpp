@@ -7,18 +7,18 @@
 
 namespace {
 
-class DigitalTestPort : public OPDI_DigitalPort {
+class DigitalTestPort : public opdi::DigitalPort {
 public:
 	DigitalTestPort();
 	virtual void setLine(uint8_t line, ChangeSource /*changeSource*/) override;
 };
 
-DigitalTestPort::DigitalTestPort() : OPDI_DigitalPort("PluginPort", "Windows Test Plugin Port", OPDI_PORTDIRCAP_OUTPUT, 0) {}
+DigitalTestPort::DigitalTestPort() : opdi::DigitalPort("PluginPort", "Windows Test Plugin Port", OPDI_PORTDIRCAP_OUTPUT, 0) {}
 
 void DigitalTestPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
-	OPDI_DigitalPort::setLine(line);
+	opdi::DigitalPort::setLine(line);
 
-	AbstractOPDID *opdid = (AbstractOPDID *)this->opdi;
+	opdid::AbstractOPDID*opdid = (opdid::AbstractOPDID*)this->opdi;
 	if (line == 0) {
 		opdid->logNormal("DigitalTestPort line set to Low");
 	} else {
@@ -26,13 +26,13 @@ void DigitalTestPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	}
 }
 
-class WindowsTestOPDIDPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener {
+class WindowsTestOPDIDPlugin : public IOPDIDPlugin, public opdid::IOPDIDConnectionListener {
 
 protected:
-	AbstractOPDID *opdid;
+	opdid::AbstractOPDID *opdid;
 
 public:
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) override;
+	virtual void setupPlugin(opdid::AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) override;
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -41,7 +41,7 @@ public:
 }	// end anonymous namespace
 
 
-void WindowsTestOPDIDPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) {
+void WindowsTestOPDIDPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);

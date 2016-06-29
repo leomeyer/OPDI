@@ -14,7 +14,7 @@
 #include "opdi_constants.h"
 
 // the main OPDI instance is declared here
-AbstractOPDID *Opdi;
+opdid::AbstractOPDID *Opdi;
 
 BOOL WINAPI SignalHandler(_In_ DWORD dwCtrlType) {
 	switch (dwCtrlType) {
@@ -68,7 +68,7 @@ int _tmain(int argc, _TCHAR* argv[], _TCHAR* envp[])
 		env = envp[counter];
 	}
 
-	Opdi = new WindowsOPDID();
+	Opdi = new opdid::WindowsOPDID();
 
 	int exitcode;
 	try

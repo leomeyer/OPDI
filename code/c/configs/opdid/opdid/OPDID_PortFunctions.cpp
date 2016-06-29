@@ -1,18 +1,20 @@
 #include "OPDID_PortFunctions.h"
 
+namespace opdid {
+
 ///////////////////////////////////////////////////////////////////////////////
 // PortFunctions
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_PortFunctions::OPDID_PortFunctions(std::string id) {
+PortFunctions::PortFunctions(std::string id) {
 	this->logVerbosity = AbstractOPDID::UNKNOWN;
 	this->portFunctionID = id;
 	this->opdid = nullptr;
 }
 
-OPDI_Port* OPDID_PortFunctions::findPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
+opdi::Port* PortFunctions::findPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
 	// locate port by ID
-	OPDI_Port* port = this->opdid->findPortByID(portID.c_str());
+	opdi::Port* port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
 	if (port == nullptr) {
 		if (required)
@@ -23,7 +25,7 @@ OPDI_Port* OPDID_PortFunctions::findPort(const std::string& configPort, const st
 	return port;
 }
 
-void OPDID_PortFunctions::findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, OPDI::PortList &portList) {
+void PortFunctions::findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, PortList &portList) {
 	// split list at blanks
 	std::stringstream ss(portIDs);
 	std::string item;
@@ -34,16 +36,16 @@ void OPDID_PortFunctions::findPorts(const std::string& configPort, const std::st
 		} else
 		// ignore empty items
 		if (!item.empty()) {
-			OPDI_Port* port = this->findPort(configPort, setting, item, true);
+			opdi::Port* port = this->findPort(configPort, setting, item, true);
 			if (port != nullptr)
 				portList.push_back(port);
 		}
 	}
 }
 
-OPDI_DigitalPort* OPDID_PortFunctions::findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
+opdi::DigitalPort* PortFunctions::findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
 	// locate port by ID
-	OPDI_Port* port = this->opdid->findPortByID(portID.c_str());
+	opdi::Port* port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
 	if (port == nullptr) {
 		if (required)
@@ -55,26 +57,26 @@ OPDI_DigitalPort* OPDID_PortFunctions::findDigitalPort(const std::string& config
 	if (port->getType()[0] != OPDI_PORTTYPE_DIGITAL[0])
 		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a digital port: " + portID);
 
-	return (OPDI_DigitalPort*)port;
+	return (opdi::DigitalPort*)port;
 }
 
-void OPDID_PortFunctions::findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, DigitalPortList& portList) {
+void PortFunctions::findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, DigitalPortList& portList) {
 	// split list at blanks
 	std::stringstream ss(portIDs);
 	std::string item;
 	while (std::getline(ss, item, ' ')) {
 		// ignore empty items
 		if (!item.empty()) {
-			OPDI_DigitalPort* port = this->findDigitalPort(configPort, setting, item, true);
+			opdi::DigitalPort* port = this->findDigitalPort(configPort, setting, item, true);
 			if (port != nullptr)
 				portList.push_back(port);
 		}
 	}
 }
 
-OPDI_AnalogPort* OPDID_PortFunctions::findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
+opdi::AnalogPort* PortFunctions::findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
 	// locate port by ID
-	OPDI_Port* port = this->opdid->findPortByID(portID.c_str());
+	opdi::Port* port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
 	if (port == nullptr) {
 		if (required)
@@ -86,26 +88,26 @@ OPDI_AnalogPort* OPDID_PortFunctions::findAnalogPort(const std::string& configPo
 	if (port->getType()[0] != OPDI_PORTTYPE_ANALOG[0])
 		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not an analog port: " + portID);
 
-	return (OPDI_AnalogPort*)port;
+	return (opdi::AnalogPort*)port;
 }
 
-void OPDID_PortFunctions::findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, AnalogPortList& portList) {
+void PortFunctions::findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, AnalogPortList& portList) {
 	// split list at blanks
 	std::stringstream ss(portIDs);
 	std::string item;
 	while (std::getline(ss, item, ' ')) {
 		// ignore empty items
 		if (!item.empty()) {
-			OPDI_AnalogPort* port = this->findAnalogPort(configPort, setting, item, true);
+			opdi::AnalogPort* port = this->findAnalogPort(configPort, setting, item, true);
 			if (port != nullptr)
 				portList.push_back(port);
 		}
 	}
 }
 
-OPDI_SelectPort* OPDID_PortFunctions::findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
+opdi::SelectPort* PortFunctions::findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
 	// locate port by ID
-	OPDI_Port* port = this->opdid->findPortByID(portID.c_str());
+	opdi::Port* port = this->opdid->findPortByID(portID.c_str());
 	// no found but required?
 	if (port == nullptr) {
 		if (required)
@@ -117,35 +119,37 @@ OPDI_SelectPort* OPDID_PortFunctions::findSelectPort(const std::string& configPo
 	if (port->getType()[0] != OPDI_PORTTYPE_SELECT[0])
 		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a select port: " + portID);
 
-	return (OPDI_SelectPort*)port;
+	return (opdi::SelectPort*)port;
 }
 
-void OPDID_PortFunctions::logWarning(const std::string& message) {
+void PortFunctions::logWarning(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity > AbstractOPDID::QUIET)) {
 		this->opdid->logWarning(message);
 	}
 }
 
-void OPDID_PortFunctions::logNormal(const std::string& message) {
+void PortFunctions::logNormal(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::NORMAL)) {
 		this->opdid->logNormal(message, this->logVerbosity);
 	}
 }
 
-void OPDID_PortFunctions::logVerbose(const std::string& message) {
+void PortFunctions::logVerbose(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::VERBOSE)) {
 		this->opdid->logVerbose(message, this->logVerbosity);
 	}
 }
 
-void OPDID_PortFunctions::logDebug(const std::string& message) {
+void PortFunctions::logDebug(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG)) {
 		this->opdid->logDebug(message, this->logVerbosity);
 	}
 }
 
-void OPDID_PortFunctions::logExtreme(const std::string& message) {
+void PortFunctions::logExtreme(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::EXTREME)) {
 		this->opdid->logExtreme(message, this->logVerbosity);
 	}
 }
+
+}		// namespace opdid

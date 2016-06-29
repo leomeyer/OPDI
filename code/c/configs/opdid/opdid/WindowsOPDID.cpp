@@ -19,6 +19,28 @@
 #include "opdi_message.h"
 #include "opdi_slave_protocol.h"
 
+// Convert a wide Unicode string to an UTF8 string
+std::string utf8_encode(const std::wstring &wstr)
+{
+	if (wstr.empty()) return std::string();
+	int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), nullptr, 0, nullptr, nullptr);
+	std::string strTo(size_needed, 0);
+	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, nullptr, nullptr);
+	return strTo;
+}
+
+// Convert an UTF8 string to a wide Unicode String
+std::wstring utf8_decode(const std::string &str)
+{
+	if (str.empty()) return std::wstring();
+	int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), nullptr, 0);
+	std::wstring wstrTo(size_needed, 0);
+	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+	return wstrTo;
+}
+
+namespace opdid {
+
 // global connection mode (TCP or COM)
 #define MODE_TCP 1
 #define MODE_COM 2
@@ -27,26 +49,6 @@ static int connection_mode = 0;
 static char first_com_byte = 0;
 
 static unsigned long last_activity = 0;
-
-// Convert a wide Unicode string to an UTF8 string
-std::string utf8_encode(const std::wstring &wstr)
-{
-    if (wstr.empty()) return std::string();
-    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), nullptr, 0, nullptr, nullptr);
-    std::string strTo(size_needed, 0);
-    WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, nullptr, nullptr);
-    return strTo;
-}
-
-// Convert an UTF8 string to a wide Unicode String
-std::wstring utf8_decode(const std::string &str)
-{
-    if (str.empty()) return std::wstring();
-    int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), nullptr, 0);
-    std::wstring wstrTo(size_needed, 0);
-    MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
-    return wstrTo;
-}
 
 /** For TCP connections, receives a byte from the socket specified in info and places the result in byte.
 *   For COM connections, reads a byte from the file handle specified in info and places the result in byte.
@@ -358,3 +360,6 @@ std::string WindowsOPDID::getCurrentUser(void) {
 void WindowsOPDID::switchToUser(std::string newUser) {
 	// TODO
 }
+
+}		// namespace opdid
+

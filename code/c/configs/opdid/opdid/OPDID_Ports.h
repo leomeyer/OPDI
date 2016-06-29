@@ -20,6 +20,8 @@
 
 #include "OPDID_PortFunctions.h"
 
+namespace opdid {
+
 ///////////////////////////////////////////////////////////////////////////////
 // Logic Port
 ///////////////////////////////////////////////////////////////////////////////
@@ -44,7 +46,7 @@
 * You can also specify inverted output ports who will be updated with the negated
 * state of this port.
 */
-class OPDID_LogicPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+class LogicPort : public opdi::DigitalPort, protected opdid::PortFunctions {
 protected:
 	enum LogicFunction {
 		UNKNOWN,
@@ -69,17 +71,17 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	OPDID_LogicPort(AbstractOPDID *opdid, const char *id);
+	LogicPort(AbstractOPDID *opdid, const char *id);
 
-	virtual ~OPDID_LogicPort();
+	virtual ~LogicPort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
 
 	virtual void setDirCaps(const char *dirCaps) override;
 
-	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
-	virtual void setLine(uint8_t line, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -97,7 +99,7 @@ public:
 * The output can be normal or inverted. There are two lists of output digital
 * ports which receive the normal or inverted output respectively.
 */
-class OPDID_PulsePort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+class PulsePort : public opdi::DigitalPort, protected opdid::PortFunctions {
 protected:
 	bool negate;
 	ValueResolver<int32_t> period;
@@ -107,7 +109,7 @@ protected:
 	std::string enablePortStr;
 	std::string outputPortStr;
 	std::string inverseOutputPortStr;
-	typedef std::vector<OPDI_DigitalPort *> PortList;
+	typedef std::vector<opdi::DigitalPort *> PortList;
 	DigitalPortList enablePorts;
 	DigitalPortList outputPorts;
 	DigitalPortList inverseOutputPorts;
@@ -119,15 +121,15 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	OPDID_PulsePort(AbstractOPDID *opdid, const char *id);
+	PulsePort(AbstractOPDID *opdid, const char *id);
 
-	virtual ~OPDID_PulsePort();
+	virtual ~PulsePort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
 
 	virtual void setDirCaps(const char *dirCaps) override;
 
-	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -140,10 +142,10 @@ public:
 *   is in the specified position and Low otherwise. If set to High it will switch
 *   the select port to the specified position. If set to Low, it will do nothing.
 */
-class OPDID_SelectorPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+class SelectorPort : public opdi::DigitalPort, protected opdid::PortFunctions {
 protected:
 	std::string selectPortStr;
-	OPDI_SelectPort *selectPort;
+	opdi::SelectPort *selectPort;
 	std::string outputPortStr;
 	DigitalPortList outputPorts;
 	uint16_t position;
@@ -151,9 +153,9 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	OPDID_SelectorPort(AbstractOPDID *opdid, const char *id);
+	SelectorPort(AbstractOPDID *opdid, const char *id);
 
-	virtual ~OPDID_SelectorPort();
+	virtual ~SelectorPort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
 
@@ -175,24 +177,24 @@ public:
 *   method returns true, the state of this port will be High and Low otherwise.
 *   The logic level can be negated.
 */
-class OPDID_ErrorDetectorPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+class ErrorDetectorPort : public opdi::DigitalPort, protected opdid::PortFunctions {
 protected:
 	bool negate;
 	std::string inputPortStr;
-	OPDI::PortList inputPorts;
+	opdi::OPDI::PortList inputPorts;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	OPDID_ErrorDetectorPort(AbstractOPDID *opdid, const char *id);
+	ErrorDetectorPort(AbstractOPDID *opdid, const char *id);
 
-	virtual ~OPDID_ErrorDetectorPort();
+	virtual ~ErrorDetectorPort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
 
 	virtual void setDirCaps(const char *dirCaps) override;
 
-	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -203,7 +205,7 @@ public:
 
 /** Defines a serial streaming port that supports streaming from and to a serial port device.
  */
-class OPDID_SerialStreamingPort : public OPDI_StreamingPort, protected OPDID_PortFunctions {
+class SerialStreamingPort : public opdi::StreamingPort, protected opdid::PortFunctions {
 friend class OPDI;
 
 protected:
@@ -221,9 +223,9 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	OPDID_SerialStreamingPort(AbstractOPDID *opdid, const char *id);
+	SerialStreamingPort(AbstractOPDID *opdid, const char *id);
 
-	virtual ~OPDID_SerialStreamingPort();
+	virtual ~SerialStreamingPort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
 
@@ -242,7 +244,7 @@ public:
 
 /** Defines a streaming port that can log port states and optionally write them to a log file.
  */
-class OPDID_LoggerPort : public OPDI_StreamingPort, protected OPDID_PortFunctions {
+class LoggerPort : public opdi::StreamingPort, protected opdid::PortFunctions {
 friend class OPDI;
 
 protected:
@@ -254,20 +256,20 @@ protected:
 	Format format;
 	std::string separator;
 	std::string portsToLogStr;
-	OPDI::PortList portsToLog;
+	opdi::OPDI::PortList portsToLog;
 	bool writeHeader;
 	uint64_t lastEntryTime;
 	
 	std::ofstream outFile;
 
-	std::string getPortStateStr(OPDI_Port* port);
+	std::string getPortStateStr(opdi::Port* port);
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	OPDID_LoggerPort(AbstractOPDID *opdid, const char *id);
+	LoggerPort(AbstractOPDID *opdid, const char *id);
 
-	virtual ~OPDID_LoggerPort();
+	virtual ~LoggerPort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
 
@@ -296,7 +298,7 @@ public:
 * If ReturnToLeft is specified as true, the output port is set to the current value of Left
 * when switched off.
 */
-class OPDID_FaderPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+class FaderPort : public opdi::DigitalPort, protected opdid::PortFunctions {
 protected:
 	enum FaderMode {
 		LINEAR,
@@ -335,17 +337,17 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	OPDID_FaderPort(AbstractOPDID *opdid, const char *id);
+	FaderPort(AbstractOPDID *opdid, const char *id);
 
-	virtual ~OPDID_FaderPort();
+	virtual ~FaderPort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
 
 	virtual void setDirCaps(const char *dirCaps) override;
 
-	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
-	virtual void setLine(uint8_t line, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -360,7 +362,7 @@ public:
 * The SceneSelectPort automatically sends a "Refresh all" message to a connected master when
 * a scene has been selected.
 */
-class OPDID_SceneSelectPort : public OPDI_SelectPort, protected OPDID_PortFunctions {
+class SceneSelectPort : public opdi::SelectPort, protected opdid::PortFunctions {
 protected:
 	typedef std::vector<std::string> FileList;
 	FileList fileList;
@@ -371,13 +373,13 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	OPDID_SceneSelectPort(AbstractOPDID *opdid, const char *id);
+	SceneSelectPort(AbstractOPDID *opdid, const char *id);
 
-	virtual ~OPDID_SceneSelectPort();
+	virtual ~SceneSelectPort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig);
 
-	virtual void setPosition(uint16_t position, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setPosition(uint16_t position, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -407,7 +409,7 @@ public:
 * being re-read. This can help avoid too many refreshes.
 * For analog and dial ports the value can be scaled using a numerator and a denominator.
 */
-class OPDID_FileInputPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+class FileInputPort : public opdi::DigitalPort, protected opdid::PortFunctions {
 protected:
 
 	enum PortType {
@@ -421,7 +423,7 @@ protected:
 
 	std::string filePath;
 	Poco::File directory;
-	OPDI_Port *port;
+	opdi::Port *port;
 	PortType portType;
 	int reloadDelayMs;
 	int expiryMs;
@@ -438,9 +440,9 @@ protected:
 	void fileChangedEvent(const void*, const Poco::DirectoryWatcher::DirectoryEvent&);
 
 public:
-	OPDID_FileInputPort(AbstractOPDID *opdid, const char *id);
+	FileInputPort(AbstractOPDID *opdid, const char *id);
 
-	virtual ~OPDID_FileInputPort();
+	virtual ~FileInputPort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig);
 };
@@ -484,7 +486,7 @@ public:
 * specified interval the values are read into the list.
 * This behavior can be used to preserve values in between OPDID restarts.
 */
-class OPDID_AggregatorPort : public OPDI_DigitalPort, public OPDID_PortFunctions {
+class AggregatorPort : public opdi::DigitalPort, public opdid::PortFunctions {
 friend class AbstractOPDID;
 protected:
 	enum Algorithm {
@@ -495,18 +497,18 @@ protected:
 		MAXIMUM
 	};
 
-	class Calculation : public OPDI_DialPort {
+	class Calculation : public opdi::DialPort {
 	public:		
 		Algorithm algorithm;
 		bool allowIncomplete;
 
 		Calculation(std::string id);
 
-		void calculate(OPDID_AggregatorPort* aggregator);
+		void calculate(AggregatorPort* aggregator);
 	};
 
 	std::string sourcePortID;
-	OPDI_Port* sourcePort;
+	opdi::Port* sourcePort;
 	int64_t queryInterval;
 	uint16_t totalValues;
 	int32_t multiplier;
@@ -514,7 +516,7 @@ protected:
 	int64_t maxDelta;
 	bool setHistory;
 	std::string historyPortID;
-	OPDI_Port* historyPort;
+	opdi::Port* historyPort;
 	int32_t allowedErrors;
 
 	std::vector<int64_t> values;
@@ -531,15 +533,15 @@ protected:
 	void resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity, bool clearPersistent = true);
 
 public:
-	OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id);
+	AggregatorPort(AbstractOPDID *opdid, const char *id);
 
-	~OPDID_AggregatorPort();
+	~AggregatorPort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig);
 
 	virtual void prepare() override;
 
-	virtual void setLine(uint8_t newLine, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setLine(uint8_t newLine, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -551,7 +553,7 @@ public:
 *   A CounterPort can also count the events detected by a TriggerPort.
 *   In this case, set the period to a value below 0 to only count the detected state changes.
 */
-class OPDID_CounterPort : public OPDI_DialPort, public OPDID_PortFunctions {
+class CounterPort : public opdi::DialPort, public opdid::PortFunctions {
 
 protected:
 	ValueResolver<int64_t> increment;
@@ -560,7 +562,7 @@ protected:
 	uint64_t lastActionTime;
 public:
 
-	OPDID_CounterPort(AbstractOPDID *opdid, const char *id);
+	CounterPort(AbstractOPDID *opdid, const char *id);
 
 	virtual void configure(Poco::Util::AbstractConfiguration *nodeConfig);
 
@@ -587,7 +589,7 @@ public:
 * No change is performed the first time a DigitalPort is read when its current
 * state is unknown. A port that returns an error will also be set to "unknown".
 */
-class OPDID_TriggerPort : public OPDI_DigitalPort, public OPDID_PortFunctions {
+class TriggerPort : public opdi::DigitalPort, public opdid::PortFunctions {
 protected:
 
 	enum TriggerType {
@@ -608,7 +610,7 @@ protected:
 		HIGH
 	};
 
-	typedef Poco::Tuple<OPDI_DigitalPort*, PortState> PortData;
+	typedef Poco::Tuple<opdi::DigitalPort*, PortState> PortData;
 	typedef std::vector<PortData> PortDataList;
 
 	std::string inputPortStr;
@@ -618,7 +620,7 @@ protected:
 	DigitalPortList inverseOutputPorts;
 	TriggerType triggerType;
 	ChangeType changeType;
-	OPDID_CounterPort* counterPort;
+	CounterPort* counterPort;
 	std::string counterPortStr;
 
 	PortDataList portDataList;
@@ -626,11 +628,13 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	OPDID_TriggerPort(AbstractOPDID *opdid, const char *id);
+	TriggerPort(AbstractOPDID *opdid, const char *id);
 
 	virtual void configure(Poco::Util::AbstractConfiguration *portConfig);
 
 	virtual void prepare() override;
 
-	virtual void setLine(uint8_t newLine, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setLine(uint8_t newLine, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 };
+
+}		// namespace opdid

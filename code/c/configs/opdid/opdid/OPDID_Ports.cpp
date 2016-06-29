@@ -20,27 +20,29 @@
 
 #include "opdi_platformfuncs.h"
 
+namespace opdid {
+
 ///////////////////////////////////////////////////////////////////////////////
 // Logic Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_LogicPort::OPDID_LogicPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
+LogicPort::LogicPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 	this->function = UNKNOWN;
 	this->funcN = -1;
 	this->negate = false;
 
-	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	// set the line to an invalid state
 	// this will trigger the detection logic in the first call of doWork
 	// so that all dependent output ports will be set to a defined state
 	this->line = -1;
 }
 
-OPDID_LogicPort::~OPDID_LogicPort() {
+LogicPort::~LogicPort() {
 }
 
-void OPDID_LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
+void LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -97,21 +99,21 @@ void OPDID_LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
 }
 
-void OPDID_LogicPort::setDirCaps(const char * /*dirCaps*/) {
+void LogicPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a LogicPort cannot be changed");
 }
 
-void OPDID_LogicPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
+void LogicPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of a LogicPort cannot be changed");
 }
 
-void OPDID_LogicPort::setLine(uint8_t /*line*/, ChangeSource /*changeSource*/) {
+void LogicPort::setLine(uint8_t /*line*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The line of a LogicPort cannot be set directly");
 }
 
-void OPDID_LogicPort::prepare() {
+void LogicPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_DigitalPort::prepare();
+	opdi::DigitalPort::prepare();
 
 	if (this->function == UNKNOWN)
 		throw PortError(std::string("Logic function is unknown; port not configured correctly: ") + this->id);
@@ -122,8 +124,8 @@ void OPDID_LogicPort::prepare() {
 	this->findDigitalPorts(this->getID(), "InverseOutputPorts", this->inverseOutputPortStr, this->inverseOutputPorts);
 }
 
-uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
-	OPDI_DigitalPort::doWork(canSend);
+uint8_t LogicPort::doWork(uint8_t canSend)  {
+	opdi::DigitalPort::doWork(canSend);
 
 	// count how many input ports are High
 	size_t highCount = 0;
@@ -172,7 +174,7 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 	if (newLine != this->line) {
 		this->logDebug(this->ID() + ": Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High)");
 
-		OPDI_DigitalPort::setLine(newLine);
+		opdi::DigitalPort::setLine(newLine);
 
 		// regular output ports
 		auto it = this->outputPorts.begin();
@@ -221,11 +223,11 @@ uint8_t OPDID_LogicPort::doWork(uint8_t canSend)  {
 // Pulse Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_PulsePort::OPDID_PulsePort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
+PulsePort::PulsePort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 	this->negate = false;
 
-	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	// set the pulse state to an invalid state
 	// this will trigger the detection logic in the first call of doWork
 	// so that all dependent output ports will be set to a defined state
@@ -235,10 +237,10 @@ OPDID_PulsePort::OPDID_PulsePort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 	this->pulseCount = -1;
 }
 
-OPDID_PulsePort::~OPDID_PulsePort() {
+PulsePort::~PulsePort() {
 }
 
-void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
+void PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -281,17 +283,17 @@ void OPDID_PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 	}
 }
 
-void OPDID_PulsePort::setDirCaps(const char * /*dirCaps*/) {
+void PulsePort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a PulsePort cannot be changed");
 }
 
-void OPDID_PulsePort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
+void PulsePort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of a PulsePort cannot be changed");
 }
 
-void OPDID_PulsePort::prepare() {
+void PulsePort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_DigitalPort::prepare();
+	opdi::DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
 	this->findDigitalPorts(this->getID(), "EnablePorts", this->enablePortStr, this->enablePorts);
@@ -299,8 +301,8 @@ void OPDID_PulsePort::prepare() {
 	this->findDigitalPorts(this->getID(), "InverseOutputPorts", this->inverseOutputPortStr, this->inverseOutputPorts);
 }
 
-uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
-	OPDI_DigitalPort::doWork(canSend);
+uint8_t PulsePort::doWork(uint8_t canSend)  {
+	opdi::DigitalPort::doWork(canSend);
 
 	// default: pulse is enabled if the line is High
 	bool enabled = (this->line == 1);
@@ -408,18 +410,18 @@ uint8_t OPDID_PulsePort::doWork(uint8_t canSend)  {
 // Selector Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_SelectorPort::OPDID_SelectorPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
+SelectorPort::SelectorPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 
-	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	// set the line to an invalid state
 	this->line = -1;
 }
 
-OPDID_SelectorPort::~OPDID_SelectorPort() {
+SelectorPort::~SelectorPort() {
 }
 
-void OPDID_SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
+void SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -436,16 +438,16 @@ void OPDID_SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->position = pos;
 }
 
-void OPDID_SelectorPort::setDirCaps(const char * /*dirCaps*/) {
+void SelectorPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a SelectorPort cannot be changed");
 }
 
-void OPDID_SelectorPort::setMode(uint8_t /*mode*/) {
+void SelectorPort::setMode(uint8_t /*mode*/) {
 	throw PortError(this->ID() + ": The mode of a SelectorPort cannot be changed");
 }
 
-void OPDID_SelectorPort::setLine(uint8_t line) {
-	OPDI_DigitalPort::setLine(line);
+void SelectorPort::setLine(uint8_t line) {
+	opdi::DigitalPort::setLine(line);
 	if (this->line == 1) {
 		// set the specified select port to the specified position
 		this->selectPort->setPosition(this->position);
@@ -458,9 +460,9 @@ void OPDID_SelectorPort::setLine(uint8_t line) {
 	}
 }
 
-void OPDID_SelectorPort::prepare() {
+void SelectorPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_DigitalPort::prepare();
+	opdi::DigitalPort::prepare();
 
 	// find port; throws errors if something required is missing
 	this->selectPort = this->findSelectPort(this->getID(), "SelectPort", this->selectPortStr, true);
@@ -471,8 +473,8 @@ void OPDID_SelectorPort::prepare() {
 		throw Poco::DataException(this->ID() + ": The specified selector position exceeds the maximum of port " + this->selectPort->getID() + ": " + to_string(this->selectPort->getMaxPosition()));
 }
 
-uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
-	OPDI_DigitalPort::doWork(canSend);
+uint8_t SelectorPort::doWork(uint8_t canSend)  {
+	opdi::DigitalPort::doWork(canSend);
 
 	// check whether the select port is in the specified position
 	uint16_t pos;
@@ -480,7 +482,7 @@ uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
 	if (pos == this->position) {
 		if (this->line != 1) {
 			this->logDebug(this->ID() + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to High");
-			OPDI_DigitalPort::setLine(1);
+			opdi::DigitalPort::setLine(1);
 			// set output ports' lines
 			auto it = this->outputPorts.cbegin();
 			while (it != this->outputPorts.cend()) {
@@ -491,7 +493,7 @@ uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
 	} else {
 		if (this->line != 0) {
 			this->logDebug(this->ID() + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to Low");
-			OPDI_DigitalPort::setLine(0);
+			opdi::DigitalPort::setLine(0);
 			// set output ports' lines
 			auto it = this->outputPorts.cbegin();
 			while (it != this->outputPorts.cend()) {
@@ -508,19 +510,19 @@ uint8_t OPDID_SelectorPort::doWork(uint8_t canSend)  {
 // Error Detector Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_ErrorDetectorPort::OPDID_ErrorDetectorPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_INPUT, 0), OPDID_PortFunctions(id) {
+ErrorDetectorPort::ErrorDetectorPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_INPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 
-	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
+	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
 
 	// make sure to trigger state change at first doWork
 	this->line = -1;
 }
 
-OPDID_ErrorDetectorPort::~OPDID_ErrorDetectorPort() {
+ErrorDetectorPort::~ErrorDetectorPort() {
 }
 
-void OPDID_ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration *config) {
+void ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configureDigitalPort(config, this);	
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -528,24 +530,24 @@ void OPDID_ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration *confi
 	this->negate = config->getBool("Negate", false);
 }
 
-void OPDID_ErrorDetectorPort::setDirCaps(const char * /*dirCaps*/) {
+void ErrorDetectorPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of an ErrorDetectorPort cannot be changed");
 }
 
-void OPDID_ErrorDetectorPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
+void ErrorDetectorPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of an ErrorDetectorPort cannot be changed");
 }
 
-void OPDID_ErrorDetectorPort::prepare() {
+void ErrorDetectorPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_DigitalPort::prepare();
+	opdi::DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
 	this->findPorts(this->getID(), "InputPorts", this->inputPortStr, this->inputPorts);
 }
 
-uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
-	OPDI_DigitalPort::doWork(canSend);
+uint8_t ErrorDetectorPort::doWork(uint8_t canSend)  {
+	opdi::DigitalPort::doWork(canSend);
 
 	int8_t newState = 0;
 
@@ -578,18 +580,18 @@ uint8_t OPDID_ErrorDetectorPort::doWork(uint8_t canSend)  {
 // Serial Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_SerialStreamingPort::OPDID_SerialStreamingPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id), OPDID_PortFunctions(id) {
+SerialStreamingPort::SerialStreamingPort(AbstractOPDID *opdid, const char *id) : opdi::StreamingPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	this->mode = PASS_THROUGH;
 	this->device = nullptr;
 	this->serialPort = new ctb::SerialPort();
 }
 
-OPDID_SerialStreamingPort::~OPDID_SerialStreamingPort() {
+SerialStreamingPort::~SerialStreamingPort() {
 }
 
-uint8_t OPDID_SerialStreamingPort::doWork(uint8_t canSend)  {
-	OPDI_StreamingPort::doWork(canSend);
+uint8_t SerialStreamingPort::doWork(uint8_t canSend)  {
+	opdi::StreamingPort::doWork(canSend);
 
 	if (this->device == nullptr)
 		return OPDI_STATUS_OK;
@@ -610,7 +612,7 @@ uint8_t OPDID_SerialStreamingPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void OPDID_SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *config) {
+void SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configureStreamingPort(config, this);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -645,11 +647,11 @@ void OPDID_SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *con
 			throw Poco::DataException(this->ID() + ": Invalid mode specifier; expected 'Passthrough' or 'Loopback': " + modeStr);
 }
 
-int OPDID_SerialStreamingPort::write(char *bytes, size_t length) {
+int SerialStreamingPort::write(char *bytes, size_t length) {
 	return this->device->Write(bytes, length);
 }
 
-int OPDID_SerialStreamingPort::available(size_t /*count*/) {
+int SerialStreamingPort::available(size_t /*count*/) {
 	// count has no meaning in this implementation
 
 	char buf;
@@ -666,7 +668,7 @@ int OPDID_SerialStreamingPort::available(size_t /*count*/) {
 	return 0;
 }
 
-int OPDID_SerialStreamingPort::read(char *result) {
+int SerialStreamingPort::read(char *result) {
 	char buf;
 	int code = this->device->Read(&buf, 1);
 	// error?
@@ -681,7 +683,7 @@ int OPDID_SerialStreamingPort::read(char *result) {
 	return 0;
 }
 
-bool OPDID_SerialStreamingPort::hasError(void) const {
+bool SerialStreamingPort::hasError(void) const {
 	return false;
 }
 
@@ -689,7 +691,7 @@ bool OPDID_SerialStreamingPort::hasError(void) const {
 // Logger Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_LoggerPort::OPDID_LoggerPort(AbstractOPDID *opdid, const char *id) : OPDI_StreamingPort(id), OPDID_PortFunctions(id) {
+LoggerPort::LoggerPort(AbstractOPDID *opdid, const char *id) : opdi::StreamingPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	this->logPeriod = 10000;		// default: 10 seconds
 	this->writeHeader = true;
@@ -698,23 +700,23 @@ OPDID_LoggerPort::OPDID_LoggerPort(AbstractOPDID *opdid, const char *id) : OPDI_
 	this->separator = ";";
 }
 
-OPDID_LoggerPort::~OPDID_LoggerPort() {
+LoggerPort::~LoggerPort() {
 }
 
-std::string OPDID_LoggerPort::getPortStateStr(OPDI_Port* port) {
+std::string LoggerPort::getPortStateStr(opdi::Port* port) {
 	return this->opdid->getPortStateStr(port);
 }
 
-void OPDID_LoggerPort::prepare() {
+void LoggerPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_StreamingPort::prepare();
+	opdi::StreamingPort::prepare();
 
 	// find ports; throws errors if something required is missing
 	this->findPorts(this->getID(), "Ports", this->portsToLogStr, this->portsToLog);
 }
 
-uint8_t OPDID_LoggerPort::doWork(uint8_t canSend)  {
-	OPDI_StreamingPort::doWork(canSend);
+uint8_t LoggerPort::doWork(uint8_t canSend)  {
+	opdi::StreamingPort::doWork(canSend);
 
 	// check whether the time for a new entry has been reached
 	uint64_t timeDiff = opdi_get_time_ms() - this->lastEntryTime;
@@ -764,7 +766,7 @@ uint8_t OPDID_LoggerPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void OPDID_LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
+void LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configureStreamingPort(config, this);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -790,22 +792,22 @@ void OPDID_LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->portsToLogStr = this->opdid->getConfigString(config, "Ports", "", true);
 }
 
-int OPDID_LoggerPort::write(char * /*bytes*/, size_t /*length*/) {
+int LoggerPort::write(char * /*bytes*/, size_t /*length*/) {
 	return 0;
 }
 
-int OPDID_LoggerPort::available(size_t /*count*/) {
+int LoggerPort::available(size_t /*count*/) {
 	// count has no meaning in this implementation
 	// nothing available
 	return 0;
 }
 
-int OPDID_LoggerPort::read(char * /*result*/) {
+int LoggerPort::read(char * /*result*/) {
 	// nothing available
 	return 0;
 }
 
-bool OPDID_LoggerPort::hasError(void) const {
+bool LoggerPort::hasError(void) const {
 	return false;
 }
 
@@ -813,7 +815,7 @@ bool OPDID_LoggerPort::hasError(void) const {
 // Fader Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_FaderPort::OPDID_FaderPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
+FaderPort::FaderPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 	this->mode = LINEAR;
 	this->lastValue = -1;
@@ -821,13 +823,13 @@ OPDID_FaderPort::OPDID_FaderPort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 	this->switchOffAction = NONE;
 	this->actionToPerform = NONE;
 
-	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 }
 
-OPDID_FaderPort::~OPDID_FaderPort() {
+FaderPort::~FaderPort() {
 }
 
-void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
+void FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	std::string modeStr = config->getString("FadeMode", "");
@@ -878,15 +880,15 @@ void OPDID_FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
 }
 
-void OPDID_FaderPort::setDirCaps(const char * /*dirCaps*/) {
+void FaderPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a FaderPort cannot be changed");
 }
 
-void OPDID_FaderPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
+void FaderPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of a FaderPort cannot be changed");
 }
 
-void OPDID_FaderPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
+void FaderPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	uint8_t oldline = this->line;
 	if ((oldline == 0) && (line == 1)) {
 		// store current values on start (might be resolved by ValueResolvers, and we don't want them to change during fading
@@ -899,14 +901,14 @@ void OPDID_FaderPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 		if (this->durationMs < 5) {
 			this->logDebug(this->ID() + ": Refusing to fade because duration is impracticably low: " + to_string(this->durationMs));
 		} else {
-			OPDI_DigitalPort::setLine(line);
+			opdi::DigitalPort::setLine(line);
 			this->startTime = Poco::Timestamp();
 			// cause correct log output
 			this->lastValue = -1;
 			this->logDebug(this->ID() + ": Start fading at " + to_string(this->left) + "% with a duration of " + to_string(this->durationMs) + " ms");
 		}
 	} else {
-		OPDI_DigitalPort::setLine(line);
+		opdi::DigitalPort::setLine(line);
 		// switched off?
 		if (oldline != this->line) {
 			this->logDebug(this->ID() + ": Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
@@ -918,17 +920,17 @@ void OPDID_FaderPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	}
 }
 
-void OPDID_FaderPort::prepare() {
+void FaderPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_DigitalPort::prepare();
+	opdi::DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
 	this->findPorts(this->ID(), "OutputPorts", this->outputPortStr, this->outputPorts);
 	this->findDigitalPorts(this->ID(), "EndSwitches", this->endSwitchesStr, this->endSwitches);
 }
 
-uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
-	OPDI_DigitalPort::doWork(canSend);
+uint8_t FaderPort::doWork(uint8_t canSend)  {
+	opdi::DigitalPort::doWork(canSend);
 
 	// active, or a switch off action needs to be performed?
 	if ((this->line == 1) || (this->actionToPerform != NONE)) {
@@ -939,7 +941,7 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 			if (this->durationMs < 0) {
 				this->logWarning(this->ID() + ": Duration may not be negative; disabling fader: " + to_string(this->durationMs));
 				// disable the fader immediately
-				OPDI_DigitalPort::setLine(0);
+				opdi::DigitalPort::setLine(0);
 				this->refreshRequired = true;
 				return OPDI_STATUS_OK;
 			}
@@ -1019,10 +1021,10 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 		while (it != ite) {
 			try {
 				if (0 == strcmp((*it)->getType(), OPDI_PORTTYPE_ANALOG)) {
-					((OPDI_AnalogPort*)(*it))->setRelativeValue(value);
+					((opdi::AnalogPort*)(*it))->setRelativeValue(value);
 				} else
 				if (0 == strcmp((*it)->getType(), OPDI_PORTTYPE_DIAL)) {
-					OPDI_DialPort* port = (OPDI_DialPort*)(*it);
+					opdi::DialPort* port = (opdi::DialPort*)(*it);
 					double pos = port->getMin() + (port->getMax() - port->getMin()) * value;
 					port->setPosition((int64_t)pos);
 				} else
@@ -1043,15 +1045,15 @@ uint8_t OPDID_FaderPort::doWork(uint8_t canSend)  {
 // SceneSelectPort
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_SceneSelectPort::OPDID_SceneSelectPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(id), OPDID_PortFunctions(id) {
+SceneSelectPort::SceneSelectPort(AbstractOPDID *opdid, const char *id) : opdi::SelectPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	this->positionSet = false;
 }
 
-OPDID_SceneSelectPort::~OPDID_SceneSelectPort() {
+SceneSelectPort::~SceneSelectPort() {
 }
 
-void OPDID_SceneSelectPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
+void SceneSelectPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	// remember configuration file path (scene files are always relative to the configuration file)
@@ -1105,9 +1107,9 @@ void OPDID_SceneSelectPort::configure(Poco::Util::AbstractConfiguration *config,
 			+ " must match the number of items (" + this->to_string(this->getMaxPosition() + 1) + ")");
 }
 
-void OPDID_SceneSelectPort::prepare() {
+void SceneSelectPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_SelectPort::prepare();
+	opdi::SelectPort::prepare();
 
 	// check files
 	auto fi = this->fileList.begin();
@@ -1135,8 +1137,8 @@ void OPDID_SceneSelectPort::prepare() {
 	}
 }
 
-uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
-	OPDI_SelectPort::doWork(canSend);
+uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
+	opdi::SelectPort::doWork(canSend);
 
 	// position changed?
 	if (this->positionSet) {
@@ -1172,7 +1174,7 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 
 		for (auto it = sectionKeys.begin(), ite = sectionKeys.end(); it != ite; ++it) {
 			// find port corresponding to this section
-			OPDI_Port *port = this->opdid->findPortByID((*it).c_str());
+			opdi::Port *port = this->opdid->findPortByID((*it).c_str());
 			if (port == nullptr)
 				this->logWarning(this->ID() + ": In scene file " + sceneFile + ": Port with ID " + (*it) + " not present in current configuration");
 			else {
@@ -1184,16 +1186,16 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 				// configure only state - not the general setup
 				try {
 					if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
-						this->opdid->configureDigitalPort(portConfig, (OPDI_DigitalPort*)port, true);
+						this->opdid->configureDigitalPort(portConfig, (opdi::DigitalPort*)port, true);
 					} else
 					if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
-						this->opdid->configureAnalogPort(portConfig, (OPDI_AnalogPort*)port, true);
+						this->opdid->configureAnalogPort(portConfig, (opdi::AnalogPort*)port, true);
 					} else
 					if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
-						this->opdid->configureSelectPort(portConfig, &config, (OPDI_SelectPort*)port, true);
+						this->opdid->configureSelectPort(portConfig, &config, (opdi::SelectPort*)port, true);
 					} else
 					if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
-						this->opdid->configureDialPort(portConfig, (OPDI_DialPort*)port, true);
+						this->opdid->configureDialPort(portConfig, (opdi::DialPort*)port, true);
 					} else
 						this->logWarning(this->ID() + ": In scene file " + sceneFile + ": Port with ID " + (*it) + " has an unknown type");
 				} catch (Poco::Exception &e) {
@@ -1211,8 +1213,8 @@ uint8_t OPDID_SceneSelectPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void OPDID_SceneSelectPort::setPosition(uint16_t position, ChangeSource /*changeSource*/) {
-	OPDI_SelectPort::setPosition(position);
+void SceneSelectPort::setPosition(uint16_t position, ChangeSource /*changeSource*/) {
+	opdi::SelectPort::setPosition(position);
 
 	this->positionSet = true;
 }
@@ -1221,8 +1223,8 @@ void OPDID_SceneSelectPort::setPosition(uint16_t position, ChangeSource /*change
 // FileInputPort
 ///////////////////////////////////////////////////////////////////////////////
 
-uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
-	uint8_t result = OPDI_DigitalPort::doWork(canSend);
+uint8_t FileInputPort::doWork(uint8_t canSend) {
+	uint8_t result = opdi::DigitalPort::doWork(canSend);
 	if (result != OPDI_STATUS_OK)
 		return result;
 
@@ -1288,7 +1290,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 					throw Poco::DataFormatException("Expected '0' or '1' but got: " + errorContent);
 				}
 				this->logDebug(this->ID() + ": Setting line of digital port '" + this->port->ID() + "' to " + this->to_string((int)line));
-				((OPDI_DigitalPort*)this->port)->setLine(line);
+				((opdi::DigitalPort*)this->port)->setLine(line);
 				break;
 			}
 			case ANALOG_PORT: {
@@ -1299,13 +1301,13 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 				}
 				value = value * this->numerator / this->denominator;
 				this->logDebug(this->ID() + ": Setting value of analog port '" + this->port->ID() + "' to " + this->to_string(value));
-				((OPDI_AnalogPort*)this->port)->setRelativeValue(value);
+				((opdi::AnalogPort*)this->port)->setRelativeValue(value);
 				break;
 			}
 			case DIAL_PORT: {
 				int64_t value;
-				int64_t min = ((OPDI_DialPort*)this->port)->getMin();
-				int64_t max = ((OPDI_DialPort*)this->port)->getMax();
+				int64_t min = ((opdi::DialPort*)this->port)->getMin();
+				int64_t max = ((opdi::DialPort*)this->port)->getMax();
 				if (!Poco::NumberParser::tryParse64(content, value)) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected integer value but got: " + errorContent);
@@ -1316,19 +1318,19 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
 				}
 				this->logDebug(this->ID() + ": Setting position of dial port '" + this->port->ID() + "' to " + this->to_string(value));
-				((OPDI_DialPort*)this->port)->setPosition(value);
+				((opdi::DialPort*)this->port)->setPosition(value);
 				break;
 			}
 			case SELECT_PORT: {
 				int32_t value;
 				uint16_t min = 0;
-				uint16_t max = ((OPDI_SelectPort*)this->port)->getMaxPosition();
+				uint16_t max = ((opdi::SelectPort*)this->port)->getMaxPosition();
 				if (!Poco::NumberParser::tryParse(content, value) || (value < min) || (value > max)) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
 				}
 				this->logDebug(this->ID() + ": Setting position of select port '" + this->port->ID() + "' to " + this->to_string(value));
-				((OPDI_SelectPort*)this->port)->setPosition(value);
+				((opdi::SelectPort*)this->port)->setPosition(value);
 				break;
 			}
 			default:
@@ -1342,7 +1344,7 @@ uint8_t OPDID_FileInputPort::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-void OPDID_FileInputPort::fileChangedEvent(const void*, const Poco::DirectoryWatcher::DirectoryEvent& evt) {
+void FileInputPort::fileChangedEvent(const void*, const Poco::DirectoryWatcher::DirectoryEvent& evt) {
 	if (evt.item.path() == this->filePath) {
 		this->logDebug(this->ID() + ": Detected file modification: " + this->filePath);
 		
@@ -1351,7 +1353,7 @@ void OPDID_FileInputPort::fileChangedEvent(const void*, const Poco::DirectoryWat
 	}
 }
 
-OPDID_FileInputPort::OPDID_FileInputPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id), OPDID_PortFunctions(id) {
+FileInputPort::FileInputPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	this->directoryWatcher = nullptr;
 	this->reloadDelayMs = 0;
@@ -1369,12 +1371,12 @@ OPDID_FileInputPort::OPDID_FileInputPort(AbstractOPDID *opdid, const char *id) :
 	this->setLine(1);
 }
 
-OPDID_FileInputPort::~OPDID_FileInputPort() {
+FileInputPort::~FileInputPort() {
 	if (this->directoryWatcher != nullptr)
 		delete this->directoryWatcher;
 }
 
-void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
+void FileInputPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
 	this->opdid->configureDigitalPort(config, this);
 
 	this->filePath = opdid->getConfigString(config, "File", "", true);
@@ -1385,29 +1387,29 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 	std::string portType = opdid->getConfigString(nodeConfig, "Type", "", true);
 	if (portType == "DigitalPort") {
 		this->portType = DIGITAL_PORT;
-		this->port = new OPDI_DigitalPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
-		this->opdid->configureDigitalPort(nodeConfig, (OPDI_DigitalPort*)port);
+		this->port = new opdi::DigitalPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
+		this->opdid->configureDigitalPort(nodeConfig, (opdi::DigitalPort*)port);
 		// validate setup
-		if (((OPDI_DigitalPort*)port)->getMode() != OPDI_DIGITAL_MODE_INPUT_FLOATING)
+		if (((opdi::DigitalPort*)port)->getMode() != OPDI_DIGITAL_MODE_INPUT_FLOATING)
 			throw Poco::DataException(this->ID() + ": Modes other than 'Input' are not supported for a digital file input port: " + portNode);
 	} else
 	if (portType == "AnalogPort") {
 		this->portType = ANALOG_PORT;
-		this->port = new OPDI_AnalogPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
-		this->opdid->configureAnalogPort(nodeConfig, (OPDI_AnalogPort*)port);
+		this->port = new opdi::AnalogPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
+		this->opdid->configureAnalogPort(nodeConfig, (opdi::AnalogPort*)port);
 		// validate setup
-		if (((OPDI_AnalogPort*)port)->getMode() != OPDI_ANALOG_MODE_INPUT)
+		if (((opdi::AnalogPort*)port)->getMode() != OPDI_ANALOG_MODE_INPUT)
 			throw Poco::DataException(this->ID() + ": Modes other than 'Input' are not supported for a analog file input port: " + portNode);
 	} else
 	if (portType == "DialPort") {
 		this->portType = DIAL_PORT;
-		this->port = new OPDI_DialPort(portNode.c_str());
-		this->opdid->configureDialPort(nodeConfig, (OPDI_DialPort*)port);
+		this->port = new opdi::DialPort(portNode.c_str());
+		this->opdid->configureDialPort(nodeConfig, (opdi::DialPort*)port);
 	} else
 	if (portType == "SelectPort") {
 		this->portType = SELECT_PORT;
-		this->port = new OPDI_SelectPort(portNode.c_str());
-		this->opdid->configureSelectPort(nodeConfig, parentConfig, (OPDI_SelectPort*)port);
+		this->port = new opdi::SelectPort(portNode.c_str());
+		this->opdid->configureSelectPort(nodeConfig, parentConfig, (opdi::SelectPort*)port);
 	} else
 	if (portType == "StreamingPort") {
 		this->portType = STREAMING_PORT;
@@ -1447,9 +1449,9 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 	this->directoryWatcher = new Poco::DirectoryWatcher(this->directory, 
 			Poco::DirectoryWatcher::DW_ITEM_MODIFIED | Poco::DirectoryWatcher::DW_ITEM_ADDED | Poco::DirectoryWatcher::DW_ITEM_MOVED_TO, 
 			Poco::DirectoryWatcher::DW_DEFAULT_SCAN_INTERVAL);
-	this->directoryWatcher->itemModified += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
-	this->directoryWatcher->itemAdded += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
-	this->directoryWatcher->itemMovedTo += Poco::delegate(this, &OPDID_FileInputPort::fileChangedEvent);
+	this->directoryWatcher->itemModified += Poco::delegate(this, &FileInputPort::fileChangedEvent);
+	this->directoryWatcher->itemAdded += Poco::delegate(this, &FileInputPort::fileChangedEvent);
+	this->directoryWatcher->itemMovedTo += Poco::delegate(this, &FileInputPort::fileChangedEvent);
 
 	// can the file be loaded initially?
 	Poco::File file(this->filePath);
@@ -1477,12 +1479,12 @@ void OPDID_FileInputPort::configure(Poco::Util::AbstractConfiguration *config, P
 // AggregatorPort
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_AggregatorPort::Calculation::Calculation(std::string id) : OPDI_DialPort(id.c_str()) {
+AggregatorPort::Calculation::Calculation(std::string id) : opdi::DialPort(id.c_str()) {
 	this->algorithm = UNKNOWN;
 	this->allowIncomplete = false;
 }
 
-void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregator) {
+void AggregatorPort::Calculation::calculate(AggregatorPort* aggregator) {
 	aggregator->logExtreme(this->ID() + ": Calculating new value");
 	if ((aggregator->values.size() < aggregator->totalValues) && !this->allowIncomplete)
 		aggregator->logDebug(this->ID() + ": Cannot compute result because not all values have been collected and AllowIncomplete is false");
@@ -1542,9 +1544,9 @@ void OPDID_AggregatorPort::Calculation::calculate(OPDID_AggregatorPort* aggregat
 	}
 }
 
-// OPDID_AggregatorPort class implementation
+// AggregatorPort class implementation
 
-void OPDID_AggregatorPort::persist() {
+void AggregatorPort::persist() {
 	// update persistent storage?
 	if (this->isPersistent() && (this->opdid->persistentConfig != nullptr)) {
 		try {
@@ -1580,7 +1582,7 @@ void OPDID_AggregatorPort::persist() {
 	}
 }
 
-void OPDID_AggregatorPort::resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity, bool clearPersistent) {
+void AggregatorPort::resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity, bool clearPersistent) {
 	switch (logVerbosity) {
 	case AbstractOPDID::EXTREME:
 		this->logExtreme(this->ID() + ": Resetting aggregator; values are now unavailable because: " + reason); break;
@@ -1611,8 +1613,8 @@ void OPDID_AggregatorPort::resetValues(std::string reason, AbstractOPDID::LogVer
 		this->historyPort->clearHistory();
 }
 
-uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
-	uint8_t result = OPDI_DigitalPort::doWork(canSend);
+uint8_t AggregatorPort::doWork(uint8_t canSend) {
+	uint8_t result = opdi::DigitalPort::doWork(canSend);
 	if (result != OPDI_STATUS_OK)
 		return result;
 
@@ -1730,7 +1732,7 @@ uint8_t OPDID_AggregatorPort::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id), OPDID_PortFunctions(id) {
+AggregatorPort::AggregatorPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	this->multiplier = 1;
 	// default: allow all values (set absolute limits very high)
@@ -1751,7 +1753,7 @@ OPDID_AggregatorPort::OPDID_AggregatorPort(AbstractOPDID *opdid, const char *id)
 	this->firstRun = true;
 }
 
-OPDID_AggregatorPort::~OPDID_AggregatorPort() {
+AggregatorPort::~AggregatorPort() {
 	// destructor functionality: if the port ist persistent, try to persist values
 	// ignore any errors during this process
 	try {
@@ -1760,7 +1762,7 @@ OPDID_AggregatorPort::~OPDID_AggregatorPort() {
 	catch (...) {}
 }
 
-void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
+void AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
 	this->opdid->configureDigitalPort(config, this);
 
 	this->sourcePortID = this->opdid->getConfigString(config, "SourcePort", "", true);
@@ -1886,9 +1888,9 @@ void OPDID_AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, 
 	this->resetValues("Setting initial state", AbstractOPDID::VERBOSE, false);
 }
 
-void OPDID_AggregatorPort::prepare() {
+void AggregatorPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_DigitalPort::prepare();
+	opdi::DigitalPort::prepare();
 
 	// find source port; throws errors if something required is missing
 	this->sourcePort = this->findPort(this->getID(), "SourcePort", this->sourcePortID, true);
@@ -1897,18 +1899,18 @@ void OPDID_AggregatorPort::prepare() {
 		this->historyPort = this->findPort(this->getID(), "HistoryPort", this->historyPortID, true);
 }
 
-void OPDID_AggregatorPort::setLine(uint8_t newLine, ChangeSource /*changeSource*/) {
+void AggregatorPort::setLine(uint8_t newLine, ChangeSource /*changeSource*/) {
 	// if being deactivated, reset values and ports to error
 	if ((this->line == 1) && (newLine == 0))
 		this->resetValues("Aggregator was deactivated", AbstractOPDID::VERBOSE);
-	OPDI_DigitalPort::setLine(newLine);
+	opdi::DigitalPort::setLine(newLine);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // CounterPort
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_CounterPort::OPDID_CounterPort(AbstractOPDID *opdid, const char *id) : OPDI_DialPort(id), OPDID_PortFunctions(id) {
+CounterPort::CounterPort(AbstractOPDID *opdid, const char *id) : opdi::DialPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	// default: increment by one
 	this->increment = { 1 };
@@ -1917,27 +1919,27 @@ OPDID_CounterPort::OPDID_CounterPort(AbstractOPDID *opdid, const char *id) : OPD
 	this->lastActionTime = 0;
 }
 
-void OPDID_CounterPort::configure(Poco::Util::AbstractConfiguration *nodeConfig) {
+void CounterPort::configure(Poco::Util::AbstractConfiguration *nodeConfig) {
 	this->opdid->configureDialPort(nodeConfig, this);
 
 	this->periodMs.initialize(this, "Period", nodeConfig->getString("Period", this->to_string(this->periodMs.value())));
 	this->increment.initialize(this, "Increment", nodeConfig->getString("Increment", this->to_string(this->increment.value())));
 }
 
-void OPDID_CounterPort::prepare() {
+void CounterPort::prepare() {
 	// start incrementing from now
 	this->lastActionTime = opdi_get_time_ms();
 }
 
-void OPDID_CounterPort::doIncrement() {
+void CounterPort::doIncrement() {
 	// get current increment from value resolver
 	int64_t increment = this->increment.value();
 	this->lastActionTime = opdi_get_time_ms();
 	this->setPosition(this->position + increment);
 }
 
-uint8_t OPDID_CounterPort::doWork(uint8_t canSend) {
-	OPDI_DialPort::doWork(canSend);
+uint8_t CounterPort::doWork(uint8_t canSend) {
+	opdi::DialPort::doWork(canSend);
 
 	// get current period from value resolver
 	int64_t period = this->periodMs.value();
@@ -1953,16 +1955,16 @@ uint8_t OPDID_CounterPort::doWork(uint8_t canSend) {
 // TriggerPort
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_TriggerPort::OPDID_TriggerPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
+TriggerPort::TriggerPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 
-	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	this->line = 1;	// default: active
 
 	this->counterPort = nullptr;
 }
 
-void OPDID_TriggerPort::configure(Poco::Util::AbstractConfiguration *config) {
+void TriggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -2001,8 +2003,8 @@ void OPDID_TriggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->counterPortStr = config->getString("CounterPort", "");
 }
 
-void OPDID_TriggerPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
-	OPDI_DigitalPort::setLine(line);
+void TriggerPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
+	opdi::DigitalPort::setLine(line);
 
 	// deactivated?
 	if (line == 0) {
@@ -2016,9 +2018,9 @@ void OPDID_TriggerPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	}
 }
 
-void OPDID_TriggerPort::prepare() {
+void TriggerPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_DigitalPort::prepare();
+	opdi::DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
 	DigitalPortList inputPorts;
@@ -2036,12 +2038,12 @@ void OPDID_TriggerPort::prepare() {
 	this->findDigitalPorts(this->getID(), "InverseOutputPorts", this->inverseOutputPortStr, this->inverseOutputPorts);
 	if (!this->counterPortStr.empty()) {
 		// find port and cast to CounterPort; if type does not match this will be nullptr
-		this->counterPort = dynamic_cast<OPDID_CounterPort*>(this->findPort(this->getID(), "CounterPort", this->counterPortStr, false));
+		this->counterPort = dynamic_cast<CounterPort*>(this->findPort(this->getID(), "CounterPort", this->counterPortStr, false));
 	}
 }
 
-uint8_t OPDID_TriggerPort::doWork(uint8_t canSend)  {
-	OPDI_DigitalPort::doWork(canSend);
+uint8_t TriggerPort::doWork(uint8_t canSend)  {
+	opdi::DigitalPort::doWork(canSend);
 
 	if (this->line == 0)
 		return OPDI_STATUS_OK;
@@ -2135,3 +2137,4 @@ uint8_t OPDID_TriggerPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
+}		// namespace opdid

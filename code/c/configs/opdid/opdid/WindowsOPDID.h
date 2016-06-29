@@ -9,6 +9,7 @@ std::string utf8_encode(const std::wstring &wstr);
 // Convert an UTF8 string to a wide Unicode String
 std::wstring utf8_decode(const std::string &str);
 
+namespace opdid {
 
 class WindowsOPDID : public AbstractOPDID
 {
@@ -39,6 +40,8 @@ public:
 	virtual void switchToUser(std::string newUser) override;
 };
 
-
 // The plugin DLL entry function that returns the plugin instance
 typedef IOPDIDPlugin* (__cdecl *GetOPDIDPluginInstance_t)(int majorVersion, int minorVersion, int patchVersion);
+
+}		// namespace opdid
+

@@ -5,39 +5,41 @@
 
 #include "AbstractOPDID.h"
 
+namespace opdid {
+
 template<typename T>
 class ValueResolver;
 
-class OPDID_PortFunctions {
+class PortFunctions {
 friend class AbstractOPDID;
 friend class ValueResolver<double>;
 friend class ValueResolver<int32_t>;
 friend class ValueResolver<int64_t>;
 
 protected:
-	typedef std::vector<OPDI_Port*> PortList;
-	typedef std::vector<OPDI_DigitalPort*> DigitalPortList;
-	typedef std::vector<OPDI_AnalogPort*> AnalogPortList;
+	typedef std::vector<opdi::Port*> PortList;
+	typedef std::vector<opdi::DigitalPort*> DigitalPortList;
+	typedef std::vector<opdi::AnalogPort*> AnalogPortList;
 
 	AbstractOPDID *opdid;
 	AbstractOPDID::LogVerbosity logVerbosity;
 	std::string portFunctionID;
 
-	OPDID_PortFunctions(std::string id);
+	PortFunctions(std::string id);
 
-	virtual OPDI_Port* findPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+	virtual opdi::Port* findPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
-	virtual void findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, OPDI::PortList& portList);
+	virtual void findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, PortList& portList);
 
-	virtual OPDI_DigitalPort* findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+	virtual opdi::DigitalPort* findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
 	virtual void findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, DigitalPortList& portList);
 
-	virtual OPDI_AnalogPort* findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+	virtual opdi::AnalogPort* findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
 	virtual void findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, AnalogPortList& portList);
 
-	virtual OPDI_SelectPort* findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+	virtual opdi::SelectPort* findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
 	virtual void logWarning(const std::string& message);
 
@@ -71,14 +73,14 @@ protected:
 template<typename T>
 class ValueResolver {
 
-	OPDID_PortFunctions* origin;
+	PortFunctions* origin;
 	std::string paramName;
 	std::string portID;
 	bool useScaleValue;
 	double scaleValue;
 	bool useErrorDefault;
 	T errorDefault;
-	mutable OPDI_Port* port;
+	mutable opdi::Port* port;
 	bool isFixed;
 	T fixedValue;
 
@@ -97,7 +99,7 @@ public:
 		this->fixedValue = initialValue;
 	}
 
-	void initialize(OPDID_PortFunctions* origin, const std::string& paramName, const std::string& value, bool allowErrorDefault = true) {
+	void initialize(PortFunctions* origin, const std::string& paramName, const std::string& value, bool allowErrorDefault = true) {
 		this->origin = origin;
 		this->useScaleValue = false;
 		this->useErrorDefault = false;
@@ -219,3 +221,4 @@ public:
 	}
 };
 
+}		// namespace opdid

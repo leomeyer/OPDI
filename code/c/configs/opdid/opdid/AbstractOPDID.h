@@ -16,25 +16,29 @@
 #include "opdi_configspecs.h"
 #include "OPDI.h"
 
-#define OPDID_CONFIG_FILE_SETTING	"__OPDID_CONFIG_FILE_PATH"
-
-class AbstractOPDID;
-
-#define OPDID_MAJOR_VERSION		0
-#define OPDID_MINOR_VERSION		1
-#define OPDID_PATCH_VERSION		0
-
 // protocol callback function for the OPDI slave implementation
 extern void protocol_callback(uint8_t state);
+
+namespace opdid {
+	class AbstractOPDID;
+}
 
 /** The abstract plugin interface. */
 struct IOPDIDPlugin {
 	// config is the parent configuration. Implementations should use createView to get the node configuration.
-	virtual void setupPlugin(AbstractOPDID* abstractOPDID, const std::string& nodeName, Poco::Util::AbstractConfiguration* config) = 0;
+	virtual void setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::string& nodeName, Poco::Util::AbstractConfiguration* config) = 0;
 
 	// virtual destructor (called when the plugin is deleted)
 	virtual ~IOPDIDPlugin() {}
 };
+
+namespace opdid {
+
+#define OPDID_CONFIG_FILE_SETTING	"__OPDID_CONFIG_FILE_PATH"
+
+#define OPDID_MAJOR_VERSION		0
+#define OPDID_MINOR_VERSION		1
+#define OPDID_PATCH_VERSION		0
 
 /** The listener interface for plugin registrations. */
 struct IOPDIDConnectionListener {
@@ -46,7 +50,7 @@ struct IOPDIDConnectionListener {
 };
 
 /** The abstract base class for OPDID implementations. */
-class AbstractOPDID: public OPDI {
+class AbstractOPDID: public opdi::OPDI {
 protected:
 	int majorVersion;
 	int minorVersion;
@@ -112,7 +116,7 @@ public:
 	std::string timestampFormat;
 
 	Poco::BasicEvent<void> allPortsRefreshed;
-	Poco::BasicEvent<OPDI_Port*> portRefreshed;
+	Poco::BasicEvent<opdi::Port*> portRefreshed;
 
 	// configuration file for port state persistence
 	std::string persistentConfigFile;
@@ -203,7 +207,7 @@ public:
 	virtual void configureAuthentication(Poco::Util::AbstractConfiguration* config);
 
 	/** Reads common properties from the configuration and configures the port group. */
-	virtual void configureGroup(Poco::Util::AbstractConfiguration* groupConfig, OPDI_PortGroup* group, int defaultFlags);
+	virtual void configureGroup(Poco::Util::AbstractConfiguration* groupConfig, opdi::PortGroup* group, int defaultFlags);
 
 	virtual void setupGroup(Poco::Util::AbstractConfiguration* groupConfig, const std::string& group);
 
@@ -212,30 +216,30 @@ public:
 	virtual void setupInclude(Poco::Util::AbstractConfiguration* groupConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& node);
 
 	/** Reads common properties from the configuration and configures the port. */
-	virtual void configurePort(Poco::Util::AbstractConfiguration* portConfig, OPDI_Port* port, int defaultFlags);
+	virtual void configurePort(Poco::Util::AbstractConfiguration* portConfig, opdi::Port* port, int defaultFlags);
 
 	/** Reads special properties from the configuration and configures the digital port. */
-	virtual void configureDigitalPort(Poco::Util::AbstractConfiguration* portConfig, OPDI_DigitalPort* port, bool stateOnly = false);
+	virtual void configureDigitalPort(Poco::Util::AbstractConfiguration* portConfig, opdi::DigitalPort* port, bool stateOnly = false);
 
 	virtual void setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the analog port. */
-	virtual void configureAnalogPort(Poco::Util::AbstractConfiguration* portConfig, OPDI_AnalogPort* port, bool stateOnly = false);
+	virtual void configureAnalogPort(Poco::Util::AbstractConfiguration* portConfig, opdi::AnalogPort* port, bool stateOnly = false);
 
 	virtual void setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the select port. */
-	virtual void configureSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, OPDI_SelectPort* port, bool stateOnly = false);
+	virtual void configureSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, opdi::SelectPort* port, bool stateOnly = false);
 
 	virtual void setupEmulatedSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the dial port. */
-	virtual void configureDialPort(Poco::Util::AbstractConfiguration* portConfig, OPDI_DialPort* port, bool stateOnly = false);
+	virtual void configureDialPort(Poco::Util::AbstractConfiguration* portConfig, opdi::DialPort* port, bool stateOnly = false);
 
 	virtual void setupEmulatedDialPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the streaming port. */
-	virtual void configureStreamingPort(Poco::Util::AbstractConfiguration* portConfig, OPDI_StreamingPort* port);
+	virtual void configureStreamingPort(Poco::Util::AbstractConfiguration* portConfig, opdi::StreamingPort* port);
 
 	virtual void setupSerialStreamingPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
@@ -295,18 +299,18 @@ public:
 	virtual std::string getExtendedDeviceInfo(void) override;
 
 	/** This implementation also logs the refreshed ports. */
-	virtual uint8_t refresh(OPDI_Port** ports) override;
+	virtual uint8_t refresh(opdi::Port** ports) override;
 
 	virtual void savePersistentConfig();
 
 	/** Implements a persistence mechanism for port states. */
-	virtual void persist(OPDI_Port* port) override;
+	virtual void persist(opdi::Port* port) override;
 
 	/** Returns a string representing the port state; empty in case of errors. */
-	virtual std::string getPortStateStr(OPDI_Port* port) const;
+	virtual std::string getPortStateStr(opdi::Port* port) const;
 
 	/** Returns a double representing the port value; throws errors if they occur. */
-	virtual double getPortValue(OPDI_Port* port) const;
+	virtual double getPortValue(opdi::Port* port) const;
 
 	virtual std::string getDeviceInfo(void);
 
@@ -320,5 +324,8 @@ template <class T> inline std::string AbstractOPDID::to_string(const T& t) const
 	return ss.str();
 }
 
+}		// namespace opdid
+
 /** Define external singleton instance */
-extern AbstractOPDID* Opdi;
+extern opdid::AbstractOPDID* Opdi;
+

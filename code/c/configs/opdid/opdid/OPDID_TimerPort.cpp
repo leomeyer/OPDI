@@ -11,11 +11,13 @@
 
 #include "SunRiseSet.h"
 
+namespace opdid {
+
 ///////////////////////////////////////////////////////////////////////////////
 // Timer Port
 ///////////////////////////////////////////////////////////////////////////////
 
-int OPDID_TimerPort::ScheduleComponent::ParseValue(Type type, std::string value) {
+int TimerPort::ScheduleComponent::ParseValue(Type type, std::string value) {
 	std::string compName;
 	switch (type) {
 	case MONTH: compName = "Month"; break;
@@ -41,7 +43,7 @@ int OPDID_TimerPort::ScheduleComponent::ParseValue(Type type, std::string value)
 	return number;
 }
 
-OPDID_TimerPort::ScheduleComponent OPDID_TimerPort::ScheduleComponent::Parse(Type type, std::string def) {
+TimerPort::ScheduleComponent TimerPort::ScheduleComponent::Parse(Type type, std::string def) {
 	ScheduleComponent result;
 	result.type = type;
 
@@ -104,7 +106,7 @@ OPDID_TimerPort::ScheduleComponent OPDID_TimerPort::ScheduleComponent::Parse(Typ
 	throw Poco::DataException("Timer port schedule component " + compName + " requires at least one allowed value");
 }
 
-bool OPDID_TimerPort::ScheduleComponent::getNextPossibleValue(int* currentValue, bool* rollover, bool* changed, int month, int year) {
+bool TimerPort::ScheduleComponent::getNextPossibleValue(int* currentValue, bool* rollover, bool* changed, int month, int year) {
 	*rollover = false;
 	*changed = false;
 	// find a match
@@ -125,7 +127,7 @@ bool OPDID_TimerPort::ScheduleComponent::getNextPossibleValue(int* currentValue,
 	return this->getFirstPossibleValue(currentValue, month, year);
 }
 
-bool OPDID_TimerPort::ScheduleComponent::getFirstPossibleValue(int* currentValue, int /*month*/, int /*year*/) {
+bool TimerPort::ScheduleComponent::getFirstPossibleValue(int* currentValue, int /*month*/, int /*year*/) {
 	// find a match
 	int i = 0;
 	switch (type) {
@@ -147,11 +149,11 @@ bool OPDID_TimerPort::ScheduleComponent::getFirstPossibleValue(int* currentValue
 	return false;
 }
 
-bool OPDID_TimerPort::ScheduleComponent::hasValue(int value) {
+bool TimerPort::ScheduleComponent::hasValue(int value) {
 	return this->values[value];
 }
 
-int OPDID_TimerPort::ScheduleComponent::getMinimum(void) {
+int TimerPort::ScheduleComponent::getMinimum(void) {
 	switch (this->type) {
 	case MONTH: return 1;
 	case DAY: return 1;
@@ -163,7 +165,7 @@ int OPDID_TimerPort::ScheduleComponent::getMinimum(void) {
 	return -1;
 }
 
-int OPDID_TimerPort::ScheduleComponent::getMaximum(void) {
+int TimerPort::ScheduleComponent::getMaximum(void) {
 	switch (this->type) {
 	case MONTH: return 12;
 	case DAY: return 31;
@@ -176,18 +178,18 @@ int OPDID_TimerPort::ScheduleComponent::getMaximum(void) {
 }
 
 
-void OPDID_TimerPort::ManualSchedulePort::setPosition(int64_t position, ChangeSource /*changeSource*/) {
-	OPDI_DialPort::setPosition(position);
+void TimerPort::ManualSchedulePort::setPosition(int64_t position, ChangeSource /*changeSource*/) {
+	DialPort::setPosition(position);
 
 	// notify timer port: schedule has changed
 	this->timerPort->recalculateSchedules();
 }
 
 
-OPDID_TimerPort::OPDID_TimerPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
+TimerPort::TimerPort(AbstractOPDID *opdid, const char *id) : DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 
-	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+	DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 
 	// default: enabled
 	this->line = 1;
@@ -205,10 +207,10 @@ OPDID_TimerPort::OPDID_TimerPort(AbstractOPDID *opdid, const char *id) : OPDI_Di
 	this->lastWorkTimestamp = 0;
 }
 
-OPDID_TimerPort::~OPDID_TimerPort() {
+TimerPort::~TimerPort() {
 }
 
-void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
+void TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
 	this->opdid->configureDigitalPort(config, this);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -401,18 +403,18 @@ void OPDID_TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 	}
 }
 
-void OPDID_TimerPort::setDirCaps(const char * /*dirCaps*/) {
+void TimerPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a TimerPort cannot be changed");
 }
 
-void OPDID_TimerPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
+void TimerPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 	if (mode != OPDI_DIGITAL_MODE_OUTPUT)
 		throw PortError(this->ID() + ": The mode of a TimerPort cannot be set to anything other than 'Output'");
 }
 
-void OPDID_TimerPort::prepare() {
+void TimerPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_DigitalPort::prepare();
+	DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
 	this->findDigitalPorts(this->ID(), "OutputPorts", this->outputPortStr, this->outputPorts);
@@ -441,7 +443,7 @@ void OPDID_TimerPort::prepare() {
 	this->lastWorkTimestamp = Poco::Timestamp();
 }
 
-bool OPDID_TimerPort::matchWeekday(int day, int month, int year, ScheduleComponent *weekdayScheduleComponent) {
+bool TimerPort::matchWeekday(int day, int month, int year, ScheduleComponent *weekdayScheduleComponent) {
 	// determine day of week
 	Poco::DateTime dt(year, month, day);
 	int dayOfWeek = dt.dayOfWeek();	// 0 = Sunday
@@ -449,7 +451,7 @@ bool OPDID_TimerPort::matchWeekday(int day, int month, int year, ScheduleCompone
 	return weekdayScheduleComponent->hasValue(dayOfWeek);
 }
 
-Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
+Poco::Timestamp TimerPort::calculateNextOccurrence(Schedule *schedule) {
 	if (schedule->type == ONCE) {
 		// validate
 		if ((schedule->data.time.month < 1) || (schedule->data.time.month > 12))
@@ -633,7 +635,7 @@ Poco::Timestamp OPDID_TimerPort::calculateNextOccurrence(Schedule *schedule) {
 		return Poco::Timestamp();
 }
 
-void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Poco::Timestamp timestamp) {
+void TimerPort::addNotification(ScheduleNotification::Ptr notification, Poco::Timestamp timestamp) {
 	Poco::Timestamp now;
 
 	// for debug output: convert UTC timestamp to local time
@@ -657,7 +659,7 @@ void OPDID_TimerPort::addNotification(ScheduleNotification::Ptr notification, Po
 	}
 }
 
-void OPDID_TimerPort::setOutputs(int8_t outputLine) {
+void TimerPort::setOutputs(int8_t outputLine) {
 	auto it = this->outputPorts.begin();
 	auto ite = this->outputPorts.end();
 	while (it != ite) {
@@ -681,8 +683,8 @@ void OPDID_TimerPort::setOutputs(int8_t outputLine) {
 	}
 }
 
-uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
-	OPDI_DigitalPort::doWork(canSend);
+uint8_t TimerPort::doWork(uint8_t canSend)  {
+	DigitalPort::doWork(canSend);
 
 	// detect connection status change
 	bool connected = this->opdid->isConnected() != 0;
@@ -810,7 +812,7 @@ uint8_t OPDID_TimerPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void OPDID_TimerPort::recalculateSchedules(Schedule* activatingSchedule) {
+void TimerPort::recalculateSchedules(Schedule* activatingSchedule) {
 	// clear all schedules
 	this->queue.clear();
 	for (auto it = this->schedules.begin(), ite = this->schedules.end(); it != ite; ++it) {
@@ -829,10 +831,10 @@ void OPDID_TimerPort::recalculateSchedules(Schedule* activatingSchedule) {
 	this->refreshRequired = true;
 }
 
-void OPDID_TimerPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
+void TimerPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	bool wasLow = (this->line == 0);
 
-	OPDI_DigitalPort::setLine(line);
+	DigitalPort::setLine(line);
 
 	// set to Low?
 	if (this->line == 0) {
@@ -853,8 +855,8 @@ void OPDID_TimerPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	this->refreshRequired = true;
 }
 
-std::string OPDID_TimerPort::getExtendedState(void) const {
-	std::string result = OPDI_DigitalPort::getExtendedState();
+std::string TimerPort::getExtendedState(void) const {
+	std::string result = DigitalPort::getExtendedState();
 	std::string myText;
 	if (this->line != 1) {
 		myText = this->deactivatedText;
@@ -868,3 +870,5 @@ std::string OPDID_TimerPort::getExtendedState(void) const {
 	// append own text to base class text if available
 	return result.empty() ? myText : result + ";" + myText;
 }
+
+}		// namespace opdid

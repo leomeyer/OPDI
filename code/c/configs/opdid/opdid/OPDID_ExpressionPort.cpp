@@ -6,11 +6,13 @@
 
 #ifdef OPDID_USE_EXPRTK
 
+namespace opdid {
+
 ///////////////////////////////////////////////////////////////////////////////
 // Expression Port
 ///////////////////////////////////////////////////////////////////////////////
 
-OPDID_ExpressionPort::OPDID_ExpressionPort(AbstractOPDID *opdid, const char *id) : OPDI_DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), OPDID_PortFunctions(id) {
+ExpressionPort::ExpressionPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 	this->numIterations = 0;
 	this->fallbackSpecified = false;
@@ -18,16 +20,16 @@ OPDID_ExpressionPort::OPDID_ExpressionPort(AbstractOPDID *opdid, const char *id)
 	this->deactivationSpecified = false;
 	this->deactivationValue = 0;
 
-	OPDI_DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 
 	// default: enabled
 	this->line = 1;
 }
 
-OPDID_ExpressionPort::~OPDID_ExpressionPort() {
+ExpressionPort::~ExpressionPort() {
 }
 
-void OPDID_ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) {
+void ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -52,16 +54,16 @@ void OPDID_ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) 
 	}
 }
 
-void OPDID_ExpressionPort::setDirCaps(const char * /*dirCaps*/) {
+void ExpressionPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of an ExpressionPort cannot be changed");
 }
 
-void OPDID_ExpressionPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
+void ExpressionPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of an ExpressionPort cannot be changed");
 }
 
-void OPDID_ExpressionPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
-	OPDI_DigitalPort::setLine(line);
+void ExpressionPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
+	opdi::DigitalPort::setLine(line);
 
 	// if the line has been set to High, start the iterations
 	if (line == 1) {
@@ -78,7 +80,7 @@ void OPDID_ExpressionPort::setLine(uint8_t line, ChangeSource /*changeSource*/) 
 	}
 }
 
-bool OPDID_ExpressionPort::prepareSymbols(bool duringSetup) {
+bool ExpressionPort::prepareSymbols(bool duringSetup) {
 	this->symbol_table.add_function("timestamp", this->timestampFunc);
 
 	// Adding constants leads to a memory leak; furthermore, constants are not detected as known symbols.
@@ -88,7 +90,7 @@ bool OPDID_ExpressionPort::prepareSymbols(bool duringSetup) {
 	return true;
 }
 
-bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
+bool ExpressionPort::prepareVariables(bool duringSetup) {
 	this->portValues.clear();
 	this->portValues.reserve(this->symbol_list.size());
 
@@ -101,7 +103,7 @@ bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 			continue;
 
 		// find port (variable name is the port ID)
-		OPDI_Port *port = this->opdid->findPortByID(symbol.first.c_str(), true);
+		opdi::Port *port = this->opdid->findPortByID(symbol.first.c_str(), true);
 
 		// port not found?
 		if (port == nullptr) {
@@ -136,8 +138,8 @@ bool OPDID_ExpressionPort::prepareVariables(bool duringSetup) {
 	return true;
 }
 
-void OPDID_ExpressionPort::prepare() {
-	OPDI_DigitalPort::prepare();
+void ExpressionPort::prepare() {
+	opdi::DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
 	this->findPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
@@ -175,7 +177,7 @@ void OPDID_ExpressionPort::prepare() {
 	this->iterations = this->numIterations;
 }
 
-void OPDID_ExpressionPort::setOutputPorts(double value) {
+void ExpressionPort::setOutputPorts(double value) {
 	// go through list of output ports
 	auto it = this->outputPorts.begin();
 	auto ite = this->outputPorts.end();
@@ -183,24 +185,24 @@ void OPDID_ExpressionPort::setOutputPorts(double value) {
 		try {
 			if ((*it)->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
 				if (value == 0)
-					((OPDI_DigitalPort *)(*it))->setLine(0);
+					((opdi::DigitalPort *)(*it))->setLine(0);
 				else
-					((OPDI_DigitalPort *)(*it))->setLine(1);
+					((opdi::DigitalPort *)(*it))->setLine(1);
 			}
 			else
 				if ((*it)->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
 					// analog port: relative value (0..1)
-					((OPDI_AnalogPort *)(*it))->setRelativeValue(value);
+					((opdi::AnalogPort *)(*it))->setRelativeValue(value);
 				}
 				else
 					if ((*it)->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
 						// dial port: absolute value
-						((OPDI_DialPort *)(*it))->setPosition((int64_t)value);
+						((opdi::DialPort *)(*it))->setPosition((int64_t)value);
 					}
 					else
 						if ((*it)->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
 							// select port: current position number
-							((OPDI_SelectPort *)(*it))->setPosition((uint16_t)value);
+							((opdi::SelectPort *)(*it))->setPosition((uint16_t)value);
 						}
 						else
 							throw PortError("");
@@ -213,8 +215,8 @@ void OPDID_ExpressionPort::setOutputPorts(double value) {
 	}
 }
 
-uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
-	OPDI_DigitalPort::doWork(canSend);
+uint8_t ExpressionPort::doWork(uint8_t canSend)  {
+	opdi::DigitalPort::doWork(canSend);
 
 	if (this->line == 1) {
 		// clear symbol table and values
@@ -253,5 +255,7 @@ uint8_t OPDID_ExpressionPort::doWork(uint8_t canSend)  {
 
 	return OPDI_STATUS_OK;
 }
+
+}		// namespace opdid
 
 #endif

@@ -14,7 +14,7 @@
 
 namespace {
 
-class WindowPort : public OPDI_SelectPort, OPDID_PortFunctions {
+class WindowPort : public opdi::SelectPort, opdid::PortFunctions {
 friend class WindowPlugin;
 protected:
 
@@ -77,14 +77,14 @@ protected:
 	int16_t positionAfterOpen;
 
 	// processed configuration
-	OPDI_DigitalPort *sensorPort;
-	OPDI_DigitalPort *motorAPort;
-	OPDI_DigitalPort *motorBPort;
-	OPDI_DigitalPort *directionPort;
-	OPDI_DigitalPort *enablePort;
-	OPDI_SelectPort *statusPort;
+	opdi::DigitalPort *sensorPort;
+	opdi::DigitalPort *motorAPort;
+	opdi::DigitalPort *motorBPort;
+	opdi::DigitalPort *directionPort;
+	opdi::DigitalPort *enablePort;
+	opdi::SelectPort *statusPort;
 
-	typedef std::vector<OPDI_DigitalPort *> DigitalPortList;
+	typedef std::vector<opdi::DigitalPort *> DigitalPortList;
 
 	DigitalPortList autoOpenPorts;
 	DigitalPortList autoClosePorts;
@@ -107,10 +107,10 @@ protected:
 	void prepare() override;
 
 	// gets the line status from the digital port
-	uint8_t getPortLine(OPDI_DigitalPort *port);
+	uint8_t getPortLine(opdi::DigitalPort *port);
 
 	// sets the line status of the digital port
-	void setPortLine(OPDI_DigitalPort *port, uint8_t line);
+	void setPortLine(opdi::DigitalPort *port, uint8_t line);
 
 	bool isSensorClosed(void);
 
@@ -139,9 +139,9 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	WindowPort(AbstractOPDID *opdid, const char *id);
+	WindowPort(opdid::AbstractOPDID *opdid, const char *id);
 
-	virtual void setPosition(uint16_t position, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setPosition(uint16_t position, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 	
 	virtual void getState(uint16_t *position) const override;
 };
@@ -150,13 +150,13 @@ public:
 // Plugin main class
 ////////////////////////////////////////////////////////////////////////
 
-class WindowPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener {
+class WindowPlugin : public IOPDIDPlugin, public opdid::IOPDIDConnectionListener {
 
 protected:
-	AbstractOPDID *opdid;
+	opdid::AbstractOPDID* opdid;
 
 public:
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) override;
+	virtual void setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration* config) override;
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -164,7 +164,7 @@ public:
 
 }	// end anonymous namespace
 
-WindowPort::WindowPort(AbstractOPDID *opdid, const char *id) : OPDI_SelectPort(id), OPDID_PortFunctions(id) {
+WindowPort::WindowPort(opdid::AbstractOPDID* opdid, const char *id) : opdi::SelectPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 
 	this->targetState = UNKNOWN;
@@ -203,7 +203,7 @@ void WindowPort::setPosition(uint16_t position, ChangeSource /*changeSource*/) {
 		if ((this->positionAfterOpen >= 0) && (position == POSITION_OPEN ) && (this->currentState == OPEN))
 			position = POSITION_AUTO;
 
-		OPDI_SelectPort::setPosition(position);
+		opdi::SelectPort::setPosition(position);
 		this->positionNewlySet = true;
 
 		std::string info = std::string(this->id) + ": Setting position to " + to_string(position) + " ";
@@ -228,12 +228,12 @@ void WindowPort::setPosition(uint16_t position, ChangeSource /*changeSource*/) {
 void WindowPort::getState(uint16_t *position) const {
 	if (this->currentState == ERR && !this->positionNewlySet)
 		throw PortError(this->ID() + ": Sensor or motor failure or misconfiguration");
-	OPDI_SelectPort::getState(position);
+	opdi::SelectPort::getState(position);
 }
 
 void WindowPort::prepare() {
 	this->logDebug(this->ID() + ": Preparing port");
-	OPDI_Port::prepare();
+	opdi::Port::prepare();
 
 	// find ports; throws errors if something required is missing
 	if (this->sensor != "")
@@ -268,14 +268,14 @@ void WindowPort::prepare() {
 		this->refreshMode =RefreshMode::REFRESH_AUTO;
 }
 
-uint8_t WindowPort::getPortLine(OPDI_DigitalPort *port) {
+uint8_t WindowPort::getPortLine(opdi::DigitalPort *port) {
 	uint8_t mode;
 	uint8_t line;
 	port->getState(&mode, &line);
 	return line;
 }
 
-void WindowPort::setPortLine(OPDI_DigitalPort *port, uint8_t newLine) {
+void WindowPort::setPortLine(opdi::DigitalPort *port, uint8_t newLine) {
 	uint8_t mode;
 	uint8_t line;
 	port->getState(&mode, &line);
@@ -478,7 +478,7 @@ void WindowPort::checkCloseHBridge(void) {
 }
 
 uint8_t WindowPort::doWork(uint8_t canSend)  {
-	OPDI_SelectPort::doWork(canSend);
+	opdi::SelectPort::doWork(canSend);
 
 	// state machine implementations
 
@@ -969,7 +969,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 }
 
 
-void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) {
+void WindowPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) {
 	this->opdid = abstractOPDID;
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
@@ -978,7 +978,7 @@ void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& 
 	WindowPort *port = new WindowPort(abstractOPDID, node.c_str());
 	abstractOPDID->configureSelectPort(nodeConfig, config, port);
 
-	port->logVerbosity = this->opdid->getConfigLogVerbosity(nodeConfig, AbstractOPDID::UNKNOWN);
+	port->logVerbosity = this->opdid->getConfigLogVerbosity(nodeConfig, opdid::AbstractOPDID::UNKNOWN);
 
 	if (nodeConfig->getInt("EnableDelay", 0) < 0)
 		throw Poco::DataException("EnableDelay may not be negative: " + abstractOPDID->to_string(port->enableDelay));
@@ -987,7 +987,7 @@ void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& 
 	// read control mode
 	std::string controlMode = abstractOPDID->getConfigString(nodeConfig, "ControlMode", "", true);
 	if (controlMode == "H-Bridge") {
-		if ((port->logVerbosity == AbstractOPDID::UNKNOWN) || (port->logVerbosity >= AbstractOPDID::VERBOSE))
+		if ((port->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (port->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
 			this->opdid->logVerbose("Configuring WindowPlugin port " + node + " in H-Bridge Mode");
 		port->mode = WindowPort::H_BRIDGE;
 		// motorA and motorB are required
@@ -1000,7 +1000,7 @@ void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& 
 		if (port->enableDelay < port->motorDelay)
 			throw Poco::DataException("If using MotorDelay, EnableDelay must be greater or equal: " + abstractOPDID->to_string(port->enableDelay));
 	} else if (controlMode == "SerialRelay") {
-		if ((port->logVerbosity == AbstractOPDID::UNKNOWN) || (port->logVerbosity >= AbstractOPDID::VERBOSE))
+		if ((port->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (port->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
 			this->opdid->logVerbose("Configuring WindowPlugin port " + node + " in Serial Relay Mode");
 		port->mode = WindowPort::SERIAL_RELAY;
 		// direction and enable ports are required
@@ -1049,7 +1049,7 @@ void WindowPlugin::setupPlugin(AbstractOPDID *abstractOPDID, const std::string& 
 
 	this->opdid->addConnectionListener(this);
 
-	if (this->opdid->logVerbosity >= AbstractOPDID::VERBOSE)
+	if (this->opdid->logVerbosity >= opdid::AbstractOPDID::VERBOSE)
 		this->opdid->logVerbose("WindowPlugin setup completed successfully as node " + node);
 }
 

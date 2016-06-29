@@ -12,6 +12,8 @@
 
 #include "OPDID_PortFunctions.h"
 
+namespace opdid {
+
 ///////////////////////////////////////////////////////////////////////////////
 // Expression Port
 ///////////////////////////////////////////////////////////////////////////////
@@ -66,7 +68,7 @@ struct timestamp_func : public exprtk::ifunction<double>
 	}
 };
 
-class OPDID_ExpressionPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+class ExpressionPort : public opdi::DigitalPort, protected PortFunctions {
 protected:
 
 	std::string expressionStr;
@@ -74,7 +76,7 @@ protected:
 	std::vector<double> portValues;	// holds the values of the ports for the expression evaluation
 
 	std::string outputPortStr;
-	OPDI::PortList outputPorts;
+	opdi::OPDI::PortList outputPorts;
 	int64_t numIterations;
 	double fallbackValue;
 	bool fallbackSpecified;
@@ -102,20 +104,21 @@ protected:
 	void setOutputPorts(double value);
 
 public:
-	OPDID_ExpressionPort(AbstractOPDID *opdid, const char *id);
+	ExpressionPort(AbstractOPDID* opdid, const char* id);
 
-	virtual ~OPDID_ExpressionPort();
+	virtual ~ExpressionPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *config);
+	virtual void configure(Poco::Util::AbstractConfiguration* config);
 
-	virtual void setDirCaps(const char *dirCaps) override;
+	virtual void setDirCaps(const char* dirCaps) override;
 
-	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
-	virtual void setLine(uint8_t line, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
 
 #endif // def OPDID_USE_EXPRTK
 
+}		// namespace opdid

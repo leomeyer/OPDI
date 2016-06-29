@@ -6,6 +6,8 @@
 
 #include "OPDID_PortFunctions.h"
 
+namespace opdid {
+
 ///////////////////////////////////////////////////////////////////////////////
 // Exec Port
 ///////////////////////////////////////////////////////////////////////////////
@@ -26,7 +28,7 @@
 *   If the parameter ForceKill is true a running process is killed if it is still running when the
 *   same process is to be started again.
 */
-class OPDID_ExecPort : public OPDI_DigitalPort, protected OPDID_PortFunctions {
+class ExecPort : public opdi::DigitalPort, protected PortFunctions {
 protected:
 
     enum ChangeType {
@@ -49,15 +51,17 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend);
 
 public:
-	OPDID_ExecPort(AbstractOPDID *opdid, const char *id);
+	ExecPort(AbstractOPDID* opdid, const char* id);
 
-	virtual ~OPDID_ExecPort();
+	virtual ~ExecPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *config);
+	virtual void configure(Poco::Util::AbstractConfiguration* config);
 
-	virtual void setDirCaps(const char *dirCaps) override;
+	virtual void setDirCaps(const char* dirCaps) override;
 
-	virtual void setMode(uint8_t mode, ChangeSource changeSource = OPDI_Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
+
+}		// namespace opdid

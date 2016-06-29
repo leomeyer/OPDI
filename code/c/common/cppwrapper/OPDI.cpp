@@ -33,6 +33,8 @@
 #include "opdi_configspecs.h"
 #include "opdi_platformfuncs.h"
 
+namespace opdi {
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Main class for OPDI functionality
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -109,7 +111,7 @@ std::string OPDI::getExtendedDeviceInfo(void) {
 }
 
 std::string OPDI::getExtendedPortInfo(char *portID, uint8_t *code) {
-	OPDI_Port *port = this->findPortByID(portID, false);
+	opdi::Port *port = this->findPortByID(portID, false);
 	if (port == nullptr) {
 		*code = OPDI_PORT_UNKNOWN;
 		return "";
@@ -120,7 +122,7 @@ std::string OPDI::getExtendedPortInfo(char *portID, uint8_t *code) {
 }
 
 std::string OPDI::getExtendedPortState(char *portID, uint8_t *code) {
-	OPDI_Port *port = this->findPortByID(portID, false);
+	opdi::Port *port = this->findPortByID(portID, false);
 	if (port == nullptr) {
 		*code = OPDI_PORT_UNKNOWN;
 		return "";
@@ -130,7 +132,7 @@ std::string OPDI::getExtendedPortState(char *portID, uint8_t *code) {
 	}
 }
 
-void OPDI::addPort(OPDI_Port *port) {
+void OPDI::addPort(opdi::Port *port) {
 	// associate port with this instance
 	port->opdi = this;
 
@@ -156,7 +158,7 @@ void OPDI::addPort(OPDI_Port *port) {
 
 // possible race conditions here, if one thread updates port data while the other retrieves it
 // - generally not a problem because slaves are usually single-threaded
-void OPDI::updatePortData(OPDI_Port *port) {
+void OPDI::updatePortData(opdi::Port *port) {
 	// allocate port data structure if necessary
 	opdi_Port *oPort = (opdi_Port *)port->data;
 	if (oPort == nullptr) {
@@ -177,7 +179,7 @@ void OPDI::updatePortData(OPDI_Port *port) {
 
 	// check port type
 	if (strcmp(port->type, OPDI_PORTTYPE_SELECT) == 0) {
-		oPort->info.ptr = static_cast<OPDI_SelectPort*>(port)->items;
+		oPort->info.ptr = static_cast<opdi::SelectPort*>(port)->items;
 	} else
 	if (strcmp(port->type, OPDI_PORTTYPE_DIAL) == 0) {
 		// release additional data structure memory
@@ -186,14 +188,14 @@ void OPDI::updatePortData(OPDI_Port *port) {
 		// allocate additional data structure memory
 		struct opdi_DialPortInfo* dialPortInfo = (struct opdi_DialPortInfo*)malloc(sizeof(opdi_DialPortInfo));
 		oPort->info.ptr = dialPortInfo;
-		dialPortInfo->min = static_cast<OPDI_DialPort*>(port)->minValue;
-		dialPortInfo->max = static_cast<OPDI_DialPort*>(port)->maxValue;
-		dialPortInfo->step = static_cast<OPDI_DialPort*>(port)->step;
+		dialPortInfo->min = static_cast<opdi::DialPort*>(port)->minValue;
+		dialPortInfo->max = static_cast<opdi::DialPort*>(port)->maxValue;
+		dialPortInfo->step = static_cast<opdi::DialPort*>(port)->step;
 	} else
 		oPort->info.ptr = port->ptr;
 }
 
-OPDI_Port *OPDI::findPort(opdi_Port *port) {
+opdi::Port *OPDI::findPort(opdi_Port *port) {
 	if (port == nullptr)
 		return *this->ports.begin();
 	auto it = this->ports.begin();
@@ -211,7 +213,7 @@ OPDI::PortList& OPDI::getPorts() {
 	return this->ports;
 }
 
-OPDI_Port *OPDI::findPortByID(const char *portID, bool caseInsensitive) {
+opdi::Port *OPDI::findPortByID(const char *portID, bool caseInsensitive) {
 	auto it = this->ports.begin();
 	auto ite = this->ports.end();
 	while (it != ite) {
@@ -233,7 +235,7 @@ OPDI_Port *OPDI::findPortByID(const char *portID, bool caseInsensitive) {
 	return nullptr;
 }
 
-void OPDI::updatePortGroupData(OPDI_PortGroup *group) {
+void OPDI::updatePortGroupData(opdi::PortGroup *group) {
 	// allocate port group data structure if necessary
 	opdi_PortGroup *oGroup = (opdi_PortGroup *)group->data;
 	if (oGroup == nullptr) {
@@ -249,7 +251,7 @@ void OPDI::updatePortGroupData(OPDI_PortGroup *group) {
 	oGroup->extendedInfo = group->extendedInfo;
 }
 
-void OPDI::addPortGroup(OPDI_PortGroup *portGroup) {
+void OPDI::addPortGroup(opdi::PortGroup *portGroup) {
 	// associate port with this instance
 	portGroup->opdi = this;
 	/*
@@ -274,10 +276,8 @@ OPDI::PortGroupList& OPDI::getPortGroups(void) {
 }
 
 
-bool OPDI_Port_Sort(OPDI_Port *i, OPDI_Port *j) { return i->orderID < j->orderID; }
-
 void OPDI::sortPorts(void) {
-	std::sort(this->ports.begin(), this->ports.end(), OPDI_Port_Sort);
+	std::sort(this->ports.begin(), this->ports.end(), [] (opdi::Port *i, opdi::Port *j) { return i->orderID < j->orderID; });
 }
 
 void OPDI::preparePorts(void) {
@@ -351,7 +351,7 @@ uint8_t OPDI::reconfigure() {
 	return opdi_reconfigure();
 }
 
-uint8_t OPDI::refresh(OPDI_Port **ports) {
+uint8_t OPDI::refresh(opdi::Port **ports) {
 	if (!this->isConnected() || !this->canSend)
 		return OPDI_DISCONNECTED;
 	opdi_Port *iPorts[OPDI_MAX_MESSAGE_PARTS + 1];
@@ -359,7 +359,7 @@ uint8_t OPDI::refresh(OPDI_Port **ports) {
 	if (ports == nullptr)
 		return opdi_refresh(iPorts);
 	// target array of internal ports to refresh
-	OPDI_Port *port = ports[0];
+	opdi::Port *port = ports[0];
 	uint8_t i = 0;
 	while (port != nullptr) {
 		opdi_Port *oPort = (opdi_Port *)port->data;
@@ -419,6 +419,8 @@ void OPDI::shutdown(void) {
 	this->shutdownRequested = true;
 }
 
-void OPDI::persist(OPDI_Port * /*port*/) {
+void OPDI::persist(opdi::Port * /*port*/) {
 	throw Poco::NotImplementedException("This implementation does not support port state persistance");
 }
+
+}		// namespace opdi

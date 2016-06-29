@@ -29,6 +29,8 @@
 #include "opdi_config.h"
 #include "opdi_port.h"
 
+namespace opdi {
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Main class for OPDI functionality
 // All public methods should be virtual.
@@ -36,8 +38,8 @@
 
 class OPDI {
 public:
-	typedef std::vector<OPDI_Port *> PortList;
-	typedef std::vector<OPDI_PortGroup *> PortGroupList;
+	typedef std::vector<opdi::Port *> PortList;
+	typedef std::vector<opdi::PortGroup *> PortGroupList;
 
 protected:
 	std::string slaveName;
@@ -57,8 +59,8 @@ protected:
 	PortList ports;
 	PortGroupList groups;
 
-//	OPDI_PortGroup *first_portGroup;
-//	OPDI_PortGroup *last_portGroup;
+//	opdi::PortGroup *first_portGroup;
+//	opdi::PortGroup *last_portGroup;
 
 	uint32_t idle_timeout_ms;
 	uint64_t last_activity;
@@ -105,26 +107,26 @@ public:
 
 	/** Adds the specified port.
 	 * */
-	virtual void addPort(OPDI_Port *port);
+	virtual void addPort(opdi::Port *port);
 
 	/** Updates the internal port data structure. Is automatically called; do not use.
 	*/
-	virtual void updatePortData(OPDI_Port *port);
+	virtual void updatePortData(opdi::Port *port);
 
 	/** Updates the internal port group data structure. Is automatically called; do not use.
 	*/
-	virtual void updatePortGroupData(OPDI_PortGroup *group);
+	virtual void updatePortGroupData(opdi::PortGroup *group);
 
 	/** Internal function.
 	* If port is NULL returns the first port.
 	 */
-	virtual OPDI_Port *findPort(opdi_Port *port);
+	virtual opdi::Port *findPort(opdi_Port *port);
 
 	/** Returns the list of all ports registered in this instance. */
 	virtual PortList& getPorts(void);
 
 	/** Returns NULL if the port could not be found. */
-	virtual OPDI_Port *findPortByID(const char *portID, bool caseInsensitive = false);
+	virtual opdi::Port *findPortByID(const char *portID, bool caseInsensitive = false);
 
 	/** Sorts the added ports by their OrderID. */
 	virtual void sortPorts(void);
@@ -134,7 +136,7 @@ public:
 	virtual void preparePorts(void);
 
 	/** Adds the specified port group. */
-	virtual void addPortGroup(OPDI_PortGroup *portGroup);
+	virtual void addPortGroup(opdi::PortGroup *portGroup);
 
 	/** Returns the list of all port groups registered in this instance. */
 	virtual PortGroupList& getPortGroups(void);
@@ -170,7 +172,7 @@ public:
 	 *  If the first element is NULL, sends the empty refresh message causing all ports to be
 	 *  refreshed.
 	 */
-	virtual uint8_t refresh(OPDI_Port **ports);
+	virtual uint8_t refresh(opdi::Port **ports);
 
 	/** This method is called when the idle timeout is reached. The default implementation sends a message
 	 *  to the master and disconnects by returning OPDI_DISCONNECT. The method may return OPDI_STATUS_OK to stay connected.
@@ -185,7 +187,9 @@ public:
 	virtual void shutdown(void);
 
 	/** Makes the port state persistent if the implementation supports it. */
-	virtual void persist(OPDI_Port *port);
+	virtual void persist(opdi::Port *port);
 };
+
+}		// namespace opdi
 
 #endif
