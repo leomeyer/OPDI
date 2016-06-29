@@ -40,7 +40,7 @@
 static int connection_mode = 0;
 static char first_com_byte = 0;
 
-static LinuxOPDID *linuxOPDID;
+static opdid::LinuxOPDID *linuxOPDID;
 
 void throw_system_error(const char* what, const char* info = nullptr) {
 	std::stringstream fullWhatSS;
@@ -49,6 +49,7 @@ void throw_system_error(const char* what, const char* info = nullptr) {
 	throw Poco::ApplicationException(fullWhat.c_str());
 }
 
+namespace opdid {
 
 /** For TCP connections, receives a byte from the socket specified in info and places the result in byte.
 *   For serial connections, reads a byte from the file handle specified in info and places the result in byte.
@@ -452,3 +453,5 @@ IOPDIDPlugin *LinuxOPDID::getPlugin(std::string driver) {
 	// call the library function to get the plugin instance
 	return ((IOPDIDPlugin *(*)(int, int, int))(getPluginInstance))(this->majorVersion, this->minorVersion, this->patchVersion);
 }
+
+} 		// namespace opdid

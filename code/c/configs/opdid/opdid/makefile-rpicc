@@ -14,7 +14,7 @@ PPATHBASE = ../../../platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List C source files of the configuration here.
-SRC = LinuxOPDID.cpp OPDIDConfigurationFile.cpp SunRiseSet.cpp OPDID_PortFunctions.cpp OPDID_TimerPort.cpp OPDID_ExpressionPort.cpp OPDID_ExecPort.cpp
+SRC = LinuxOPDID.cpp OPDIDConfigurationFile.cpp SunRiseSet.cpp PortFunctions.cpp TimerPort.cpp ExpressionPort.cpp ExecPort.cpp
 
 # platform specific files
 SRC += $(PPATH)/opdi_platformfuncs.c
@@ -36,7 +36,7 @@ CPPPATH = $(CPATH)/cppwrapper
 SRC += $(CPPPATH)/OPDI.cpp $(CPPPATH)/OPDI_Ports.cpp
 
 # additional source files
-SRC += ./AbstractOPDID.cpp ./OPDID_Ports.cpp ./opdid_linux.cpp
+SRC += ./AbstractOPDID.cpp ./Ports.cpp ./opdid_linux.cpp
 
 # POCO include path
 POCOINCPATH = ../../../libraries/POCO/Util/include ../../../libraries/POCO/Foundation/include ../../../libraries/POCO/Net/include
