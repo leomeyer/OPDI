@@ -528,7 +528,7 @@ protected:
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
-	void persist(void);
+	virtual void persist(void) override;
 
 	void resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity, bool clearPersistent = true);
 

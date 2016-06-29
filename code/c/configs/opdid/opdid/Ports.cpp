@@ -1754,12 +1754,6 @@ AggregatorPort::AggregatorPort(AbstractOPDID *opdid, const char *id) : opdi::Dig
 }
 
 AggregatorPort::~AggregatorPort() {
-	// destructor functionality: if the port ist persistent, try to persist values
-	// ignore any errors during this process
-	try {
-		this->persist();
-	}
-	catch (...) {}
 }
 
 void AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {

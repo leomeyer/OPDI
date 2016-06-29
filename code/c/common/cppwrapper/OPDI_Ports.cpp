@@ -77,6 +77,16 @@ uint8_t Port::doWork(uint8_t /* canSend */) {
 	return OPDI_STATUS_OK;
 }
 
+void Port::shutdown() {
+	// shutdown functionality: if the port ist persistent, try to persist values
+	if (this->persistent) {
+		this->persist();
+	};
+}
+
+void Port::persist() {
+}
+
 const char *Port::getID(void) const {
 	return this->id;
 }

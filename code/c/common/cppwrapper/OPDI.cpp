@@ -40,11 +40,16 @@ namespace opdi {
 //////////////////////////////////////////////////////////////////////////////////////////
 
 uint8_t OPDI::shutdownInternal(void) {
-	// free all ports
+	// shutdown and free all ports
 	auto it = this->ports.begin();
 	auto ite = this->ports.end();
 	while (it != ite) {
-		delete *it;
+		// ignore any errors during this process
+		try {
+			(*it)->shutdown();
+			delete *it;
+		}
+		catch (...) {}
 		++it;
 	}
 	this->ports.clear();
