@@ -10,7 +10,7 @@
 // expression evaluation library
 #include <exprtk.hpp>
 
-#include "OPDID_PortFunctions.h"
+#include "PortFunctions.h"
 
 namespace opdid {
 

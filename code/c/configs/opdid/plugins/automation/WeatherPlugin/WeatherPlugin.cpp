@@ -35,7 +35,7 @@
 #include "opdi_platformfuncs.h"
 
 #include "AbstractOPDID.h"
-#include "OPDID_PortFunctions.h"
+#include "PortFunctions.h"
 
 namespace {
 

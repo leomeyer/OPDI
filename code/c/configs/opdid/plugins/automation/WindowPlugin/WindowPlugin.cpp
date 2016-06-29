@@ -10,7 +10,7 @@
 #include "LinuxOPDID.h"
 #endif
 
-#include "OPDID_PortFunctions.h"
+#include "PortFunctions.h"
 
 namespace {
 

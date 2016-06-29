@@ -4,7 +4,7 @@
 #include "Poco/Thread.h"
 #include "Poco/Util/AbstractConfiguration.h"
 
-#include "OPDID_PortFunctions.h"
+#include "PortFunctions.h"
 
 namespace opdid {
 

@@ -28,7 +28,7 @@
 #include "opdi_platformfuncs.h"
 
 #include "AbstractOPDID.h"
-#include "OPDID_PortFunctions.h"
+#include "PortFunctions.h"
 
 #define INVALID_SID		"0000000000000000"
 

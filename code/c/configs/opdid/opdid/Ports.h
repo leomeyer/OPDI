@@ -18,7 +18,7 @@
 #include "opdi_constants.h"
 #include "opdi_port.h"
 
-#include "OPDID_PortFunctions.h"
+#include "PortFunctions.h"
 
 namespace opdid {
 

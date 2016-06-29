@@ -23,10 +23,10 @@
 #include "opdi_constants.h"
 
 #include "OPDI_Ports.h"
-#include "OPDID_Ports.h"
-#include "OPDID_TimerPort.h"
-#include "OPDID_ExpressionPort.h"
-#include "OPDID_ExecPort.h"
+#include "Ports.h"
+#include "TimerPort.h"
+#include "ExpressionPort.h"
+#include "ExecPort.h"
 
 #define DEFAULT_IDLETIMEOUT_MS	180000
 #define DEFAULT_TCP_PORT		13110

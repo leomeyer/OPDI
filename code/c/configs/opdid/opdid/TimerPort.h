@@ -6,7 +6,7 @@
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/TimedNotificationQueue.h"
 
-#include "OPDID_PortFunctions.h"
+#include "PortFunctions.h"
 
 namespace opdid {
 

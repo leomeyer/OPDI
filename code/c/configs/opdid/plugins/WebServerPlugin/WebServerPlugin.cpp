@@ -13,7 +13,7 @@
 #include "opdi_platformfuncs.h"
 
 #include "AbstractOPDID.h"
-#include "OPDID_PortFunctions.h"
+#include "PortFunctions.h"
 
 #define OPDID_NO_INTTYPES
 #include <mongoose.h>

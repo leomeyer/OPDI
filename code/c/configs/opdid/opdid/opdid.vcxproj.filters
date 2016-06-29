@@ -141,9 +141,6 @@
     <ClInclude Include="..\..\..\platforms\win32\opdi_platformtypes.h">
       <Filter>Headerdateien\platforms\win32</Filter>
     </ClInclude>
-    <ClInclude Include="OPDID_Ports.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\platforms\opdi_platformfuncs.h">
       <Filter>Headerdateien\platforms</Filter>
     </ClInclude>
@@ -195,20 +192,23 @@
     <ClInclude Include="SunRiseSet.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="OPDID_PortFunctions.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="OPDID_TimerPort.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="OPDID_ExpressionPort.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="OPDID_ExecPort.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\libraries\ExprTk\exprtk.hpp">
       <Filter>Headerdateien\libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="ExecPort.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionPort.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="PortFunctions.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Ports.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="TimerPort.h">
+      <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -248,9 +248,6 @@
     <ClCompile Include="..\..\..\platforms\win32\opdi_platformfuncs.c">
       <Filter>Quelldateien\platforms\win32</Filter>
     </ClCompile>
-    <ClCompile Include="OPDID_Ports.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="OPDIDConfigurationFile.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
@@ -281,22 +278,25 @@
     <ClCompile Include="SunRiseSet.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="OPDID_PortFunctions.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\common\opdi_aes.cpp">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\common\opdi_rijndael.cpp">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
-    <ClCompile Include="OPDID_TimerPort.cpp">
+    <ClCompile Include="ExecPort.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="OPDID_ExpressionPort.cpp">
+    <ClCompile Include="ExpressionPort.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="OPDID_ExecPort.cpp">
+    <ClCompile Include="PortFunctions.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Ports.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="TimerPort.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
