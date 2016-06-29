@@ -2,7 +2,9 @@
 
 #include "AbstractOPDID.h"
 
-class LinuxOPDID : public AbstractOPDID
+namespace opdid {
+
+class LinuxOPDID : public opdid::AbstractOPDID
 {
 public:
 	LinuxOPDID(void);
@@ -28,3 +30,4 @@ public:
 	IOPDIDPlugin *getPlugin(std::string driver);
 };
 
+}

@@ -15,7 +15,7 @@
 #include "LinuxOPDID.h"
 
 // the main OPDI instance is declared here
-AbstractOPDID *Opdi;
+opdid::AbstractOPDID *Opdi;
 
 void signal_handler(int) {
 	std::cout << "Interrupted, exiting" << std::endl;
@@ -51,7 +51,7 @@ void signal_handler_abrt(int signum) {
 
 int main(int argc, char *argv[], char *envp[])
 {
-	Opdi = new LinuxOPDID();
+	Opdi = new opdid::LinuxOPDID();
 
 	// install Ctrl+C intercept handler
 	struct sigaction sigIntHandler;
