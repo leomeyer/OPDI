@@ -1,8 +1,8 @@
 #include <string.h>
-
 #include <cstdlib>
 #include <string>
 #include <sstream>
+#include <cassert>
 
 #include "Poco/Exception.h"
 
@@ -24,7 +24,7 @@ namespace opdi {
 // General port functionality
 //////////////////////////////////////////////////////////////////////////////////////////
 
-Port::Port(const char *id, const char *type) {
+Port::Port(const char* id, const char* type) {
 	this->data = nullptr;
 	this->id = nullptr;
 	this->label = nullptr;
@@ -47,7 +47,7 @@ Port::Port(const char *id, const char *type) {
 	strcpy(this->type, type);
 }
 
-Port::Port(const char *id, const char *label, const char *type, const char *dircaps, int32_t flags, void* ptr) : Port(id, type) {
+Port::Port(const char* id, const char* label, const char* type, const char* dircaps, int32_t flags, void* ptr) : Port(id, type) {
 	this->flags = flags;
 	this->ptr = ptr;
 	this->setLabel(label);
@@ -87,7 +87,7 @@ void Port::shutdown() {
 void Port::persist() {
 }
 
-const char *Port::getID(void) const {
+const char* Port::getID(void) const {
 	return this->id;
 }
 
@@ -95,6 +95,7 @@ void Port::setID(const char* newID) {
 	if (this->id != nullptr)
 		free(this->id);
 	this->id = (char*)malloc(strlen(newID) + 1);
+	assert(this->id && "Unable to allocate memory");
 	strcpy(this->id, newID);
 }
 
@@ -102,11 +103,11 @@ std::string Port::ID() const {
 	return std::string(this->getID());
 }
 
-const char *Port::getType(void) const {
+const char* Port::getType(void) const {
 	return this->type;
 }
 
-const char *Port::getLabel(void) const {
+const char* Port::getLabel(void) const {
 	return this->label;
 }
 
@@ -134,20 +135,21 @@ bool Port::isPersistent(void) const {
 	return this->persistent;
 }
 
-void Port::setLabel(const char *label) {
+void Port::setLabel(const char* label) {
 	if (this->label != nullptr)
 		free(this->label);
 	this->label = nullptr;
 	if (label == nullptr)
 		return;
 	this->label = (char*)malloc(strlen(label) + 1);
+	assert(this->label && "Unable to allocate memory");
 	strcpy(this->label, label);
 	// label changed; update internal data
 	if (this->opdi != nullptr)
 		this->opdi->updatePortData(this);
 }
 
-void Port::setDirCaps(const char *dirCaps) {
+void Port::setDirCaps(const char* dirCaps) {
 	this->caps[0] = dirCaps[0];
 	this->caps[1] = '\0';
 
@@ -290,7 +292,7 @@ uint8_t Port::refresh() {
 	if (this->isHidden())
 		return OPDI_STATUS_OK;
 
-	Port *ports[2];
+	Port* ports[2];
 	ports[0] = this;
 	ports[1] = nullptr;
 
@@ -332,7 +334,7 @@ Port::~Port() {
 }
 
 
-PortGroup::PortGroup(const char *id) {
+PortGroup::PortGroup(const char* id) {
 	this->data = nullptr;
 	this->next = nullptr;
 	this->id = nullptr;
@@ -343,10 +345,13 @@ PortGroup::PortGroup(const char *id) {
 	this->extendedInfo = nullptr;
 
 	this->id = (char*)malloc(strlen(id) + 1);
+	assert(this->id && "Unable to allocate memory");
 	strcpy(this->id, id);
 	this->label = (char*)malloc(strlen(id) + 1);
+	assert(this->label && "Unable to allocate memory");
 	strcpy(this->label, id);
 	this->parent = (char*)malloc(1);
+	assert(this->parent && "Unable to allocate memory");
 	this->parent[0] = '\0';
 }
 
@@ -361,7 +366,7 @@ PortGroup::~PortGroup() {
 		free(this->data);
 }
 
-const char *PortGroup::getID(void) {
+const char* PortGroup::getID(void) {
 	return this->id;
 }
 
@@ -373,24 +378,26 @@ void PortGroup::updateExtendedInfo(void) {
 	if (this->extendedInfo != nullptr) {
 		free(this->extendedInfo);
 	}
-	this->extendedInfo = (char *)malloc(exInfo.size() + 1);
+	this->extendedInfo = (char*)malloc(exInfo.size() + 1);
+	assert(this->extendedInfo && "Unable to allocate memory");
 	strcpy(this->extendedInfo, exInfo.c_str());
 }
 
-void PortGroup::setLabel(const char *label) {
+void PortGroup::setLabel(const char* label) {
 	if (this->label != nullptr)
 		free(this->label);
 	this->label = nullptr;
 	if (label == nullptr)
 		return;
 	this->label = (char*)malloc(strlen(label) + 1);
+	assert(this->label && "Unable to allocate memory");
 	strcpy(this->label, label);
 	// label changed; update internal data
 	if (this->opdi != nullptr)
 		this->opdi->updatePortGroupData(this);
 }
 
-const char *PortGroup::getLabel(void) {
+const char* PortGroup::getLabel(void) {
 	return this->label;
 }
 
@@ -411,20 +418,21 @@ void PortGroup::setIcon(const std::string& icon) {
 	}
 }
 
-void PortGroup::setParent(const char *parent) {
+void PortGroup::setParent(const char* parent) {
 	if (this->parent != nullptr)
 		free(this->parent);
 	this->parent = nullptr;
 	if (parent == nullptr)
 		throw Poco::InvalidArgumentException("Parent group ID must never be nullptr");
 	this->parent = (char*)malloc(strlen(parent) + 1);
+	assert(this->parent && "Unable to allocate memory");
 	strcpy(this->parent, parent);
 	// label changed; update internal data
 	if (this->opdi != nullptr)
 		this->opdi->updatePortGroupData(this);
 }
 
-const char *PortGroup::getParent(void) {
+const char* PortGroup::getParent(void) {
 	return this->parent;
 }
 
@@ -434,13 +442,13 @@ const char *PortGroup::getParent(void) {
 
 #ifndef OPDI_NO_DIGITAL_PORTS
 
-DigitalPort::DigitalPort(const char *id) : Port(id, OPDI_PORTTYPE_DIGITAL) {
+DigitalPort::DigitalPort(const char* id) : Port(id, OPDI_PORTTYPE_DIGITAL) {
 	this->mode = 0;
 	this->line = 0;
 	this->setDirCaps(OPDI_PORTDIRCAP_BIDI);
 }
 
-DigitalPort::DigitalPort(const char *id, const char *label, const char *dircaps, const int32_t flags) :
+DigitalPort::DigitalPort(const char* id, const char* label, const char* dircaps, const int32_t flags) :
 	// call base constructor; mask unsupported flags (?)
 	Port(id, label, OPDI_PORTTYPE_DIGITAL, dircaps, flags, nullptr) { // & (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) & (OPDI_DIGITAL_PORT_HAS_PULLDN | OPDI_DIGITAL_PORT_PULLDN_ALWAYS))
 
@@ -452,7 +460,7 @@ DigitalPort::DigitalPort(const char *id, const char *label, const char *dircaps,
 DigitalPort::~DigitalPort() {
 }
 
-void DigitalPort::setDirCaps(const char *dirCaps) {
+void DigitalPort::setDirCaps(const char* dirCaps) {
 	Port::setDirCaps(dirCaps);
 
 	if (!strcmp(dirCaps, OPDI_PORTDIRCAP_UNKNOWN))
@@ -536,7 +544,7 @@ void DigitalPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 		this->opdi->persist(this);
 }
 
-void DigitalPort::getState(uint8_t *mode, uint8_t *line) const {
+void DigitalPort::getState(uint8_t* mode, uint8_t* line) const {
 	this->checkError();
 
 	*mode = this->mode;
@@ -567,14 +575,14 @@ bool DigitalPort::hasError(void) const {
 
 #ifndef OPDI_NO_ANALOG_PORTS
 
-AnalogPort::AnalogPort(const char *id) : Port(id, OPDI_PORTTYPE_ANALOG) {
+AnalogPort::AnalogPort(const char* id) : Port(id, OPDI_PORTTYPE_ANALOG) {
 	this->mode = 0;
 	this->value = 0;
 	this->reference = 0;
 	this->resolution = 0;
 }
 
-AnalogPort::AnalogPort(const char *id, const char *label, const char *dircaps, const int32_t flags) :
+AnalogPort::AnalogPort(const char* id, const char* label, const char* dircaps, const int32_t flags) :
 	// call base constructor
 	Port(id, label, OPDI_PORTTYPE_ANALOG, dircaps, flags, nullptr) {
 
@@ -649,7 +657,7 @@ void AnalogPort::setValue(int32_t value, ChangeSource /*changeSource*/) {
 		this->opdi->persist(this);
 }
 
-void AnalogPort::getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) const {
+void AnalogPort::getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) const {
 	this->checkError();
 
 	*mode = this->mode;
@@ -696,13 +704,13 @@ bool AnalogPort::hasError(void) const {
 
 #ifndef OPDI_NO_SELECT_PORTS
 
-SelectPort::SelectPort(const char *id) : Port(id, nullptr, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
+SelectPort::SelectPort(const char* id) : Port(id, nullptr, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	this->count = 0;
 	this->items = nullptr;
 	this->position = 0;
 }
 
-SelectPort::SelectPort(const char *id, const char *label, const char *items[])
+SelectPort::SelectPort(const char* id, const char* label, const char** items)
 	: Port(id, label, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	this->setItems(items);
 	this->position = 0;
@@ -715,9 +723,9 @@ SelectPort::~SelectPort() {
 void SelectPort::freeItems() {
 	if (this->items != nullptr) {
 		int i = 0;
-		const char *item = this->items[i];
+		const char* item = this->items[i];
 		while (item) {
-			free((void *)item);
+			free((void*)item);
 			i++;
 			item = this->items[i];
 		}
@@ -725,14 +733,14 @@ void SelectPort::freeItems() {
 	}
 }
 
-void SelectPort::setItems(const char **items) {
+void SelectPort::setItems(const char** items) {
 	this->freeItems();
 	this->items = nullptr;
 	this->count = 0;
 	if (items == nullptr)
 		return;
 	// determine array size
-	const char *item = items[0];
+	const char* item = items[0];
 	int itemCount = 0;
 	while (item) {
 		itemCount++;
@@ -746,7 +754,8 @@ void SelectPort::setItems(const char **items) {
 	item = items[0];
 	itemCount = 0;
 	while (item) {
-		this->items[itemCount] = (char *)malloc(strlen(items[itemCount]) + 1);
+		this->items[itemCount] = (char*)malloc(strlen(items[itemCount]) + 1);
+		assert(this->items[itemCount] && "Unable to allocate memory");
 		// copy string
 		strcpy(this->items[itemCount], items[itemCount]);
 		itemCount++;
@@ -770,13 +779,13 @@ void SelectPort::setPosition(uint16_t position, ChangeSource /*changeSource*/) {
 		this->opdi->persist(this);
 }
 
-void SelectPort::getState(uint16_t *position) const {
+void SelectPort::getState(uint16_t* position) const {
 	this->checkError();
 
 	*position = this->position;
 }
 
-const char *SelectPort::getPositionLabel(uint16_t position) {
+const char* SelectPort::getPositionLabel(uint16_t position) {
 	return this->items[position];
 }
 
@@ -799,14 +808,14 @@ bool SelectPort::hasError(void) const {
 
 #ifndef OPDI_NO_DIAL_PORTS
 
-DialPort::DialPort(const char *id) : Port(id, nullptr, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
+DialPort::DialPort(const char* id) : Port(id, nullptr, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	this->minValue = 0;
 	this->maxValue = 0;
 	this->step = 0;
 	this->position = 0;
 }
 
-DialPort::DialPort(const char *id, const char *label, int64_t minValue, int64_t maxValue, uint64_t step)
+DialPort::DialPort(const char* id, const char* label, int64_t minValue, int64_t maxValue, uint64_t step)
 	: Port(id, label, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	if (minValue >= maxValue) {
 		throw Poco::DataException("Dial port minValue must be < maxValue");
@@ -819,7 +828,7 @@ DialPort::DialPort(const char *id, const char *label, int64_t minValue, int64_t 
 
 DialPort::~DialPort() {
 	// release additional data structure memory
-	opdi_Port *oPort = (opdi_Port *)this->data;
+	opdi_Port* oPort = (opdi_Port*)this->data;
 
 	if (oPort->info.ptr != nullptr)
 		free(oPort->info.ptr);
@@ -866,7 +875,7 @@ void DialPort::setPosition(int64_t position, ChangeSource /*changeSource*/) {
 		this->opdi->persist(this);
 }
 
-void DialPort::getState(int64_t *position) const {
+void DialPort::getState(int64_t* position) const {
 	this->checkError();
 
 	*position = this->position;
@@ -889,7 +898,7 @@ bool DialPort::hasError(void) const {
 // Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
 
-StreamingPort::StreamingPort(const char *id) :
+StreamingPort::StreamingPort(const char* id) :
 	Port(id, OPDI_PORTTYPE_STREAMING) {
 }
 

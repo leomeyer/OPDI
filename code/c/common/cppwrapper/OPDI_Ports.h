@@ -50,13 +50,13 @@ private:
 
 protected:
 	// protected constructor - for use by friend classes only
-	Port(const char *id, const char *type);
+	Port(const char* id, const char* type);
 
 	// protected constructor: This class can't be instantiated directly
-	Port(const char *id, const char *label, const char *type, const char* dircaps, int32_t flags, void* ptr);
+	Port(const char* id, const char* label, const char* type, const char* dircaps, int32_t flags, void* ptr);
 
-	char *id;
-	char *label;
+	char* id;
+	char* label;
 	char type[2];	// type constants are one character (see opdi_port.h)
 	char caps[2];	// caps constants are one character (port direction constants)
 	int32_t flags;
@@ -82,7 +82,7 @@ protected:
 	std::string history;
 
 	// pointer to OPDI class instance
-	OPDI *opdi;
+	OPDI* opdi;
 
 	// OPDI implementation management structure
 	// this pointer is managed by the OPDI class
@@ -187,11 +187,11 @@ public:
 	// The tag is additional information not used elsewhere.
 	std::string tag;
 
-	virtual const char *getID(void) const;
+	virtual const char* getID(void) const;
 
 	std::string ID() const;
 
-	virtual const char *getType(void) const;
+	virtual const char* getType(void) const;
 
 	virtual void setHidden(bool hidden);
 
@@ -206,12 +206,12 @@ public:
 	virtual bool isPersistent(void) const;
 
 	/** Sets the label of the port. */
-	virtual void setLabel(const char *label);
+	virtual void setLabel(const char* label);
 
-	virtual const char *getLabel(void) const;
+	virtual const char* getLabel(void) const;
 
 	/** Sets the direction capabilities of the port. */
-	virtual void setDirCaps(const char *dirCaps);
+	virtual void setDirCaps(const char* dirCaps);
 
 	virtual const char* getDirCaps(void) const;
 
@@ -288,42 +288,42 @@ class PortGroup {
 		PortGroup(const PortGroup& that);
 	*/
 protected:
-	char *id;
-	char *label;
-	char *parent;
+	char* id;
+	char* label;
+	char* parent;
 	int32_t flags;
-	char *extendedInfo;
+	char* extendedInfo;
 
 	// pointer to OPDI class instance
-	OPDI *opdi;
+	OPDI* opdi;
 
 	// OPDI implementation management structure
 	void* data;
 
 	// linked list of port groups - pointer to next port group
-	PortGroup *next;
+	PortGroup* next;
 
 	std::string icon;
 
 	virtual void updateExtendedInfo(void);
 
 public:
-	explicit PortGroup(const char *id);
+	explicit PortGroup(const char* id);
 
 	/** Virtual destructor for the port. */
 	virtual ~PortGroup();
 
-	virtual const char *getID(void);
+	virtual const char* getID(void);
 
 	/** Sets the label of the port group. */
-	virtual void setLabel(const char *label);
+	virtual void setLabel(const char* label);
 
-	virtual const char *getLabel(void);
+	virtual const char* getLabel(void);
 
 	/** Sets the parent of the port group. */
-	virtual void setParent(const char *parent);
+	virtual void setParent(const char* parent);
 
-	virtual const char *getParent(void);
+	virtual const char* getParent(void);
 
 	/** Sets the flags of the port group. */
 	virtual void setFlags(int32_t flags);
@@ -345,15 +345,15 @@ protected:
 	uint8_t line;
 
 public:
-	explicit DigitalPort(const char *id);
+	explicit DigitalPort(const char* id);
 
 	// Initialize a digital port. Specify one of the OPDI_PORTDIRCAPS_* values for dircaps.
 	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
-	DigitalPort(const char *id, const char *label, const char * dircaps, const int32_t flags);
+	DigitalPort(const char* id, const char* label, const char*  dircaps, const int32_t flags);
 
 	virtual ~DigitalPort();
 
-	virtual void setDirCaps(const char *dirCaps);
+	virtual void setDirCaps(const char* dirCaps);
 
 	// function that handles the set mode command (opdi_set_digital_port_mode)
 	// mode = 0: floating input
@@ -368,7 +368,7 @@ public:
 	virtual void setLine(uint8_t line, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
 	// function that fills in the current port state
-	virtual void getState(uint8_t *mode, uint8_t *line) const;
+	virtual void getState(uint8_t* mode, uint8_t* line) const;
 
 	virtual uint8_t getMode(void);
 
@@ -389,9 +389,9 @@ protected:
 	virtual int32_t validateValue(int32_t value) const;
 
 public:
-	explicit AnalogPort(const char *id);
+	explicit AnalogPort(const char* id);
 
-	AnalogPort(const char *id, const char *label, const char * dircaps, const int32_t flags);
+	AnalogPort(const char* id, const char* label, const char*  dircaps, const int32_t flags);
 
 	virtual ~AnalogPort();
 
@@ -408,7 +408,7 @@ public:
 	// value: an integer value ranging from 0 to 2^resolution - 1
 	virtual void setValue(int32_t value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
-	virtual void getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) const;
+	virtual void getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) const;
 
 	// returns the value as a factor between 0 and 1 of the maximum resolution
 	virtual double getRelativeValue(void);
@@ -428,7 +428,7 @@ class SelectPort : public Port {
 	friend class OPDI;
 
 protected:
-	char **items;
+	char** items;
 	uint16_t count;
 	uint16_t position;
 
@@ -436,25 +436,25 @@ protected:
 	void freeItems();
 
 public:
-	explicit SelectPort(const char *id);
+	explicit SelectPort(const char* id);
 
 	// Initialize a select port. The direction of a select port is output only.
 	// You have to specify a list of items that are the labels of the different select positions. The last element must be NULL.
 	// The items are copied into the privately managed data structure of this class.
-	SelectPort(const char *id, const char *label, const char **items);
+	SelectPort(const char* id, const char* label, const char** items);
 
 	virtual ~SelectPort();
 
 	// Copies the items into the privately managed data structure of this class.
-	virtual void setItems(const char **items);
+	virtual void setItems(const char* *items);
 
 	// function that handles position setting; position may be in the range of 0..(items.length - 1)
 	virtual void setPosition(uint16_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
 	// function that fills in the current port state
-	virtual void getState(uint16_t *position) const;
+	virtual void getState(uint16_t* position) const;
 
-	virtual const char *getPositionLabel(uint16_t position);
+	virtual const char* getPositionLabel(uint16_t position);
 
 	virtual uint16_t getMaxPosition(void);
 
@@ -474,11 +474,11 @@ protected:
 	int64_t position;
 
 public:
-	explicit DialPort(const char *id);
+	explicit DialPort(const char* id);
 
 	// Initialize a dial port. The direction of a dial port is output only.
 	// You have to specify boundary values and a step size.
-	DialPort(const char *id, const char *label, int64_t minValue, int64_t maxValue, uint64_t step);
+	DialPort(const char* id, const char* label, int64_t minValue, int64_t maxValue, uint64_t step);
 	virtual ~DialPort();
 
 	virtual int64_t getMin(void);
@@ -493,7 +493,7 @@ public:
 	virtual void setPosition(int64_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
 	// function that fills in the current port state
-	virtual void getState(int64_t *position) const;
+	virtual void getState(int64_t* position) const;
 
 	virtual bool hasError(void) const override;
 };
@@ -513,13 +513,13 @@ class StreamingPort : public Port {
 
 public:
 	// Initialize a streaming port. A streaming port is always bidirectional.
-	explicit StreamingPort(const char *id);
+	explicit StreamingPort(const char* id);
 
 	virtual ~StreamingPort();
 
 	// Writes the specified bytes to the data sink. Returns the number of bytes written.
 	// If the returned value is less than 0 it is considered an (implementation specific) error.
-	virtual int write(char *bytes, size_t length) = 0;
+	virtual int write(char* bytes, size_t length) = 0;
 
 	// Checks how many bytes are available from the data source. If count is > 0
 	// it is used as a value to request the number of bytes if the underlying system
@@ -530,7 +530,7 @@ public:
 
 	// Reads one byte from the data source and places it in result. If the returned
 	// value is less than 1 it is considered an (implementation specific) error.
-	virtual int read(char *result) = 0;
+	virtual int read(char* result) = 0;
 };
 
 }	// namespace opdi
