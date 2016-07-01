@@ -19,7 +19,7 @@ public:
 
 	virtual ~WindowsOPDID(void);
 
-	virtual uint32_t getTimeMs();
+//	virtual uint32_t getTimeMs();
 
 	virtual void print(const char *text);
 

@@ -1,18 +1,12 @@
 #include "WindowsOPDID.h"
 
+#include <Windows.h>
 #include <winsock2.h>
-#include <windows.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <Mmsystem.h>
-#include <stdio.h>
-#pragma comment(lib, "Winmm.lib")
 
 #include "Poco/Stopwatch.h"
 
 #include "opdi_platformtypes.h"
+#include "opdi_platformfuncs.h"
 #include "opdi_config.h"
 #include "opdi_constants.h"
 #include "opdi_port.h"
@@ -59,7 +53,7 @@ static unsigned long last_activity = 0;
 static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t canSend) {
 	char c;
 	int result;
-	long ticks = GetTickCount();
+	uint64_t ticks = opdi_get_time_ms();
 
 	while (1) {
 		// call work function
@@ -87,7 +81,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 			if (result == 0) {
 				// ran into timeout
 				// "real" timeout condition
-				if (GetTickCount() - ticks >= timeout)
+				if (opdi_get_time_ms() - ticks >= timeout)
 					return OPDI_TIMEOUT;
 			} else {
 				// socket contains data
@@ -127,7 +121,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 				else {
 					// ran into timeout
 					// "real" timeout condition
-					if (GetTickCount() - ticks >= timeout)
+					if (opdi_get_time_ms() - ticks >= timeout)
 						return OPDI_TIMEOUT;
 				}
 			}
@@ -179,11 +173,11 @@ WindowsOPDID::WindowsOPDID(void)
 WindowsOPDID::~WindowsOPDID(void)
 {
 }
-
+/*
 uint32_t WindowsOPDID::getTimeMs(void) {
-	return GetTickCount();
+	return GetTickCount64();
 }
-
+*/
 void WindowsOPDID::print(const char *text) {
 	// text is treated as UTF8. Convert to wide character
 	std::wcout << utf8_decode(std::string(text));
@@ -219,7 +213,7 @@ int WindowsOPDID::HandleTCPConnection(int *csock) {
 	if (result != 0) 
 		return result;
 
-	last_activity = GetTickCount();
+	last_activity = opdi_get_time_ms();
 
 	// initiate handshake
 	result = opdi_slave_start(&message, nullptr, &protocol_callback);
