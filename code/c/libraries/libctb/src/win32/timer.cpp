@@ -12,7 +12,8 @@
 
 #ifdef WIN32
 #include <windows.h>
-# ifndef DWORD_PTR 
+#pragma comment(lib, "Winmm.lib")
+# ifndef DWORD_PTR
 #  define DWORD_PTR DWORD*
 # endif
 #endif
