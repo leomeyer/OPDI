@@ -219,6 +219,25 @@ function getUnitSettings(unit) {
                         })
                         .replace("%%", "%");
                 };
+				
+				result.getDisplayHint = function(value) {
+					var hint = "active";	// default
+					// conversion defined?
+					if (typeof this.conversion != "undefined") {
+						// timestamp conversions
+						if ("unixSeconds" === this.conversion) {
+                            // return 0;   // TODO
+						} else
+						if ("unixSecondsLocal" === this.conversion) {
+							// the value is inactive if the current time is more recent
+							var dt = new Date(value * 1000);
+							if (dt < new Date())
+								return "inactive";
+						} else
+							hint = "Unknown conversion: " + this.conversion;
+					}
+					return hint;
+				}
 			}
 
             unitsToUse[unit] = result;
@@ -604,8 +623,17 @@ var DialPort = Port.extend({
     getPortValue: function() {
         if (this.port.state.error != null || (typeof this.port.state.position == "undefined"))
             return "";
-        else 
-			return this.getTextValue(this.port.state.position);
+        else {
+			var result = this.getTextValue(this.port.state.position);
+			if (this.unit != null) {
+				// get display hint from unit
+				if (this.unit.getDisplayHint(this.port.state.position) == "inactive") {
+					// inactive values are gray
+					result = "<font color='Gray'>" + result;
+				}
+			}
+			return result;
+		}
     },
 
     createWidget: function() {
@@ -689,6 +717,7 @@ var DialPort = Port.extend({
                         // determine minimum, maximum and total sum
                         var min = Number.MAX_VALUE;
                         var max = Number.MIN_VALUE;
+						var avg = null;
                         var totalSum = 0;
                         for (var i = 0; i < values.length; i++) {
                             if (Number(values[i]) < min)
@@ -720,7 +749,7 @@ var DialPort = Port.extend({
                             }
                             // average: top left
                             if (values.length > 0) {
-                                var avg = totalSum / values.length;
+                                avg = totalSum / values.length;
                                 var label = "Ø " + this.getTextValue(avg);
                                 var labelHeight = 10;
                                 ctx.fillText(label, 1, labelHeight - 3);
@@ -745,7 +774,7 @@ var DialPort = Port.extend({
                             }
                         }
 
-						title = "Min: " + this.getTextValue(min) + "; Max: " + this.getTextValue(max);
+						title = "Min: " + this.getTextValue(min) + "; Max: " + this.getTextValue(max) + (avg == null ? "" : "; Ø: " + this.getTextValue(avg));
                         // draw history graph line
                         ctx.strokeStyle = "#00ace6";
 						// the line width depends on the number of total values; less values => thicker lines
