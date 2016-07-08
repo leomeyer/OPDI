@@ -283,7 +283,7 @@ void PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
 	}
 }
 
-void PulsePort::setDirCaps(const char * /*dirCaps*/) {
+void PulsePort::setDirCaps(const char* /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a PulsePort cannot be changed");
 }
 
@@ -442,11 +442,11 @@ void SelectorPort::setDirCaps(const char * /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a SelectorPort cannot be changed");
 }
 
-void SelectorPort::setMode(uint8_t /*mode*/) {
+void SelectorPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of a SelectorPort cannot be changed");
 }
 
-void SelectorPort::setLine(uint8_t line) {
+void SelectorPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	opdi::DigitalPort::setLine(line);
 	if (this->line == 1) {
 		this->logDebug(std::string() + "Setting Port " + this->selectPort->getID() + " to position " + to_string(this->position));

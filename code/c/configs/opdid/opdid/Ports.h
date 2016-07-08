@@ -159,11 +159,11 @@ public:
 
 	virtual void configure(Poco::Util::AbstractConfiguration *config);
 
-	virtual void setDirCaps(const char *dirCaps);
+	virtual void setDirCaps(const char *dirCaps) override;
 
-	virtual void setMode(uint8_t mode);
+	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
-	virtual void setLine(uint8_t line);
+	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare();
 };
