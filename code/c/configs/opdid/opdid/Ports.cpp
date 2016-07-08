@@ -452,6 +452,8 @@ void SelectorPort::setLine(uint8_t line) {
 		this->logDebug(std::string() + "Setting Port " + this->selectPort->getID() + " to position " + to_string(this->position));
 		// set the specified select port to the specified position
 		this->selectPort->setPosition(this->position);
+	} else {
+		this->logDebug(std::string() + "Warning: Setting selector port line to Low has no effect on SelectPort");
 	}
 	// set output ports' lines
 	auto it = this->outputPorts.cbegin();
