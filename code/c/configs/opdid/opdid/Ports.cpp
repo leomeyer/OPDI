@@ -449,6 +449,7 @@ void SelectorPort::setMode(uint8_t /*mode*/) {
 void SelectorPort::setLine(uint8_t line) {
 	opdi::DigitalPort::setLine(line);
 	if (this->line == 1) {
+		this->logDebug(std::string() + "Setting Port " + this->selectPort->getID() + " to position " + to_string(this->position));
 		// set the specified select port to the specified position
 		this->selectPort->setPosition(this->position);
 	}
