@@ -427,7 +427,12 @@ int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<
 	// create view to "Connection" section
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> connection = configuration->createView("Connection");
 
-	return this->setupConnection(connection, testMode);
+	int result = this->setupConnection(connection, testMode);
+
+	// save persistent configuration when exiting
+	this->savePersistentConfig();
+
+	return result;
 }
 
 void AbstractOPDID::lockResource(const std::string& resourceID, const std::string& lockerID) {
@@ -1578,7 +1583,10 @@ void AbstractOPDID::persist(opdi::Port* port) {
 		this->logWarning("Unable to persist state of port " + port->ID() + ": " + e.message());
 		return;
 	}
-	this->savePersistentConfig();
+	// save configuration only if not already shutting down
+	// the config will be saved on shutdown automatically
+	if (!this->shutdownRequested)
+		this->savePersistentConfig();
 }
 
 std::string AbstractOPDID::getPortStateStr(opdi::Port* port) const {

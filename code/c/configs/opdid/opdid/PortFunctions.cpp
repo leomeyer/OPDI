@@ -124,31 +124,31 @@ opdi::SelectPort* PortFunctions::findSelectPort(const std::string& configPort, c
 
 void PortFunctions::logWarning(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity > AbstractOPDID::QUIET)) {
-		this->opdid->logWarning(message);
+		this->opdid->logWarning(this->portFunctionID + ": " + message);
 	}
 }
 
 void PortFunctions::logNormal(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::NORMAL)) {
-		this->opdid->logNormal(message, this->logVerbosity);
+		this->opdid->logNormal(this->portFunctionID + ": " + message, this->logVerbosity);
 	}
 }
 
 void PortFunctions::logVerbose(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::VERBOSE)) {
-		this->opdid->logVerbose(message, this->logVerbosity);
+		this->opdid->logVerbose(this->portFunctionID + ": " + message, this->logVerbosity);
 	}
 }
 
 void PortFunctions::logDebug(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::DEBUG)) {
-		this->opdid->logDebug(message, this->logVerbosity);
+		this->opdid->logDebug(this->portFunctionID + ": " + message, this->logVerbosity);
 	}
 }
 
 void PortFunctions::logExtreme(const std::string& message) {
 	if ((this->logVerbosity == AbstractOPDID::UNKNOWN) || (this->logVerbosity >= AbstractOPDID::EXTREME)) {
-		this->opdid->logExtreme(message, this->logVerbosity);
+		this->opdid->logExtreme(this->portFunctionID + ": " + message, this->logVerbosity);
 	}
 }
 

@@ -396,7 +396,7 @@ void WebServerPlugin::sendJsonRpcError(struct mg_connection* nc, Poco::Dynamic::
 	response.stringify(sOut);
 	std::string strOut = sOut.str();
 
-	this->logDebug(this->ID() + ": Sending JSON-RPC error: " + strOut);
+	this->logDebug(std::string() + "Sending JSON-RPC error: " + strOut);
 
 	mg_printf(nc, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\n"
 		"Content-Type: application/json\r\n\r\n%s",
@@ -412,12 +412,12 @@ void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void *p) {
 			// prepare log message
 			char address[INET6_ADDRSTRLEN];
 			inet_ntop(nc->sa.sa.sa_family, get_in_addr(&nc->sa.sa), address, sizeof address);
-			this->logDebug(this->ID() + ": Request received from: " + address + " for: " + std::string(hm->uri.p, hm->uri.len));
+			this->logDebug(std::string() + "Request received from: " + address + " for: " + std::string(hm->uri.p, hm->uri.len));
 
 			// JSON-RPC url received?
 			if (mg_vcmp(&hm->uri, jsonRpcUrl.c_str()) == 0) {
 				std::string json(hm->body.p, hm->body.len);
-				this->logDebug(this->ID() + ": Received JSON-RPC request: " + json);
+				this->logDebug(std::string() + "Received JSON-RPC request: " + json);
 				// parse JSON
 				Poco::Dynamic::Var id;
 				try {
@@ -470,7 +470,7 @@ void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void *p) {
 					response.stringify(sOut);
 					std::string strOut = sOut.str();
 
-					this->logDebug(this->ID() + ": Sending JSON-RPC response: " + strOut);
+					this->logDebug(std::string() + "Sending JSON-RPC response: " + strOut);
 
 					// send result
 					mg_printf(nc, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\n"
@@ -485,25 +485,25 @@ void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void *p) {
 					err.append(e.what());
 					err.append(": ");
 					err.append(e.message());
-					this->logVerbose(this->ID() + ": " + err);
+					this->logVerbose(std::string() + "" + err);
 					this->sendJsonRpcError(nc, id, -32700, err);	// Parse error
 				} catch (InvalidRequestException& e) {
 					// Invalid Request
 					std::string err("Invalid JSON request: ");
 					err.append(e.message());
-					this->logVerbose(this->ID() + ": " + err);
+					this->logVerbose(std::string() + "" + err);
 					this->sendJsonRpcError(nc, id, -32600, err);	// Invalid Request
 				} catch (MethodNotFoundException& e) {
 					// Method not found
 					std::string err("Method not found: ");
 					err.append(e.message());
-					this->logVerbose(this->ID() + ": " + err);
+					this->logVerbose(std::string() + "" + err);
 					this->sendJsonRpcError(nc, id, -32601, err);	// Method not found
 				} catch (Poco::InvalidArgumentException& e) {
 					// Invalid params
 					std::string err("Invalid parameters: ");
 					err.append(e.message());
-					this->logVerbose(this->ID() + ": " + err);
+					this->logVerbose(std::string() + "" + err);
 					this->sendJsonRpcError(nc, id, -32602, err);	// Invalid params
 				} catch (Poco::Exception& e) {
 					// Internal error
@@ -511,18 +511,18 @@ void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void *p) {
 					err.append(e.what());
 					err.append(": ");
 					err.append(e.message());
-					this->logVerbose(this->ID() + ": " + err);
+					this->logVerbose(std::string() + "" + err);
 					this->sendJsonRpcError(nc, id, -32603, err);	// Internal error
 				} catch (std::exception& e) {
 					// Internal error
 					std::string err("Error processing request: ");
 					err.append(e.what());
-					this->logVerbose(this->ID() + ": " + err);
+					this->logVerbose(std::string() + "" + err);
 					this->sendJsonRpcError(nc, id, -32603, err);	// Internal error
 				} catch (...) {
 					// Internal error
 					std::string err("Error processing request (unknown error)");
-					this->logVerbose(this->ID() + ": " + err);
+					this->logVerbose(std::string() + "" + err);
 					this->sendJsonRpcError(nc, id, -32603, err);	// Internal error
 				}
 				// send data
@@ -588,7 +588,7 @@ void WebServerPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std
 	// append document root to path of previous config file (or replace it)
 	Poco::Path finalPath = parentPath.resolve(this->documentRoot);
 	this->documentRoot = finalPath.toString();
-	this->logDebug(this->ID() + ": Resolved document root to: " + this->documentRoot);
+	this->logDebug(std::string() + "Resolved document root to: " + this->documentRoot);
 	if (!Poco::File(finalPath).isDirectory())
 		throw Poco::DataException("Document root folder does not exist or is not a folder: " + documentRoot);
 		
@@ -613,7 +613,7 @@ void WebServerPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std
 	if (this->ipACL != "")
 		this->s_http_server_opts.ip_acl = this->ipACL.c_str();
 
-	this->logVerbose(this->ID() + ": Setting up web server at: " + this->httpPort);
+	this->logVerbose(std::string() + "Setting up web server at: " + this->httpPort);
 		
 	// setup web server
 	mg_mgr_init(&this->mgr, nullptr);
@@ -625,7 +625,7 @@ void WebServerPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std
 	// set HTTP server parameters
 	mg_set_protocol_http_websocket(this->nc);
 
-	this->logVerbose(this->ID() + ": WebServerPlugin setup completed successfully at: " + this->httpPort);
+	this->logVerbose(std::string() + "WebServerPlugin setup completed successfully at: " + this->httpPort);
 	
 	// register port (necessary for doWork to be called regularly)
 	this->opdid->addPort(this);

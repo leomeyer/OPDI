@@ -170,18 +170,15 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	std::string value = rawValue;
 	if (this->regexMatch != "") {
 		Poco::RegularExpression regex(this->regexMatch, 0, true);
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-			this->opdid->logDebug(this->ID() + ": WeatherGaugePort for element " + this->dataElement + ": Matching regex against weather data: " + rawValue);
+		this->logDebug(std::string() + "WeatherGaugePort for element " + this->dataElement + ": Matching regex against weather data: " + rawValue);
 		if (regex.extract(rawValue, value, 0) == 0) {
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-			this->opdid->logDebug(this->ID() + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Matching regex returned no result; weather data: " + rawValue);
+		this->logDebug(std::string() + "WeatherGaugePort for element " + this->dataElement + ": Warning: Matching regex returned no result; weather data: " + rawValue);
 		}
 	}
 	if (this->regexReplace != "") {
 		Poco::RegularExpression regex(this->regexReplace, 0, true);
 		if (regex.subst(value, this->replaceBy, Poco::RegularExpression::RE_GLOBAL) == 0) {
-			if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-				this->opdid->logDebug(this->ID() + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Replacement regex did not match in value: " + value);
+			this->logDebug(std::string() + "WeatherGaugePort for element " + this->dataElement + ": Warning: Replacement regex did not match in value: " + value);
 		}
 	}
 
@@ -193,26 +190,22 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	try {
 		result = Poco::NumberParser::parseFloat(value);
 	} catch (Poco::Exception e) {
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-			this->opdid->logDebug(this->ID() + ": WeatherGaugePort for element " + this->dataElement + ": Warning: Unable to parse weather data: " + value);
+		this->logDebug(std::string() + "WeatherGaugePort for element " + this->dataElement + ": Warning: Unable to parse weather data: " + value);
 		return OPDI_STATUS_OK;
 	}
 
 	// scale the result
 	int64_t newPos = (int64_t)(result * this->numerator / this->denominator * 1.0);
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-		this->opdid->logDebug(this->ID() + ": WeatherGaugePort for element " + this->dataElement + ": Extracted value is: " + to_string(newPos));
+	this->logDebug(std::string() + "WeatherGaugePort for element " + this->dataElement + ": Extracted value is: " + to_string(newPos));
 
 	// correct value; a standard dial port will throw exceptions
 	// but exceptions must be avoided in this threaded code because they will cause strange messages on Linux
 	if (newPos < this->minValue) {
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-			this->opdid->logDebug(this->ID() + ": Warning: Value too low (" + to_string(newPos) + " < " + to_string(this->minValue) + "), correcting");
+		this->logDebug(std::string() + "Warning: Value too low (" + to_string(newPos) + " < " + to_string(this->minValue) + "), correcting");
 		newPos = this->minValue;
 	}
 	if (newPos > this->maxValue) {
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-			this->opdid->logDebug(this->ID() + ": Warning: Value too high (" + to_string(newPos) + " > " + to_string(this->maxValue) + "), correcting");
+		this->logDebug(std::string() + "Warning: Value too high (" + to_string(newPos) + " > " + to_string(this->maxValue) + "), correcting");
 		newPos = this->maxValue;
 	}
 	this->setPosition(newPos);
@@ -326,8 +319,7 @@ void WeatherPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::
 		throw Poco::DataException(node + ": Please specify a non-negative meaningful DataValidity in seconds");
 
 	// enumerate keys of the plugin's nodes (in specified order)
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-		this->opdid->logVerbose(node + ": Enumerating Weather nodes: " + node + ".Nodes");
+	this->opdid->logVerbose(node + ": Enumerating Weather nodes: " + node + ".Nodes", this->logVerbosity);
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodes = config->createView(node + ".Nodes");
 
@@ -360,8 +352,7 @@ void WeatherPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::
 	}
 
 	if (orderedItems.size() == 0) {
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::NORMAL))
-			this->opdid->logNormal("Warning: No ports configured in node " + node + ".Nodes; is this intended?");
+		this->opdid->logNormal("Warning: No ports configured in node " + node + ".Nodes; is this intended?", this->logVerbosity);
 	}
 
 	// go through items, create ports in specified order
@@ -371,8 +362,7 @@ void WeatherPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::
 
 		std::string nodeName = nli->get<1>();
 
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-			this->opdid->logVerbose("Setting up Weather port(s) for node: " + nodeName);
+		this->opdid->logVerbose("Setting up Weather port(s) for node: " + nodeName, this->logVerbosity);
 
 		// get port section from the configuration
 		Poco::Util::AbstractConfiguration *portConfig = config->createView(nodeName);
@@ -400,8 +390,7 @@ void WeatherPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::
 	this->workThread.setName(node + " work thread");
 	this->workThread.start(*this);
 
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-		this->opdid->logVerbose(this->nodeID + ": WeatherPlugin setup completed successfully");
+	this->opdid->logVerbose(this->nodeID + ": WeatherPlugin setup completed successfully", this->logVerbosity);
 }
 
 void WeatherPlugin::masterConnected() {
@@ -450,8 +439,7 @@ void WeatherPlugin::refreshData(void) {
 			++it;
 		}
 
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-			this->opdid->logDebug(this->nodeID + ": Fetching content of URL: " + this->url);
+		this->opdid->logDebug(this->nodeID + ": Fetching content of URL: " + this->url, this->logVerbosity);
 
 		Poco::URI uri(this->url);
 		std::auto_ptr<std::istream> pStr(Poco::URIStreamOpener::defaultOpener().open(uri));
@@ -469,8 +457,7 @@ void WeatherPlugin::refreshData(void) {
 			replaceAll(content, "select NAME=noaaselect", "select name=\"noaaselect\"");
 			replaceAll(content, "option selected", "option selected=\"1\"");
 
-			if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-				this->opdid->logDebug(this->nodeID + ": Parsing weather data content as XML");
+			this->opdid->logDebug(this->nodeID + ": Parsing weather data content as XML", this->logVerbosity);
 
 			std::stringstream in(content);
 			Poco::XML::InputSource src(in);
@@ -481,12 +468,11 @@ void WeatherPlugin::refreshData(void) {
 
 			node = pDoc->getNodeByPath(this->xpath);
 			if (node == nullptr) {
-				this->opdid->logNormal(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider);
-				this->opdid->logNormal(this->nodeID + ": Check XPath expression: " + this->xpath);
+				this->opdid->logNormal(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider, this->logVerbosity);
+				this->opdid->logNormal(this->nodeID + ": Check XPath expression: " + this->xpath, this->logVerbosity);
 				return;
 			}
-			if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-				this->opdid->logDebug(this->nodeID + ": Found weather data XML node: " + node->localName());
+			this->opdid->logDebug(this->nodeID + ": Found weather data XML node: " + node->localName(), this->logVerbosity);
 			Poco::XML::NodeList *children = node->childNodes();
 			for (size_t i = 0; i < children->length(); i++) {
 				if (children->item(i)->localName() != "tr")
@@ -505,8 +491,7 @@ void WeatherPlugin::refreshData(void) {
 				auto ite = this->weatherPorts.end();
 				while (it != ite) {
 					if ((*it)->getDataElement() == dataElement) {
-						if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-							this->opdid->logDebug(this->nodeID + ": Evaluating XML weather data element: " + dataElement + " with data: " + dataNode->innerText());
+						this->opdid->logDebug(this->nodeID + ": Evaluating XML weather data element: " + dataElement + " with data: " + dataNode->innerText(), this->logVerbosity);
 						(*it)->extract(dataNode->innerText());
 					}
 					++it;
@@ -517,8 +502,7 @@ void WeatherPlugin::refreshData(void) {
 		if (this->provider == "Weewx-JSON") {
 
 			// parse content as JSON
-			if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-				this->opdid->logDebug(this->nodeID + ": Parsing weather data content as JSON");
+			this->opdid->logDebug(this->nodeID + ": Parsing weather data content as JSON", this->logVerbosity);
 
 			Poco::JSON::Parser jsonParser;
 			Poco::Dynamic::Var loParsedJson = jsonParser.parse(content);
@@ -527,13 +511,11 @@ void WeatherPlugin::refreshData(void) {
 
 			// validate object
 			if (loJsonObject.isNull()) {
-				if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-					this->opdid->logVerbose(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider);
+				this->opdid->logVerbose(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider, this->logVerbosity);
 				return;
 			}
 			std::string time = GetJSONStringValue(loJsonObject, "time");
-			if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-				this->opdid->logDebug(this->nodeID + ": Found weather data; time: " + time);
+			this->opdid->logDebug(this->nodeID + ": Found weather data; time: " + time, this->logVerbosity);
 
 			// parse time
 			int tzd = 0;
@@ -544,24 +526,21 @@ void WeatherPlugin::refreshData(void) {
 			jsonTime.makeUTC(Poco::Timezone::tzd());
 			// check whether the data is considered valid (or too old); data validity in microseconds
 			Poco::DateTime now;
-//			this->opdid->log(this->nodeID + ": TimeDiff is: " + opdid->to_string((now - jsonTime).totalSeconds()));
+//			this->opdid->log(this->nodeID + ": TimeDiff is: " + opdid->to_string((now - jsonTime).totalSeconds()), this->logVerbosity);
 			if (now - jsonTime > this->dataValiditySeconds * 1000 * 1000) {
-				if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::NORMAL))
-					this->opdid->logNormal(this->nodeID + ": Error: Weewx JSON weather data is too old; timestamp is: "
-						+ Poco::DateTimeFormatter::format(jsonLocalTime, "%m/%d/%Y %h:%M:%S %A"));
+				this->opdid->logNormal(this->nodeID + ": Error: Weewx JSON weather data is too old; timestamp is: "
+						+ Poco::DateTimeFormatter::format(jsonLocalTime, "%m/%d/%Y %h:%M:%S %A"), this->logVerbosity);
 				return;
 			}
 			// get stats/current object
 			Poco::JSON::Object::Ptr stats = GetJSONObject(loJsonObject, "stats");
 			if (stats.isNull()) {
-				if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::NORMAL))
-					this->opdid->logNormal(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider + "; expected element 'stats' not found");
+				this->opdid->logNormal(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider + "; expected element 'stats' not found", this->logVerbosity);
 				return;
 			}
 			Poco::JSON::Object::Ptr current = GetJSONObject(stats, "current");
 			if (current.isNull()) {
-				if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::NORMAL))
-					this->opdid->logNormal(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider + "; expected element 'current' not found");
+				this->opdid->logNormal(this->nodeID + ": Error: File format mismatch for weather data provider " + this->provider + "; expected element 'current' not found", this->logVerbosity);
 				return;
 			}
 
@@ -578,8 +557,7 @@ void WeatherPlugin::refreshData(void) {
 				auto ite = this->weatherPorts.end();
 				while (it != ite) {
 					if ((*it)->getDataElement() == dataElement) {
-						if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-							this->opdid->logDebug(this->nodeID + ": Evaluating JSON weather data element: " + dataElement + " with data: " + data);
+						this->opdid->logDebug(this->nodeID + ": Evaluating JSON weather data element: " + dataElement + " with data: " + data, this->logVerbosity);
 						(*it)->extract(data);
 					}
 					++it;
@@ -588,23 +566,18 @@ void WeatherPlugin::refreshData(void) {
 		}
 
 	} catch (Poco::FileNotFoundException &fnfe) {
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-			this->opdid->logVerbose(this->nodeID + ": The file was not found: " + fnfe.message());
+		this->opdid->logVerbose(this->nodeID + ": The file was not found: " + fnfe.message(), this->logVerbosity);
 	} catch (Poco::Net::NetException &ne) {
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-			this->opdid->logVerbose(this->nodeID + ": Network problem: " + ne.className() + ": " + ne.message());
+		this->opdid->logVerbose(this->nodeID + ": Network problem: " + ne.className() + ": " + ne.message(), this->logVerbosity);
 	} catch (Poco::UnknownURISchemeException &uuse) {
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-			this->opdid->logVerbose(this->nodeID + ": Unknown URI scheme: " + uuse.message());
+		this->opdid->logVerbose(this->nodeID + ": Unknown URI scheme: " + uuse.message(), this->logVerbosity);
 	} catch (Poco::Exception &e) {
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-			this->opdid->logVerbose(this->nodeID + ": " + e.className() + ": " + e.message());
+		this->opdid->logVerbose(this->nodeID + ": " + e.className() + ": " + e.message(), this->logVerbosity);
 	}
 }
 
 void WeatherPlugin::run(void) {
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-		this->opdid->logDebug(this->nodeID + ": WeatherPlugin worker thread started");
+	this->opdid->logDebug(this->nodeID + ": WeatherPlugin worker thread started", this->logVerbosity);
 
 	Poco::Net::HTTPStreamFactory::registerFactory();
 	// Poco::Net::HTTPSStreamFactory::registerFactory();
@@ -615,15 +588,14 @@ void WeatherPlugin::run(void) {
 			this->refreshData();
 
 		} catch (Poco::Exception &e) {
-			this->opdid->logNormal(this->nodeID + ": Unhandled exception in worker thread: " + e.message());
+			this->opdid->logNormal(this->nodeID + ": Unhandled exception in worker thread: " + e.message(), this->logVerbosity);
 		}
 
 		// sleep for the specified refresh time (milliseconds)
 		Poco::Thread::sleep(this->refreshTime * 1000);
 	}
 
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-		this->opdid->logDebug(this->nodeID + ": WeatherPlugin worker thread terminated");
+	this->opdid->logDebug(this->nodeID + ": WeatherPlugin worker thread terminated", this->logVerbosity);
 }
 
 // plugin instance factory function

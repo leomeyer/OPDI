@@ -413,7 +413,7 @@ void TimerPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 }
 
 void TimerPort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+	this->logDebug(std::string() + "Preparing port");
 	DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -643,18 +643,18 @@ void TimerPort::addNotification(ScheduleNotification::Ptr notification, Poco::Ti
 	if (timestamp > now) {
 		std::string timeText = Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat);
 		if (!notification->deactivate)
-			this->logVerbose(this->ID() + ": Next scheduled time for node " + 
+			this->logVerbose(std::string() + "Next scheduled time for node " + 
 					notification->schedule->nodeName + " is: " + timeText);
 		// add with the specified activation time
 		this->queue.enqueueNotification(notification, timestamp);
 		if (!notification->deactivate)
 			notification->schedule->nextEvent = timestamp;
 	} else {
-		this->logNormal(this->ID() + ": Warning: Scheduled time for node " + 
+		this->logNormal(std::string() + "Warning: Scheduled time for node " + 
 				notification->schedule->nodeName + " lies in the past, ignoring: " + Poco::DateTimeFormatter::format(ldt, this->opdid->timestampFormat));
 /*
-		this->opdid->log(this->ID() + ": Timestamp is: " + Poco::DateTimeFormatter::format(timestamp, "%Y-%m-%d %H:%M:%S"));
-		this->opdid->log(this->ID() + ": Now is      : " + Poco::DateTimeFormatter::format(now, "%Y-%m-%d %H:%M:%S"));
+		this->log(this->ID() + ": Timestamp is: " + Poco::DateTimeFormatter::format(timestamp, "%Y-%m-%d %H:%M:%S"));
+		this->log(this->ID() + ": Now is      : " + Poco::DateTimeFormatter::format(now, "%Y-%m-%d %H:%M:%S"));
 */
 	}
 }
@@ -677,7 +677,7 @@ void TimerPort::setOutputs(int8_t outputLine) {
 			// set output line
 			(*it)->setLine(outputLine);
 		} catch (Poco::Exception &e) {
-			this->opdid->logNormal(this->ID() + ": Error setting output port state: " + (*it)->ID() + ": " + e.message());
+			this->logNormal(std::string() + "Error setting output port state: " + (*it)->ID() + ": " + e.message());
 		}
 		++it;
 	}
@@ -703,7 +703,7 @@ uint8_t TimerPort::doWork(uint8_t canSend)  {
 		auto ite = this->schedules.end();
 		while (it != ite) {
 			if ((*it).type == (connected ? ONLOGIN : ONLOGOUT)) {
-				this->logDebug(this->ID() + ": Connection status change detected; executing schedule " + (*it).nodeName + ((*it).type == ONLOGIN ? " (OnLogin)" : " (OnLogout)"));
+				this->logDebug(std::string() + "Connection status change detected; executing schedule " + (*it).nodeName + ((*it).type == ONLOGIN ? " (OnLogin)" : " (OnLogout)"));
 				// schedule found; create event notification
 				notification = new ScheduleNotification(&*it, false);
 				break;
@@ -716,7 +716,7 @@ uint8_t TimerPort::doWork(uint8_t canSend)  {
 	// this may happen due to daylight saving time or timezone changes
 	// or due to system time corrections (user action, NTP etc)
 	if (abs(Poco::Timestamp() - this->lastWorkTimestamp) > Poco::Timestamp::resolution() * 5) {
-		this->logVerbose(this->ID() + ": Relevant system time change detected; recalculating schedules");
+		this->logVerbose(std::string() + "Relevant system time change detected; recalculating schedules");
 		this->recalculateSchedules();
 	}
 
@@ -733,7 +733,7 @@ uint8_t TimerPort::doWork(uint8_t canSend)  {
 			ScheduleNotification::Ptr workNf = notification.cast<ScheduleNotification>();
 			Schedule* schedule = workNf->schedule;
 
-			this->logVerbose(this->ID() + ": Timer reached scheduled " + (workNf->deactivate ? "deactivation " : "") 
+			this->logVerbose(std::string() + "Timer reached scheduled " + (workNf->deactivate ? "deactivation " : "") 
 				+ "time for node: " + schedule->nodeName);
 
 			schedule->occurrences++;
@@ -752,7 +752,7 @@ uint8_t TimerPort::doWork(uint8_t canSend)  {
 				} else {
 					// warn if unable to calculate next occurrence; except if login or logout event
 					if ((schedule->type != ONLOGIN) && (schedule->type != ONLOGOUT))
-						this->logNormal(this->ID() + ": Warning: Next scheduled time for " + schedule->nodeName + " could not be determined");
+						this->logNormal(std::string() + "Warning: Next scheduled time for " + schedule->nodeName + " could not be determined");
 				}
 			}
 
@@ -765,7 +765,7 @@ uint8_t TimerPort::doWork(uint8_t canSend)  {
 				deacTime += timediff;
 				Poco::DateTime deacLocal(deacTime);
 				deacLocal.makeLocal(Poco::Timezone::tzd());
-				this->logVerbose(this->ID() + ": Scheduled deactivation time for node " + schedule->nodeName + " is at: " + 
+				this->logVerbose(std::string() + "Scheduled deactivation time for node " + schedule->nodeName + " is at: " + 
 						Poco::DateTimeFormatter::format(deacLocal, this->opdid->timestampFormat)
 						+ "; in " + this->to_string(timediff / 1000000) + " second(s)");
 				// add with the specified deactivation time
@@ -781,7 +781,7 @@ uint8_t TimerPort::doWork(uint8_t canSend)  {
 
 			this->setOutputs(outputLine);
 		} catch (Poco::Exception &e) {
-			this->opdid->logNormal(this->ID() + ": Error processing timer schedule: " + e.message());
+			this->logNormal(std::string() + "Error processing timer schedule: " + e.message());
 		}
 	}
 
@@ -824,7 +824,7 @@ void TimerPort::recalculateSchedules(Schedule* activatingSchedule) {
 			this->addNotification(new ScheduleNotification(schedule, false), nextOccurrence);
 		} else {
 			if ((schedule->type != ONLOGIN) && (schedule->type != ONLOGOUT))
-				this->logVerbose(this->ID() + ": Next scheduled time for " + schedule->nodeName + " could not be determined");
+				this->logVerbose(std::string() + "Next scheduled time for " + schedule->nodeName + " could not be determined");
 			schedule->nextEvent = Poco::Timestamp();
 		}
 	}

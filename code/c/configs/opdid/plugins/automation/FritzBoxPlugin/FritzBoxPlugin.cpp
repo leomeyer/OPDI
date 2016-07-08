@@ -435,8 +435,7 @@ std::string FritzBoxPlugin::httpGet(const std::string& url) {
 		std::string path(uri.getPathAndQuery());
 		if (path.empty()) path = "/";
 
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-			this->opdid->logDebug(this->nodeID + ": HTTP GET: " + uri.toString());
+		this->opdid->logDebug(this->nodeID + ": HTTP GET: " + uri.toString(), this->logVerbosity);
 
 		// send request
 		Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, path, Poco::Net::HTTPMessage::HTTP_1_1);
@@ -449,15 +448,12 @@ std::string FritzBoxPlugin::httpGet(const std::string& url) {
 		std::istream &is = session.receiveResponse(res);
 
 		if (res.getStatus() != 200) {
-			if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-				this->opdid->logVerbose(this->nodeID + ": HTTP GET: " + uri.toString());
-			if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::NORMAL))
-				this->opdid->logNormal(this->nodeID + ": The server returned an error: " + this->opdid->to_string(res.getStatus()) + " " + res.getReason());
+			this->opdid->logVerbose(this->nodeID + ": HTTP GET: " + uri.toString(), this->logVerbosity);
+			this->opdid->logNormal(this->nodeID + ": The server returned an error: " + this->opdid->to_string(res.getStatus()) + " " + res.getReason(), this->logVerbosity);
 
 			return "";
 		} else
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-			this->opdid->logDebug(this->nodeID + ": HTTP Response: " + this->opdid->to_string(res.getStatus()) + " " + res.getReason());
+		this->opdid->logDebug(this->nodeID + ": HTTP Response: " + this->opdid->to_string(res.getStatus()) + " " + res.getReason(), this->logVerbosity);
 
 		std::stringstream ss;
 
@@ -465,7 +461,7 @@ std::string FritzBoxPlugin::httpGet(const std::string& url) {
 
 		return ss.str().erase(ss.str().find_last_not_of("\n") + 1);
 	} catch (Poco::Exception &e) {
-		this->opdid->logNormal(this->nodeID + ": Error during HTTP GET for " + url + ": " + e.message());
+		this->opdid->logNormal(this->nodeID + ": Error during HTTP GET for " + url + ": " + e.message(), this->logVerbosity);
 	}
 
 	return "";
@@ -532,18 +528,16 @@ std::string FritzBoxPlugin::getSessionID(const std::string& user, const std::str
 }
 
 void FritzBoxPlugin::login(void) {
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-		this->opdid->logDebug(this->nodeID + ": Attempting to login to FritzBox " + this->host + " with user " + this->user);
+	this->opdid->logDebug(this->nodeID + ": Attempting to login to FritzBox " + this->host + " with user " + this->user, this->logVerbosity);
 
 	this->sid = this->getSessionID(this->user, this->password);
 
 	if (sid == INVALID_SID) {
-		this->opdid->logNormal(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " failed");
+		this->opdid->logNormal(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " failed", this->logVerbosity);
 		return;
 	}
 
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-		this->opdid->logDebug(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " successful; sid = " + this->sid);
+	this->opdid->logDebug(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " successful; sid = " + this->sid, this->logVerbosity);
 
 	// query ports (post notifications to query)
 	auto it = this->fritzPorts.begin();
@@ -574,8 +568,7 @@ void FritzBoxPlugin::logout(void) {
 	if (this->sid == INVALID_SID)
 		return;
 
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-		this->opdid->logDebug(this->nodeID + ": Logout from FritzBox " + this->host);
+	this->opdid->logDebug(this->nodeID + ": Logout from FritzBox " + this->host, this->logVerbosity);
 
 	this->httpGet("/login_sid.lua?logout=true&sid=" + this->sid);
 
@@ -716,8 +709,7 @@ void FritzBoxPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std:
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdid::AbstractOPDID::UNKNOWN);
 
 	// enumerate keys of the plugin's nodes (in specified order)
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-		this->opdid->logVerbose("Enumerating FritzBox devices: " + node + ".Devices");
+	this->opdid->logVerbose("Enumerating FritzBox devices: " + node + ".Devices", this->logVerbosity);
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodes = config->createView(node + ".Devices");
 
@@ -750,7 +742,6 @@ void FritzBoxPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std:
 	}
 
 	if (orderedItems.size() == 0) {
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::NORMAL))
 		this->opdid->logWarning("No devices configured in " + node + ".Devices; is this intended?");
 	}
 
@@ -761,8 +752,7 @@ void FritzBoxPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std:
 
 		std::string nodeName = nli->get<1>();
 
-		if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-			this->opdid->logVerbose("Setting up FritzBox port(s) for device: " + nodeName);
+		this->opdid->logVerbose("Setting up FritzBox port(s) for device: " + nodeName, this->logVerbosity);
 
 		// get port section from the configuration
 		Poco::Util::AbstractConfiguration* portConfig = config->createView(nodeName);
@@ -815,8 +805,7 @@ void FritzBoxPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std:
 	this->workThread.setName(node + " work thread");
 	this->workThread.start(*this);
 
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-		this->opdid->logVerbose(this->nodeID + ": FritzBoxPlugin setup completed successfully");
+	this->opdid->logVerbose(this->nodeID + ": FritzBoxPlugin setup completed successfully", this->logVerbosity);
 }
 
 void FritzBoxPlugin::masterConnected() {
@@ -827,8 +816,7 @@ void FritzBoxPlugin::masterDisconnected() {
 
 void FritzBoxPlugin::run(void) {
 
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-		this->opdid->logDebug(this->nodeID + ": FritzBoxPlugin worker thread started");
+	this->opdid->logDebug(this->nodeID + ": FritzBoxPlugin worker thread started", this->logVerbosity);
 
 	while (!this->opdid->shutdownRequested) {
 		try {
@@ -850,12 +838,11 @@ void FritzBoxPlugin::run(void) {
 				}
 			}
 		} catch (Poco::Exception &e) {
-			this->opdid->logNormal(this->nodeID + ": Unhandled exception in worker thread: " + e.message());
+			this->opdid->logNormal(this->nodeID + ": Unhandled exception in worker thread: " + e.message(), this->logVerbosity);
 		}
 	}
 
-	if ((this->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (this->logVerbosity >= opdid::AbstractOPDID::DEBUG))
-		this->opdid->logDebug(this->nodeID + ": FritzBoxPlugin worker thread terminated");
+	this->opdid->logDebug(this->nodeID + ": FritzBoxPlugin worker thread terminated", this->logVerbosity);
 }
 
 // plugin instance factory function

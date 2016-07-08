@@ -112,7 +112,7 @@ void LogicPort::setLine(uint8_t /*line*/, ChangeSource /*changeSource*/) {
 }
 
 void LogicPort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+	this->logDebug(std::string() + "Preparing port");
 	opdi::DigitalPort::prepare();
 
 	if (this->function == UNKNOWN)
@@ -137,7 +137,7 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 		try {
 			(*it)->getState(&mode, &line);
 		} catch (Poco::Exception &e) {
-			this->opdid->logNormal(std::string("Error querying port ") + (*it)->getID() + ": " + e.message());
+			this->logNormal(std::string("Error querying port ") + (*it)->getID() + ": " + e.message());
 		}
 		highCount += line;
 		++it;
@@ -172,7 +172,7 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 
 	// change detected?
 	if (newLine != this->line) {
-		this->logDebug(this->ID() + ": Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High)");
+		this->logDebug(std::string() + "Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High)");
 
 		opdi::DigitalPort::setLine(newLine);
 
@@ -187,11 +187,11 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 				(*it)->getState(&mode, &line);
 				// changed?
 				if (line != newLine) {
-					this->logDebug(this->ID() + ": Changing line of port " + (*it)->getID() + " to " + (newLine == 0 ? "Low" : "High"));
+					this->logDebug(std::string() + "Changing line of port " + (*it)->getID() + " to " + (newLine == 0 ? "Low" : "High"));
 					(*it)->setLine(newLine);
 				}
 			} catch (Poco::Exception &e) {
-				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
+				this->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
 			}
 			++it;
 		}
@@ -206,11 +206,11 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 				(*it)->getState(&mode, &line);
 				// changed?
 				if (line == newLine) {
-					this->logDebug(this->ID() + ": Changing line of inverse port " + (*it)->getID() + " to " + (newLine == 0 ? "High" : "Low"));
+					this->logDebug(std::string() + "Changing line of inverse port " + (*it)->getID() + " to " + (newLine == 0 ? "High" : "Low"));
 					(*it)->setLine((newLine == 0 ? 1 : 0));
 				}
 			} catch (Poco::Exception &e) {
-				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
+				this->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
 			}
 			++it;
 		}
@@ -292,7 +292,7 @@ void PulsePort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 }
 
 void PulsePort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+	this->logDebug(std::string() + "Preparing port");
 	opdi::DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -317,7 +317,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->getState(&mode, &line);
 			} catch (Poco::Exception &e) {
-				this->opdid->logNormal(this->ID() + ": Error querying port " + (*it)->getID() + ": " + e.message());
+				this->logNormal(std::string() + "Error querying port " + (*it)->getID() + ": " + e.message());
 			}
 			highCount += line;
 			++it;
@@ -330,17 +330,17 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 
 	int32_t period = this->period.value();
 	if (period < 0) {
-		this->logWarning(this->ID() + ": Period may not be negative: " + to_string(period));
+		this->logWarning(std::string() + "Period may not be negative: " + to_string(period));
 		return OPDI_STATUS_OK;
 	}
 
 	double dutyCycle = this->dutyCycle.value();
 	if (dutyCycle < 0) {
-		this->logWarning(this->ID() + ": DutyCycle may not be negative: " + to_string(dutyCycle));
+		this->logWarning(std::string() + "DutyCycle may not be negative: " + to_string(dutyCycle));
 		return OPDI_STATUS_OK;
 	}
 	if (dutyCycle > 100) {
-		this->logWarning(this->ID() + ": DutyCycle may not exceed 100%: " + to_string(dutyCycle));
+		this->logWarning(std::string() + "DutyCycle may not exceed 100%: " + to_string(dutyCycle));
 		return OPDI_STATUS_OK;
 	}
 
@@ -372,7 +372,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 
 	// change detected?
 	if (newState != this->pulseState) {
-		this->logDebug(this->ID() + ": Changing pulse to " + (newState == 1 ? "High" : "Low") + " (dTime: " + to_string(opdi_get_time_ms() - this->lastStateChangeTime) + " ms)");
+		this->logDebug(std::string() + "Changing pulse to " + (newState == 1 ? "High" : "Low") + " (dTime: " + to_string(opdi_get_time_ms() - this->lastStateChangeTime) + " ms)");
 
 		this->lastStateChangeTime = opdi_get_time_ms();
 
@@ -386,7 +386,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->setLine(newState);
 			} catch (Poco::Exception &e) {
-				this->opdid->logNormal(this->ID() + ": Error setting output port state: " + (*it)->getID() + ": " + e.message());
+				this->logNormal(std::string() + "Error setting output port state: " + (*it)->getID() + ": " + e.message());
 			}
 			++it;
 		}
@@ -397,7 +397,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->setLine((newState == 0 ? 1 : 0));
 			} catch (Poco::Exception &e) {
-				this->opdid->logNormal(this->ID() + ": Error setting inverse output port state: " + (*it)->getID() + ": " + e.message());
+				this->logNormal(std::string() + "Error setting inverse output port state: " + (*it)->getID() + ": " + e.message());
 			}
 			++it;
 		}
@@ -461,7 +461,7 @@ void SelectorPort::setLine(uint8_t line) {
 }
 
 void SelectorPort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+	this->logDebug(std::string() + "Preparing port");
 	opdi::DigitalPort::prepare();
 
 	// find port; throws errors if something required is missing
@@ -481,7 +481,7 @@ uint8_t SelectorPort::doWork(uint8_t canSend)  {
 	this->selectPort->getState(&pos);
 	if (pos == this->position) {
 		if (this->line != 1) {
-			this->logDebug(this->ID() + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to High");
+			this->logDebug(std::string() + "Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to High");
 			opdi::DigitalPort::setLine(1);
 			// set output ports' lines
 			auto it = this->outputPorts.cbegin();
@@ -492,7 +492,7 @@ uint8_t SelectorPort::doWork(uint8_t canSend)  {
 		}
 	} else {
 		if (this->line != 0) {
-			this->logDebug(this->ID() + ": Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to Low");
+			this->logDebug(std::string() + "Port " + this->selectPort->getID() + " is in position " + to_string(this->position) + ", switching SelectorPort to Low");
 			opdi::DigitalPort::setLine(0);
 			// set output ports' lines
 			auto it = this->outputPorts.cbegin();
@@ -539,7 +539,7 @@ void ErrorDetectorPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/)
 }
 
 void ErrorDetectorPort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+	this->logDebug(std::string() + "Preparing port");
 	opdi::DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -556,7 +556,7 @@ uint8_t ErrorDetectorPort::doWork(uint8_t canSend)  {
 	auto ite = this->inputPorts.end();
 	while (it != ite) {
 		if ((*it)->hasError()) {
-			this->logExtreme(this->ID() + ": Detected error on port: " + (*it)->getID());
+			this->logExtreme(std::string() + "Detected error on port: " + (*it)->getID());
 			newState = 1;
 			break;
 		}
@@ -568,7 +568,7 @@ uint8_t ErrorDetectorPort::doWork(uint8_t canSend)  {
 
 	// change?
 	if (this->line != newState) {
-		this->logDebug(this->ID() + ": Changing line state to: " + (newState == 1 ? "High" : "Low"));
+		this->logDebug(std::string() + "Changing line state to: " + (newState == 1 ? "High" : "Low"));
 		this->line = newState;
 		this->doRefresh();
 	}
@@ -601,7 +601,7 @@ uint8_t SerialStreamingPort::doWork(uint8_t canSend)  {
 		if (this->available(0) > 0) {
 			char result;
 			if (this->read(&result) > 0) {
-				this->logDebug(this->ID() + ": Looping back received serial data byte: " + this->opdid->to_string((int)result));
+				this->logDebug(std::string() + "Looping back received serial data byte: " + this->opdid->to_string((int)result));
 
 				// echo
 				this->write(&result, 1);
@@ -621,7 +621,7 @@ void SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *config) {
 	std::string protocol = config->getString("Protocol", "8N1");
 	// int timeout = config->getInt("Timeout", 100);
 
-	this->logVerbose(this->ID() + ": Opening serial port " + serialPortName + " with " + this->opdid->to_string(baudRate) + " baud and protocol " + protocol);
+	this->logVerbose(std::string() + "Opening serial port " + serialPortName + " with " + this->opdid->to_string(baudRate) + " baud and protocol " + protocol);
 
 	// try to lock the port name as a resource
 	this->opdid->lockResource(serialPortName, this->getID());
@@ -634,7 +634,7 @@ void SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *config) {
 		throw Poco::ApplicationException(this->ID() + ": Unable to open serial port: " + serialPortName);
 	}
 
-	this->logVerbose(this->ID() + ": Serial port " + serialPortName + " opened successfully");
+	this->logVerbose(std::string() + "Serial port " + serialPortName + " opened successfully");
 
 	std::string modeStr = config->getString("Mode", "");
 	if (modeStr == "Loopback") {
@@ -708,7 +708,7 @@ std::string LoggerPort::getPortStateStr(opdi::Port* port) {
 }
 
 void LoggerPort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+	this->logDebug(std::string() + "Preparing port");
 	opdi::StreamingPort::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -782,7 +782,7 @@ void LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 		// try to lock the output file name as a resource
 		this->opdid->lockResource(outFileStr, this->getID());
 
-		this->logVerbose(this->ID() + ": Opening output log file " + outFileStr);
+		this->logVerbose(std::string() + "Opening output log file " + outFileStr);
 
 		// open the stream in append mode
 		this->outFile.open(outFileStr, std::ios_base::app);
@@ -899,19 +899,19 @@ void FaderPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 
 		// don't fade if the duration is impracticably low
 		if (this->durationMs < 5) {
-			this->logDebug(this->ID() + ": Refusing to fade because duration is impracticably low: " + to_string(this->durationMs));
+			this->logDebug(std::string() + "Refusing to fade because duration is impracticably low: " + to_string(this->durationMs));
 		} else {
 			opdi::DigitalPort::setLine(line);
 			this->startTime = Poco::Timestamp();
 			// cause correct log output
 			this->lastValue = -1;
-			this->logDebug(this->ID() + ": Start fading at " + to_string(this->left) + "% with a duration of " + to_string(this->durationMs) + " ms");
+			this->logDebug(std::string() + "Start fading at " + to_string(this->left) + "% with a duration of " + to_string(this->durationMs) + " ms");
 		}
 	} else {
 		opdi::DigitalPort::setLine(line);
 		// switched off?
 		if (oldline != this->line) {
-			this->logDebug(this->ID() + ": Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
+			this->logDebug(std::string() + "Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
 			this->actionToPerform = this->switchOffAction;
 			// resolve values again for the switch off action
 			this->left = this->leftValue.value();
@@ -921,7 +921,7 @@ void FaderPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 }
 
 void FaderPort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+	this->logDebug(std::string() + "Preparing port");
 	opdi::DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -939,7 +939,7 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 
 		if (this->line == 1) {
 			if (this->durationMs < 0) {
-				this->logWarning(this->ID() + ": Duration may not be negative; disabling fader: " + to_string(this->durationMs));
+				this->logWarning(std::string() + "Duration may not be negative; disabling fader: " + to_string(this->durationMs));
 				// disable the fader immediately
 				opdi::DigitalPort::setLine(0);
 				this->refreshRequired = true;
@@ -960,10 +960,10 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 				auto ite = this->endSwitches.end();
 				while (it != ite) {
 					try {
-						this->logDebug(this->ID() + ": Setting line of end switch port " + (*it)->ID() + " to High");
+						this->logDebug(std::string() + "Setting line of end switch port " + (*it)->ID() + " to High");
 						(*it)->setLine(1);
 					} catch (Poco::Exception &e) {
-						this->opdid->logWarning(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
+						this->logWarning(std::string() + "Error changing port " + (*it)->getID() + ": " + e.message());
 					}
 					++it;
 				}
@@ -985,7 +985,7 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 				value = this->right / 100.0;
 			// action has been handled
 			this->actionToPerform = NONE;
-			this->logDebug(this->ID() + ": Switch off action handled; setting value to: " + this->to_string(value) + "%");
+			this->logDebug(std::string() + "Switch off action handled; setting value to: " + this->to_string(value) + "%");
 		} else {
 			// regular fader operation
 			if (this->mode == LINEAR) {
@@ -1013,7 +1013,7 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 				value = 0.0;
 		}
 
-		this->logExtreme(this->ID() + ": Setting current fader value to " + to_string(value * 100.0) + "%");
+		this->logExtreme(std::string() + "Setting current fader value to " + to_string(value * 100.0) + "%");
 
 		// regular output ports
 		auto it = this->outputPorts.begin();
@@ -1030,7 +1030,7 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 				} else
 					throw Poco::Exception("The port " + (*it)->ID() + " is neither an AnalogPort nor a DialPort");
 			} catch (Poco::Exception& e) {
-				this->opdid->logNormal(this->ID() + ": Error changing port " + (*it)->getID() + ": " + e.message());
+				this->logNormal(std::string() + "Error changing port " + (*it)->getID() + ": " + e.message());
 			}
 			++it;
 		}
@@ -1108,7 +1108,7 @@ void SceneSelectPort::configure(Poco::Util::AbstractConfiguration *config, Poco:
 }
 
 void SceneSelectPort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+	this->logDebug(std::string() + "Preparing port");
 	opdi::SelectPort::prepare();
 
 	// check files
@@ -1117,7 +1117,7 @@ void SceneSelectPort::prepare() {
 	while (fi != fie) {
 		std::string sceneFile = *fi;
 
-		this->logDebug(this->ID() + ": Checking scene file "+ sceneFile + " relative to configuration file: " + this->configFilePath);
+		this->logDebug(std::string() + "Checking scene file "+ sceneFile + " relative to configuration file: " + this->configFilePath);
 
 		Poco::Path filePath(this->configFilePath);
 		Poco::Path absPath(filePath.absolute());
@@ -1142,7 +1142,7 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 
 	// position changed?
 	if (this->positionSet) {
-		this->logVerbose(this->ID() + ": Scene selected: " + this->getPositionLabel(this->position));
+		this->logVerbose(std::string() + "Scene selected: " + this->getPositionLabel(this->position));
 
 		std::string sceneFile = this->fileList[this->position];
 
@@ -1151,11 +1151,11 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 		this->opdid->getEnvironment(parameters);
 
 		if (this->logVerbosity >= AbstractOPDID::DEBUG) {
-			this->logDebug(this->ID() + ": Scene file parameters:");
+			this->logDebug(std::string() + "Scene file parameters:");
 			auto it = parameters.begin();
 			auto ite = parameters.end();
 			while (it != ite) {
-				this->logDebug(this->ID() + ":   " + (*it).first + " = " + (*it).second);
+				this->logDebug(std::string() + "  " + (*it).first + " = " + (*it).second);
 				++it;
 			}
 		}
@@ -1168,17 +1168,17 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 		config.keys("", sectionKeys);
 
 		if (sectionKeys.size() == 0)
-			this->logWarning(this->ID() + ": Scene file " + sceneFile + " does not contain any scene information, is this intended?");
+			this->logWarning(std::string() + "Scene file " + sceneFile + " does not contain any scene information, is this intended?");
 		else
-			this->logDebug(this->ID() + ": Applying settings from scene file: " + sceneFile);
+			this->logDebug(std::string() + "Applying settings from scene file: " + sceneFile);
 
 		for (auto it = sectionKeys.begin(), ite = sectionKeys.end(); it != ite; ++it) {
 			// find port corresponding to this section
 			opdi::Port *port = this->opdid->findPortByID((*it).c_str());
 			if (port == nullptr)
-				this->logWarning(this->ID() + ": In scene file " + sceneFile + ": Port with ID " + (*it) + " not present in current configuration");
+				this->logWarning(std::string() + "In scene file " + sceneFile + ": Port with ID " + (*it) + " not present in current configuration");
 			else {
-				this->logDebug(this->ID() + ": Applying settings to port: " + *it);
+				this->logDebug(std::string() + "Applying settings to port: " + *it);
 
 				// configure port according to settings 
 				Poco::AutoPtr<Poco::Util::AbstractConfiguration> portConfig = config.createView(*it);
@@ -1197,9 +1197,9 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 					if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
 						this->opdid->configureDialPort(portConfig, (opdi::DialPort*)port, true);
 					} else
-						this->logWarning(this->ID() + ": In scene file " + sceneFile + ": Port with ID " + (*it) + " has an unknown type");
+						this->logWarning(std::string() + "In scene file " + sceneFile + ": Port with ID " + (*it) + " has an unknown type");
 				} catch (Poco::Exception &e) {
-					this->logWarning(this->ID() + ": In scene file " + sceneFile + ": Error configuring port " + (*it) + ": " + e.message());
+					this->logWarning(std::string() + "In scene file " + sceneFile + ": Error configuring port " + (*it) + ": " + e.message());
 				}
 			}
 		}
@@ -1250,7 +1250,7 @@ uint8_t FileInputPort::doWork(uint8_t canSend) {
 		return OPDI_STATUS_OK;
 
 	if (this->needsReload) {
-		this->logDebug(this->ID() + ": Reloading file: " + this->filePath);
+		this->logDebug(std::string() + "Reloading file: " + this->filePath);
 
 		this->lastReloadTime = opdi_get_time_ms();
 
@@ -1289,7 +1289,7 @@ uint8_t FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected '0' or '1' but got: " + errorContent);
 				}
-				this->logDebug(this->ID() + ": Setting line of digital port '" + this->port->ID() + "' to " + this->to_string((int)line));
+				this->logDebug(std::string() + "Setting line of digital port '" + this->port->ID() + "' to " + this->to_string((int)line));
 				((opdi::DigitalPort*)this->port)->setLine(line);
 				break;
 			}
@@ -1300,7 +1300,7 @@ uint8_t FileInputPort::doWork(uint8_t canSend) {
 					throw Poco::DataFormatException("Expected decimal value between 0 and 1 but got: " + errorContent);
 				}
 				value = value * this->numerator / this->denominator;
-				this->logDebug(this->ID() + ": Setting value of analog port '" + this->port->ID() + "' to " + this->to_string(value));
+				this->logDebug(std::string() + "Setting value of analog port '" + this->port->ID() + "' to " + this->to_string(value));
 				((opdi::AnalogPort*)this->port)->setRelativeValue(value);
 				break;
 			}
@@ -1317,7 +1317,7 @@ uint8_t FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
 				}
-				this->logDebug(this->ID() + ": Setting position of dial port '" + this->port->ID() + "' to " + this->to_string(value));
+				this->logDebug(std::string() + "Setting position of dial port '" + this->port->ID() + "' to " + this->to_string(value));
 				((opdi::DialPort*)this->port)->setPosition(value);
 				break;
 			}
@@ -1329,7 +1329,7 @@ uint8_t FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
 				}
-				this->logDebug(this->ID() + ": Setting position of select port '" + this->port->ID() + "' to " + this->to_string(value));
+				this->logDebug(std::string() + "Setting position of select port '" + this->port->ID() + "' to " + this->to_string(value));
 				((opdi::SelectPort*)this->port)->setPosition(value);
 				break;
 			}
@@ -1337,7 +1337,7 @@ uint8_t FileInputPort::doWork(uint8_t canSend) {
 				throw Poco::ApplicationException("Port type is unknown or not supported");
 			}
 		} catch (Poco::Exception &e) {
-			this->logWarning(this->ID() + ": Error setting port state from file '" + this->filePath + "': " + e.message());
+			this->logWarning(std::string() + "Error setting port state from file '" + this->filePath + "': " + e.message());
 		}
 	}
 
@@ -1346,7 +1346,7 @@ uint8_t FileInputPort::doWork(uint8_t canSend) {
 
 void FileInputPort::fileChangedEvent(const void*, const Poco::DirectoryWatcher::DirectoryEvent& evt) {
 	if (evt.item.path() == this->filePath) {
-		this->logDebug(this->ID() + ": Detected file modification: " + this->filePath);
+		this->logDebug(std::string() + "Detected file modification: " + this->filePath);
 		
 		Poco::Mutex::ScopedLock(this->mutex);
 		this->needsReload = true;
@@ -1444,7 +1444,7 @@ void FileInputPort::configure(Poco::Util::AbstractConfiguration *config, Poco::U
 	this->filePath = absPath.toString();
 	this->directory = absPath.parent();
 
-	this->logDebug(this->ID() + ": Preparing DirectoryWatcher for folder '" + this->directory.path() + "'");
+	this->logDebug(std::string() + "Preparing DirectoryWatcher for folder '" + this->directory.path() + "'");
 
 	this->directoryWatcher = new Poco::DirectoryWatcher(this->directory, 
 			Poco::DirectoryWatcher::DW_ITEM_MODIFIED | Poco::DirectoryWatcher::DW_ITEM_ADDED | Poco::DirectoryWatcher::DW_ITEM_MOVED_TO, 
@@ -1485,9 +1485,9 @@ AggregatorPort::Calculation::Calculation(std::string id) : opdi::DialPort(id.c_s
 }
 
 void AggregatorPort::Calculation::calculate(AggregatorPort* aggregator) {
-	aggregator->logExtreme(this->ID() + ": Calculating new value");
+	aggregator->logExtreme("Calculating new value");
 	if ((aggregator->values.size() < aggregator->totalValues) && !this->allowIncomplete)
-		aggregator->logDebug(this->ID() + ": Cannot compute result because not all values have been collected and AllowIncomplete is false");
+		aggregator->logDebug("Cannot compute result because not all values have been collected and AllowIncomplete is false");
 	else {
 		// copy values, multiply if necessary
 		std::vector<int64_t> values = aggregator->values;
@@ -1497,21 +1497,21 @@ void AggregatorPort::Calculation::calculate(AggregatorPort* aggregator) {
 		switch (this->algorithm) {
 		case DELTA: {
 			int64_t newValue = values.at(values.size() - 1) - values.at(0);
-			aggregator->logDebug(this->ID() + ": New value according to Delta algorithm: " + this->to_string(newValue));
+			aggregator->logDebug(std::string() + "New value according to Delta algorithm: " + this->to_string(newValue));
 			if ((newValue >= this->getMin()) && (newValue <= this->getMax()))
 				this->setPosition(newValue);
 			else
-				aggregator->logWarning(this->ID() + ": Cannot set new position: Calculated delta value is out of range: " + this->to_string(newValue));
+				aggregator->logWarning(std::string() + "Cannot set new position: Calculated delta value is out of range: " + this->to_string(newValue));
 			break;
 		}
 		case ARITHMETIC_MEAN: {
 			int64_t sum = std::accumulate(values.begin(), values.end(), (int64_t)0);
 			int64_t mean = sum / values.size();
-			aggregator->logDebug(this->ID() + ": New value according to ArithmeticMean algorithm: " + this->to_string(mean));
+			aggregator->logDebug(std::string() + "New value according to ArithmeticMean algorithm: " + this->to_string(mean));
 			if ((mean >= this->getMin()) && (mean <= this->getMax()))
 				this->setPosition(mean);
 			else
-				aggregator->logWarning(this->ID() + ": Cannot set new position: Calculated average value is out of range: " + this->to_string(mean));
+				aggregator->logWarning(std::string() + "Cannot set new position: Calculated average value is out of range: " + this->to_string(mean));
 			break;
 		}
 		case MINIMUM: {
@@ -1519,11 +1519,11 @@ void AggregatorPort::Calculation::calculate(AggregatorPort* aggregator) {
 			if (minimum == values.end())
 				this->setError(Error::VALUE_NOT_AVAILABLE);
 			int64_t min = *minimum;
-			aggregator->logDebug(this->ID() + ": New value according to Minimum algorithm: " + this->to_string(min));
+			aggregator->logDebug(std::string() + "New value according to Minimum algorithm: " + this->to_string(min));
 			if ((min >= this->getMin()) && (min <= this->getMax()))
 				this->setPosition(min);
 			else
-				aggregator->logWarning(this->ID() + ": Cannot set new position: Calculated minimum value is out of range: " + this->to_string(min));
+				aggregator->logWarning(std::string() + "Cannot set new position: Calculated minimum value is out of range: " + this->to_string(min));
 			break;
 		}
 		case MAXIMUM: {
@@ -1531,11 +1531,11 @@ void AggregatorPort::Calculation::calculate(AggregatorPort* aggregator) {
 			if (maximum == values.end())
 				this->setError(Error::VALUE_NOT_AVAILABLE);
 			int64_t max = *maximum;
-			aggregator->logDebug(this->ID() + ": New value according to Maximum algorithm: " + this->to_string(max));
+			aggregator->logDebug(std::string() + "New value according to Maximum algorithm: " + this->to_string(max));
 			if ((max >= this->getMin()) && (max <= this->getMax()))
 				this->setPosition(max);
 			else
-				aggregator->logWarning(this->ID() + ": Cannot set new position: Calculated minimum value is out of range: " + this->to_string(max));
+				aggregator->logWarning(std::string() + "Cannot set new position: Calculated minimum value is out of range: " + this->to_string(max));
 			break;
 		}
 		default:
@@ -1551,9 +1551,9 @@ void AggregatorPort::persist() {
 	if (this->isPersistent() && (this->opdid->persistentConfig != nullptr)) {
 		try {
 			if (this->opdid->shutdownRequested)
-				this->logVerbose(this->ID() + ": Trying to persist aggregator values on shutdown");
+				this->logVerbose(std::string() + "Trying to persist aggregator values on shutdown");
 			else
-				this->logDebug(this->ID() + "Trying to persist aggregator values");
+				this->logDebug(std::string() + "Trying to persist aggregator values");
 			if (this->values.size() == 0) {
 				this->opdid->persistentConfig->remove(this->ID() + ".Time");
 				this->opdid->persistentConfig->remove(this->ID() + ".Values");
@@ -1563,21 +1563,26 @@ void AggregatorPort::persist() {
 				this->opdid->persistentConfig->setUInt64(this->ID() + ".Time", opdi_get_time_ms());
 				std::stringstream ss;
 				auto vit = this->values.cbegin();
-				while (vit != this->values.cend()) {
-					if (vit != this->values.cbegin())
+				auto vitb = this->values.cbegin();
+				auto vite = this->values.cend();
+				while (vit != vite) {
+					if (vit != vitb)
 						ss << ",";
 					ss << this->to_string(*vit);
 					++vit;
 				}
 				this->opdid->persistentConfig->setString(this->ID() + ".Values", ss.str());
 			}
-			this->opdid->savePersistentConfig();
+			// save configuration only if not already shutting down
+			// the config will be saved on shutdown automatically
+			if (!this->opdid->shutdownRequested)
+				this->opdid->savePersistentConfig();
 		}
 		catch (Poco::Exception& e) {
-			this->logWarning(this->ID() + ": Error persisting aggregator values: " + e.message());
+			this->logWarning(std::string() + "Error persisting aggregator values: " + e.message());
 		}
 		catch (std::exception& e) {
-			this->logWarning(this->ID() + ": Error persisting aggregator values: " + e.what());
+			this->logWarning(std::string() + "Error persisting aggregator values: " + e.what());
 		}
 	}
 }
@@ -1585,13 +1590,13 @@ void AggregatorPort::persist() {
 void AggregatorPort::resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity, bool clearPersistent) {
 	switch (logVerbosity) {
 	case AbstractOPDID::EXTREME:
-		this->logExtreme(this->ID() + ": Resetting aggregator; values are now unavailable because: " + reason); break;
+		this->logExtreme(std::string() + "Resetting aggregator; values are now unavailable because: " + reason); break;
 	case AbstractOPDID::DEBUG:
-		this->logDebug(this->ID() + ": Resetting aggregator; values are now unavailable because: " + reason); break;
+		this->logDebug(std::string() + "Resetting aggregator; values are now unavailable because: " + reason); break;
 	case AbstractOPDID::VERBOSE:
-		this->logVerbose(this->ID() + ": Resetting aggregator; values are now unavailable because: " + reason); break;
+		this->logVerbose(std::string() + "Resetting aggregator; values are now unavailable because: " + reason); break;
 	case AbstractOPDID::NORMAL:
-		this->logNormal(this->ID() + ": Resetting aggregator; values are now unavailable because: " + reason); break;
+		this->logNormal(std::string() + "Resetting aggregator; values are now unavailable because: " + reason); break;
 	default: break;
 	}
 	// indicate errors on all calculations
@@ -1620,7 +1625,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 
 	// disabled?
 	if (this->line != 1) {
-		// this->logExtreme(this->ID() + ": Aggregator is disabled");
+		// this->logExtreme(std::string() + "Aggregator is disabled");
 		return OPDI_STATUS_OK;
 	}
 
@@ -1631,7 +1636,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 
 		// try to read values from persistent storage?
 		if (this->isPersistent() && (this->opdid->persistentConfig != nullptr)) {
-			this->logVerbose(this->ID() + ": Trying to read persisted aggregator values with current time being " + this->to_string(opdi_get_time_ms()));
+			this->logVerbose(std::string() + "Trying to read persisted aggregator values with current time being " + this->to_string(opdi_get_time_ms()));
 			// read timestamp
 			uint64_t persistTime = this->opdid->persistentConfig->getUInt64(this->ID() + ".Time", 0);
 			// timestamp acceptable? must be in the past and within the query interval
@@ -1658,10 +1663,10 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 					}
 				}	// read values
 				valuesAvailable = true;
-				this->logVerbose(this->ID() + ": Total persisted aggregator values read: " + this->to_string(this->values.size()));
+				this->logVerbose(std::string() + "Total persisted aggregator values read: " + this->to_string(this->values.size()));
 			}	// timestamp valid
 			else
-				this->logVerbose(this->ID() + ": Persisted aggregator values not found or outdated, timestamp was: " + to_string(persistTime));
+				this->logVerbose(std::string() + "Persisted aggregator values not found or outdated, timestamp was: " + to_string(persistTime));
 		}	// persistence enabled
 	}
 
@@ -1677,13 +1682,13 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 			this->errors = 0;
 		}
 		catch (Poco::Exception &e) {
-			this->logDebug(this->ID() + ": Error querying source port " + this->sourcePort->ID() + ": " + e.message());
+			this->logDebug(std::string() + "Error querying source port " + this->sourcePort->ID() + ": " + e.message());
 			// error occurred; check whether there's a last value and an error tolerance
 			if ((this->values.size() > 0) && (this->allowedErrors > 0) && (this->errors < this->allowedErrors)) {
 				++errors;
 				// fallback to last value
 				value = (double)this->values.at(this->values.size() - 1);
-				this->logDebug(this->ID() + ": Fallback to last read value, remaining allowed errors: " + this->to_string(this->allowedErrors - this->errors));
+				this->logDebug(std::string() + "Fallback to last read value, remaining allowed errors: " + this->to_string(this->allowedErrors - this->errors));
 			}
 			else {
 				this->resetValues("Querying the source port " + this->sourcePort->ID() + " resulted in an error: " + e.message(), AbstractOPDID::VERBOSE);
@@ -1693,7 +1698,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 
 		int64_t longValue = (int64_t)(value);
 
-		this->logDebug(this->ID() + ": Newly aggregated value: " + this->to_string(longValue));
+		this->logDebug(std::string() + "Newly aggregated value: " + this->to_string(longValue));
 
 		// use first value without check
 		if (this->values.size() > 0) {
@@ -1705,7 +1710,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 			int64_t diff = this->values.at(this->values.size() - 1) - longValue;
 			// diff may not exceed deltas
 			if ((diff < this->minDelta) || (diff > this->maxDelta)) {
-				this->logWarning(this->ID() + ": The new source port value of " + this->to_string(longValue) + " is outside of the specified limits (diff = " + this->to_string(diff) + ")");
+				this->logWarning(std::string() + "The new source port value of " + this->to_string(longValue) + " is outside of the specified limits (diff = " + this->to_string(diff) + ")");
 				// an invalid value invalidates the whole calculation
 				this->resetValues("The value was outside of the specified limits", AbstractOPDID::VERBOSE);
 				return OPDI_STATUS_OK;
@@ -1883,7 +1888,7 @@ void AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, Poco::
 }
 
 void AggregatorPort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+	this->logDebug(std::string() + "Preparing port");
 	opdi::DigitalPort::prepare();
 
 	// find source port; throws errors if something required is missing
@@ -2013,7 +2018,7 @@ void TriggerPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 }
 
 void TriggerPort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+	this->logDebug(std::string() + "Preparing port");
 	opdi::DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -2075,7 +2080,7 @@ uint8_t TriggerPort::doWork(uint8_t canSend)  {
 
 	// change detected?
 	if (changeDetected) {
-		this->logDebug(this->ID() + ": Detected triggering change");
+		this->logDebug(std::string() + "Detected triggering change");
 
 		// regular output ports
 		auto it = this->outputPorts.begin();
@@ -2096,7 +2101,7 @@ uint8_t TriggerPort::doWork(uint8_t canSend)  {
 					(*it)->setLine(line == 1 ? 0 : 1);
 				}
 			} catch (Poco::Exception &e) {
-				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
+				this->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
 			}
 			++it;
 		}
@@ -2119,7 +2124,7 @@ uint8_t TriggerPort::doWork(uint8_t canSend)  {
 					(*it)->setLine(line == 1 ? 0 : 1);
 				}
 			} catch (Poco::Exception &e) {
-				this->opdid->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
+				this->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
 			}
 			++it;
 		}

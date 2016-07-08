@@ -56,7 +56,7 @@ void ExecPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->forceKill = config->getBool("ForceKill", false);
 	
 	if ((this->waitTimeMs > 0) && (this->resetTimeMs > 0) && (this->waitTimeMs > this->resetTimeMs))
-		this->opdid->logWarning(this->ID() + ": The specified wait time is larger than the reset time; reset will not execute!");
+		this->logWarning(std::string() + "The specified wait time is larger than the reset time; reset will not execute!");
 }
 
 void ExecPort::setDirCaps(const char * /*dirCaps*/) {
@@ -68,7 +68,7 @@ void ExecPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 }
 
 void ExecPort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+	this->logDebug(std::string() + "Preparing port");
 	opdi::DigitalPort::prepare();
 }
 
@@ -95,7 +95,7 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 
 				// program still running?
 				if (Poco::Process::isRunning(this->processPID) && forceKill) {
-					this->logDebug(this->ID() + ": Trying to kill previously started process with PID " + this->to_string(this->processPID));
+					this->logDebug(std::string() + "Trying to kill previously started process with PID " + this->to_string(this->processPID));
 
 					// kill process
 					Poco::Process::kill(this->processPID);
@@ -133,8 +133,8 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 					}
 				}
 
-				this->logDebug(this->ID() + ": Preparing start of program '" + this->programName + "'");
-				this->logDebug(this->ID() + ": Parameters: " + params);
+				this->logDebug(std::string() + "Preparing start of program '" + this->programName + "'");
+				this->logDebug(std::string() + "Parameters: " + params);
 
 				// split parameters
 				std::vector<std::string> argList;
@@ -154,9 +154,9 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 				try {
 					Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList));
 					this->processPID = ph.id();
-					this->logVerbose(this->ID() + ": Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
+					this->logVerbose(std::string() + "Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
 				} catch (Poco::Exception &e) {
-					this->opdid->logError(this->ID() + ": Unable to start program '" + this->programName + "': " + e.message());
+					this->logNormal(std::string() + "ERROR: Unable to start program '" + this->programName + "': " + e.message());
 				}
 			}		// not blocked by wait time
 		}		// stateChanged

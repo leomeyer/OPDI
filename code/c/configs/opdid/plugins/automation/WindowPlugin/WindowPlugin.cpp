@@ -232,7 +232,7 @@ void WindowPort::getState(uint16_t *position) const {
 }
 
 void WindowPort::prepare() {
-	this->logDebug(this->ID() + ": Preparing port");
+	this->logDebug(std::string() + "Preparing port");
 	opdi::Port::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -987,8 +987,7 @@ void WindowPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::s
 	// read control mode
 	std::string controlMode = abstractOPDID->getConfigString(nodeConfig, "ControlMode", "", true);
 	if (controlMode == "H-Bridge") {
-		if ((port->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (port->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-			this->opdid->logVerbose("Configuring WindowPlugin port " + node + " in H-Bridge Mode");
+		this->opdid->logVerbose("Configuring WindowPlugin port " + node + " in H-Bridge Mode");
 		port->mode = WindowPort::H_BRIDGE;
 		// motorA and motorB are required
 		port->motorA = abstractOPDID->getConfigString(nodeConfig, "MotorA", "", true);
@@ -1000,8 +999,7 @@ void WindowPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::s
 		if (port->enableDelay < port->motorDelay)
 			throw Poco::DataException("If using MotorDelay, EnableDelay must be greater or equal: " + abstractOPDID->to_string(port->enableDelay));
 	} else if (controlMode == "SerialRelay") {
-		if ((port->logVerbosity == opdid::AbstractOPDID::UNKNOWN) || (port->logVerbosity >= opdid::AbstractOPDID::VERBOSE))
-			this->opdid->logVerbose("Configuring WindowPlugin port " + node + " in Serial Relay Mode");
+		this->opdid->logVerbose("Configuring WindowPlugin port " + node + " in Serial Relay Mode");
 		port->mode = WindowPort::SERIAL_RELAY;
 		// direction and enable ports are required
 		port->direction = abstractOPDID->getConfigString(nodeConfig, "Direction", "", true);
@@ -1049,8 +1047,7 @@ void WindowPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::s
 
 	this->opdid->addConnectionListener(this);
 
-	if (this->opdid->logVerbosity >= opdid::AbstractOPDID::VERBOSE)
-		this->opdid->logVerbose("WindowPlugin setup completed successfully as node " + node);
+	this->opdid->logVerbose("WindowPlugin setup completed successfully as node " + node);
 }
 
 void WindowPlugin::masterConnected() {

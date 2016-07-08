@@ -67,14 +67,14 @@ void ExpressionPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 
 	// if the line has been set to High, start the iterations
 	if (line == 1) {
-		this->logDebug(this->ID() + ": Expression activated, number of iterations: " + this->to_string(this->numIterations));
+		this->logDebug(std::string() + "Expression activated, number of iterations: " + this->to_string(this->numIterations));
 		this->iterations = this->numIterations;
 	}
 	// set to 0; check whether to set a deactivation value
 	else {
-		this->logDebug(this->ID() + ": Expression deactivated");
+		this->logDebug(std::string() + "Expression deactivated");
 		if (this->deactivationSpecified) {
-			this->logDebug(this->ID() + ": Applying deactivation value: " + this->to_string(this->deactivationValue));
+			this->logDebug(std::string() + "Applying deactivation value: " + this->to_string(this->deactivationValue));
 			this->setOutputPorts(this->deactivationValue);
 		}
 	}
@@ -113,18 +113,18 @@ bool ExpressionPort::prepareVariables(bool duringSetup) {
 		// calculate port value
 		try {
 			double value = opdid->getPortValue(port);
-			this->logExtreme(this->ID() + ": Resolved value of port " + port->ID() + " to: " + to_string(value));
+			this->logExtreme(std::string() + "Resolved value of port " + port->ID() + " to: " + to_string(value));
 			this->portValues.push_back(value);
 		} catch (Poco::Exception& e) {
 			// error handling during setup is different; to avoid too many warnings (in the doWork method)
 			// we make a difference here
 			if (duringSetup) {
 				// emit a warning
-				this->logWarning(this->ID() + ": Failed to resolve value of port " + port->ID() + ": " + e.message());
+				this->logWarning(std::string() + "Failed to resolve value of port " + port->ID() + ": " + e.message());
 				this->portValues.push_back(0.0f);
 			} else {
 				// warn in extreme logging mode only
-				this->logExtreme(this->ID() + ": Failed to resolve value of port " + port->ID() + ": " + e.message());
+				this->logExtreme(std::string() + "Failed to resolve value of port " + port->ID() + ": " + e.message());
 				// the expression cannot be evaluated if there is an error
 				return false;
 			}
@@ -208,7 +208,7 @@ void ExpressionPort::setOutputPorts(double value) {
 							throw PortError("");
 		}
 		catch (Poco::Exception &e) {
-			this->opdid->logNormal(this->ID() + ": Error setting output port value of port " + (*it)->getID() + ": " + e.message());
+			this->logNormal(std::string() + "Error setting output port value of port " + (*it)->getID() + ": " + e.message());
 		}
 
 		++it;
@@ -229,7 +229,7 @@ uint8_t ExpressionPort::doWork(uint8_t canSend)  {
 
 			double value = expression.value();
 
-			this->logExtreme(this->ID() + ": Expression result: " + to_string(value));
+			this->logExtreme(std::string() + "Expression result: " + to_string(value));
 
 			this->setOutputPorts(value);
 		}
@@ -240,7 +240,7 @@ uint8_t ExpressionPort::doWork(uint8_t canSend)  {
 			if (this->fallbackSpecified) {
 				double value = this->fallbackValue;
 
-				this->logExtreme(this->ID() + ": An error occurred, applying fallback value of: " + to_string(value));
+				this->logExtreme(std::string() + "An error occurred, applying fallback value of: " + to_string(value));
 
 				this->setOutputPorts(value);
 			}
