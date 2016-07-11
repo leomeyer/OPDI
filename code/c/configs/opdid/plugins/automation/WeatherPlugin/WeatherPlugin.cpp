@@ -1,9 +1,6 @@
 #include <sstream>
 #include <exception>
-
-#ifdef linux
 #include <memory>
-#endif
 
 #include "Poco/Tuple.h"
 #include "Poco/Runnable.h"
@@ -442,7 +439,7 @@ void WeatherPlugin::refreshData(void) {
 		this->opdid->logDebug(this->nodeID + ": Fetching content of URL: " + this->url, this->logVerbosity);
 
 		Poco::URI uri(this->url);
-		std::auto_ptr<std::istream> pStr(Poco::URIStreamOpener::defaultOpener().open(uri));
+		std::unique_ptr<std::istream> pStr(Poco::URIStreamOpener::defaultOpener().open(uri));
 
 		// save stream content
 		std::string content;
