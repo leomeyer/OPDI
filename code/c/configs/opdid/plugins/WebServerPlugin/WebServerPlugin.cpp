@@ -67,7 +67,7 @@ public:
 
 	virtual void setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration* nodeConfig) override;
 
-	void handleEvent(struct mg_connection* nc, int ev, void *p);
+	void handleEvent(struct mg_connection* nc, int ev, void* p);
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
@@ -121,7 +121,7 @@ public:
 static WebServerPlugin* instance;
 
 // Mongoose event handler function
-static void ev_handler(struct mg_connection* nc, int ev, void *p) {
+static void ev_handler(struct mg_connection* nc, int ev, void* p) {
 	// delegate to class instance
 	instance->handleEvent(nc, ev, p);
 }
@@ -373,7 +373,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetSelectPosition(struct mg_connectio
 }
 
 // get sockaddr, IPv4 or IPv6:
-static void *get_in_addr(struct sockaddr *sa)
+static void* get_in_addr(struct sockaddr* sa)
 {
     if (sa->sa_family == AF_INET)
         return &(((struct sockaddr_in*)sa)->sin_addr);
@@ -403,7 +403,7 @@ void WebServerPlugin::sendJsonRpcError(struct mg_connection* nc, Poco::Dynamic::
 		strOut.size(), strOut.c_str());
 }
 
-void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void *p) {
+void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void* p) {
 
 	struct http_message* hm = (struct http_message*)p;
 	

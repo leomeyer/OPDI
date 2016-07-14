@@ -120,7 +120,7 @@ public:
 		output << "Device " << aDevice->getID() << ": Connection error" << (message != "" ? ": " + message : "") << std::endl;
 	}
 			
-	bool getCredentials(IDevice* device, std::string *user, std::string *password, bool *save) override
+	bool getCredentials(IDevice* device, std::string* user, std::string* password, bool* save) override
 	{
 		output << "Authentication required for ";
 		show_device_info(device);
@@ -181,7 +181,7 @@ void show_help()
 	output << "Query device capabilities: 'gDC 1'" << std::endl;
 }
 
-IDevice *create_device(const std::string id, const std::string address) 
+IDevice* create_device(const std::string id, const std::string address) 
 {
 	// parse address
 	Poco::URI uri;
@@ -283,7 +283,7 @@ void show_variables()
 	show_variable("debug");
 }
 
-bool get_bool_value(std::string variable, std::string value, bool *var)
+bool get_bool_value(std::string variable, std::string value, bool* var)
 {
 	if (value == "0")
 		*var = false;
@@ -326,25 +326,25 @@ void print_devicecaps(BasicDeviceCapabilities* bdc)
 	}
 }
 
-DigitalPort *checkDigitalPort(std::string cmd, OPDIPort *port) {
+DigitalPort* checkDigitalPort(std::string cmd, OPDIPort* port) {
 	if (port->getType() != PORTTYPE_DIGITAL) {
 		output << "Expected digital port for command: " << cmd << std::endl;
 		return NULL;
 	}
-	return (DigitalPort *)port;
+	return (DigitalPort*)port;
 }
 
-SelectPort *checkSelectPort(std::string cmd, OPDIPort *port) {
+SelectPort* checkSelectPort(std::string cmd, OPDIPort* port) {
 	if (port->getType() != PORTTYPE_SELECT) {
 		output << "Expected select port for command: " << cmd << std::endl;
 		return NULL;
 	}
-	return (SelectPort *)port;
+	return (SelectPort*)port;
 }
 
 bool digital_port_command(std::string cmd, OPDIPort* port)
 {
-	const char *part;
+	const char* part;
 
 	if (cmd == OPDI_setDigitalPortMode) {
 		part = strtok(NULL, " ");
@@ -405,7 +405,7 @@ bool digital_port_command(std::string cmd, OPDIPort* port)
 
 bool select_port_command(std::string cmd, OPDIPort* port)
 {
-	const char *part;
+	const char* part;
 	if (cmd == OPDI_getSelectPortState)	{
 		SelectPort* thePort = checkSelectPort(cmd, port);
 		if (thePort == NULL)
@@ -432,7 +432,7 @@ bool select_port_command(std::string cmd, OPDIPort* port)
 
 // commands that operate on ports
 // find device, find port, execute command
-bool port_command(const char *part)
+bool port_command(const char* part)
 {
 	std::string cmd = part;
 
@@ -446,7 +446,7 @@ bool port_command(const char *part)
 
 	// find device
 	// throw exception if not found
-	IDevice *device = find_device(devID, true);
+	IDevice* device = find_device(devID, true);
 
 	if (device->getStatus() != DS_CONNECTED) {
 		output << "Device " << device->getID() << " is not connected" << std::endl;
@@ -497,7 +497,7 @@ int start_master()
 {
 	#define PROMPT	"$ "
 
-	const char *part;
+	const char* part;
 
 	printf("Interactive OPDI master started. Type '?' for help.\n");
 
@@ -557,7 +557,7 @@ int start_master()
 				std::string devID = part;
 
 				// throw exception if not found
-				IDevice *device = find_device(devID, true);
+				IDevice* device = find_device(devID, true);
 
 				if (!device->prepare())
 					continue;
@@ -584,7 +584,7 @@ int start_master()
 				std::string devID = part;
 
 				// throw exception if not found
-				IDevice *device = find_device(devID, true);
+				IDevice* device = find_device(devID, true);
 
 				if (device->getStatus() != DS_CONNECTED) {
 					output << "Device " << device->getID() << " is not connected" << std::endl;
@@ -619,7 +619,7 @@ int start_master()
 				std::string devID = part;
 
 				// throw exception if not found
-				IDevice *device = find_device(devID, true);
+				IDevice* device = find_device(devID, true);
 
 				if (device->getStatus() == DS_DISCONNECTED) {
 					output << "Device " << device->getID() << " is already disconnected" << std::endl;

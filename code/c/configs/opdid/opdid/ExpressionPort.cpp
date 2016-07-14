@@ -12,7 +12,7 @@ namespace opdid {
 // Expression Port
 ///////////////////////////////////////////////////////////////////////////////
 
-ExpressionPort::ExpressionPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+ExpressionPort::ExpressionPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 	this->numIterations = 0;
 	this->fallbackSpecified = false;
@@ -29,7 +29,7 @@ ExpressionPort::ExpressionPort(AbstractOPDID *opdid, const char *id) : opdi::Dig
 ExpressionPort::~ExpressionPort() {
 }
 
-void ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) {
+void ExpressionPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -54,7 +54,7 @@ void ExpressionPort::configure(Poco::Util::AbstractConfiguration *config) {
 	}
 }
 
-void ExpressionPort::setDirCaps(const char * /*dirCaps*/) {
+void ExpressionPort::setDirCaps(const char* /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of an ExpressionPort cannot be changed");
 }
 
@@ -103,7 +103,7 @@ bool ExpressionPort::prepareVariables(bool duringSetup) {
 			continue;
 
 		// find port (variable name is the port ID)
-		opdi::Port *port = this->opdid->findPortByID(symbol.first.c_str(), true);
+		opdi::Port* port = this->opdid->findPortByID(symbol.first.c_str(), true);
 
 		// port not found?
 		if (port == nullptr) {
@@ -185,24 +185,24 @@ void ExpressionPort::setOutputPorts(double value) {
 		try {
 			if ((*it)->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
 				if (value == 0)
-					((opdi::DigitalPort *)(*it))->setLine(0);
+					((opdi::DigitalPort*)(*it))->setLine(0);
 				else
-					((opdi::DigitalPort *)(*it))->setLine(1);
+					((opdi::DigitalPort*)(*it))->setLine(1);
 			}
 			else
 				if ((*it)->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
 					// analog port: relative value (0..1)
-					((opdi::AnalogPort *)(*it))->setRelativeValue(value);
+					((opdi::AnalogPort*)(*it))->setRelativeValue(value);
 				}
 				else
 					if ((*it)->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
 						// dial port: absolute value
-						((opdi::DialPort *)(*it))->setPosition((int64_t)value);
+						((opdi::DialPort*)(*it))->setPosition((int64_t)value);
 					}
 					else
 						if ((*it)->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
 							// select port: current position number
-							((opdi::SelectPort *)(*it))->setPosition((uint16_t)value);
+							((opdi::SelectPort*)(*it))->setPosition((uint16_t)value);
 						}
 						else
 							throw PortError("");

@@ -8,7 +8,7 @@ namespace opdid {
 // Exec Port
 ///////////////////////////////////////////////////////////////////////////////
 
-ExecPort::ExecPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+ExecPort::ExecPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -22,7 +22,7 @@ ExecPort::ExecPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id,
 ExecPort::~ExecPort() {
 }
 
-void ExecPort::configure(Poco::Util::AbstractConfiguration *config) {
+void ExecPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -59,7 +59,7 @@ void ExecPort::configure(Poco::Util::AbstractConfiguration *config) {
 		this->logWarning(std::string() + "The specified wait time is larger than the reset time; reset will not execute!");
 }
 
-void ExecPort::setDirCaps(const char * /*dirCaps*/) {
+void ExecPort::setDirCaps(const char* /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of an ExecPort cannot be changed");
 }
 

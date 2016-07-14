@@ -43,4 +43,4 @@ int listen_tcp(int host_port);
 
 /** Starts the server by listening to the specified COM port.
 */
-int listen_com(char *portName, int baudRate, int stopBits, int parity, int byteSize, int tmeout);
+int listen_com(char* portName, int baudRate, int stopBits, int parity, int byteSize, int tmeout);

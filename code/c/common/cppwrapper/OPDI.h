@@ -38,7 +38,7 @@ namespace opdi {
 
 class OPDI {
 public:
-	typedef std::vector<opdi::Port *> PortList;
+	typedef std::vector<opdi::Port*> PortList;
 	typedef std::vector<opdi::PortGroup *> PortGroupList;
 
 protected:
@@ -76,7 +76,7 @@ public:
 	/** Prepares the OPDI class for use.
 	 * You can override this method to implement your platform specific setup.
 	 */
-	virtual uint8_t setup(const char *slave_name, int idleTimeout);
+	virtual uint8_t setup(const char* slave_name, int idleTimeout);
 
 	/** Sets the idle timeout. If the master sends no meaningful messages during this time
 	 * the slave sends a disconnect message. If the value is 0 (default), the setting has no effect.
@@ -101,17 +101,17 @@ public:
 
 	virtual std::string getExtendedDeviceInfo(void);
 
-	virtual std::string getExtendedPortInfo(char *portID, uint8_t *code);
+	virtual std::string getExtendedPortInfo(char* portID, uint8_t* code);
 
-	virtual std::string getExtendedPortState(char *portID, uint8_t *code);
+	virtual std::string getExtendedPortState(char* portID, uint8_t* code);
 
 	/** Adds the specified port.
 	 * */
-	virtual void addPort(opdi::Port *port);
+	virtual void addPort(opdi::Port* port);
 
 	/** Updates the internal port data structure. Is automatically called; do not use.
 	*/
-	virtual void updatePortData(opdi::Port *port);
+	virtual void updatePortData(opdi::Port* port);
 
 	/** Updates the internal port group data structure. Is automatically called; do not use.
 	*/
@@ -120,13 +120,13 @@ public:
 	/** Internal function.
 	* If port is NULL returns the first port.
 	 */
-	virtual opdi::Port *findPort(opdi_Port *port);
+	virtual opdi::Port* findPort(opdi_Port* port);
 
 	/** Returns the list of all ports registered in this instance. */
 	virtual PortList& getPorts(void);
 
 	/** Returns NULL if the port could not be found. */
-	virtual opdi::Port *findPortByID(const char *portID, bool caseInsensitive = false);
+	virtual opdi::Port* findPortByID(const char* portID, bool caseInsensitive = false);
 
 	/** Sorts the added ports by their OrderID. */
 	virtual void sortPorts(void);
@@ -172,7 +172,7 @@ public:
 	 *  If the first element is NULL, sends the empty refresh message causing all ports to be
 	 *  refreshed.
 	 */
-	virtual uint8_t refresh(opdi::Port **ports);
+	virtual uint8_t refresh(opdi::Port** ports);
 
 	/** This method is called when the idle timeout is reached. The default implementation sends a message
 	 *  to the master and disconnects by returning OPDI_DISCONNECT. The method may return OPDI_STATUS_OK to stay connected.
@@ -181,13 +181,13 @@ public:
 
 	/** An internal handler which is used to implement the idle timer.
 	 */
-	virtual uint8_t messageHandled(channel_t channel, const char **parts);
+	virtual uint8_t messageHandled(channel_t channel, const char** parts);
 
 	/** Disconnects a master if connected and releases resources. Frees all ports and stops message processing. */
 	virtual void shutdown(void);
 
 	/** Makes the port state persistent if the implementation supports it. */
-	virtual void persist(opdi::Port *port);
+	virtual void persist(opdi::Port* port);
 };
 
 }		// namespace opdi

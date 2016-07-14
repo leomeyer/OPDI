@@ -60,7 +60,7 @@ static unsigned long last_activity = 0;
 *   If an error occurs returns an error code != 0.
 *   If the connection has been gracefully closed, returns STATUS_DISCONNECTED.
 */
-static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t canSend) {
+static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t canSend) {
 	char c;
 	int result;
 	uint64_t ticks = opdi_get_time_ms();
@@ -148,8 +148,8 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 /** For TCP connections, sends count bytes to the socket specified in info.
 *   For serial connections, writes count bytes to the file handle specified in info.
 *   If an error occurs returns an error code != 0. */
-static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
-	char *c = (char *)bytes;
+static uint8_t io_send(void* info, uint8_t* bytes, uint16_t count) {
+	char* c = (char*)bytes;
 
 	if (connection_mode == MODE_TCP) {
 
@@ -194,17 +194,17 @@ int HandleTCPConnection(int csock) {
 	aTimeout.tv_usec = 1000;		// one ms timeout
 
 	// set timeouts on socket
-	if (setsockopt (csock, SOL_SOCKET, SO_RCVTIMEO, (char *)&aTimeout, sizeof(aTimeout)) < 0) {
+	if (setsockopt (csock, SOL_SOCKET, SO_RCVTIMEO, (char*)&aTimeout, sizeof(aTimeout)) < 0) {
 		printf("setsockopt failed\n");
 		return OPDI_DEVICE_ERROR;
 	}
-	if (setsockopt (csock, SOL_SOCKET, SO_SNDTIMEO, (char *)&aTimeout, sizeof(aTimeout)) < 0) {
+	if (setsockopt (csock, SOL_SOCKET, SO_SNDTIMEO, (char*)&aTimeout, sizeof(aTimeout)) < 0) {
 		printf("setsockopt failed\n");
 		return OPDI_DEVICE_ERROR;
 	}
 
 	// info value is the socket handle
-	result = opdi_message_setup(&io_receive, &io_send, (void *)(long)csock);
+	result = opdi_message_setup(&io_receive, &io_send, (void*)(long)csock);
 	if (result != 0) 
 		return result;
 
@@ -232,7 +232,7 @@ int HandleSerialConnection(char firstByte, int fd) {
 	init_device();
 
 	// info value is the serial port handle
-	result = opdi_message_setup(&io_receive, &io_send, (void *)(long)fd);
+	result = opdi_message_setup(&io_receive, &io_send, (void*)(long)fd);
 	if (result != 0)
 		return result;
 
@@ -253,7 +253,7 @@ int HandleSerialConnection(char firstByte, int fd) {
 #endif 
 
 
-uint8_t opdi_message_handled(channel_t channel, const char **parts) {
+uint8_t opdi_message_handled(channel_t channel, const char** parts) {
 	uint8_t result;
 	if (idle_timeout_ms > 0) {
 		// do not time out if there are bound streaming ports
@@ -295,13 +295,13 @@ int listen_tcp(int host_port) {
 	}
 
 	// prepare address
-	bzero((char *) &serv_addr, sizeof(serv_addr));
+	bzero((char*) &serv_addr, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(host_port);
 
 	// bind to specified port
-	if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+	if (bind(sockfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
 		printf("ERROR on binding\n");
 		err = OPDI_DEVICE_ERROR;
 		goto FINISH;
@@ -314,7 +314,7 @@ int listen_tcp(int host_port) {
 	while (true) {
         	printf("listening for a connection on port %d\n", host_port);
 		clilen = sizeof(cli_addr);
-		newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
+		newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &clilen);
 		if (newsockfd < 0) {
 			printf("ERROR on accept\n");
 			err = OPDI_DEVICE_ERROR;
@@ -466,7 +466,7 @@ int main(int argc, char* argv[])
 	int code = 0;
 	int interactive = 0;
 	int tcp_port = 13110;
-	char *comPort = NULL;
+	char* comPort = NULL;
 
 	printf("LinOPDI server. Arguments: [-i] [-tcp <port>] [-com <port>]\n");
 	printf("-i starts the interactive master.\n");

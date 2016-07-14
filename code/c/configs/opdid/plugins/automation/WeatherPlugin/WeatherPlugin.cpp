@@ -219,7 +219,7 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 }
 
 // function that fills in the current port state
-void WeatherGaugePort::getState(int64_t *position) const {
+void WeatherGaugePort::getState(int64_t* position) const {
 
 	// ensure thread safety for this block
 	// also ensures that the doWork method and getState do not cross
@@ -362,14 +362,14 @@ void WeatherPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::
 		this->opdid->logVerbose("Setting up Weather port(s) for node: " + nodeName, this->logVerbosity);
 
 		// get port section from the configuration
-		Poco::Util::AbstractConfiguration *portConfig = config->createView(nodeName);
+		Poco::Util::AbstractConfiguration* portConfig = config->createView(nodeName);
 
 		// get port type (required)
 		std::string portType = abstractOPDID->getConfigString(portConfig, "Type", "", true);
 
 		if (portType == "WeatherGaugePort") {
 
-			WeatherGaugePort *port = new WeatherGaugePort(this->opdid, nodeName.c_str());
+			WeatherGaugePort* port = new WeatherGaugePort(this->opdid, nodeName.c_str());
 			port->setGroup(group);
 			port->configure(portConfig, this->logVerbosity);
 			opdid->addPort(port);
@@ -461,7 +461,7 @@ void WeatherPlugin::refreshData(void) {
 			Poco::XML::DOMParser parser;
 			Poco::AutoPtr<Poco::XML::Document> pDoc = parser.parse(&src);
 
-			Poco::XML::Node *node;
+			Poco::XML::Node* node;
 
 			node = pDoc->getNodeByPath(this->xpath);
 			if (node == nullptr) {
@@ -470,13 +470,13 @@ void WeatherPlugin::refreshData(void) {
 				return;
 			}
 			this->opdid->logDebug(this->nodeID + ": Found weather data XML node: " + node->localName(), this->logVerbosity);
-			Poco::XML::NodeList *children = node->childNodes();
+			Poco::XML::NodeList* children = node->childNodes();
 			for (size_t i = 0; i < children->length(); i++) {
 				if (children->item(i)->localName() != "tr")
 					continue;
 
-				Poco::XML::Node *labelNode = children->item(i)->getNodeByPath("td[@class='stats_label']");
-				Poco::XML::Node *dataNode = children->item(i)->getNodeByPath("td[@class='stats_data']");
+				Poco::XML::Node* labelNode = children->item(i)->getNodeByPath("td[@class='stats_label']");
+				Poco::XML::Node* dataNode = children->item(i)->getNodeByPath("td[@class='stats_data']");
 
 				if ((labelNode == nullptr) || (dataNode == nullptr) || (labelNode == dataNode))
 					continue;

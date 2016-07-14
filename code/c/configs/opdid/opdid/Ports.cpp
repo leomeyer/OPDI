@@ -42,7 +42,7 @@ LogicPort::LogicPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(i
 LogicPort::~LogicPort() {
 }
 
-void LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
+void LogicPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -99,7 +99,7 @@ void LogicPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
 }
 
-void LogicPort::setDirCaps(const char * /*dirCaps*/) {
+void LogicPort::setDirCaps(const char* /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a LogicPort cannot be changed");
 }
 
@@ -223,7 +223,7 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 // Pulse Port
 ///////////////////////////////////////////////////////////////////////////////
 
-PulsePort::PulsePort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+PulsePort::PulsePort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 	this->negate = false;
 
@@ -240,7 +240,7 @@ PulsePort::PulsePort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(i
 PulsePort::~PulsePort() {
 }
 
-void PulsePort::configure(Poco::Util::AbstractConfiguration *config) {
+void PulsePort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -410,7 +410,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 // Selector Port
 ///////////////////////////////////////////////////////////////////////////////
 
-SelectorPort::SelectorPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+SelectorPort::SelectorPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -421,7 +421,7 @@ SelectorPort::SelectorPort(AbstractOPDID *opdid, const char *id) : opdi::Digital
 SelectorPort::~SelectorPort() {
 }
 
-void SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
+void SelectorPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -438,7 +438,7 @@ void SelectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->position = pos;
 }
 
-void SelectorPort::setDirCaps(const char * /*dirCaps*/) {
+void SelectorPort::setDirCaps(const char* /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a SelectorPort cannot be changed");
 }
 
@@ -513,7 +513,7 @@ uint8_t SelectorPort::doWork(uint8_t canSend)  {
 // Error Detector Port
 ///////////////////////////////////////////////////////////////////////////////
 
-ErrorDetectorPort::ErrorDetectorPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_INPUT, 0), PortFunctions(id) {
+ErrorDetectorPort::ErrorDetectorPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_INPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
@@ -525,7 +525,7 @@ ErrorDetectorPort::ErrorDetectorPort(AbstractOPDID *opdid, const char *id) : opd
 ErrorDetectorPort::~ErrorDetectorPort() {
 }
 
-void ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration *config) {
+void ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configureDigitalPort(config, this);	
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -533,7 +533,7 @@ void ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->negate = config->getBool("Negate", false);
 }
 
-void ErrorDetectorPort::setDirCaps(const char * /*dirCaps*/) {
+void ErrorDetectorPort::setDirCaps(const char* /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of an ErrorDetectorPort cannot be changed");
 }
 
@@ -583,7 +583,7 @@ uint8_t ErrorDetectorPort::doWork(uint8_t canSend)  {
 // Serial Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
 
-SerialStreamingPort::SerialStreamingPort(AbstractOPDID *opdid, const char *id) : opdi::StreamingPort(id), PortFunctions(id) {
+SerialStreamingPort::SerialStreamingPort(AbstractOPDID* opdid, const char* id) : opdi::StreamingPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	this->mode = PASS_THROUGH;
 	this->device = nullptr;
@@ -615,7 +615,7 @@ uint8_t SerialStreamingPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *config) {
+void SerialStreamingPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configureStreamingPort(config, this);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -650,7 +650,7 @@ void SerialStreamingPort::configure(Poco::Util::AbstractConfiguration *config) {
 			throw Poco::DataException(this->ID() + ": Invalid mode specifier; expected 'Passthrough' or 'Loopback': " + modeStr);
 }
 
-int SerialStreamingPort::write(char *bytes, size_t length) {
+int SerialStreamingPort::write(char* bytes, size_t length) {
 	return this->device->Write(bytes, length);
 }
 
@@ -671,7 +671,7 @@ int SerialStreamingPort::available(size_t /*count*/) {
 	return 0;
 }
 
-int SerialStreamingPort::read(char *result) {
+int SerialStreamingPort::read(char* result) {
 	char buf;
 	int code = this->device->Read(&buf, 1);
 	// error?
@@ -694,7 +694,7 @@ bool SerialStreamingPort::hasError(void) const {
 // Logger Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
 
-LoggerPort::LoggerPort(AbstractOPDID *opdid, const char *id) : opdi::StreamingPort(id), PortFunctions(id) {
+LoggerPort::LoggerPort(AbstractOPDID* opdid, const char* id) : opdi::StreamingPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	this->logPeriod = 10000;		// default: 10 seconds
 	this->writeHeader = true;
@@ -769,7 +769,7 @@ uint8_t LoggerPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
+void LoggerPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configureStreamingPort(config, this);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -795,7 +795,7 @@ void LoggerPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->portsToLogStr = this->opdid->getConfigString(config, "Ports", "", true);
 }
 
-int LoggerPort::write(char * /*bytes*/, size_t /*length*/) {
+int LoggerPort::write(char* /*bytes*/, size_t /*length*/) {
 	return 0;
 }
 
@@ -805,7 +805,7 @@ int LoggerPort::available(size_t /*count*/) {
 	return 0;
 }
 
-int LoggerPort::read(char * /*result*/) {
+int LoggerPort::read(char* /*result*/) {
 	// nothing available
 	return 0;
 }
@@ -818,7 +818,7 @@ bool LoggerPort::hasError(void) const {
 // Fader Port
 ///////////////////////////////////////////////////////////////////////////////
 
-FaderPort::FaderPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+FaderPort::FaderPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 	this->mode = LINEAR;
 	this->lastValue = -1;
@@ -832,7 +832,7 @@ FaderPort::FaderPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(i
 FaderPort::~FaderPort() {
 }
 
-void FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
+void FaderPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	std::string modeStr = config->getString("FadeMode", "");
@@ -883,7 +883,7 @@ void FaderPort::configure(Poco::Util::AbstractConfiguration *config) {
 	this->opdid->configurePort(config, this, 0);
 }
 
-void FaderPort::setDirCaps(const char * /*dirCaps*/) {
+void FaderPort::setDirCaps(const char* /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a FaderPort cannot be changed");
 }
 
@@ -1048,7 +1048,7 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 // SceneSelectPort
 ///////////////////////////////////////////////////////////////////////////////
 
-SceneSelectPort::SceneSelectPort(AbstractOPDID *opdid, const char *id) : opdi::SelectPort(id), PortFunctions(id) {
+SceneSelectPort::SceneSelectPort(AbstractOPDID* opdid, const char* id) : opdi::SelectPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	this->positionSet = false;
 }
@@ -1056,7 +1056,7 @@ SceneSelectPort::SceneSelectPort(AbstractOPDID *opdid, const char *id) : opdi::S
 SceneSelectPort::~SceneSelectPort() {
 }
 
-void SceneSelectPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
+void SceneSelectPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
 	// remember configuration file path (scene files are always relative to the configuration file)
@@ -1177,7 +1177,7 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 
 		for (auto it = sectionKeys.begin(), ite = sectionKeys.end(); it != ite; ++it) {
 			// find port corresponding to this section
-			opdi::Port *port = this->opdid->findPortByID((*it).c_str());
+			opdi::Port* port = this->opdid->findPortByID((*it).c_str());
 			if (port == nullptr)
 				this->logWarning(std::string() + "In scene file " + sceneFile + ": Port with ID " + (*it) + " not present in current configuration");
 			else {
@@ -1356,7 +1356,7 @@ void FileInputPort::fileChangedEvent(const void*, const Poco::DirectoryWatcher::
 	}
 }
 
-FileInputPort::FileInputPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id), PortFunctions(id) {
+FileInputPort::FileInputPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	this->directoryWatcher = nullptr;
 	this->reloadDelayMs = 0;
@@ -1379,7 +1379,7 @@ FileInputPort::~FileInputPort() {
 		delete this->directoryWatcher;
 }
 
-void FileInputPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
+void FileInputPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
 	this->opdid->configureDigitalPort(config, this);
 
 	this->filePath = opdid->getConfigString(config, "File", "", true);
@@ -1740,7 +1740,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-AggregatorPort::AggregatorPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id), PortFunctions(id) {
+AggregatorPort::AggregatorPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	this->multiplier = 1;
 	// default: allow all values (set absolute limits very high)
@@ -1764,7 +1764,7 @@ AggregatorPort::AggregatorPort(AbstractOPDID *opdid, const char *id) : opdi::Dig
 AggregatorPort::~AggregatorPort() {
 }
 
-void AggregatorPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
+void AggregatorPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
 	this->opdid->configureDigitalPort(config, this);
 
 	this->sourcePortID = this->opdid->getConfigString(config, "SourcePort", "", true);
@@ -1912,7 +1912,7 @@ void AggregatorPort::setLine(uint8_t newLine, ChangeSource /*changeSource*/) {
 // CounterPort
 ///////////////////////////////////////////////////////////////////////////////
 
-CounterPort::CounterPort(AbstractOPDID *opdid, const char *id) : opdi::DialPort(id), PortFunctions(id) {
+CounterPort::CounterPort(AbstractOPDID* opdid, const char* id) : opdi::DialPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	// default: increment by one
 	this->increment = { 1 };
@@ -1921,7 +1921,7 @@ CounterPort::CounterPort(AbstractOPDID *opdid, const char *id) : opdi::DialPort(
 	this->lastActionTime = 0;
 }
 
-void CounterPort::configure(Poco::Util::AbstractConfiguration *nodeConfig) {
+void CounterPort::configure(Poco::Util::AbstractConfiguration* nodeConfig) {
 	this->opdid->configureDialPort(nodeConfig, this);
 
 	this->periodMs.initialize(this, "Period", nodeConfig->getString("Period", this->to_string(this->periodMs.value())));
@@ -1957,7 +1957,7 @@ uint8_t CounterPort::doWork(uint8_t canSend) {
 // TriggerPort
 ///////////////////////////////////////////////////////////////////////////////
 
-TriggerPort::TriggerPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+TriggerPort::TriggerPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -1966,7 +1966,7 @@ TriggerPort::TriggerPort(AbstractOPDID *opdid, const char *id) : opdi::DigitalPo
 	this->counterPort = nullptr;
 }
 
-void TriggerPort::configure(Poco::Util::AbstractConfiguration *config) {
+void TriggerPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configurePort(config, this, 0);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 

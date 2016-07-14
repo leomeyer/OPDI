@@ -40,7 +40,7 @@
 static int connection_mode = 0;
 static char first_com_byte = 0;
 
-static opdid::LinuxOPDID *linuxOPDID;
+static opdid::LinuxOPDID* linuxOPDID;
 
 void throw_system_error(const char* what, const char* info = nullptr) {
 	std::stringstream fullWhatSS;
@@ -57,7 +57,7 @@ namespace opdid {
 *   If an error occurs returns an error code != 0.
 *   If the connection has been gracefully closed, returns STATUS_DISCONNECTED.
 */
-static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t canSend) {
+static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t canSend) {
 	char c;
 	int result;
 	long ticks = opdi_get_time_ms();
@@ -143,8 +143,8 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 /** For TCP connections, sends count bytes to the socket specified in info.
 *   For serial connections, writes count bytes to the file handle specified in info.
 *   If an error occurs returns an error code != 0. */
-static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
-	char *c = (char *)bytes;
+static uint8_t io_send(void* info, uint8_t* bytes, uint16_t count) {
+	char* c = (char*)bytes;
 
 	if (connection_mode == MODE_TCP) {
 
@@ -198,22 +198,22 @@ LinuxOPDID::~LinuxOPDID(void)
 {
 }
 
-void LinuxOPDID::print(const char *text) {
+void LinuxOPDID::print(const char* text) {
 	// text is treated as UTF8.
 	std::cout << text;
 }
 
-void LinuxOPDID::println(const char *text) {
+void LinuxOPDID::println(const char* text) {
 	// text is treated as UTF8.
 	std::cout << text << std::endl;
 }
 
-void LinuxOPDID::printe(const char *text) {
+void LinuxOPDID::printe(const char* text) {
 	// text is treated as UTF8.
 	std::cerr << text;
 }
 
-void LinuxOPDID::printlne(const char *text) {
+void LinuxOPDID::printlne(const char* text) {
 	// text is treated as UTF8.
 	std::cerr << text << std::endl;
 }
@@ -267,11 +267,11 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 	aTimeout.tv_usec = 1000;		// one ms timeout
 
 	// set timeouts on socket
-	if (setsockopt (csock, SOL_SOCKET, SO_RCVTIMEO, (char *)&aTimeout, sizeof(aTimeout)) < 0) {
+	if (setsockopt (csock, SOL_SOCKET, SO_RCVTIMEO, (char*)&aTimeout, sizeof(aTimeout)) < 0) {
 		this->log("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
-	if (setsockopt (csock, SOL_SOCKET, SO_SNDTIMEO, (char *)&aTimeout, sizeof(aTimeout)) < 0) {
+	if (setsockopt (csock, SOL_SOCKET, SO_SNDTIMEO, (char*)&aTimeout, sizeof(aTimeout)) < 0) {
 		this->log("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
@@ -280,20 +280,20 @@ int LinuxOPDID::HandleTCPConnection(int csock) {
 	struct linger sLinger;
 	sLinger.l_onoff = 1;
 	sLinger.l_linger = 1;
-	if (setsockopt (csock, SOL_SOCKET, SO_LINGER, (char *)&sLinger, sizeof(sLinger)) < 0) {
+	if (setsockopt (csock, SOL_SOCKET, SO_LINGER, (char*)&sLinger, sizeof(sLinger)) < 0) {
 		this->log("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
 
 	// set TCP_NODELAY
 	int flag = 1;
-	if (setsockopt(csock, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int)) < 0) {
+	if (setsockopt(csock, IPPROTO_TCP, TCP_NODELAY, (char*) &flag, sizeof(int)) < 0) {
 		this->log("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
 
 	// info value is the socket handle
-	result = opdi_message_setup(&io_receive, &io_send, (void *)(long)csock);
+	result = opdi_message_setup(&io_receive, &io_send, (void*)(long)csock);
 	if (result != 0)
 		return result;
 
@@ -330,23 +330,23 @@ int LinuxOPDID::setupTCP(std::string /*interface_*/, int port) {
 
 	// set TCP_NODELAY
 	int flag = 1;
-	if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int)) < 0) {
+	if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char*) &flag, sizeof(int)) < 0) {
 		this->log("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
-	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *) &flag, sizeof(int)) < 0) {
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char*) &flag, sizeof(int)) < 0) {
 		this->log("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
 
 	// prepare address
-	bzero((char *) &serv_addr, sizeof(serv_addr));
+	bzero((char*) &serv_addr, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_port = htons(port);
 
 	// bind to specified port
-	if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+	if (bind(sockfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
 		throw_system_error("Error binding to socket");
 	}
 
@@ -363,7 +363,7 @@ int LinuxOPDID::setupTCP(std::string /*interface_*/, int port) {
 		while (true) {
 
 			clilen = sizeof(cli_addr);
-			newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
+			newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &clilen);
 			if (newsockfd < 0) {
 				if ((errno == EWOULDBLOCK) || (errno == EAGAIN)) {
 					// measure processing time
@@ -428,11 +428,11 @@ int LinuxOPDID::setupTCP(std::string /*interface_*/, int port) {
 	return 0;
 }
 
-IOPDIDPlugin *LinuxOPDID::getPlugin(std::string driver) {
+IOPDIDPlugin* LinuxOPDID::getPlugin(std::string driver) {
 
 	this->warnIfPluginMoreRecent(driver);
 
-	void *hndl = dlopen(driver.c_str(), RTLD_NOW);
+	void* hndl = dlopen(driver.c_str(), RTLD_NOW);
 	if (hndl == NULL){
 		throw Poco::FileException("Could not load the plugin library", dlerror());
 	}
@@ -442,16 +442,16 @@ IOPDIDPlugin *LinuxOPDID::getPlugin(std::string driver) {
 	// "ISO C++ forbids casting between pointer-to-function and pointer-to-object"
 	// This trick is described here: https://github.com/christopherpoole/cppplugin/wiki/Plugins-in-CPP%3A-Dynamically-Linking-Shared-Objects
 	IOPDIDPlugin* (*getPluginInstance)(int, int, int);
-	*(void **)(&getPluginInstance) = dlsym(hndl, "GetOPDIDPluginInstance");
+	*(void**)(&getPluginInstance) = dlsym(hndl, "GetOPDIDPluginInstance");
 
-	char *lasterror = dlerror();
+	char* lasterror = dlerror();
 	if (lasterror != NULL) {
 		dlclose(hndl);
 		throw Poco::ApplicationException("Invalid plugin library; could not locate function 'GetOPDIDPluginInstance' in " + driver, lasterror);
 	}
 
 	// call the library function to get the plugin instance
-	return ((IOPDIDPlugin *(*)(int, int, int))(getPluginInstance))(this->majorVersion, this->minorVersion, this->patchVersion);
+	return ((IOPDIDPlugin* (*)(int, int, int))(getPluginInstance))(this->majorVersion, this->minorVersion, this->patchVersion);
 }
 
 } 		// namespace opdid

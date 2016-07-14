@@ -21,7 +21,7 @@ protected:
 	typedef std::vector<opdi::DigitalPort*> DigitalPortList;
 	typedef std::vector<opdi::AnalogPort*> AnalogPortList;
 
-	AbstractOPDID *opdid;
+	AbstractOPDID* opdid;
 	AbstractOPDID::LogVerbosity logVerbosity;
 	std::string portFunctionID;
 

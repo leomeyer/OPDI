@@ -13,9 +13,9 @@ public:
 
 	virtual uint32_t getTimeMs() override;
 
-	virtual uint8_t setUsername(char *username);
+	virtual uint8_t setUsername(char* username);
 
-	virtual uint8_t setPassword(char *password);
+	virtual uint8_t setPassword(char* password);
 };
 
 #ifndef OPDI_NO_DIGITAL_PORTS
@@ -34,7 +34,7 @@ public:
 	// Initialize a digital port. Specify one of the OPDI_PORTDIRCAPS_* values for dircaps.
 	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
 	// Note: OPDI_DIGITAL_PORT_HAS_PULLDN is not supported.
-	OPDI_DigitalPortPin(const char *id, const char *name, const char * dircaps, const uint8_t flags, const uint8_t pin);
+	OPDI_DigitalPortPin(const char* id, const char* name, const char*  dircaps, const uint8_t flags, const uint8_t pin);
 	virtual ~OPDI_DigitalPortPin();
 
 	// function that handles the set mode command (opdi_set_digital_port_mode)
@@ -50,7 +50,7 @@ public:
 	uint8_t setLine(uint8_t line);
 
 	// function that fills in the current port state
-	uint8_t getState(uint8_t *mode, uint8_t *line);
+	uint8_t getState(uint8_t* mode, uint8_t* line);
 };
 
 #endif // OPDI_NO_DIGITAL_PORTS
@@ -75,7 +75,7 @@ protected:
 	int32_t value;
 
 public:
-	OPDI_AnalogPortPin(const char *id, const char *name, const char * dircaps, const uint8_t flags, const uint8_t pin);
+	OPDI_AnalogPortPin(const char* id, const char* name, const char*  dircaps, const uint8_t flags, const uint8_t pin);
 	virtual ~OPDI_AnalogPortPin();
 
 	// mode = 0: input
@@ -92,7 +92,7 @@ public:
 	// value: an integer value ranging from 0 to 2^resolution - 1
 	uint8_t setValue(int32_t value);
 
-	uint8_t getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value);
+	uint8_t getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value);
 };
 
 #endif // OPDI_NO_ANALOG_PORTS

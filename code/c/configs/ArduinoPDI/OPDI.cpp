@@ -35,11 +35,11 @@ uint16_t opdi_device_flags = 0;
 // digital port functions
 #ifndef OPDI_NO_DIGITAL_PORTS
 
-uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
+uint8_t opdi_get_digital_port_state(opdi_Port* port, char mode[], char line[]) {
 	uint8_t result;
 	uint8_t dMode;
 	uint8_t dLine;
-	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi->findPort(port);
+	OPDI_DigitalPort* dPort = (OPDI_DigitalPort*)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -52,10 +52,10 @@ uint8_t opdi_get_digital_port_state(opdi_Port *port, char mode[], char line[]) {
 	return OPDI_STATUS_OK;
 }
 
-uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
+uint8_t opdi_set_digital_port_line(opdi_Port* port, const char line[]) {
 	uint8_t dLine;
 
-	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi->findPort(port);
+	OPDI_DigitalPort* dPort = (OPDI_DigitalPort*)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -66,10 +66,10 @@ uint8_t opdi_set_digital_port_line(opdi_Port *port, const char line[]) {
 	return dPort->setLine(dLine);
 }
 
-uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
+uint8_t opdi_set_digital_port_mode(opdi_Port* port, const char mode[]) {
 	uint8_t dMode;
 
-	OPDI_DigitalPort *dPort = (OPDI_DigitalPort *)Opdi->findPort(port);
+	OPDI_DigitalPort* dPort = (OPDI_DigitalPort*)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -86,13 +86,13 @@ uint8_t opdi_set_digital_port_mode(opdi_Port *port, const char mode[]) {
 
 #ifndef OPDI_NO_ANALOG_PORTS
 
-uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], char ref[], int32_t *value) {
+uint8_t opdi_get_analog_port_state(opdi_Port* port, char mode[], char res[], char ref[], int32_t* value) {
 	uint8_t result;
 	uint8_t aMode;
 	uint8_t aRef;
 	uint8_t aRes;
 
-	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
+	OPDI_AnalogPort* aPort = (OPDI_AnalogPort*)Opdi->findPort(port);
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -106,18 +106,18 @@ uint8_t opdi_get_analog_port_state(opdi_Port *port, char mode[], char res[], cha
 	return OPDI_STATUS_OK;
 }
 
-uint8_t opdi_set_analog_port_value(opdi_Port *port, int32_t value) {
-	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
+uint8_t opdi_set_analog_port_value(opdi_Port* port, int32_t value) {
+	OPDI_AnalogPort* aPort = (OPDI_AnalogPort*)Opdi->findPort(port);
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
 	return aPort->setValue(value);
 }
 
-uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
+uint8_t opdi_set_analog_port_mode(opdi_Port* port, const char mode[]) {
 	uint8_t aMode;
 
-	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
+	OPDI_AnalogPort* aPort = (OPDI_AnalogPort*)Opdi->findPort(port);
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -130,9 +130,9 @@ uint8_t opdi_set_analog_port_mode(opdi_Port *port, const char mode[]) {
 	return aPort->setMode(aMode);
 }
 
-uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
+uint8_t opdi_set_analog_port_resolution(opdi_Port* port, const char res[]) {
 	uint8_t aRes;
-	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
+	OPDI_AnalogPort* aPort = (OPDI_AnalogPort*)Opdi->findPort(port);
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -145,9 +145,9 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port *port, const char res[]) {
 	return aPort->setResolution(aRes);
 }
 
-uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
+uint8_t opdi_set_analog_port_reference(opdi_Port* port, const char ref[]) {
 	uint8_t aRef;
-	OPDI_AnalogPort *aPort = (OPDI_AnalogPort *)Opdi->findPort(port);
+	OPDI_AnalogPort* aPort = (OPDI_AnalogPort*)Opdi->findPort(port);
 	if (aPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -164,16 +164,16 @@ uint8_t opdi_set_analog_port_reference(opdi_Port *port, const char ref[]) {
 
 #ifndef OPDI_NO_SELECT_PORTS
 
-uint8_t opdi_get_select_port_state(opdi_Port *port, uint16_t *position) {
-	OPDI_SelectPort *sPort = (OPDI_SelectPort *)Opdi->findPort(port);
+uint8_t opdi_get_select_port_state(opdi_Port* port, uint16_t* position) {
+	OPDI_SelectPort* sPort = (OPDI_SelectPort*)Opdi->findPort(port);
 	if (sPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
 	return sPort->getState(position);
 }
 
-uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
-	OPDI_SelectPort *sPort = (OPDI_SelectPort *)Opdi->findPort(port);
+uint8_t opdi_set_select_port_position(opdi_Port* port, uint16_t position) {
+	OPDI_SelectPort* sPort = (OPDI_SelectPort*)Opdi->findPort(port);
 	if (sPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -184,16 +184,16 @@ uint8_t opdi_set_select_port_position(opdi_Port *port, uint16_t position) {
 
 #ifndef OPDI_NO_DIAL_PORTS
 
-uint8_t opdi_get_dial_port_state(opdi_Port *port, int64_t *position) {
-	OPDI_DialPort *dPort = (OPDI_DialPort *)Opdi->findPort(port);
+uint8_t opdi_get_dial_port_state(opdi_Port* port, int64_t* position) {
+	OPDI_DialPort* dPort = (OPDI_DialPort*)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
 	return dPort->getState(position);
 }
 
-uint8_t opdi_set_dial_port_position(opdi_Port *port, int64_t position) {
-	OPDI_DialPort *dPort = (OPDI_DialPort *)Opdi->findPort(port);
+uint8_t opdi_set_dial_port_position(opdi_Port* port, int64_t position) {
+	OPDI_DialPort* dPort = (OPDI_DialPort*)Opdi->findPort(port);
 	if (dPort == NULL)
 		return OPDI_PORT_UNKNOWN;
 
@@ -205,7 +205,7 @@ uint8_t opdi_set_dial_port_position(opdi_Port *port, int64_t position) {
 
 // general functions
 
-uint8_t opdi_choose_language(const char *languages) {
+uint8_t opdi_choose_language(const char* languages) {
 	// supports German?
 	if (strcmp("de_DE", languages) == 0) {
 		// TODO
@@ -216,7 +216,7 @@ uint8_t opdi_choose_language(const char *languages) {
 
 #ifdef OPDI_HAS_MESSAGE_HANDLED
 
-uint8_t opdi_message_handled(channel_t channel, const char **parts) {
+uint8_t opdi_message_handled(channel_t channel, const char** parts) {
 	return Opdi->messageHandled(channel, parts);
 }
 
@@ -226,7 +226,7 @@ uint8_t opdi_message_handled(channel_t channel, const char **parts) {
 // General port functionality
 //////////////////////////////////////////////////////////////////////////////////////////
 
-OPDI_Port::OPDI_Port(const char *id, const char *name, const char *type, const char *dircaps) {
+OPDI_Port::OPDI_Port(const char* id, const char* name, const char* type, const char* dircaps) {
 	// protected constructor
 	// assign buffers, clear fields
 	this->port.id = (const char*)&this->id;
@@ -249,20 +249,20 @@ uint8_t OPDI_Port::doWork() {
 	return OPDI_STATUS_OK;
 }
 
-void OPDI_Port::setName(const char *name) {
+void OPDI_Port::setName(const char* name) {
 	// copy name to class buffer
 	strncpy(this->name, name, (MAX_PORTNAMELENGTH) - 1);
 }
 
 uint8_t OPDI_Port::refresh() {
-	OPDI_Port *ports[2];
+	OPDI_Port* ports[2];
 	ports[0] = this;
 	ports[1] = NULL;
 
 	return Opdi->refresh(ports);
 }
 
-uint8_t OPDI_Port::getExtendedInfo(char *buffer, size_t length) {
+uint8_t OPDI_Port::getExtendedInfo(char* buffer, size_t length) {
 	// standard implementation returns an empty string
 	buffer[0] = '\0';
 	return OPDI_STATUS_OK;
@@ -277,7 +277,7 @@ OPDI_Port::~OPDI_Port() {
 
 #ifndef OPDI_NO_DIGITAL_PORTS
 
-OPDI_DigitalPort::OPDI_DigitalPort(const char *id, const char *name, const char *dircaps, const int32_t flags) :
+OPDI_DigitalPort::OPDI_DigitalPort(const char* id, const char* name, const char* dircaps, const int32_t flags) :
 	// call base constructor
 	OPDI_Port(id, name, OPDI_PORTTYPE_DIGITAL, dircaps) {
 
@@ -295,7 +295,7 @@ OPDI_DigitalPort::~OPDI_DigitalPort() {
 
 #ifndef OPDI_NO_ANALOG_PORTS
 
-OPDI_AnalogPort::OPDI_AnalogPort(const char *id, const char *name, const char *dircaps, const int32_t flags) :
+OPDI_AnalogPort::OPDI_AnalogPort(const char* id, const char* name, const char* dircaps, const int32_t flags) :
 	// call base constructor
 	OPDI_Port(id, name, OPDI_PORTTYPE_ANALOG, dircaps) {
 
@@ -313,7 +313,7 @@ OPDI_AnalogPort::~OPDI_AnalogPort() {
 
 #ifndef OPDI_NO_DIAL_PORTS
 
-OPDI_DialPort::OPDI_DialPort(const char *id, const char *label, const int64_t minValue, const int64_t maxValue, const uint64_t step, const int32_t flags)
+OPDI_DialPort::OPDI_DialPort(const char* id, const char* label, const int64_t minValue, const int64_t maxValue, const uint64_t step, const int32_t flags)
 	: OPDI_Port(id, label, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCAP_OUTPUT) {
 	this->portInfo.min = minValue;
 	this->portInfo.max = maxValue;
@@ -352,7 +352,7 @@ void OPDI::setIdleTimeout(uint32_t idleTimeoutMs) {
 	this->idle_timeout_ms = idleTimeoutMs;
 }
 
-uint8_t OPDI::addPort(OPDI_Port *port) {
+uint8_t OPDI::addPort(OPDI_Port* port) {
 	// first added port?
 	if (this->first_port == NULL) {
 		this->first_port = port;
@@ -366,9 +366,9 @@ uint8_t OPDI::addPort(OPDI_Port *port) {
 	return opdi_add_port(&port->port);
 }
 
-OPDI_Port *OPDI::findPort(opdi_Port *port) {
+OPDI_Port* OPDI::findPort(opdi_Port* port) {
 
-	OPDI_Port *p = this->first_port;
+	OPDI_Port* p = this->first_port;
 	// go through linked list
 	while (p != NULL) {
 		if (&p->port == port)
@@ -413,7 +413,7 @@ uint8_t OPDI::waiting(uint8_t canSend) {
 
 	// ports' doWork function can be called as long as canSend is true
 	if (canSend) {
-		OPDI_Port *p = this->first_port;
+		OPDI_Port* p = this->first_port;
 		// go through ports
 		while (p != NULL) {
 			// call doWork function, return errors immediately
@@ -439,10 +439,10 @@ uint8_t OPDI::reconfigure() {
 	return opdi_reconfigure();
 }
 
-uint8_t OPDI::refresh(OPDI_Port **ports) {
+uint8_t OPDI::refresh(OPDI_Port** ports) {
 	// target array of internal ports to refresh
-	opdi_Port *iPorts[OPDI_MAX_MESSAGE_PARTS + 1];
-	OPDI_Port *port = ports[0];
+	opdi_Port* iPorts[OPDI_MAX_MESSAGE_PARTS + 1];
+	OPDI_Port* port = ports[0];
 	uint8_t i = 0;
 	while (port != NULL) {
 		iPorts[i++] = &port->port;
@@ -454,7 +454,7 @@ uint8_t OPDI::refresh(OPDI_Port **ports) {
 	return opdi_refresh(iPorts);
 }
 
-uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
+uint8_t OPDI::messageHandled(channel_t channel, const char** parts) {
 	if (this->idle_timeout_ms > 0) {
 		// channels below 20 do not reset the activity timer
 		// (control messages and device-caused refreshes)
@@ -474,28 +474,28 @@ uint8_t OPDI::messageHandled(channel_t channel, const char **parts) {
 }
 
 
-void OPDI::getSlaveName(char *buffer, size_t length) {
+void OPDI::getSlaveName(char* buffer, size_t length) {
 	strncpy(buffer, "OPDI Slave", length);
 }
 
-void OPDI::getEncoding(char *buffer, size_t length) {
+void OPDI::getEncoding(char* buffer, size_t length) {
 	strncpy(buffer, "utf-8", length);
 }
 
-uint8_t OPDI::setLanguages(char *languages) {
+uint8_t OPDI::setLanguages(char* languages) {
 	return OPDI_STATUS_OK;
 }
 
-uint8_t OPDI::setUsername(char *username) {
+uint8_t OPDI::setUsername(char* username) {
 	return OPDI_STATUS_OK;
 }
 
-uint8_t OPDI::setPassword(char *password) {
+uint8_t OPDI::setPassword(char* password) {
 	return OPDI_STATUS_OK;
 }
 
-uint8_t OPDI::getExtendedPortInfo(char *buffer, size_t length) {
-	OPDI_Port *port = this->first_port;
+uint8_t OPDI::getExtendedPortInfo(char* buffer, size_t length) {
+	OPDI_Port* port = this->first_port;
 	// go through linked list
 	while (port != NULL) {
 		if (!strcmp(port->id, buffer)) break;
@@ -509,7 +509,7 @@ uint8_t OPDI::getExtendedPortInfo(char *buffer, size_t length) {
 }
 
 
-uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char *buffer, size_t data) {
+uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char* buffer, size_t data) {
 
 	switch (opdiFunctionCode) {
 	case OPDI_FUNCTION_GET_CONFIG_NAME: Opdi->getSlaveName(buffer, data); return OPDI_STATUS_OK;

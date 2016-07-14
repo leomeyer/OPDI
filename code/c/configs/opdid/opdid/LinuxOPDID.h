@@ -11,13 +11,13 @@ public:
 
 	virtual ~LinuxOPDID(void);
 
-	virtual void print(const char *text);
+	virtual void print(const char* text);
 
-	virtual void println(const char *text);
+	virtual void println(const char* text);
 
-	virtual void printe(const char *text);
+	virtual void printe(const char* text);
 
-	virtual void printlne(const char *text);
+	virtual void printlne(const char* text);
 	
 	virtual std::string getCurrentUser(void);
 
@@ -27,7 +27,7 @@ public:
 
 	int setupTCP(std::string interfaces, int port);
 
-	IOPDIDPlugin *getPlugin(std::string driver);
+	IOPDIDPlugin* getPlugin(std::string driver);
 };
 
 }

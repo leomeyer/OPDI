@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 {
 	int code = 0;
 	int tcp_port = 13110;
-	char *comPort = NULL;
+	char* comPort = NULL;
 
 	printf("RaspOPDI server. Arguments: [-tcp <port>] [-serial <device>]\n");
 

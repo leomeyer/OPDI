@@ -29,10 +29,10 @@ void DigitalTestPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 class WindowsTestOPDIDPlugin : public IOPDIDPlugin, public opdid::IOPDIDConnectionListener {
 
 protected:
-	opdid::AbstractOPDID *opdid;
+	opdid::AbstractOPDID* opdid;
 
 public:
-	virtual void setupPlugin(opdid::AbstractOPDID *abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) override;
+	virtual void setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration* config) override;
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -41,7 +41,7 @@ public:
 }	// end anonymous namespace
 
 
-void WindowsTestOPDIDPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration *config) {
+void WindowsTestOPDIDPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration* config) {
 	this->opdid = abstractOPDID;
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
@@ -51,7 +51,7 @@ void WindowsTestOPDIDPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, co
 
 	if (portType == "DigitalPort") {
 		// add emulated test port
-		DigitalTestPort *port = new DigitalTestPort();
+		DigitalTestPort* port = new DigitalTestPort();
 		abstractOPDID->configureDigitalPort(nodeConfig, port);
 		abstractOPDID->addPort(port);
 	} else

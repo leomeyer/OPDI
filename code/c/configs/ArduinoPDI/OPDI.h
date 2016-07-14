@@ -33,10 +33,10 @@ friend class OPDI;
 
 protected:
 	// Protected constructor: This class can't be instantiated directly
-	OPDI_Port(const char *id, const char *name, const char *type, const char* dircaps);
+	OPDI_Port(const char* id, const char* name, const char* type, const char* dircaps);
 
 	/** Called regularly by the OPDI system. Enables the port to do work.
-	 * Override this in subclasses to implement more complex functionality. */
+	*  Override this in subclasses to implement more complex functionality. */
 	virtual uint8_t doWork();
 
 	char id[MAX_PORTIDLENGTH];
@@ -48,19 +48,19 @@ protected:
 	struct opdi_Port port;
 
 	// linked list of ports - pointer to next port
-	OPDI_Port *next;
+	OPDI_Port* next;
 
 public:
 	/** Virtual destructor for the port. */
 	virtual ~OPDI_Port();
 
 	/** Sets the name of the port. Maximum length is defined in MAX_PORTNAMELENGTH. */
-	void setName(const char *name);
+	void setName(const char* name);
 
 	/** Causes the port to be refreshed by sending a refresh message to a connected master. */
 	uint8_t refresh();
 
-	virtual uint8_t getExtendedInfo(char *buffer, size_t length);
+	virtual uint8_t getExtendedInfo(char* buffer, size_t length);
 };
 
 
@@ -74,7 +74,7 @@ public:
 	// Initialize a digital port. Specify one of the OPDI_PORTDIR_CAPS* values for dircaps.
 	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
 	// Note: OPDI_DIGITAL_PORT_HAS_PULLDN is not supported.
-	OPDI_DigitalPort(const char *id, const char *name, const char * dircaps, const int32_t flags);
+	OPDI_DigitalPort(const char* id, const char* name, const char*  dircaps, const int32_t flags);
 	virtual ~OPDI_DigitalPort();
 
 	// pure virtual methods that need to be implemented by subclasses
@@ -92,7 +92,7 @@ public:
 	virtual uint8_t setLine(uint8_t line) = 0;
 
 	// function that fills in the current port state
-	virtual uint8_t getState(uint8_t *mode, uint8_t *line) = 0;
+	virtual uint8_t getState(uint8_t* mode, uint8_t* line) = 0;
 };
 
 #endif // OPDI_NO_DIGITAL_PORTS
@@ -106,7 +106,7 @@ class OPDI_AnalogPort : public OPDI_Port {
 public:
 	// Initialize an analog port. Specify one of the OPDI_PORTDIR_CAPS* values for dircaps.
 	// Specify one or more of the OPDI_ANALOG_PORT_* values for flags, or'ed together, to specify possible settings.
-	OPDI_AnalogPort(const char *id, const char *name, const char * dircaps, const int32_t flags);
+	OPDI_AnalogPort(const char* id, const char* name, const char*  dircaps, const int32_t flags);
 	virtual ~OPDI_AnalogPort();
 
 	// pure virtual methods that need to be implemented by subclasses
@@ -130,7 +130,7 @@ public:
 	virtual uint8_t setValue(int32_t value) = 0;
 
 	// function that fills in the current port state
-	virtual uint8_t getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) = 0;
+	virtual uint8_t getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) = 0;
 };
 
 #endif // OPDI_NO_ANALOG_PORTS
@@ -143,12 +143,12 @@ public:
 class OPDI_SelectPort : public OPDI_Port {
 
 public:
-	OPDI_SelectPort(const char *id);
+	OPDI_SelectPort(const char* id);
 
 	// Initialize a select port. The direction of a select port is output only.
 	// You have to specify a list of items that are the labels of the different select positions. The last element must be NULL.
 	// The items are copied into the privately managed data structure of this class.
-	OPDI_SelectPort(const char *id, const char *label, const char **items);
+	OPDI_SelectPort(const char* id, const char* label, const char** items);
 
 	virtual ~OPDI_SelectPort();
 
@@ -156,7 +156,7 @@ public:
 	virtual uint8_t setPosition(uint16_t position) = 0;
 
 	// function that fills in the current port state
-	virtual uint8_t getState(uint16_t *position) = 0;
+	virtual uint8_t getState(uint16_t* position) = 0;
 };
 
 #endif // OPDI_NO_SELECT_PORTS
@@ -170,18 +170,18 @@ protected:
 	opdi_DialPortInfo portInfo;
 
 public:
-	OPDI_DialPort(const char *id);
+	OPDI_DialPort(const char* id);
 
 	// Initialize a dial port. The direction of a dial port is output only.
 	// You have to specify boundary values and a step size.
-	OPDI_DialPort(const char *id, const char *label, const int64_t minValue, const int64_t maxValue, const uint64_t step, const int32_t flags);
+	OPDI_DialPort(const char* id, const char* label, const int64_t minValue, const int64_t maxValue, const uint64_t step, const int32_t flags);
 	virtual ~OPDI_DialPort();
 
 	// function that handles position setting; position may be in the range of minValue..maxValue
 	virtual uint8_t setPosition(int64_t position) = 0;
 
 	// function that fills in the current port state
-	virtual uint8_t getState(int64_t *position) = 0;
+	virtual uint8_t getState(int64_t* position) = 0;
 };
 
 #endif	// OPDI_NO_DIAL_PORTS
@@ -194,8 +194,8 @@ class OPDI {
 
 protected:
 	// list pointers
-	OPDI_Port *first_port;
-	OPDI_Port *last_port;
+	OPDI_Port* first_port;
+	OPDI_Port* last_port;
 
 	uint32_t idle_timeout_ms;
 	uint32_t last_activity;
@@ -221,11 +221,11 @@ public:
 
 	/** Adds the specified port.
 	 * */
-	uint8_t addPort(OPDI_Port *port);
+	uint8_t addPort(OPDI_Port* port);
 
 	/** Internal function.
 	 */
-	OPDI_Port *findPort(opdi_Port *port);
+	OPDI_Port* findPort(opdi_Port* port);
 
 	/** Starts the OPDI handshake to accept commands from a master.
 	 * Does not use a housekeeping function.
@@ -262,24 +262,24 @@ public:
 	 *  If the first element is NULL, sends the empty refresh message causing all ports to be
 	 *  refreshed.
 	 */
-	uint8_t refresh(OPDI_Port **ports);
+	uint8_t refresh(OPDI_Port** ports);
 
 	/** An internal handler which is used to implement the idle timer.
 	 */
-	virtual uint8_t messageHandled(channel_t channel, const char **parts);
+	virtual uint8_t messageHandled(channel_t channel, const char** parts);
 
-	virtual void getSlaveName(char *buffer, size_t length);
+	virtual void getSlaveName(char* buffer, size_t length);
 
-	virtual void getEncoding(char *buffer, size_t length);
+	virtual void getEncoding(char* buffer, size_t length);
 
-	virtual uint8_t setLanguages(char *languages);
+	virtual uint8_t setLanguages(char* languages);
 
-	virtual uint8_t setUsername(char *username);
+	virtual uint8_t setUsername(char* username);
 
-	virtual uint8_t setPassword(char *password);
+	virtual uint8_t setPassword(char* password);
 
-	uint8_t getExtendedPortInfo(char *buffer, size_t length);
+	uint8_t getExtendedPortInfo(char* buffer, size_t length);
 };
 
 // declare a singleton instance that must be defined by the implementation
-extern OPDI *Opdi;
+extern OPDI* Opdi;

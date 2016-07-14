@@ -58,7 +58,7 @@ static unsigned long last_activity = 0;
 *   If an error occurs returns an error code != 0. 
 *   If the connection has been gracefully closed, returns STATUS_DISCONNECTED.
 */
-static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t canSend) {
+static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t canSend) {
 	char c;
 	int result;
 	long ticks = GetTickCount();
@@ -76,7 +76,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 		}
 
 		if (connection_mode == MODE_TCP) {
-			int *csock = (int *)info;
+			int* csock = (int*)info;
 			fd_set sockset;
 			TIMEVAL aTimeout;
 			// wait until data arrives or a timeout occurs
@@ -155,11 +155,11 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 /** For TCP connections, sends count bytes to the socket specified in info.
 *   For COM connections, writes count bytes to the file handle specified in info.
 *   If an error occurs returns an error code != 0. */
-static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
-	char *c = (char *)bytes;
+static uint8_t io_send(void* info, uint8_t* bytes, uint16_t count) {
+	char* c = (char*)bytes;
 
 	if (connection_mode == MODE_TCP) {
-		int *csock = (int *)info;
+		int* csock = (int*)info;
 
 		if (send(*csock, c, count, 0) == SOCKET_ERROR) {
 			return OPDI_DEVICE_ERROR;
@@ -185,7 +185,7 @@ void init_device() {
 }
 
 
-uint8_t opdi_message_handled(channel_t channel, const char **parts) {
+uint8_t opdi_message_handled(channel_t channel, const char** parts) {
 	uint8_t result;
 	if (idle_timeout_ms > 0) {
 		// do not time out if there are bound streaming ports
@@ -211,7 +211,7 @@ uint8_t opdi_message_handled(channel_t channel, const char **parts) {
 
 /** This method handles an incoming TCP connection. It blocks until the connection is closed.
 */
-int HandleTCPConnection(int *csock) {
+int HandleTCPConnection(int* csock) {
 	opdi_Message message;
 	uint8_t result;
 
@@ -219,7 +219,7 @@ int HandleTCPConnection(int *csock) {
 	init_device();
 
 	// info value is the socket handle
-	opdi_message_setup(&io_receive, &io_send, (void *)csock);
+	opdi_message_setup(&io_receive, &io_send, (void*)csock);
 
 	result = opdi_get_message(&message, OPDI_CANNOT_SEND);
 	if (result != 0) 
@@ -246,7 +246,7 @@ int HandleCOMConnection(char firstByte, HANDLE hndPort) {
 	init_device();
 
 	// info value is the serial port handle
-	opdi_message_setup(&io_receive, &io_send, (void *)hndPort);
+	opdi_message_setup(&io_receive, &io_send, (void*)hndPort);
 
 	result = opdi_get_message(&message, OPDI_CANNOT_SEND);
 	if (result != 0) 
@@ -280,7 +280,7 @@ int listen_tcp(int host_port) {
 
     // Initialize sockets and set any options
     int hsock;
-    int *p_int ;
+    int* p_int ;
     hsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (hsock == -1) {
         printf("Error initializing socket %d\n", WSAGetLastError());
@@ -317,15 +317,15 @@ int listen_tcp(int host_port) {
     
 	// wait for connections
 
-    int *csock;
+    int* csock;
     sockaddr_in sadr;
     int addr_size = sizeof(SOCKADDR);
     
     while (true) {
         printf("Listening for a TCP connection on port %d\n", host_port);
-        csock = (int *)malloc(sizeof(int));
+        csock = (int*)malloc(sizeof(int));
         
-        if ((*csock = accept(hsock, (SOCKADDR *)&sadr, &addr_size)) != INVALID_SOCKET) {
+        if ((*csock = accept(hsock, (SOCKADDR*)&sadr, &addr_size)) != INVALID_SOCKET) {
             printf("Connection attempt from %s\n", inet_ntoa(sadr.sin_addr));
 
             err = HandleTCPConnection(csock);

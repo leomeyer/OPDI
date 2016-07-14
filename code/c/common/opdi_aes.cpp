@@ -38,7 +38,7 @@ static CRijndael *get_rijndael() {
 }
 
 
-uint8_t opdi_encrypt_block(uint8_t *dest, const uint8_t *src) {
+uint8_t opdi_encrypt_block(uint8_t* dest, const uint8_t* src) {
 	try
 	{
 		CRijndael *oRijndael = get_rijndael();
@@ -51,7 +51,7 @@ uint8_t opdi_encrypt_block(uint8_t *dest, const uint8_t *src) {
 }
 
 
-uint8_t opdi_decrypt_block(uint8_t *dest, const uint8_t *src) {
+uint8_t opdi_decrypt_block(uint8_t* dest, const uint8_t* src) {
 	try
 	{
 		CRijndael *oRijndael = get_rijndael();

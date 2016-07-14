@@ -57,7 +57,7 @@ uint8_t OPDI::shutdownInternal(void) {
 	return OPDI_SHUTDOWN;
 }
 
-uint8_t OPDI::setup(const char *slaveName, int idleTimeout) {
+uint8_t OPDI::setup(const char* slaveName, int idleTimeout) {
 	this->shutdownRequested = false;
 
 	// initialize port list
@@ -115,8 +115,8 @@ std::string OPDI::getExtendedDeviceInfo(void) {
 	return "";
 }
 
-std::string OPDI::getExtendedPortInfo(char *portID, uint8_t *code) {
-	opdi::Port *port = this->findPortByID(portID, false);
+std::string OPDI::getExtendedPortInfo(char* portID, uint8_t* code) {
+	opdi::Port* port = this->findPortByID(portID, false);
 	if (port == nullptr) {
 		*code = OPDI_PORT_UNKNOWN;
 		return "";
@@ -126,8 +126,8 @@ std::string OPDI::getExtendedPortInfo(char *portID, uint8_t *code) {
 	}
 }
 
-std::string OPDI::getExtendedPortState(char *portID, uint8_t *code) {
-	opdi::Port *port = this->findPortByID(portID, false);
+std::string OPDI::getExtendedPortState(char* portID, uint8_t* code) {
+	opdi::Port* port = this->findPortByID(portID, false);
 	if (port == nullptr) {
 		*code = OPDI_PORT_UNKNOWN;
 		return "";
@@ -137,7 +137,7 @@ std::string OPDI::getExtendedPortState(char *portID, uint8_t *code) {
 	}
 }
 
-void OPDI::addPort(opdi::Port *port) {
+void OPDI::addPort(opdi::Port* port) {
 	// associate port with this instance
 	port->opdi = this;
 
@@ -163,11 +163,11 @@ void OPDI::addPort(opdi::Port *port) {
 
 // possible race conditions here, if one thread updates port data while the other retrieves it
 // - generally not a problem because slaves are usually single-threaded
-void OPDI::updatePortData(opdi::Port *port) {
+void OPDI::updatePortData(opdi::Port* port) {
 	// allocate port data structure if necessary
-	opdi_Port *oPort = (opdi_Port *)port->data;
+	opdi_Port* oPort = (opdi_Port*)port->data;
 	if (oPort == nullptr) {
-		oPort = (opdi_Port *)malloc(sizeof(opdi_Port));
+		oPort = (opdi_Port*)malloc(sizeof(opdi_Port));
 		port->data = oPort;
 		oPort->info.i = 0;
 		oPort->info.ptr = nullptr;
@@ -200,7 +200,7 @@ void OPDI::updatePortData(opdi::Port *port) {
 		oPort->info.ptr = port->ptr;
 }
 
-opdi::Port *OPDI::findPort(opdi_Port *port) {
+opdi::Port* OPDI::findPort(opdi_Port* port) {
 	if (port == nullptr)
 		return *this->ports.begin();
 	auto it = this->ports.begin();
@@ -218,11 +218,11 @@ OPDI::PortList& OPDI::getPorts() {
 	return this->ports;
 }
 
-opdi::Port *OPDI::findPortByID(const char *portID, bool caseInsensitive) {
+opdi::Port* OPDI::findPortByID(const char* portID, bool caseInsensitive) {
 	auto it = this->ports.begin();
 	auto ite = this->ports.end();
 	while (it != ite) {
-		opdi_Port *oPort = (opdi_Port *)(*it)->data;
+		opdi_Port* oPort = (opdi_Port*)(*it)->data;
 		if (caseInsensitive) {
 #ifdef linux
 			if (strcasecmp(oPort->id, portID) == 0)
@@ -282,7 +282,7 @@ OPDI::PortGroupList& OPDI::getPortGroups(void) {
 
 
 void OPDI::sortPorts(void) {
-	std::sort(this->ports.begin(), this->ports.end(), [] (opdi::Port *i, opdi::Port *j) { return i->orderID < j->orderID; });
+	std::sort(this->ports.begin(), this->ports.end(), [] (opdi::Port* i, opdi::Port* j) { return i->orderID < j->orderID; });
 }
 
 void OPDI::preparePorts(void) {
@@ -356,18 +356,18 @@ uint8_t OPDI::reconfigure() {
 	return opdi_reconfigure();
 }
 
-uint8_t OPDI::refresh(opdi::Port **ports) {
+uint8_t OPDI::refresh(opdi::Port** ports) {
 	if (!this->isConnected() || !this->canSend)
 		return OPDI_DISCONNECTED;
-	opdi_Port *iPorts[OPDI_MAX_MESSAGE_PARTS + 1];
+	opdi_Port* iPorts[OPDI_MAX_MESSAGE_PARTS + 1];
 	iPorts[0] = nullptr;
 	if (ports == nullptr)
 		return opdi_refresh(iPorts);
 	// target array of internal ports to refresh
-	opdi::Port *port = ports[0];
+	opdi::Port* port = ports[0];
 	uint8_t i = 0;
 	while (port != nullptr) {
-		opdi_Port *oPort = (opdi_Port *)port->data;
+		opdi_Port* oPort = (opdi_Port*)port->data;
 		iPorts[i] = oPort;
 		if (++i > OPDI_MAX_MESSAGE_PARTS)
 			return OPDI_ERROR_PARTS_OVERFLOW;
@@ -384,7 +384,7 @@ uint8_t OPDI::idleTimeoutReached() {
 	return this->disconnect();
 }
 
-uint8_t OPDI::messageHandled(channel_t channel, const char ** /*parts*/) {
+uint8_t OPDI::messageHandled(channel_t channel, const char** /*parts*/) {
 	// a complete message has been processed; it's now safe to send
 	this->canSend = true;
 
@@ -424,7 +424,7 @@ void OPDI::shutdown(void) {
 	this->shutdownRequested = true;
 }
 
-void OPDI::persist(opdi::Port * /*port*/) {
+void OPDI::persist(opdi::Port*  /*port*/) {
 	throw Poco::NotImplementedException("This implementation does not support port state persistance");
 }
 

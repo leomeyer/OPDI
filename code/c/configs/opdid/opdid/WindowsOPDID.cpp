@@ -50,7 +50,7 @@ static unsigned long last_activity = 0;
 *   If an error occurs returns an error code != 0. 
 *   If the connection has been gracefully closed, returns STATUS_DISCONNECTED.
 */
-static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t canSend) {
+static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t canSend) {
 	char c;
 	int result;
 	uint64_t ticks = opdi_get_time_ms();
@@ -64,7 +64,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 		}
 
 		if (connection_mode == MODE_TCP) {
-			int *csock = (int *)info;
+			int* csock = (int*)info;
 			fd_set sockset;
 			TIMEVAL aTimeout;
 			// wait until data arrives or a timeout occurs
@@ -143,11 +143,11 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 /** For TCP connections, sends count bytes to the socket specified in info.
 *   For COM connections, writes count bytes to the file handle specified in info.
 *   If an error occurs returns an error code != 0. */
-static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
-	char *c = (char *)bytes;
+static uint8_t io_send(void* info, uint8_t* bytes, uint16_t count) {
+	char* c = (char*)bytes;
 
 	if (connection_mode == MODE_TCP) {
-		int *csock = (int *)info;
+		int* csock = (int*)info;
 
 		if (send(*csock, c, count, 0) == SOCKET_ERROR) {
 			return OPDI_DEVICE_ERROR;
@@ -178,36 +178,36 @@ uint32_t WindowsOPDID::getTimeMs(void) {
 	return GetTickCount64();
 }
 */
-void WindowsOPDID::print(const char *text) {
+void WindowsOPDID::print(const char* text) {
 	// text is treated as UTF8. Convert to wide character
 	std::wcout << utf8_decode(std::string(text));
 }
 
-void WindowsOPDID::println(const char *text) {
+void WindowsOPDID::println(const char* text) {
 	// text is treated as UTF8. Convert to wide character
 	std::wcout << utf8_decode(std::string(text)) << std::endl;
 }
 
-void WindowsOPDID::printe(const char *text) {
+void WindowsOPDID::printe(const char* text) {
 	// text is treated as UTF8. Convert to wide character
 	std::wcerr << utf8_decode(std::string(text));
 }
 
-void WindowsOPDID::printlne(const char *text) {
+void WindowsOPDID::printlne(const char* text) {
 	// text is treated as UTF8. Convert to wide character
 	std::wcerr << utf8_decode(std::string(text)) << std::endl;
 }
 
 /** This method handles an incoming TCP connection. It blocks until the connection is closed.
 */
-int WindowsOPDID::HandleTCPConnection(int *csock) {
+int WindowsOPDID::HandleTCPConnection(int* csock) {
 	opdi_Message message;
 	uint8_t result;
 
 	connection_mode = MODE_TCP;
 
 	// info value is the socket handle
-	opdi_message_setup(&io_receive, &io_send, (void *)csock);
+	opdi_message_setup(&io_receive, &io_send, (void*)csock);
 
 	result = opdi_get_message(&message, OPDI_CANNOT_SEND);
 	if (result != 0) 
@@ -244,7 +244,7 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 	u_long iMode = 1;
 	ioctlsocket(hsock, FIONBIO, &iMode);
 
-    int *p_int = (int*)malloc(sizeof(int));
+    int* p_int = (int*)malloc(sizeof(int));
     *p_int = 1;
     if ((setsockopt(hsock, SOL_SOCKET, SO_REUSEADDR, (char*)p_int, sizeof(int)) == -1)||
         (setsockopt(hsock, SOL_SOCKET, SO_KEEPALIVE, (char*)p_int, sizeof(int)) == -1) ||
@@ -280,7 +280,7 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 
 		while (true) {
 			memset(&sadr, 0, addr_size);
-			int csock = accept(hsock, (SOCKADDR *)&sadr, &addr_size);
+			int csock = accept(hsock, (SOCKADDR*)&sadr, &addr_size);
 
 			// error condition?
 			if (csock == INVALID_SOCKET) {
@@ -325,7 +325,7 @@ int WindowsOPDID::setupTCP(std::string interface_, int port) {
 	return 0;
 }
 
-IOPDIDPlugin *WindowsOPDID::getPlugin(std::string driver) {
+IOPDIDPlugin* WindowsOPDID::getPlugin(std::string driver) {
 	this->warnIfPluginMoreRecent(driver);
 
 	// attempt to load the specified DLL

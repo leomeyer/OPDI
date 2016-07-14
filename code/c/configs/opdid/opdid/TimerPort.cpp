@@ -186,7 +186,7 @@ void TimerPort::ManualSchedulePort::setPosition(int64_t position, ChangeSource /
 }
 
 
-TimerPort::TimerPort(AbstractOPDID *opdid, const char *id) : DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+TimerPort::TimerPort(AbstractOPDID* opdid, const char* id) : DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
 	this->opdid = opdid;
 
 	DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -210,7 +210,7 @@ TimerPort::TimerPort(AbstractOPDID *opdid, const char *id) : DigitalPort(id, id,
 TimerPort::~TimerPort() {
 }
 
-void TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig) {
+void TimerPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
 	this->opdid->configureDigitalPort(config, this);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
@@ -403,7 +403,7 @@ void TimerPort::configure(Poco::Util::AbstractConfiguration *config, Poco::Util:
 	}
 }
 
-void TimerPort::setDirCaps(const char * /*dirCaps*/) {
+void TimerPort::setDirCaps(const char* /*dirCaps*/) {
 	throw PortError(this->ID() + ": The direction capabilities of a TimerPort cannot be changed");
 }
 
@@ -443,7 +443,7 @@ void TimerPort::prepare() {
 	this->lastWorkTimestamp = Poco::Timestamp();
 }
 
-bool TimerPort::matchWeekday(int day, int month, int year, ScheduleComponent *weekdayScheduleComponent) {
+bool TimerPort::matchWeekday(int day, int month, int year, ScheduleComponent* weekdayScheduleComponent) {
 	// determine day of week
 	Poco::DateTime dt(year, month, day);
 	int dayOfWeek = dt.dayOfWeek();	// 0 = Sunday
@@ -451,7 +451,7 @@ bool TimerPort::matchWeekday(int day, int month, int year, ScheduleComponent *we
 	return weekdayScheduleComponent->hasValue(dayOfWeek);
 }
 
-Poco::Timestamp TimerPort::calculateNextOccurrence(Schedule *schedule) {
+Poco::Timestamp TimerPort::calculateNextOccurrence(Schedule* schedule) {
 	if (schedule->type == ONCE) {
 		// validate
 		if ((schedule->data.time.month < 1) || (schedule->data.time.month > 12))
@@ -759,7 +759,7 @@ uint8_t TimerPort::doWork(uint8_t canSend)  {
 			// need to deactivate?
 			if ((!workNf->deactivate) && (schedule->duration > 0)) {
 				// enqueue the notification for the deactivation
-				ScheduleNotification *notification = new ScheduleNotification(schedule, true);
+				ScheduleNotification* notification = new ScheduleNotification(schedule, true);
 				Poco::Timestamp deacTime;
 				Poco::Timestamp::TimeDiff timediff = schedule->duration * Poco::Timestamp::resolution() / 1000;
 				deacTime += timediff;
@@ -816,7 +816,7 @@ void TimerPort::recalculateSchedules(Schedule* activatingSchedule) {
 	// clear all schedules
 	this->queue.clear();
 	for (auto it = this->schedules.begin(), ite = this->schedules.end(); it != ite; ++it) {
-		Schedule *schedule = &*it;
+		Schedule* schedule = &*it;
 		// calculate
 		Poco::Timestamp nextOccurrence = this->calculateNextOccurrence(schedule);
 		if (nextOccurrence > Poco::Timestamp()) {

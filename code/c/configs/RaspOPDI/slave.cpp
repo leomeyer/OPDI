@@ -50,13 +50,13 @@ int listen_tcp(int host_port) {
 	}
 
 	// prepare address
-	bzero((char *) &serv_addr, sizeof(serv_addr));
+	bzero((char*) &serv_addr, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(host_port);
 
 	// bind to specified port
-	if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+	if (bind(sockfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
 		printf("ERROR on binding\n");
 		err = OPDI_DEVICE_ERROR;
 		goto FINISH;
@@ -69,7 +69,7 @@ int listen_tcp(int host_port) {
 	while (true) {
         	printf("listening for a connection on port %d\n", host_port);
 		clilen = sizeof(cli_addr);
-		newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
+		newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &clilen);
 		if (newsockfd < 0) {
 			printf("ERROR on accept\n");
 			err = OPDI_DEVICE_ERROR;

@@ -22,7 +22,7 @@
 class RemoteSwitchPlugin : public IOPDIDPlugin, public IOPDIDConnectionListener {
 
 protected:
-	AbstractOPDID *opdid;
+	AbstractOPDID* opdid;
 	std::string nodeID;
 
 	int gpioPin;
@@ -30,7 +30,7 @@ protected:
 	RCSwitch rcSwitch;
 
 public:
-	virtual void setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *nodeConfig);
+	virtual void setupPlugin(AbstractOPDID* abstractOPDID, std::string node, Poco::Util::AbstractConfiguration* nodeConfig);
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -51,13 +51,13 @@ protected:
 	int unitCode;
 
 public:
-	RemoteSwitchPort(AbstractOPDID *opdid, const char *ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode);
+	RemoteSwitchPort(AbstractOPDID* opdid, const char* ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode);
 	virtual ~RemoteSwitchPort(void);
 	virtual void setPosition(uint16_t position) override;
-	virtual void getState(uint16_t *position) override;
+	virtual void getState(uint16_t* position) override;
 };
 
-RemoteSwitchPort::RemoteSwitchPort(AbstractOPDID *opdid, const char *ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode) : OPDI_SelectPort(ID) {
+RemoteSwitchPort::RemoteSwitchPort(AbstractOPDID* opdid, const char* ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode) : OPDI_SelectPort(ID) {
 	this->opdid = opdid;
 	this->rcSwitch = rcSwitch;
 	this->systemCode = systemCode;
@@ -83,7 +83,7 @@ void RemoteSwitchPort::setPosition(uint16_t position)  {
 	}
 }
 
-void RemoteSwitchPort::getState(uint16_t *position) {
+void RemoteSwitchPort::getState(uint16_t* position) {
 	// the position is always unknown
 	throw AccessDenied("Cannot read a RemoteSwitch");
 }
@@ -93,11 +93,11 @@ void RemoteSwitchPort::getState(uint16_t *position) {
 // RemoteSwitchPlugin
 ///////////////////////////////////////////////////////////////////////////////
 
-void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string node, Poco::Util::AbstractConfiguration *config) {
+void RemoteSwitchPlugin::setupPlugin(AbstractOPDID* abstractOPDID, std::string node, Poco::Util::AbstractConfiguration* config) {
 	this->opdid = abstractOPDID;
 	this->nodeID = node;
 
-	Poco::Util::AbstractConfiguration *nodeConfig = config->createView(node);
+	Poco::Util::AbstractConfiguration* nodeConfig = config->createView(node);
 
 	int pin = nodeConfig->getInt("Pin", -1);
 	if (pin < 0)
@@ -119,7 +119,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->opdid->logVerbose("Enumerating RemoteSwitch nodes: " + node + ".Nodes");
 
-	Poco::Util::AbstractConfiguration *nodes = config->createView(node + ".Nodes");
+	Poco::Util::AbstractConfiguration* nodes = config->createView(node + ".Nodes");
 
 	// store main node's group (will become the default of ports)
 	std::string group = nodeConfig->getString("Group", "");
@@ -163,7 +163,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 		this->opdid->logVerbose("Setting up RemoteSwitchPlugin port for node: " + nodeName);
 
 		// get port section from the configuration
-		Poco::Util::AbstractConfiguration *portConfig = config->createView(nodeName);
+		Poco::Util::AbstractConfiguration* portConfig = config->createView(nodeName);
 
 		// get port type (required)
 		std::string portType = abstractOPDID->getConfigString(portConfig, "Type", "", true);
@@ -182,7 +182,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOPDID *abstractOPDID, std::string n
 				throw Poco::DataException("A 'UnitCode' between 1 and 4 must be specified for a RemoteSwitch port");
 
 			// setup the port instance and add it
-			RemoteSwitchPort *port = new RemoteSwitchPort(abstractOPDID, nodeName.c_str(), &this->rcSwitch, systemCode, unitCode);
+			RemoteSwitchPort* port = new RemoteSwitchPort(abstractOPDID, nodeName.c_str(), &this->rcSwitch, systemCode, unitCode);
 			// set default group: RemoteSwitchPlugin node's group
 			port->setGroup(group);
 			abstractOPDID->configureSelectPort(portConfig, config, port);

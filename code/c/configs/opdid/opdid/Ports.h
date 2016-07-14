@@ -71,13 +71,13 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	LogicPort(AbstractOPDID *opdid, const char *id);
+	LogicPort(AbstractOPDID* opdid, const char* id);
 
 	virtual ~LogicPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *config);
+	virtual void configure(Poco::Util::AbstractConfiguration* config);
 
-	virtual void setDirCaps(const char *dirCaps) override;
+	virtual void setDirCaps(const char* dirCaps) override;
 
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
@@ -109,7 +109,7 @@ protected:
 	std::string enablePortStr;
 	std::string outputPortStr;
 	std::string inverseOutputPortStr;
-	typedef std::vector<opdi::DigitalPort *> PortList;
+	typedef std::vector<opdi::DigitalPort*> PortList;
 	DigitalPortList enablePorts;
 	DigitalPortList outputPorts;
 	DigitalPortList inverseOutputPorts;
@@ -121,13 +121,13 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	PulsePort(AbstractOPDID *opdid, const char *id);
+	PulsePort(AbstractOPDID* opdid, const char* id);
 
 	virtual ~PulsePort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *config);
+	virtual void configure(Poco::Util::AbstractConfiguration* config);
 
-	virtual void setDirCaps(const char *dirCaps) override;
+	virtual void setDirCaps(const char* dirCaps) override;
 
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
@@ -145,7 +145,7 @@ public:
 class SelectorPort : public opdi::DigitalPort, protected opdid::PortFunctions {
 protected:
 	std::string selectPortStr;
-	opdi::SelectPort *selectPort;
+	opdi::SelectPort* selectPort;
 	std::string outputPortStr;
 	DigitalPortList outputPorts;
 	uint16_t position;
@@ -153,13 +153,13 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	SelectorPort(AbstractOPDID *opdid, const char *id);
+	SelectorPort(AbstractOPDID* opdid, const char* id);
 
 	virtual ~SelectorPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *config);
+	virtual void configure(Poco::Util::AbstractConfiguration* config);
 
-	virtual void setDirCaps(const char *dirCaps) override;
+	virtual void setDirCaps(const char* dirCaps) override;
 
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
@@ -186,13 +186,13 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	ErrorDetectorPort(AbstractOPDID *opdid, const char *id);
+	ErrorDetectorPort(AbstractOPDID* opdid, const char* id);
 
 	virtual ~ErrorDetectorPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *config);
+	virtual void configure(Poco::Util::AbstractConfiguration* config);
 
-	virtual void setDirCaps(const char *dirCaps) override;
+	virtual void setDirCaps(const char* dirCaps) override;
 
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
@@ -223,17 +223,17 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	SerialStreamingPort(AbstractOPDID *opdid, const char *id);
+	SerialStreamingPort(AbstractOPDID* opdid, const char* id);
 
 	virtual ~SerialStreamingPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *config);
+	virtual void configure(Poco::Util::AbstractConfiguration* config);
 
-	virtual int write(char *bytes, size_t length) override;
+	virtual int write(char* bytes, size_t length) override;
 
 	virtual int available(size_t count) override;
 
-	virtual int read(char *result) override;
+	virtual int read(char* result) override;
 
 	virtual bool hasError(void) const override;
 };
@@ -267,19 +267,19 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	LoggerPort(AbstractOPDID *opdid, const char *id);
+	LoggerPort(AbstractOPDID* opdid, const char* id);
 
 	virtual ~LoggerPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *config);
+	virtual void configure(Poco::Util::AbstractConfiguration* config);
 
 	virtual void prepare() override;
 
-	virtual int write(char *bytes, size_t length) override;
+	virtual int write(char* bytes, size_t length) override;
 
 	virtual int available(size_t count) override;
 
-	virtual int read(char *result) override;
+	virtual int read(char* result) override;
 
 	virtual bool hasError(void) const override;
 };
@@ -337,13 +337,13 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	FaderPort(AbstractOPDID *opdid, const char *id);
+	FaderPort(AbstractOPDID* opdid, const char* id);
 
 	virtual ~FaderPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *config);
+	virtual void configure(Poco::Util::AbstractConfiguration* config);
 
-	virtual void setDirCaps(const char *dirCaps) override;
+	virtual void setDirCaps(const char* dirCaps) override;
 
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
@@ -373,11 +373,11 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	SceneSelectPort(AbstractOPDID *opdid, const char *id);
+	SceneSelectPort(AbstractOPDID* opdid, const char* id);
 
 	virtual ~SceneSelectPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig);
+	virtual void configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig);
 
 	virtual void setPosition(uint16_t position, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
@@ -423,14 +423,14 @@ protected:
 
 	std::string filePath;
 	Poco::File directory;
-	opdi::Port *port;
+	opdi::Port* port;
 	PortType portType;
 	int reloadDelayMs;
 	int expiryMs;
 	int numerator;
 	int denominator;
 
-	Poco::DirectoryWatcher *directoryWatcher;
+	Poco::DirectoryWatcher* directoryWatcher;
 	uint64_t lastReloadTime;
 	Poco::Mutex mutex;
 	bool needsReload;
@@ -440,11 +440,11 @@ protected:
 	void fileChangedEvent(const void*, const Poco::DirectoryWatcher::DirectoryEvent&);
 
 public:
-	FileInputPort(AbstractOPDID *opdid, const char *id);
+	FileInputPort(AbstractOPDID* opdid, const char* id);
 
 	virtual ~FileInputPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *config, Poco::Util::AbstractConfiguration *parentConfig);
+	virtual void configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -533,11 +533,11 @@ protected:
 	void resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity, bool clearPersistent = true);
 
 public:
-	AggregatorPort(AbstractOPDID *opdid, const char *id);
+	AggregatorPort(AbstractOPDID* opdid, const char* id);
 
 	~AggregatorPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration *portConfig, Poco::Util::AbstractConfiguration *parentConfig);
+	virtual void configure(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig);
 
 	virtual void prepare() override;
 
@@ -562,9 +562,9 @@ protected:
 	uint64_t lastActionTime;
 public:
 
-	CounterPort(AbstractOPDID *opdid, const char *id);
+	CounterPort(AbstractOPDID* opdid, const char* id);
 
-	virtual void configure(Poco::Util::AbstractConfiguration *nodeConfig);
+	virtual void configure(Poco::Util::AbstractConfiguration* nodeConfig);
 
 	virtual void prepare() override;
 
@@ -628,9 +628,9 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
-	TriggerPort(AbstractOPDID *opdid, const char *id);
+	TriggerPort(AbstractOPDID* opdid, const char* id);
 
-	virtual void configure(Poco::Util::AbstractConfiguration *portConfig);
+	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
 
 	virtual void prepare() override;
 

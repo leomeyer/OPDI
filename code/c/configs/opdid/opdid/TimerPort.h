@@ -168,10 +168,10 @@ namespace opdid {
 		public:
 			typedef Poco::AutoPtr<ScheduleNotification> Ptr;
 			Poco::Timestamp timestamp;
-			Schedule *schedule;
+			Schedule* schedule;
 			bool deactivate;
 
-			ScheduleNotification(Schedule *schedule, bool deactivate) {
+			ScheduleNotification(Schedule* schedule, bool deactivate) {
 				this->schedule = schedule;
 				this->deactivate = deactivate;
 			};
@@ -186,7 +186,7 @@ namespace opdid {
 
 		Poco::TimedNotificationQueue queue;
 
-		Poco::Timestamp calculateNextOccurrence(Schedule *schedule);
+		Poco::Timestamp calculateNextOccurrence(Schedule* schedule);
 		std::string deactivatedText;
 		std::string notScheduledText;
 		std::string nextEventText;
@@ -199,7 +199,7 @@ namespace opdid {
 
 		void addNotification(ScheduleNotification::Ptr notification, Poco::Timestamp timestamp);
 
-		bool matchWeekday(int day, int month, int year, ScheduleComponent *weekdayScheduleComponent);
+		bool matchWeekday(int day, int month, int year, ScheduleComponent* weekdayScheduleComponent);
 
 		void recalculateSchedules(Schedule* activatingSchedule = nullptr);
 

@@ -45,7 +45,7 @@ extern const char* opdi_password;
 /** Receives a character from the UART and places the result in byte.
 *   Blocks until data is available or the timeout expires. 
 */
-static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t canSend) {
+static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t canSend) {
 
 	unsigned long ticks = millis();
 
@@ -66,7 +66,7 @@ static uint8_t io_receive(void *info, uint8_t *byte, uint16_t timeout, uint8_t c
 }
 
 /** Sends count bytes to the serial port. */
-static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
+static uint8_t io_send(void* info, uint8_t* bytes, uint16_t count) {
 	Opdi->ioStream->write(bytes, count);
 
 	return OPDI_STATUS_OK;
@@ -75,7 +75,7 @@ static uint8_t io_send(void *info, uint8_t *bytes, uint16_t count) {
 /** Can be used to send debug messages to a monitor.
  *
  */
-uint8_t opdi_debug_msg(const char *message, uint8_t direction) {
+uint8_t opdi_debug_msg(const char* message, uint8_t direction) {
 	if (Opdi->debugStream != NULL) {
 
 		if (direction == OPDI_DIR_INCOMING)
@@ -121,13 +121,13 @@ uint32_t ArduinOPDI::getTimeMs() {
 	return millis();
 }
 
-uint8_t ArduinOPDI::setUsername(char *username) {
+uint8_t ArduinOPDI::setUsername(char* username) {
 	if (strcmp(username, opdi_username))
 		return OPDI_AUTHENTICATION_FAILED;
 	return OPDI_STATUS_OK;
 }
 
-uint8_t ArduinOPDI::setPassword(char *password) {
+uint8_t ArduinOPDI::setPassword(char* password) {
 	if (strcmp(password, opdi_password))
 		return OPDI_AUTHENTICATION_FAILED;
 	return OPDI_STATUS_OK;
@@ -139,7 +139,7 @@ uint8_t ArduinOPDI::setPassword(char *password) {
 
 #ifndef OPDI_NO_DIGITAL_PORTS
 
-OPDI_DigitalPortPin::OPDI_DigitalPortPin(const char *id, const char *name, const char *dircaps, const uint8_t flags, const uint8_t pin) :
+OPDI_DigitalPortPin::OPDI_DigitalPortPin(const char* id, const char* name, const char* dircaps, const uint8_t flags, const uint8_t pin) :
 	// call base constructor; digital pins do not support pulldowns, mask the respective flags
 	OPDI_DigitalPort(id, name, dircaps, flags & (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS)) {
 
@@ -205,7 +205,7 @@ uint8_t OPDI_DigitalPortPin::setLine(uint8_t line) {
 }
 
 // function that fills in the current port state
-uint8_t OPDI_DigitalPortPin::getState(uint8_t *mode, uint8_t *line) {
+uint8_t OPDI_DigitalPortPin::getState(uint8_t* mode, uint8_t* line) {
 	// output?
 	if (this->mode == 3) {
 		// set remembered line
@@ -223,7 +223,7 @@ uint8_t OPDI_DigitalPortPin::getState(uint8_t *mode, uint8_t *line) {
 
 #ifndef OPDI_NO_ANALOG_PORTS
 
-OPDI_AnalogPortPin::OPDI_AnalogPortPin(const char *id, const char *name, const char *dircaps, const uint8_t flags, const uint8_t pin) :
+OPDI_AnalogPortPin::OPDI_AnalogPortPin(const char* id, const char* name, const char* dircaps, const uint8_t flags, const uint8_t pin) :
 	// call base constructor; analog ports can't change resolutions, mask the respective flags
 	OPDI_AnalogPort(id, name, dircaps, flags & ~(OPDI_ANALOG_PORT_CAN_CHANGE_RES)) {
 
@@ -299,7 +299,7 @@ uint8_t OPDI_AnalogPortPin::setValue(int32_t value) {
 }
 
 // function that fills in the current port state
-uint8_t OPDI_AnalogPortPin::getState(uint8_t *mode, uint8_t *resolution, uint8_t *reference, int32_t *value) {
+uint8_t OPDI_AnalogPortPin::getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) {
 	*mode = this->mode;
 	*resolution = this->resolution;
 	*reference = this->reference;
