@@ -14,7 +14,7 @@
 #include "opdi_constants.h"
 
 // the main OPDI instance is declared here
-opdid::AbstractOPDID *Opdi;
+opdid::AbstractOPDID* Opdi;
 
 BOOL WINAPI SignalHandler(_In_ DWORD dwCtrlType) {
 	switch (dwCtrlType) {
@@ -50,12 +50,12 @@ int _tmain(int argc, _TCHAR* argv[], _TCHAR* envp[])
 	// create a map of environment parameters (important: uppercase, prefix $)
 	std::map<std::string, std::string> environment;
 	size_t counter = 0;
-	_TCHAR *env = envp[counter];
+	_TCHAR* env = envp[counter];
 	while (env) {
 		std::wstring envStr(env);
-		wchar_t *envVar = wcstok(&envStr[0], L"=");
+		wchar_t* envVar = wcstok(&envStr[0], L"=");
 		if (envVar != nullptr) {
-			wchar_t *envValue = wcstok(nullptr, L"");
+			wchar_t* envValue = wcstok(nullptr, L"");
 			if (envValue != nullptr) {
 				std::wstring envKey(envVar);
 				// convert key to uppercase

@@ -15,7 +15,7 @@
 #include "LinuxOPDID.h"
 
 // the main OPDI instance is declared here
-opdid::AbstractOPDID *Opdi;
+opdid::AbstractOPDID* Opdi;
 
 void signal_handler(int) {
 	std::cout << "Interrupted, exiting" << std::endl;
@@ -49,7 +49,7 @@ void signal_handler_abrt(int signum) {
 	kill(getpid(), signum);
 }
 
-int main(int argc, char *argv[], char *envp[])
+int main(int argc, char* argv[], char* envp[])
 {
 	Opdi = new opdid::LinuxOPDID();
 
@@ -81,12 +81,12 @@ int main(int argc, char *argv[], char *envp[])
 	// create a map of environment parameters (important: uppercase, prefix $)
 	std::map<std::string, std::string> environment;
 	size_t counter = 0;
-	char *env = envp[counter];
+	char* env = envp[counter];
 	while (env) {
 		std::string envStr(env);
-		char *envVar = strtok(&envStr[0], "=");
+		char* envVar = strtok(&envStr[0], "=");
 		if (envVar != NULL) {
-			char *envValue = strtok(NULL, "");
+			char* envValue = strtok(NULL, "");
 			if (envValue != NULL) {
 				std::string envKey(envVar);
 				// convert key to uppercase
