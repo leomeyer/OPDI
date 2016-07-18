@@ -1223,10 +1223,10 @@ void SceneSelectPort::setPosition(uint16_t position, ChangeSource /*changeSource
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// FileInputPort
+// FilePort
 ///////////////////////////////////////////////////////////////////////////////
 
-uint8_t FileInputPort::doWork(uint8_t canSend) {
+uint8_t FilePort::doWork(uint8_t canSend) {
 	uint8_t result = opdi::DigitalPort::doWork(canSend);
 	if (result != OPDI_STATUS_OK)
 		return result;
@@ -1236,9 +1236,9 @@ uint8_t FileInputPort::doWork(uint8_t canSend) {
 	// expiry time over?
 	if ((this->expiryMs > 0) && (this->lastReloadTime > 0) && (opdi_get_time_ms() - lastReloadTime > (uint64_t)this->expiryMs)) {
 		// only if the port's value is ok
-		if (this->port->getError() == Error::VALUE_OK) {
-			this->logWarning(ID() + ": Value of port '" + this->port->ID() + "' has expired");
-			this->port->setError(Error::VALUE_EXPIRED);
+		if (this->valuePort->getError() == Error::VALUE_OK) {
+			this->logWarning(ID() + ": Value of port '" + this->valuePort->ID() + "' has expired");
+			this->valuePort->setError(Error::VALUE_EXPIRED);
 		}
 	}
 
@@ -1292,8 +1292,8 @@ uint8_t FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected '0' or '1' but got: " + errorContent);
 				}
-				this->logDebug(std::string() + "Setting line of digital port '" + this->port->ID() + "' to " + this->to_string((int)line));
-				((opdi::DigitalPort*)this->port)->setLine(line);
+				this->logDebug(std::string() + "Setting line of digital port '" + this->valuePort->ID() + "' to " + this->to_string((int)line));
+				((opdi::DigitalPort*)this->valuePort)->setLine(line);
 				break;
 			}
 			case ANALOG_PORT: {
@@ -1303,14 +1303,14 @@ uint8_t FileInputPort::doWork(uint8_t canSend) {
 					throw Poco::DataFormatException("Expected decimal value between 0 and 1 but got: " + errorContent);
 				}
 				value = value * this->numerator / this->denominator;
-				this->logDebug(std::string() + "Setting value of analog port '" + this->port->ID() + "' to " + this->to_string(value));
-				((opdi::AnalogPort*)this->port)->setRelativeValue(value);
+				this->logDebug(std::string() + "Setting value of analog port '" + this->valuePort->ID() + "' to " + this->to_string(value));
+				((opdi::AnalogPort*)this->valuePort)->setRelativeValue(value);
 				break;
 			}
 			case DIAL_PORT: {
 				int64_t value;
-				int64_t min = ((opdi::DialPort*)this->port)->getMin();
-				int64_t max = ((opdi::DialPort*)this->port)->getMax();
+				int64_t min = ((opdi::DialPort*)this->valuePort)->getMin();
+				int64_t max = ((opdi::DialPort*)this->valuePort)->getMax();
 				if (!Poco::NumberParser::tryParse64(content, value)) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected integer value but got: " + errorContent);
@@ -1320,20 +1320,20 @@ uint8_t FileInputPort::doWork(uint8_t canSend) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
 				}
-				this->logDebug(std::string() + "Setting position of dial port '" + this->port->ID() + "' to " + this->to_string(value));
-				((opdi::DialPort*)this->port)->setPosition(value);
+				this->logDebug(std::string() + "Setting position of dial port '" + this->valuePort->ID() + "' to " + this->to_string(value));
+				((opdi::DialPort*)this->valuePort)->setPosition(value);
 				break;
 			}
 			case SELECT_PORT: {
 				int32_t value;
 				uint16_t min = 0;
-				uint16_t max = ((opdi::SelectPort*)this->port)->getMaxPosition();
+				uint16_t max = ((opdi::SelectPort*)this->valuePort)->getMaxPosition();
 				if (!Poco::NumberParser::tryParse(content, value) || (value < min) || (value > max)) {
 					std::string errorContent = (content.length() > 50 ? content.substr(0, 50) + "..." : content);
 					throw Poco::DataFormatException("Expected integer value between " + this->to_string(min) + " and " + this->to_string(max) + " but got: " + errorContent);
 				}
-				this->logDebug(std::string() + "Setting position of select port '" + this->port->ID() + "' to " + this->to_string(value));
-				((opdi::SelectPort*)this->port)->setPosition(value);
+				this->logDebug(std::string() + "Setting position of select port '" + this->valuePort->ID() + "' to " + this->to_string(value));
+				((opdi::SelectPort*)this->valuePort)->setPosition(value);
 				break;
 			}
 			default:
@@ -1347,7 +1347,7 @@ uint8_t FileInputPort::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-void FileInputPort::fileChangedEvent(const void*, const Poco::DirectoryWatcher::DirectoryEvent& evt) {
+void FilePort::fileChangedEvent(const void*, const Poco::DirectoryWatcher::DirectoryEvent& evt) {
 	if (evt.item.path() == this->filePath) {
 		this->logDebug(std::string() + "Detected file modification: " + this->filePath);
 		
@@ -1356,7 +1356,55 @@ void FileInputPort::fileChangedEvent(const void*, const Poco::DirectoryWatcher::
 	}
 }
 
-FileInputPort::FileInputPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id), PortFunctions(id) {
+void FilePort::writeContent() {
+	if (this->line == 0)
+		return;
+
+	// create file content
+	std::string content;
+
+	switch (this->portType) {
+	case DIGITAL_PORT: {
+		uint8_t line;
+		uint8_t mode;
+//			this->logDebug(std::string() + "Setting line of digital port '" + this->valuePort->ID() + "' to " + this->to_string((int)line));
+		((opdi::DigitalPort*)this->valuePort)->getState(&mode, &line);
+		content += (line == 1 ? "1" : "0");
+		break;
+	}
+	case ANALOG_PORT: {
+		double value = ((opdi::AnalogPort*)this->valuePort)->getRelativeValue();
+		value = value / this->numerator * this->denominator;
+		//this->logDebug(std::string() + "Setting value of analog port '" + this->valuePort->ID() + "' to " + this->to_string(value));
+		content += this->to_string(value);
+		break;
+	}
+	case DIAL_PORT: {
+		int64_t value;
+		((opdi::DialPort*)this->valuePort)->getState(&value);
+		value = value / this->numerator * this->denominator;
+		// this->logDebug(std::string() + "Setting position of dial port '" + this->valuePort->ID() + "' to " + this->to_string(value));
+		content += this->to_string(value);
+		break;
+	}
+	case SELECT_PORT: {
+		uint16_t value;
+		((opdi::SelectPort*)this->valuePort)->getState(&value);
+		// this->logDebug(std::string() + "Setting position of select port '" + this->valuePort->ID() + "' to " + this->to_string(value));
+		content += this->to_string(value);
+		break;
+	}
+	default:
+		throw Poco::ApplicationException("Port type is unknown or not supported");
+	}
+
+	// write content to file
+	Poco::FileOutputStream fos(this->filePath);
+	fos << content;
+	fos.close();
+}
+
+FilePort::FilePort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id), PortFunctions(id) {
 	this->opdid = opdid;
 	this->directoryWatcher = nullptr;
 	this->reloadDelayMs = 0;
@@ -1365,21 +1413,21 @@ FileInputPort::FileInputPort(AbstractOPDID* opdid, const char* id) : opdi::Digit
 	this->needsReload = false;
 	this->numerator = 1;
 	this->denominator = 1;
-	this->port = nullptr;
+	this->valuePort = nullptr;
 	this->portType = UNKNOWN;
 
-	// a FileInput port is presented as an output (being High means that the file input is active)
+	// a File port is presented as an output (being High means that file IO is active)
 	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
-	// file input is active by default
+	// file IO is active by default
 	this->setLine(1);
 }
 
-FileInputPort::~FileInputPort() {
+FilePort::~FilePort() {
 	if (this->directoryWatcher != nullptr)
 		delete this->directoryWatcher;
 }
 
-void FileInputPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
+void FilePort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
 	this->opdid->configureDigitalPort(config, this);
 
 	this->filePath = opdid->getConfigString(config, "File", "", true);
@@ -1390,29 +1438,29 @@ void FileInputPort::configure(Poco::Util::AbstractConfiguration* config, Poco::U
 	std::string portType = opdid->getConfigString(nodeConfig, "Type", "", true);
 	if (portType == "DigitalPort") {
 		this->portType = DIGITAL_PORT;
-		this->port = new opdi::DigitalPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
-		this->opdid->configureDigitalPort(nodeConfig, (opdi::DigitalPort*)port);
+		this->valuePort = new opdi::DigitalPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
+		this->opdid->configureDigitalPort(nodeConfig, (opdi::DigitalPort*)valuePort);
 		// validate setup
-		if (((opdi::DigitalPort*)port)->getMode() != OPDI_DIGITAL_MODE_INPUT_FLOATING)
-			throw Poco::DataException(this->ID() + ": Modes other than 'Input' are not supported for a digital file input port: " + portNode);
+		if (((opdi::DigitalPort*)valuePort)->getMode() != OPDI_DIGITAL_MODE_INPUT_FLOATING)
+			throw Poco::DataException(this->ID() + ": Modes other than 'Input' are not supported for a digital file port: " + portNode);
 	} else
 	if (portType == "AnalogPort") {
 		this->portType = ANALOG_PORT;
-		this->port = new opdi::AnalogPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
-		this->opdid->configureAnalogPort(nodeConfig, (opdi::AnalogPort*)port);
+		this->valuePort = new opdi::AnalogPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
+		this->opdid->configureAnalogPort(nodeConfig, (opdi::AnalogPort*)valuePort);
 		// validate setup
-		if (((opdi::AnalogPort*)port)->getMode() != OPDI_ANALOG_MODE_INPUT)
-			throw Poco::DataException(this->ID() + ": Modes other than 'Input' are not supported for a analog file input port: " + portNode);
+		if (((opdi::AnalogPort*)valuePort)->getMode() != OPDI_ANALOG_MODE_INPUT)
+			throw Poco::DataException(this->ID() + ": Modes other than 'Input' are not supported for a analog file port: " + portNode);
 	} else
 	if (portType == "DialPort") {
 		this->portType = DIAL_PORT;
-		this->port = new opdi::DialPort(portNode.c_str());
-		this->opdid->configureDialPort(nodeConfig, (opdi::DialPort*)port);
+		this->valuePort = new opdi::DialPort(portNode.c_str());
+		this->opdid->configureDialPort(nodeConfig, (opdi::DialPort*)valuePort);
 	} else
 	if (portType == "SelectPort") {
 		this->portType = SELECT_PORT;
-		this->port = new opdi::SelectPort(portNode.c_str());
-		this->opdid->configureSelectPort(nodeConfig, parentConfig, (opdi::SelectPort*)port);
+		this->valuePort = new opdi::SelectPort(portNode.c_str());
+		this->opdid->configureSelectPort(nodeConfig, parentConfig, (opdi::SelectPort*)valuePort);
 	} else
 	if (portType == "StreamingPort") {
 		this->portType = STREAMING_PORT;
@@ -1420,9 +1468,20 @@ void FileInputPort::configure(Poco::Util::AbstractConfiguration* config, Poco::U
 	} else
 		throw Poco::DataException(this->ID() + ": Node " + portNode + ": Type unsupported, expected 'DigitalPort', 'AnalogPort', 'DialPort', 'SelectPort', or 'StreamingPort': " + portType);
 
-	// a file input port is always readonly
-	this->port->setReadonly(true);
-	this->opdid->addPort(port);
+	this->opdid->addPort(this->valuePort);
+
+	// if the port is not read-only, we react to state changes
+	if (!this->valuePort->isReadonly()) {
+		// create a dummy DigitalPort that handles the value port's state changes
+		ChangeHandlerPort* chp = new ChangeHandlerPort((this->ID() + "_ChangeHandlerPort").c_str(), this);
+		// ports of this type are always hidden
+		chp->setHidden(true);
+		this->opdid->addPort(chp);
+
+		// user changes to the value port are handled by the change handler
+		// the name will be resolved to the actual port in prepare()
+		this->valuePort->onChangeUserPortsStr += " " + chp->ID();
+	}
 
 	this->reloadDelayMs = config->getInt("ReloadDelay", 0);
 	if (this->reloadDelayMs < 0) {
@@ -1452,14 +1511,14 @@ void FileInputPort::configure(Poco::Util::AbstractConfiguration* config, Poco::U
 	this->directoryWatcher = new Poco::DirectoryWatcher(this->directory, 
 			Poco::DirectoryWatcher::DW_ITEM_MODIFIED | Poco::DirectoryWatcher::DW_ITEM_ADDED | Poco::DirectoryWatcher::DW_ITEM_MOVED_TO, 
 			Poco::DirectoryWatcher::DW_DEFAULT_SCAN_INTERVAL);
-	this->directoryWatcher->itemModified += Poco::delegate(this, &FileInputPort::fileChangedEvent);
-	this->directoryWatcher->itemAdded += Poco::delegate(this, &FileInputPort::fileChangedEvent);
-	this->directoryWatcher->itemMovedTo += Poco::delegate(this, &FileInputPort::fileChangedEvent);
+	this->directoryWatcher->itemModified += Poco::delegate(this, &FilePort::fileChangedEvent);
+	this->directoryWatcher->itemAdded += Poco::delegate(this, &FilePort::fileChangedEvent);
+	this->directoryWatcher->itemMovedTo += Poco::delegate(this, &FilePort::fileChangedEvent);
 
 	// can the file be loaded initially?
 	Poco::File file(this->filePath);
 	if (!file.exists())
-		this->port->setError(Error::VALUE_NOT_AVAILABLE);
+		this->valuePort->setError(Error::VALUE_NOT_AVAILABLE);
 	else {
 		// expiry time specified?
 		if (this->expiryMs > 0) {
@@ -1470,10 +1529,10 @@ void FileInputPort::configure(Poco::Util::AbstractConfiguration* config, Poco::U
 				// file is not yet expired, reload
 				this->needsReload = true;
 			else
-				this->port->setError(Error::VALUE_NOT_AVAILABLE);
+				this->valuePort->setError(Error::VALUE_NOT_AVAILABLE);
 		}
 		else
-			this->port->setError(Error::VALUE_NOT_AVAILABLE);
+			this->valuePort->setError(Error::VALUE_NOT_AVAILABLE);
 	}
 }
 

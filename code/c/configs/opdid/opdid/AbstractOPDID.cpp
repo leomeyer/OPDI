@@ -794,6 +794,9 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration* portConfig,
 	port->tag = this->getConfigString(portConfig, "Tag", "", false);
 
 	port->orderID = portConfig->getInt("OrderID", -1);
+
+	port->onChangeIntPortsStr = this->getConfigString(portConfig, "OnChangeInt", "", false);
+	port->onChangeUserPortsStr = this->getConfigString(portConfig, "OnChangeUser", "", false);
 }
 
 void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration* portConfig, opdi::DigitalPort* port, bool stateOnly) {
@@ -1121,10 +1124,10 @@ void AbstractOPDID::setupSceneSelectPort(Poco::Util::AbstractConfiguration* port
 	this->addPort(ssPort);
 }
 
-void AbstractOPDID::setupFileInputPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
-	this->logVerbose("Setting up FileInput: " + port);
+void AbstractOPDID::setupFilePort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
+	this->logVerbose("Setting up File: " + port);
 
-	FileInputPort* fiPort = new FileInputPort(this, port.c_str());
+	FilePort* fiPort = new FilePort(this, port.c_str());
 	fiPort->configure(portConfig, parentConfig);
 
 	this->addPort(fiPort);
@@ -1250,8 +1253,8 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration* config, const s
 	if (nodeType == "SceneSelect") {
 		this->setupSceneSelectPort(nodeConfig, config, node);
 	} else
-	if (nodeType == "FileInput") {
-		this->setupFileInputPort(nodeConfig, config, node);
+	if (nodeType == "File") {
+		this->setupFilePort(nodeConfig, config, node);
 	} else
 	if (nodeType == "Aggregator") {
 		this->setupAggregatorPort(nodeConfig, config, node);

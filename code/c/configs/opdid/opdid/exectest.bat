@@ -2,7 +2,7 @@
 
 :loop
 if "%1" == "" goto end
-echo %1
+echo exectest.bat parameter: %1
 shift
 goto loop
 

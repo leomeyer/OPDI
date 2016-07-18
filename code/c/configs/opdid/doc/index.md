@@ -141,12 +141,12 @@ Scene Select Port
 
 A Scene Select port lets you select one of several pre-defined so-called scenes. A scene is just a specification of the states of some ports in the system. These can be defined in a configuration file that is being applied when the corresponding option is selected.
 
-File Input Port
+File Port
 ---------------
 
-A File Input port is a Digital port which, while its Line is High, monitors the content of a specified file. If the file's content changes it is being read and the result is set to a certain specified port, possibly applying some transformations.
+A File port is a Digital port which, while its Line is High, monitors the content of a specified file. If the file's content changes it is being read and the result is set to a certain specified "value port", possibly applying some transformations. If the value port is not read-only any changes in its value are written to the specified file.
 
-The File Input port is an important port which allows the OPDID automation to receive input from its surroundings in a generic way, i. e. without the need for specialized drivers.
+The File port is an important port which allows the OPDID automation to receive input from its surroundings in a generic way, i. e. without the need for specialized drivers.
 
 Exec Port
 ---------

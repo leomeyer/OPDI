@@ -99,6 +99,23 @@ void Port::setID(const char* newID) {
 	strcpy(this->id, newID);
 }
 
+void Port::handleStateChange(ChangeSource changeSource) {
+	// determine port list to iterate
+	DigitalPortList* pl;
+	switch (changeSource) {
+	case ChangeSource::CHANGESOURCE_INT: pl = &this->onChangeIntPorts; break;
+	case ChangeSource::CHANGESOURCE_USER: pl = &this->onChangeUserPorts; break;
+	default: return;
+	}
+	// go through ports
+	auto it = pl->begin();
+	auto ite = pl->end();
+	while (it != ite) {
+		(*it)->setLine(1);
+		++it;
+	}
+}
+
 std::string Port::ID() const {
 	return std::string(this->getID());
 }
@@ -303,6 +320,11 @@ uint8_t Port::refresh() {
 void Port::prepare() {
 	// update flags (for example, OR other flags to current flag settings)
 	this->setFlags(this->flags);
+
+	// resolve change handlers
+	this->opdi->findDigitalPorts(this->ID(), "", this->onChangeIntPortsStr, this->onChangeIntPorts);
+	this->opdi->findDigitalPorts(this->ID(), "", this->onChangeUserPortsStr, this->onChangeUserPorts);
+
 	this->updateExtendedInfo();
 }
 
@@ -531,17 +553,20 @@ void DigitalPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 	}
 }
 
-void DigitalPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
+void DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 	if (line > 1)
 		throw PortError(this->ID() + ": Digital port line not supported: " + this->to_string((int)line));
 	if (this->error != Error::VALUE_OK)
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
-	if (line != this->line)
+	bool changed = (line != this->line);
+	if (changed)
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	this->line = line;
 	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
+	if (changed)
+		this->handleStateChange(changeSource);
 }
 
 void DigitalPort::getState(uint8_t* mode, uint8_t* line) const {
@@ -644,17 +669,20 @@ void AnalogPort::setReference(uint8_t reference, ChangeSource /*changeSource*/) 
 		this->opdi->persist(this);
 }
 
-void AnalogPort::setValue(int32_t value, ChangeSource /*changeSource*/) {
+void AnalogPort::setValue(int32_t value, ChangeSource changeSource) {
 	// restrict value to possible range
 	int32_t newValue = this->validateValue(value);
 	if (this->error != Error::VALUE_OK)
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
-	if (newValue != this->value)
+	bool changed = (newValue != this->value);
+	if (changed)
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	this->value = newValue;
 	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
+	if (changed)
+		this->handleStateChange(changeSource);
 }
 
 void AnalogPort::getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) const {
@@ -766,17 +794,20 @@ void SelectPort::setItems(const char** items) {
 	this->count = itemCount - 1;
 }
 
-void SelectPort::setPosition(uint16_t position, ChangeSource /*changeSource*/) {
+void SelectPort::setPosition(uint16_t position, ChangeSource changeSource) {
 	if (position > count)
 		throw PortError(this->ID() + ": Position must not exceed the number of items: " + to_string((int)this->count));
 	if (this->error != Error::VALUE_OK)
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
-	if (position != this->position)
+	bool changed = (position != this->position);
+	if (changed)
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	this->position = position;
 	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
+	if (changed)
+		this->handleStateChange(changeSource);
 }
 
 void SelectPort::getState(uint16_t* position) const {
@@ -858,7 +889,7 @@ void DialPort::setStep(uint64_t step) {
 	this->step = step;
 }
 
-void DialPort::setPosition(int64_t position, ChangeSource /*changeSource*/) {
+void DialPort::setPosition(int64_t position, ChangeSource changeSource) {
 	if (position < this->minValue)
 		throw PortError(this->ID() + ": Position must not be less than the minimum: " + to_string(this->minValue));
 	if (position > this->maxValue)
@@ -867,12 +898,15 @@ void DialPort::setPosition(int64_t position, ChangeSource /*changeSource*/) {
 	int64_t newPosition = ((position - this->minValue) / this->step) * this->step + this->minValue;
 	if (this->error != Error::VALUE_OK)
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
-	if (newPosition != this->position)
+	bool changed = (newPosition != this->position);
+	if (changed)
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	this->position = position;
 	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
+	if (changed)
+		this->handleStateChange(changeSource);
 }
 
 void DialPort::getState(int64_t* position) const {

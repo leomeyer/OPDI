@@ -384,20 +384,19 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// File Input Port
+// File Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A FileInputPort is a port that reads its state from a file. It is represented by
+/** A FilePort is a port that reads or writes its state from or to a file. It is represented by
 * a DigitalPort; as such it can be either active (line = High) or inactive (line = Low).
-* The FileInputPort actually consists of two ports: 1.) one DigitalPort which handles
-* the actual file monitoring; it can be enabled and disabled, and 2.) one more port with
+* The FilePort actually consists of two ports: 1.) one DigitalPort which handles
+* the actual file monitoring; it can be enabled and disabled, and 2.) a value port with
 * a specified type that reflects the file content.
-* You have to specify a PortNode setting which provides information about the actual
-* input port that should reflect the file content. This node's configuration is
-* evaluated just as if it was a standard port node, except that you cannot set
-* the Mode setting to anything other than Input (if available).
+* You have to specify a PortNode setting which provides information about the value
+* port that should reflect the file content. This node's configuration is
+* evaluated just as if it was a standard port node.
 * The port monitors the file and reads its contents when it changes. The content is
-* parsed according to the port type:
+* parsed according to the value port's type:
 *  - DigitalPort: content must be either 0 or 1
 *  - AnalogPort: content must be a decimal number (separator '.') in range [0..1]
 *  - DialPort: content must be a number in range [min..max] (it's automatically adjusted
@@ -407,8 +406,11 @@ public:
 * Additionally you can specify a delay that signals how long to wait until the file is
 * being re-read. This can help avoid too many refreshes.
 * For analog and dial ports the value can be scaled using a numerator and a denominator.
+* The FilePort can also be set (by a user or an internal function, if it is not read-only.
+* If the FilePort is active (High) when such a state change occurs the state of the value port
+* is written to the specified file.
 */
-class FileInputPort : public opdi::DigitalPort, protected opdid::PortFunctions {
+class FilePort : public opdi::DigitalPort, protected opdid::PortFunctions {
 protected:
 
 	enum PortType {
@@ -420,9 +422,24 @@ protected:
 		STREAMING_PORT
 	};
 
+	// Dummy digital port that handles the state change event of the value port
+	class ChangeHandlerPort : public opdi::DigitalPort {
+		FilePort* filePort;
+	public:
+		ChangeHandlerPort(const char* id, FilePort* filePort) : opdi::DigitalPort(id) {
+			this->filePort = filePort;
+		}
+
+		virtual void setLine(uint8_t line, ChangeSource /*changeSource*/) override {
+			// the internal state is not updated as this is an event handler only
+			if (line == 1)
+				this->filePort->writeContent();
+		}
+	};
+
 	std::string filePath;
 	Poco::File directory;
-	opdi::Port* port;
+	opdi::Port* valuePort;
 	PortType portType;
 	int reloadDelayMs;
 	int expiryMs;
@@ -438,10 +455,12 @@ protected:
 
 	void fileChangedEvent(const void*, const Poco::DirectoryWatcher::DirectoryEvent&);
 
-public:
-	FileInputPort(AbstractOPDID* opdid, const char* id);
+	void writeContent();
 
-	virtual ~FileInputPort();
+public:
+	FilePort(AbstractOPDID* opdid, const char* id);
+
+	virtual ~FilePort();
 
 	virtual void configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig);
 };

@@ -106,8 +106,9 @@ public:
 
 	virtual std::string getExtendedPortState(char* portID, uint8_t* code);
 
-	/** Adds the specified port.
-	 * */
+	/** Adds the specified port. 
+	* Transfers ownership of the pointer to this class.
+	*/
 	virtual void addPort(opdi::Port* port);
 
 	/** Updates the internal port data structure. Is automatically called; do not use.
@@ -189,6 +190,20 @@ public:
 
 	/** Makes the port state persistent if the implementation supports it. */
 	virtual void persist(opdi::Port* port);
+
+	virtual opdi::Port* findPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+
+	virtual void findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::PortList& portList);
+
+	virtual opdi::DigitalPort* findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+
+	virtual void findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::DigitalPortList& portList);
+
+	virtual opdi::AnalogPort* findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+
+	virtual void findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::AnalogPortList& portList);
+
+	virtual opdi::SelectPort* findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 };
 
 }		// namespace opdi

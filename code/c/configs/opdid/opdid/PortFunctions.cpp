@@ -12,114 +12,41 @@ PortFunctions::PortFunctions(std::string id) {
 	this->opdid = nullptr;
 }
 
-opdi::Port* PortFunctions::findPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
-	// locate port by ID
-	opdi::Port* port = this->opdid->findPortByID(portID.c_str());
-	// no found but required?
-	if (port == nullptr) {
-		if (required)
-			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
-		return nullptr;
-	}
+// find function delegates
 
-	return port;
+opdi::Port * PortFunctions::findPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required)
+{
+	return this->opdid->findPort(configPort, setting, portID, required);
 }
 
-void PortFunctions::findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::PortList &portList) {
-	// split list at blanks
-	std::stringstream ss(portIDs);
-	std::string item;
-	while (std::getline(ss, item, ' ')) {
-		if (item == "*") {
-			// add all ports
-			portList = this->opdid->getPorts();
-		} else
-		// ignore empty items
-		if (!item.empty()) {
-			opdi::Port* port = this->findPort(configPort, setting, item, true);
-			if (port != nullptr)
-				portList.push_back(port);
-		}
-	}
+void PortFunctions::findPorts(const std::string & configPort, const std::string & setting, const std::string & portIDs, opdi::PortList & portList)
+{
+	this->opdid->findPorts(configPort, setting, portIDs, portList);
 }
 
-opdi::DigitalPort* PortFunctions::findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
-	// locate port by ID
-	opdi::Port* port = this->opdid->findPortByID(portID.c_str());
-	// no found but required?
-	if (port == nullptr) {
-		if (required)
-			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
-		return nullptr;
-	}
-
-	// port type must be "digital"
-	if (port->getType()[0] != OPDI_PORTTYPE_DIGITAL[0])
-		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a digital port: " + portID);
-
-	return (opdi::DigitalPort*)port;
+opdi::DigitalPort * PortFunctions::findDigitalPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required)
+{
+	return this->opdid->findDigitalPort(configPort, setting, portID, required);
 }
 
-void PortFunctions::findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::DigitalPortList& portList) {
-	// split list at blanks
-	std::stringstream ss(portIDs);
-	std::string item;
-	while (std::getline(ss, item, ' ')) {
-		// ignore empty items
-		if (!item.empty()) {
-			opdi::DigitalPort* port = this->findDigitalPort(configPort, setting, item, true);
-			if (port != nullptr)
-				portList.push_back(port);
-		}
-	}
+void PortFunctions::findDigitalPorts(const std::string & configPort, const std::string & setting, const std::string & portIDs, opdi::DigitalPortList & portList)
+{
+	this->opdid->findDigitalPorts(configPort, setting, portIDs, portList);
 }
 
-opdi::AnalogPort* PortFunctions::findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
-	// locate port by ID
-	opdi::Port* port = this->opdid->findPortByID(portID.c_str());
-	// no found but required?
-	if (port == nullptr) {
-		if (required)
-			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
-		return nullptr;
-	}
-
-	// port type must be "analog"
-	if (port->getType()[0] != OPDI_PORTTYPE_ANALOG[0])
-		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not an analog port: " + portID);
-
-	return (opdi::AnalogPort*)port;
+opdi::AnalogPort * PortFunctions::findAnalogPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required)
+{
+	return this->opdid->findAnalogPort(configPort, setting, portID, required);
 }
 
-void PortFunctions::findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::AnalogPortList& portList) {
-	// split list at blanks
-	std::stringstream ss(portIDs);
-	std::string item;
-	while (std::getline(ss, item, ' ')) {
-		// ignore empty items
-		if (!item.empty()) {
-			opdi::AnalogPort* port = this->findAnalogPort(configPort, setting, item, true);
-			if (port != nullptr)
-				portList.push_back(port);
-		}
-	}
+void PortFunctions::findAnalogPorts(const std::string & configPort, const std::string & setting, const std::string & portIDs, opdi::AnalogPortList & portList)
+{
+	this->opdid->findAnalogPorts(configPort, setting, portIDs, portList);
 }
 
-opdi::SelectPort* PortFunctions::findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
-	// locate port by ID
-	opdi::Port* port = this->opdid->findPortByID(portID.c_str());
-	// no found but required?
-	if (port == nullptr) {
-		if (required)
-			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
-		return nullptr;
-	}
-
-	// port type must be "select"
-	if (port->getType()[0] != OPDI_PORTTYPE_SELECT[0])
-		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a select port: " + portID);
-
-	return (opdi::SelectPort*)port;
+opdi::SelectPort * PortFunctions::findSelectPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required)
+{
+	return this->opdid->findSelectPort(configPort, setting, portID, required);
 }
 
 void PortFunctions::logWarning(const std::string& message) {

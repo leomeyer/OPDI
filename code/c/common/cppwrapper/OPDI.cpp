@@ -428,4 +428,115 @@ void OPDI::persist(opdi::Port*  /*port*/) {
 	throw Poco::NotImplementedException("This implementation does not support port state persistance");
 }
 
+opdi::Port* OPDI::findPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
+	// locate port by ID
+	opdi::Port* port = this->findPortByID(portID.c_str());
+	// no found but required?
+	if (port == nullptr) {
+		if (required)
+			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
+		return nullptr;
+	}
+
+	return port;
+}
+
+void OPDI::findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::PortList &portList) {
+	// split list at blanks
+	std::stringstream ss(portIDs);
+	std::string item;
+	while (std::getline(ss, item, ' ')) {
+		if (item == "*") {
+			// add all ports
+			portList = this->getPorts();
+		}
+		else
+			// ignore empty items
+			if (!item.empty()) {
+				opdi::Port* port = this->findPort(configPort, setting, item, true);
+				if (port != nullptr)
+					portList.push_back(port);
+			}
+	}
+}
+
+opdi::DigitalPort* OPDI::findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
+	// locate port by ID
+	opdi::Port* port = this->findPortByID(portID.c_str());
+	// no found but required?
+	if (port == nullptr) {
+		if (required)
+			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
+		return nullptr;
+	}
+
+	// port type must be "digital"
+	if (port->getType()[0] != OPDI_PORTTYPE_DIGITAL[0])
+		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a digital port: " + portID);
+
+	return (opdi::DigitalPort*)port;
+}
+
+void OPDI::findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::DigitalPortList& portList) {
+	// split list at blanks
+	std::stringstream ss(portIDs);
+	std::string item;
+	while (std::getline(ss, item, ' ')) {
+		// ignore empty items
+		if (!item.empty()) {
+			opdi::DigitalPort* port = this->findDigitalPort(configPort, setting, item, true);
+			if (port != nullptr)
+				portList.push_back(port);
+		}
+	}
+}
+
+opdi::AnalogPort* OPDI::findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
+	// locate port by ID
+	opdi::Port* port = this->findPortByID(portID.c_str());
+	// no found but required?
+	if (port == nullptr) {
+		if (required)
+			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
+		return nullptr;
+	}
+
+	// port type must be "analog"
+	if (port->getType()[0] != OPDI_PORTTYPE_ANALOG[0])
+		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not an analog port: " + portID);
+
+	return (opdi::AnalogPort*)port;
+}
+
+void OPDI::findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::AnalogPortList& portList) {
+	// split list at blanks
+	std::stringstream ss(portIDs);
+	std::string item;
+	while (std::getline(ss, item, ' ')) {
+		// ignore empty items
+		if (!item.empty()) {
+			opdi::AnalogPort* port = this->findAnalogPort(configPort, setting, item, true);
+			if (port != nullptr)
+				portList.push_back(port);
+		}
+	}
+}
+
+opdi::SelectPort* OPDI::findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
+	// locate port by ID
+	opdi::Port* port = this->findPortByID(portID.c_str());
+	// no found but required?
+	if (port == nullptr) {
+		if (required)
+			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
+		return nullptr;
+	}
+
+	// port type must be "select"
+	if (port->getType()[0] != OPDI_PORTTYPE_SELECT[0])
+		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a select port: " + portID);
+
+	return (opdi::SelectPort*)port;
+}
+
 }		// namespace opdi

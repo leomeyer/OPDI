@@ -137,22 +137,26 @@ protected:
 	virtual void persist(void);
 
 	/** Causes the port to be refreshed by sending a refresh message to a connected master.
-	*   Only if the port is not hidden. */
+	* Only if the port is not hidden. */
 	virtual uint8_t refresh();
 
 	/** Called when the port should send a refresh message to the master.
-	*   This implementation sets this->refreshRequired = true. */
+	* This implementation sets this->refreshRequired = true. */
 	virtual void doRefresh(void);
 
 	virtual void updateExtendedInfo(void);
 
 	std::string escapeKeyValueText(const std::string& str) const;
 
-	// checks the error state and throws an exception
-	// should be used by subclasses in getState() methods
+	/** Checks the error state and throws an exception.
+	* Should be used by subclasses in getState() methods. */
 	virtual void checkError(void) const;
 
 	virtual void setID(const char* newID);
+
+	/** This method must be called when the state changes in order to
+	* handle the onChange* functionality. */
+	virtual void handleStateChange(ChangeSource changeSource);
 
 public:
 
@@ -192,8 +196,15 @@ public:
 	// used to provide display ordering on ports
 	int orderID;
 
-	// The tag is additional information not used elsewhere.
+	// The tag is additional information that is not used anywhere
 	std::string tag;
+
+	// Lists of digital ports that are to be set to High if a change occurs
+	// The lists are to be set from external code but handled internally (this->handleStateChange).
+	std::string onChangeIntPortsStr;
+	std::string onChangeUserPortsStr;
+	DigitalPortList onChangeIntPorts;
+	DigitalPortList onChangeUserPorts;
 
 	virtual const char* getID(void) const;
 
