@@ -16,7 +16,9 @@ ExecPort::ExecPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id,
 	// default: Low
 	this->line = 0;
 	this->lastTriggerTime = 0;
-	this->changeType = CHANGED_TO_HIGH;
+	this->changeType = CHANGED_TO_HIGH;	// default: execute when changed to High only
+	this->waitTimeMs = 0;		// no wait time
+	this->resetTimeMs = 1000;	// reset after one second
 }
 
 ExecPort::~ExecPort() {
@@ -45,11 +47,11 @@ void ExecPort::configure(Poco::Util::AbstractConfiguration* config) {
 
 	this->parameters = config->getString("Parameters", "");
 
-	this->waitTimeMs = config->getInt64("WaitTime", 0);
+	this->waitTimeMs = config->getInt64("WaitTime", this->waitTimeMs);
 	if (this->waitTimeMs < 0)
 		throw Poco::DataException(this->ID() + ": Please specify a positive value for WaitTime: ", this->to_string(this->waitTimeMs));
 
-	this->resetTimeMs = config->getInt64("ResetTime", 0);
+	this->resetTimeMs = config->getInt64("ResetTime", this->resetTimeMs);
 	if (this->resetTimeMs < 0)
 		throw Poco::DataException(this->ID() + ": Please specify a positive value for ResetTime: ", this->to_string(this->resetTimeMs));
 
