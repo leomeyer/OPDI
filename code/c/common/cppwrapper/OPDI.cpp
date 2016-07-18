@@ -214,7 +214,7 @@ opdi::Port* OPDI::findPort(opdi_Port* port) {
 	return nullptr;
 }
 
-OPDI::PortList& OPDI::getPorts() {
+opdi::PortList& OPDI::getPorts() {
 	return this->ports;
 }
 
@@ -276,7 +276,7 @@ void OPDI::addPortGroup(opdi::PortGroup *portGroup) {
 	opdi_add_portgroup((opdi_PortGroup*)portGroup->data);
 }
 
-OPDI::PortGroupList& OPDI::getPortGroups(void) {
+opdi::PortGroupList& OPDI::getPortGroups(void) {
 	return this->groups;
 }
 

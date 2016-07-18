@@ -64,9 +64,9 @@ protected:
 	std::string inputPortStr;
 	std::string outputPortStr;
 	std::string inverseOutputPortStr;
-	DigitalPortList inputPorts;
-	DigitalPortList outputPorts;
-	DigitalPortList inverseOutputPorts;
+	opdi::DigitalPortList inputPorts;
+	opdi::DigitalPortList outputPorts;
+	opdi::DigitalPortList inverseOutputPorts;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
@@ -109,10 +109,9 @@ protected:
 	std::string enablePortStr;
 	std::string outputPortStr;
 	std::string inverseOutputPortStr;
-	typedef std::vector<opdi::DigitalPort*> PortList;
-	DigitalPortList enablePorts;
-	DigitalPortList outputPorts;
-	DigitalPortList inverseOutputPorts;
+	opdi::DigitalPortList enablePorts;
+	opdi::DigitalPortList outputPorts;
+	opdi::DigitalPortList inverseOutputPorts;
 
 	// state
 	uint8_t pulseState;
@@ -147,7 +146,7 @@ protected:
 	std::string selectPortStr;
 	opdi::SelectPort* selectPort;
 	std::string outputPortStr;
-	DigitalPortList outputPorts;
+	opdi::DigitalPortList outputPorts;
 	uint16_t position;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
@@ -181,7 +180,7 @@ class ErrorDetectorPort : public opdi::DigitalPort, protected opdid::PortFunctio
 protected:
 	bool negate;
 	std::string inputPortStr;
-	opdi::OPDI::PortList inputPorts;
+	opdi::PortList inputPorts;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
@@ -256,7 +255,7 @@ protected:
 	Format format;
 	std::string separator;
 	std::string portsToLogStr;
-	opdi::OPDI::PortList portsToLog;
+	opdi::PortList portsToLog;
 	bool writeHeader;
 	uint64_t lastEntryTime;
 	
@@ -325,10 +324,10 @@ protected:
 	SwitchOffAction switchOffAction;
 
 	std::string outputPortStr;
-	PortList outputPorts;
+	opdi::PortList outputPorts;
 
 	std::string endSwitchesStr;
-	DigitalPortList endSwitches;
+	opdi::DigitalPortList endSwitches;
 
 	Poco::Timestamp startTime;
 	double lastValue;
@@ -616,8 +615,8 @@ protected:
 	std::string inputPortStr;
 	std::string outputPortStr;
 	std::string inverseOutputPortStr;
-	DigitalPortList outputPorts;
-	DigitalPortList inverseOutputPorts;
+	opdi::DigitalPortList outputPorts;
+	opdi::DigitalPortList inverseOutputPorts;
 	TriggerType triggerType;
 	ChangeType changeType;
 	CounterPort* counterPort;

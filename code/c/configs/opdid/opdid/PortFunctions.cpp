@@ -25,7 +25,7 @@ opdi::Port* PortFunctions::findPort(const std::string& configPort, const std::st
 	return port;
 }
 
-void PortFunctions::findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, PortList &portList) {
+void PortFunctions::findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::PortList &portList) {
 	// split list at blanks
 	std::stringstream ss(portIDs);
 	std::string item;
@@ -60,7 +60,7 @@ opdi::DigitalPort* PortFunctions::findDigitalPort(const std::string& configPort,
 	return (opdi::DigitalPort*)port;
 }
 
-void PortFunctions::findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, DigitalPortList& portList) {
+void PortFunctions::findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::DigitalPortList& portList) {
 	// split list at blanks
 	std::stringstream ss(portIDs);
 	std::string item;
@@ -91,7 +91,7 @@ opdi::AnalogPort* PortFunctions::findAnalogPort(const std::string& configPort, c
 	return (opdi::AnalogPort*)port;
 }
 
-void PortFunctions::findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, AnalogPortList& portList) {
+void PortFunctions::findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::AnalogPortList& portList) {
 	// split list at blanks
 	std::stringstream ss(portIDs);
 	std::string item;

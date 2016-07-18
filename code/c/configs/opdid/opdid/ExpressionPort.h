@@ -76,7 +76,7 @@ protected:
 	std::vector<double> portValues;	// holds the values of the ports for the expression evaluation
 
 	std::string outputPortStr;
-	opdi::OPDI::PortList outputPorts;
+	opdi::PortList outputPorts;
 	int64_t numIterations;
 	double fallbackValue;
 	bool fallbackSpecified;

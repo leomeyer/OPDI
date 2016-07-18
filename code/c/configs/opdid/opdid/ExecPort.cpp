@@ -108,7 +108,7 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 				PortValues portValues;
 				std::string allPorts;
 				// go through all ports
-				opdi::OPDI::PortList pl = this->opdid->getPorts();
+				opdi::PortList pl = this->opdid->getPorts();
 				auto pli = pl.begin();
 				auto plie = pl.end();
 				while (pli != plie) {

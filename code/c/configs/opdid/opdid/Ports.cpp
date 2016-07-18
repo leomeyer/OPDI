@@ -2025,7 +2025,7 @@ void TriggerPort::prepare() {
 	opdi::DigitalPort::prepare();
 
 	// find ports; throws errors if something required is missing
-	DigitalPortList inputPorts;
+	opdi::DigitalPortList inputPorts;
 	this->findDigitalPorts(this->getID(), "InputPorts", this->inputPortStr, inputPorts);
 	// go through input ports, build port state list
 	auto it = inputPorts.begin();

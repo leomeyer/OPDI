@@ -218,7 +218,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcGetPortInfo(struct mg_connection* /*n
 Poco::JSON::Array WebServerPlugin::jsonGetPortList() {
 	// return an array of port objects
 	Poco::JSON::Array result;
-	PortList pl = this->opdid->getPorts();
+	opdi::PortList pl = this->opdid->getPorts();
 	auto it = pl.begin();
 	auto ite = pl.end();
 	while (it != ite) {
@@ -233,7 +233,7 @@ Poco::JSON::Array WebServerPlugin::jsonGetPortList() {
 Poco::JSON::Array WebServerPlugin::jsonGetPortGroups() {
 	// return an array of group objects
 	Poco::JSON::Array result;
-	opdi::OPDI::PortGroupList gl = this->opdid->getPortGroups();
+	opdi::PortGroupList gl = this->opdid->getPortGroups();
 	auto it = gl.begin();
 	auto ite = gl.end();
 	while (it != ite) {

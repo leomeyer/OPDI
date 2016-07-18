@@ -31,15 +31,16 @@
 
 namespace opdi {
 
+class PortGroup;
+
+typedef std::vector<opdi::PortGroup*> PortGroupList;
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Main class for OPDI functionality
 // All public methods should be virtual.
 //////////////////////////////////////////////////////////////////////////////////////////
 
 class OPDI {
-public:
-	typedef std::vector<opdi::Port*> PortList;
-	typedef std::vector<opdi::PortGroup *> PortGroupList;
 
 protected:
 	std::string slaveName;

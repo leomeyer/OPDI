@@ -17,10 +17,6 @@ friend class ValueResolver<int32_t>;
 friend class ValueResolver<int64_t>;
 
 protected:
-	typedef std::vector<opdi::Port*> PortList;
-	typedef std::vector<opdi::DigitalPort*> DigitalPortList;
-	typedef std::vector<opdi::AnalogPort*> AnalogPortList;
-
 	AbstractOPDID* opdid;
 	AbstractOPDID::LogVerbosity logVerbosity;
 	std::string portFunctionID;
@@ -29,15 +25,15 @@ protected:
 
 	virtual opdi::Port* findPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
-	virtual void findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, PortList& portList);
+	virtual void findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::PortList& portList);
 
 	virtual opdi::DigitalPort* findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
-	virtual void findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, DigitalPortList& portList);
+	virtual void findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::DigitalPortList& portList);
 
 	virtual opdi::AnalogPort* findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
-	virtual void findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, AnalogPortList& portList);
+	virtual void findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::AnalogPortList& portList);
 
 	virtual opdi::SelectPort* findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 

@@ -13,6 +13,16 @@
 namespace opdi {
 
 class OPDI;
+class Port;
+class DigitalPort;
+class AnalogPort;
+class SelectPort;
+class DialPort;
+
+typedef std::vector<Port*> PortList;
+typedef std::vector<DigitalPort*> DigitalPortList;
+typedef std::vector<AnalogPort*> AnalogPortList;
+
 
 /** Base class for OPDI port wrappers.
 	*
@@ -43,8 +53,6 @@ public:
 		VALUE_NOT_AVAILABLE
 	};
 
-
-private:
 	// disable copy constructor
 	Port(const Port& that) = delete;
 
@@ -132,8 +140,8 @@ protected:
 	*   Only if the port is not hidden. */
 	virtual uint8_t refresh();
 
-	/* Called when the port should send a refresh message to the master.
-	*  This implementation sets this->refreshRequired = true. */
+	/** Called when the port should send a refresh message to the master.
+	*   This implementation sets this->refreshRequired = true. */
 	virtual void doRefresh(void);
 
 	virtual void updateExtendedInfo(void);
@@ -152,7 +160,7 @@ public:
 	virtual ~Port();
 
 	/** This exception can be used by implementations to indicate an error during a port operation.
-		*  Its message will be transferred to the master. */
+	*  Its message will be transferred to the master. */
 	class PortError : public Poco::Exception
 	{
 	public:

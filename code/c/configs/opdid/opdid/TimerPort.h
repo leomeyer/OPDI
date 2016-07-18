@@ -181,7 +181,7 @@ namespace opdid {
 		ScheduleList schedules;
 
 		std::string outputPortStr;
-		DigitalPortList outputPorts;
+		opdi::DigitalPortList outputPorts;
 		bool propagateSwitchOff;	// deactivates the output ports if itself being deactivated
 
 		Poco::TimedNotificationQueue queue;

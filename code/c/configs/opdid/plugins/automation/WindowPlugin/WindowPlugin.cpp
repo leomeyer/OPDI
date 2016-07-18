@@ -84,14 +84,12 @@ protected:
 	opdi::DigitalPort* enablePort;
 	opdi::SelectPort* statusPort;
 
-	typedef std::vector<opdi::DigitalPort*> DigitalPortList;
-
-	DigitalPortList autoOpenPorts;
-	DigitalPortList autoClosePorts;
-	DigitalPortList forceOpenPorts;
-	DigitalPortList forceClosePorts;
-	DigitalPortList errorPorts;
-	DigitalPortList resetPorts;
+	opdi::DigitalPortList autoOpenPorts;
+	opdi::DigitalPortList autoClosePorts;
+	opdi::DigitalPortList forceOpenPorts;
+	opdi::DigitalPortList forceClosePorts;
+	opdi::DigitalPortList errorPorts;
+	opdi::DigitalPortList resetPorts;
 
 	WindowMode mode;
 	// state
@@ -857,7 +855,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		}
 	}
 
-	DigitalPortList::const_iterator pi;
+	opdi::DigitalPortList::const_iterator pi;
 	bool forceOpen = false;
 	bool forceClose = false;
 
