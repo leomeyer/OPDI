@@ -80,7 +80,7 @@ void ExecPort::prepare() {
 uint8_t ExecPort::doWork(uint8_t canSend)  {
 	opdi::DigitalPort::doWork(canSend);
 
-	if (this->processIO != nullptr)
+	if (this->processIO)
 		this->processIO->process();
 
 	// process running?
@@ -88,7 +88,7 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 		if (Poco::Process::isRunning(this->processPID)) {
 		} else {
 			this->logVerbose("Process with PID " + this->to_string(this->processPID) + " has terminated.");
-			delete this->processIO;
+			processIO = nullptr;
 			this->processIO = nullptr;
 			this->processPID = 0;
 		}
@@ -178,7 +178,7 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 					Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList, inPipe.get(), outPipe.get(), errPipe.get()));
 
 					this->processPID = ph.id();
-					this->processIO = new ProcessIO(this, std::move(outPipe), std::move(errPipe), std::move(inPipe));
+					this->processIO = std::unique_ptr<ProcessIO>(new ProcessIO(this, std::move(outPipe), std::move(errPipe), std::move(inPipe)));
 
 					this->logVerbose(std::string() + "Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
 				} catch (Poco::Exception &e) {

@@ -93,7 +93,7 @@ protected:
 	uint8_t lastState;
 	Poco::Timestamp lastTriggerTime;
 	Poco::Process::PID processPID;
-	ProcessIO* processIO;
+	std::unique_ptr<ProcessIO> processIO;
 
 	virtual uint8_t doWork(uint8_t canSend);
 
