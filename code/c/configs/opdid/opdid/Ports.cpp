@@ -1773,9 +1773,18 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 			// diff may not exceed deltas
 			if ((diff < this->minDelta) || (diff > this->maxDelta)) {
 				this->logWarning(std::string() + "The new source port value of " + this->to_string(longValue) + " is outside of the specified limits (diff = " + this->to_string(diff) + ")");
-				// an invalid value invalidates the whole calculation
-				this->resetValues("The value was outside of the specified limits", AbstractOPDID::VERBOSE);
-				return OPDI_STATUS_OK;
+				// error occurred; check whether there's a last value and an error tolerance
+				if ((this->values.size() > 0) && (this->allowedErrors > 0) && (this->errors < this->allowedErrors)) {
+					++errors;
+					// fallback to last value
+					value = (double)this->values.at(this->values.size() - 1);
+					this->logDebug(std::string() + "Fallback to last read value, remaining allowed errors: " + this->to_string(this->allowedErrors - this->errors));
+				}
+				else {
+					// an invalid value invalidates the whole calculation
+					this->resetValues("The value was outside of the specified limits", AbstractOPDID::VERBOSE);
+					return OPDI_STATUS_OK;
+				}
 			}
 			// value is ok
 		}

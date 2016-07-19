@@ -9,7 +9,6 @@ namespace opdid {
 ///////////////////////////////////////////////////////////////////////////////
 
 ExecPort::ExecPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id)
-//	, pis(this->outPipe), pes(this->errPipe), pos(this->inPipe) 
 {
 	this->opdid = opdid;
 
