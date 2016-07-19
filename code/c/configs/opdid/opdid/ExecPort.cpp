@@ -171,14 +171,17 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 
 				// execute program
 				try {
-					// Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList));
+					// create pipes for IO redirection
 					std::unique_ptr<Poco::Pipe> outPipe(new Poco::Pipe);
 					std::unique_ptr<Poco::Pipe> errPipe(new Poco::Pipe);
 					std::unique_ptr<Poco::Pipe> inPipe(new Poco::Pipe);
 					Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList, inPipe.get(), outPipe.get(), errPipe.get()));
 
 					this->processPID = ph.id();
+					// let the helper class handle IO
 					this->processIO = std::unique_ptr<ProcessIO>(new ProcessIO(this, std::move(outPipe), std::move(errPipe), std::move(inPipe)));
+					// create a thread that waits for the process to terminate
+					// otherwise, on Linux, child processes will remain defunct
 
 					this->logVerbose(std::string() + "Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
 				} catch (Poco::Exception &e) {

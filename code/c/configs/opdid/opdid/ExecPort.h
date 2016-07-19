@@ -82,6 +82,9 @@ protected:
 			}
 		}
 	};
+	
+	class WaitThread : Poco::Thread {
+	};
 
 	std::string programName;
 	std::string parameters;

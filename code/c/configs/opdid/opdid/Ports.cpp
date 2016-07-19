@@ -1753,7 +1753,10 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 				this->logDebug(std::string() + "Fallback to last read value, remaining allowed errors: " + this->to_string(this->allowedErrors - this->errors));
 			}
 			else {
-				this->resetValues("Querying the source port " + this->sourcePort->ID() + " resulted in an error: " + e.message(), AbstractOPDID::VERBOSE);
+				// avoid logging too many messages
+				if (this->values.size() > 0) {
+					this->resetValues("Querying the source port " + this->sourcePort->ID() + " resulted in an error: " + e.message(), AbstractOPDID::VERBOSE);
+				}
 				return OPDI_STATUS_OK;
 			}
 		}
@@ -1782,7 +1785,10 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 				}
 				else {
 					// an invalid value invalidates the whole calculation
-					this->resetValues("The value was outside of the specified limits", AbstractOPDID::VERBOSE);
+					// avoid logging too many messages
+					if (this->values.size() > 0) {
+						this->resetValues("The value was outside of the specified limits", AbstractOPDID::VERBOSE);
+					}
 					return OPDI_STATUS_OK;
 				}
 			}
