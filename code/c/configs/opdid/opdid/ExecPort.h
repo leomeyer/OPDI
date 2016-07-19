@@ -3,6 +3,10 @@
 #include "Poco/Process.h"
 #include "Poco/Thread.h"
 #include "Poco/Util/AbstractConfiguration.h"
+#include "Poco/PipeStream.h"
+#include "Poco/StreamCopier.h"
+
+#include <memory>
 
 #include "PortFunctions.h"
 
@@ -37,6 +41,48 @@ protected:
         ANY_CHANGE
     };
 
+	class ProcessIO {
+		std::unique_ptr<Poco::Pipe> outPipe;
+		std::unique_ptr<Poco::Pipe> errPipe;
+		std::unique_ptr<Poco::Pipe> inPipe;
+
+		Poco::PipeInputStream pis;	// stdout
+		Poco::PipeInputStream pes;	// stderr
+		Poco::PipeOutputStream pos;	// stdin
+
+		ExecPort* execPort;
+
+	public:
+		ProcessIO(ExecPort* execPort, std::unique_ptr<Poco::Pipe> outPipe, std::unique_ptr<Poco::Pipe> errPipe, std::unique_ptr<Poco::Pipe> inPipe)
+			: pis(*outPipe.get()), pes(*errPipe.get()), pos(*inPipe.get()) {
+			this->execPort = execPort;
+		}
+
+		void process() {
+			// does the stdin stream request data?
+			if (this->pos.eof()) {
+				// data cannot be served, the process must be killed
+				this->execPort->logWarning("Process " + this->execPort->to_string(this->execPort->processPID) + " requests data that cannot be provided, killing the process");
+				Poco::Process::kill(this->execPort->processPID);
+			}
+			// check whether stream data is available
+			int ces = (this->pes.good() ? this->pes.peek() : EOF);
+			if (ces != EOF) {
+				// read data from the stream
+				std::string data;
+				Poco::StreamCopier::copyToString(this->pes, data);
+				this->execPort->logNormal("stderr: " + data);
+			}
+			int cis = (this->pis.good() ? this->pis.peek() : EOF);
+			if (cis != EOF) {
+				// read data from the stream
+				std::string data;
+				Poco::StreamCopier::copyToString(this->pis, data);
+				this->execPort->logVerbose("stdout: " + data);
+			}
+		}
+	};
+
 	std::string programName;
 	std::string parameters;
 	ChangeType changeType;
@@ -47,6 +93,7 @@ protected:
 	uint8_t lastState;
 	Poco::Timestamp lastTriggerTime;
 	Poco::Process::PID processPID;
+	ProcessIO* processIO;
 
 	virtual uint8_t doWork(uint8_t canSend);
 

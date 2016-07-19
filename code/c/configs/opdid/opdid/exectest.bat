@@ -6,4 +6,6 @@ echo exectest.bat parameter: %1
 shift
 goto loop
 
+set /p id="Enter test value: "
+
 :end

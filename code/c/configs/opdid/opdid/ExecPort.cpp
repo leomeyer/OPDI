@@ -8,7 +8,9 @@ namespace opdid {
 // Exec Port
 ///////////////////////////////////////////////////////////////////////////////
 
-ExecPort::ExecPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+ExecPort::ExecPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id)
+//	, pis(this->outPipe), pes(this->errPipe), pos(this->inPipe) 
+{
 	this->opdid = opdid;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -16,6 +18,8 @@ ExecPort::ExecPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id,
 	// default: Low
 	this->line = 0;
 	this->lastTriggerTime = 0;
+	this->processPID = 0;
+	this->processIO = nullptr;
 	this->changeType = CHANGED_TO_HIGH;	// default: execute when changed to High only
 	this->waitTimeMs = 0;		// no wait time
 	this->resetTimeMs = 1000;	// reset after one second
@@ -76,6 +80,20 @@ void ExecPort::prepare() {
 
 uint8_t ExecPort::doWork(uint8_t canSend)  {
 	opdi::DigitalPort::doWork(canSend);
+
+	if (this->processIO != nullptr)
+		this->processIO->process();
+
+	// process running?
+	if (this->processPID != 0) {
+		if (Poco::Process::isRunning(this->processPID)) {
+		} else {
+			this->logVerbose("Process with PID " + this->to_string(this->processPID) + " has terminated.");
+			delete this->processIO;
+			this->processIO = nullptr;
+			this->processPID = 0;
+		}
+	}
 
 	uint8_t lastLine = this->lastState;
 	this->lastState = this->line;
@@ -154,8 +172,15 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 
 				// execute program
 				try {
-					Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList));
+					// Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList));
+					std::unique_ptr<Poco::Pipe> outPipe(new Poco::Pipe);
+					std::unique_ptr<Poco::Pipe> errPipe(new Poco::Pipe);
+					std::unique_ptr<Poco::Pipe> inPipe(new Poco::Pipe);
+					Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList, inPipe.get(), outPipe.get(), errPipe.get()));
+
 					this->processPID = ph.id();
+					this->processIO = new ProcessIO(this, std::move(outPipe), std::move(errPipe), std::move(inPipe));
+
 					this->logVerbose(std::string() + "Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
 				} catch (Poco::Exception &e) {
 					this->logNormal(std::string() + "ERROR: Unable to start program '" + this->programName + "': " + e.message());
