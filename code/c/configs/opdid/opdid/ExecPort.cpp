@@ -8,8 +8,7 @@ namespace opdid {
 // Exec Port
 ///////////////////////////////////////////////////////////////////////////////
 
-ExecPort::ExecPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id)
-{
+ExecPort::ExecPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id), waiter(*this, &ExecPort::waitForProcessEnd) {
 	this->opdid = opdid;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -22,6 +21,7 @@ ExecPort::ExecPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id,
 	this->changeType = CHANGED_TO_HIGH;	// default: execute when changed to High only
 	this->waitTimeMs = 0;		// no wait time
 	this->resetTimeMs = 1000;	// reset after one second
+	this->killTimeMs = 0;		// kill time disabled
 }
 
 ExecPort::~ExecPort() {
@@ -58,6 +58,10 @@ void ExecPort::configure(Poco::Util::AbstractConfiguration* config) {
 	if (this->resetTimeMs < 0)
 		throw Poco::DataException(this->ID() + ": Please specify a positive value for ResetTime: ", this->to_string(this->resetTimeMs));
 
+	this->killTimeMs = config->getInt64("KillTime", this->killTimeMs);
+	if (this->killTimeMs < 0)
+		throw Poco::DataException(this->ID() + ": Please specify a positive value for KillTime: ", this->to_string(this->killTimeMs));
+
 	this->forceKill = config->getBool("ForceKill", false);
 	
 	if ((this->waitTimeMs > 0) && (this->resetTimeMs > 0) && (this->waitTimeMs > this->resetTimeMs))
@@ -86,6 +90,14 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 	// process running?
 	if (this->processPID != 0) {
 		if (Poco::Process::isRunning(this->processPID)) {
+			Poco::Timestamp::TimeDiff timeDiff = (Poco::Timestamp() - this->lastTriggerTime);
+			// kill time up?
+			if ((this->killTimeMs > 0) && (timeDiff / 1000 > this->killTimeMs)) { // Poco TimeDiff is in microseconds
+				this->logVerbose(std::string() + "Trying to kill previously started process with PID " + this->to_string(this->processPID) + ": Kill time exceeded");
+
+				// kill process
+				Poco::Process::kill(this->processPID);
+			}
 		} else {
 			this->logVerbose("Process with PID " + this->to_string(this->processPID) + " has terminated.");
 			processIO = nullptr;
@@ -107,14 +119,14 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
             stateChanged = false;
 
 		if (stateChanged) {
-			// relevant change detected - wait time must be up if specified
 			Poco::Timestamp::TimeDiff timeDiff = (Poco::Timestamp() - this->lastTriggerTime);
+			// relevant change detected - wait time must be up if specified
 			if ((this->waitTimeMs == 0) || (timeDiff / 1000 > this->waitTimeMs)) { // Poco TimeDiff is in microseconds
 				// trigger detected
 
 				// program still running?
 				if (Poco::Process::isRunning(this->processPID) && forceKill) {
-					this->logDebug(std::string() + "Trying to kill previously started process with PID " + this->to_string(this->processPID));
+					this->logVerbose(std::string() + "Trying to kill previously started process with PID " + this->to_string(this->processPID) + ": Kill forced on repeated start");
 
 					// kill process
 					Poco::Process::kill(this->processPID);
@@ -175,13 +187,14 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 					std::unique_ptr<Poco::Pipe> outPipe(new Poco::Pipe);
 					std::unique_ptr<Poco::Pipe> errPipe(new Poco::Pipe);
 					std::unique_ptr<Poco::Pipe> inPipe(new Poco::Pipe);
-					Poco::ProcessHandle ph(Poco::Process::launch(this->programName, argList, inPipe.get(), outPipe.get(), errPipe.get()));
+					this->processHandle = new Poco::ProcessHandle(Poco::Process::launch(this->programName, argList, inPipe.get(), outPipe.get(), errPipe.get()));
 
-					this->processPID = ph.id();
+					this->processPID = this->processHandle->id();
 					// let the helper class handle IO
 					this->processIO = std::unique_ptr<ProcessIO>(new ProcessIO(this, std::move(outPipe), std::move(errPipe), std::move(inPipe)));
 					// create a thread that waits for the process to terminate
 					// otherwise, on Linux, child processes will remain defunct
+					this->waitThread.start(waiter);
 
 					this->logVerbose(std::string() + "Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
 				} catch (Poco::Exception &e) {

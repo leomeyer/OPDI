@@ -2,6 +2,7 @@
 
 #include "Poco/Process.h"
 #include "Poco/Thread.h"
+#include "Poco/RunnableAdapter.h"
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/PipeStream.h"
 #include "Poco/StreamCopier.h"
@@ -35,11 +36,11 @@ namespace opdid {
 class ExecPort : public opdi::DigitalPort, protected PortFunctions {
 protected:
 
-    enum ChangeType {
-        CHANGED_TO_HIGH,
-        CHANGED_TO_LOW,
-        ANY_CHANGE
-    };
+	enum ChangeType {
+		CHANGED_TO_HIGH,
+		CHANGED_TO_LOW,
+		ANY_CHANGE
+	};
 
 	class ProcessIO {
 		std::unique_ptr<Poco::Pipe> outPipe;
@@ -59,31 +60,31 @@ protected:
 		}
 
 		void process() {
+			// this does not work (on Windows, at least)
+			// because iostream does not support async I/O
+			// TODO check whether this can be solved with async I/O
+			/*
 			// does the stdin stream request data?
-			if (this->pos.eof()) {
+			if (this->pos.rdbuf()->) {
 				// data cannot be served, the process must be killed
 				this->execPort->logWarning("Process " + this->execPort->to_string(this->execPort->processPID) + " requests data that cannot be provided, killing the process");
 				Poco::Process::kill(this->execPort->processPID);
 			}
 			// check whether stream data is available
-			int ces = (this->pes.good() ? this->pes.peek() : EOF);
-			if (ces != EOF) {
+			if (this->pes.rdbuf()->in_avail() > 0) {
 				// read data from the stream
 				std::string data;
 				Poco::StreamCopier::copyToString(this->pes, data);
 				this->execPort->logNormal("stderr: " + data);
 			}
-			int cis = (this->pis.good() ? this->pis.peek() : EOF);
-			if (cis != EOF) {
+			if (this->pis.rdbuf()->in_avail() > 0) {
 				// read data from the stream
 				std::string data;
 				Poco::StreamCopier::copyToString(this->pis, data);
 				this->execPort->logVerbose("stdout: " + data);
 			}
+			*/
 		}
-	};
-	
-	class WaitThread : Poco::Thread {
 	};
 
 	std::string programName;
@@ -91,12 +92,21 @@ protected:
 	ChangeType changeType;
 	int64_t waitTimeMs;
 	int64_t resetTimeMs;
+	int64_t killTimeMs;
 	bool forceKill;
 
 	uint8_t lastState;
 	Poco::Timestamp lastTriggerTime;
+	Poco::ProcessHandle* processHandle;
 	Poco::Process::PID processPID;
+	Poco::Thread waitThread;
+	Poco::RunnableAdapter<ExecPort> waiter;
 	std::unique_ptr<ProcessIO> processIO;
+
+	void waitForProcessEnd() {
+		Poco::Process::wait(*this->processHandle);
+		free(this->processHandle);
+	}
 
 	virtual uint8_t doWork(uint8_t canSend);
 
