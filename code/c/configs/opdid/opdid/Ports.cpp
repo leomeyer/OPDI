@@ -1342,9 +1342,10 @@ uint8_t FilePort::doWork(uint8_t canSend) {
 		} catch (Poco::Exception &e) {
 			this->logWarning("Error setting port state from file '" + this->filePath + "': " + e.message());
 		}
-		if (this->deleteOnChange) {
+		if (this->deleteAfterRead) {
 			Poco::File file(this->filePath);
 			try {
+				this->logDebug("Trying to delete file: " + this->filePath);
 				file.remove();
 			}
 			catch (Poco::Exception &e) {
@@ -1422,7 +1423,7 @@ FilePort::FilePort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id)
 	this->directoryWatcher = nullptr;
 	this->reloadDelayMs = 0;
 	this->expiryMs = 0;
-	this->deleteOnChange = false;
+	this->deleteAfterRead = false;
 	this->lastReloadTime = 0;
 	this->needsReload = false;
 	this->numerator = 1;
@@ -1506,7 +1507,7 @@ void FilePort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::
 	if (this->expiryMs < 0) {
 		throw Poco::DataException(this->ID() + ": If Expiry is specified it must be greater than 0 (ms): " + this->to_string(this->expiryMs));
 	}
-	this->deleteOnChange = config->getBool("DeleteOnChange", this->deleteOnChange);
+	this->deleteAfterRead = config->getBool("DeleteAfterRead", this->deleteAfterRead);
 
 	this->numerator = nodeConfig->getInt("Numerator", this->numerator);
 	this->denominator = nodeConfig->getInt("Denominator", this->denominator);

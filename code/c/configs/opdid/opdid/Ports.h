@@ -443,7 +443,7 @@ protected:
 	PortType portType;
 	int reloadDelayMs;
 	int expiryMs;
-	bool deleteOnChange;
+	bool deleteAfterRead;
 	int numerator;
 	int denominator;
 
