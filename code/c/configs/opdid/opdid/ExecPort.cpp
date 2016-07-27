@@ -65,7 +65,7 @@ void ExecPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->forceKill = config->getBool("ForceKill", false);
 	
 	if ((this->waitTimeMs > 0) && (this->resetTimeMs > 0) && (this->waitTimeMs > this->resetTimeMs))
-		this->logWarning(std::string() + "The specified wait time is larger than the reset time; reset will not execute!");
+		this->logWarning("The specified wait time is larger than the reset time; reset will not execute!");
 }
 
 void ExecPort::setDirCaps(const char* /*dirCaps*/) {
@@ -77,7 +77,7 @@ void ExecPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 }
 
 void ExecPort::prepare() {
-	this->logDebug(std::string() + "Preparing port");
+	this->logDebug("Preparing port");
 	opdi::DigitalPort::prepare();
 }
 
@@ -93,7 +93,7 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 			Poco::Timestamp::TimeDiff timeDiff = (Poco::Timestamp() - this->lastTriggerTime);
 			// kill time up?
 			if ((this->killTimeMs > 0) && (timeDiff / 1000 > this->killTimeMs)) { // Poco TimeDiff is in microseconds
-				this->logVerbose(std::string() + "Trying to kill previously started process with PID " + this->to_string(this->processPID) + ": Kill time exceeded");
+				this->logVerbose("Trying to kill previously started process with PID " + this->to_string(this->processPID) + ": Kill time exceeded");
 
 				// kill process
 				Poco::Process::kill(this->processPID);
@@ -126,7 +126,7 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 
 				// program still running?
 				if (Poco::Process::isRunning(this->processPID) && forceKill) {
-					this->logVerbose(std::string() + "Trying to kill previously started process with PID " + this->to_string(this->processPID) + ": Kill forced on repeated start");
+					this->logVerbose("Trying to kill previously started process with PID " + this->to_string(this->processPID) + ": Kill forced on repeated start");
 
 					// kill process
 					Poco::Process::kill(this->processPID);
@@ -164,8 +164,8 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 					}
 				}
 
-				this->logDebug(std::string() + "Preparing start of program '" + this->programName + "'");
-				this->logDebug(std::string() + "Parameters: " + params);
+				this->logDebug("Preparing start of program '" + this->programName + "'");
+				this->logDebug("Parameters: " + params);
 
 				// split parameters
 				std::vector<std::string> argList;
@@ -196,9 +196,9 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 					// otherwise, on Linux, child processes will remain defunct
 					this->waitThread.start(waiter);
 
-					this->logVerbose(std::string() + "Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
+					this->logVerbose("Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
 				} catch (Poco::Exception &e) {
-					this->logNormal(std::string() + "ERROR: Unable to start program '" + this->programName + "': " + e.message());
+					this->logNormal("ERROR: Unable to start program '" + this->programName + "': " + e.message());
 				}
 			}		// not blocked by wait time
 		}		// stateChanged

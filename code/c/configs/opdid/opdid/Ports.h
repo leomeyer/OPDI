@@ -406,7 +406,7 @@ public:
 * Additionally you can specify a delay that signals how long to wait until the file is
 * being re-read. This can help avoid too many refreshes.
 * For analog and dial ports the value can be scaled using a numerator and a denominator.
-* The FilePort can also be set (by a user or an internal function, if it is not read-only.
+* The FilePort can also be set (by a user or an internal function), if it is not read-only.
 * If the FilePort is active (High) when such a state change occurs the state of the value port
 * is written to the specified file.
 */
@@ -443,6 +443,7 @@ protected:
 	PortType portType;
 	int reloadDelayMs;
 	int expiryMs;
+	bool deleteOnChange;
 	int numerator;
 	int denominator;
 

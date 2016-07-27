@@ -230,7 +230,7 @@ void WindowPort::getState(uint16_t* position) const {
 }
 
 void WindowPort::prepare() {
-	this->logDebug(std::string() + "Preparing port");
+	this->logDebug("Preparing port");
 	opdi::Port::prepare();
 
 	// find ports; throws errors if something required is missing

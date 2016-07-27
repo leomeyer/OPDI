@@ -167,15 +167,15 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	std::string value = rawValue;
 	if (this->regexMatch != "") {
 		Poco::RegularExpression regex(this->regexMatch, 0, true);
-		this->logDebug(std::string() + "WeatherGaugePort for element " + this->dataElement + ": Matching regex against weather data: " + rawValue);
+		this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Matching regex against weather data: " + rawValue);
 		if (regex.extract(rawValue, value, 0) == 0) {
-		this->logDebug(std::string() + "WeatherGaugePort for element " + this->dataElement + ": Warning: Matching regex returned no result; weather data: " + rawValue);
+		this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Warning: Matching regex returned no result; weather data: " + rawValue);
 		}
 	}
 	if (this->regexReplace != "") {
 		Poco::RegularExpression regex(this->regexReplace, 0, true);
 		if (regex.subst(value, this->replaceBy, Poco::RegularExpression::RE_GLOBAL) == 0) {
-			this->logDebug(std::string() + "WeatherGaugePort for element " + this->dataElement + ": Warning: Replacement regex did not match in value: " + value);
+			this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Warning: Replacement regex did not match in value: " + value);
 		}
 	}
 
@@ -187,22 +187,22 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	try {
 		result = Poco::NumberParser::parseFloat(value);
 	} catch (Poco::Exception e) {
-		this->logDebug(std::string() + "WeatherGaugePort for element " + this->dataElement + ": Warning: Unable to parse weather data: " + value);
+		this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Warning: Unable to parse weather data: " + value);
 		return OPDI_STATUS_OK;
 	}
 
 	// scale the result
 	int64_t newPos = (int64_t)(result * this->numerator / this->denominator * 1.0);
-	this->logDebug(std::string() + "WeatherGaugePort for element " + this->dataElement + ": Extracted value is: " + to_string(newPos));
+	this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Extracted value is: " + to_string(newPos));
 
 	// correct value; a standard dial port will throw exceptions
 	// but exceptions must be avoided in this threaded code because they will cause strange messages on Linux
 	if (newPos < this->minValue) {
-		this->logDebug(std::string() + "Warning: Value too low (" + to_string(newPos) + " < " + to_string(this->minValue) + "), correcting");
+		this->logDebug("Warning: Value too low (" + to_string(newPos) + " < " + to_string(this->minValue) + "), correcting");
 		newPos = this->minValue;
 	}
 	if (newPos > this->maxValue) {
-		this->logDebug(std::string() + "Warning: Value too high (" + to_string(newPos) + " > " + to_string(this->maxValue) + "), correcting");
+		this->logDebug("Warning: Value too high (" + to_string(newPos) + " > " + to_string(this->maxValue) + "), correcting");
 		newPos = this->maxValue;
 	}
 	this->setPosition(newPos);
