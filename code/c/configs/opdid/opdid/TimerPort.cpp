@@ -214,7 +214,7 @@ void TimerPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util:
 	this->opdid->configureDigitalPort(config, this);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
-	this->outputPortStr = this->opdid->getConfigString(config, "OutputPorts", "", true);
+	this->outputPortStr = this->opdid->getConfigString(config, this->ID(), "OutputPorts", "", true);
 	this->propagateSwitchOff = config->getBool("PropagateSwitchOff", false);
 	this->deactivatedText = config->getString("DeactivatedText", this->deactivatedText);
 	this->notScheduledText = config->getString("NotScheduledText", this->notScheduledText);
@@ -277,7 +277,7 @@ void TimerPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util:
 		schedule.duration = scheduleConfig->getInt("Duration", 1000);	// default duration: 1 second
 		schedule.action = SET_HIGH;										// default action
 
-		std::string action = this->opdid->getConfigString(scheduleConfig, "Action", "", false);
+		std::string action = this->opdid->getConfigString(scheduleConfig, nodeName, "Action", "", false);
 		if (action == "SetHigh") {
 			schedule.action = SET_HIGH;
 		} else
@@ -291,7 +291,7 @@ void TimerPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util:
 				throw Poco::DataException(nodeName + ": Unknown schedule action; expected: 'SetHigh', 'SetLow' or 'Toggle': " + action);
 
 		// get schedule type (required)
-		std::string scheduleType = this->opdid->getConfigString(scheduleConfig, "Type", "", true);
+		std::string scheduleType = this->opdid->getConfigString(scheduleConfig, nodeName, "Type", "", true);
 
 		if (scheduleType == "Once") {
 			schedule.type = ONCE;
@@ -346,7 +346,7 @@ void TimerPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util:
 		} else
 		if (scheduleType == "Astronomical") {
 			schedule.type = ASTRONOMICAL;
-			std::string astroEventStr = this->opdid->getConfigString(scheduleConfig, "AstroEvent", "", true);
+			std::string astroEventStr = this->opdid->getConfigString(scheduleConfig, nodeName, "AstroEvent", "", true);
 			if (astroEventStr == "Sunrise") {
 				schedule.astroEvent = SUNRISE;
 			} else
@@ -376,12 +376,12 @@ void TimerPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util:
 			// the user can set the scheduled instant using this port
 			// This port is a dependent node, i. e. it is not included by root but created by this port.
 
-			std::string nodeID = this->opdid->getConfigString(scheduleConfig, "NodeID", "", true);
+			std::string nodeID = this->opdid->getConfigString(scheduleConfig, nodeName, "NodeID", "", true);
 
 			Poco::AutoPtr<Poco::Util::AbstractConfiguration> manualPortNode = parentConfig->createView(nodeID);
 
 			// port must be of type "DialPort"
-			if (this->opdid->getConfigString(manualPortNode, "Type", "", true) != "DialPort")
+			if (this->opdid->getConfigString(manualPortNode, nodeName, "Type", "", true) != "DialPort")
 				throw Poco::DataException(nodeName + "The dependent port node for a manual timer schedule must be of type 'DialPort' (referenced by NodeID '" + nodeID + "')");
 
 			// create the manual schedule dial port

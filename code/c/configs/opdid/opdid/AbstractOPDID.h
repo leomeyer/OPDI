@@ -152,7 +152,7 @@ public:
 	virtual std::string getOPDIResult(uint8_t code);
 
 	/** Returns the key's value from the configuration or the default value, if it is missing. If missing and isRequired is true, throws an exception. */
-	virtual std::string getConfigString(Poco::Util::AbstractConfiguration* config, const std::string &key, const std::string &defaultValue, const bool isRequired);
+	virtual std::string getConfigString(Poco::Util::AbstractConfiguration* config, const std::string &section, const std::string &key, const std::string &defaultValue, const bool isRequired);
 
 	/** Outputs the specified text to an implementation-dependent output with an appended line break. */
 	virtual void println(const char* text) = 0;
@@ -211,7 +211,7 @@ public:
 
 	virtual void setupGroup(Poco::Util::AbstractConfiguration* groupConfig, const std::string& group);
 
-	virtual std::string resolveRelativePath(Poco::Util::AbstractConfiguration* config, const std::string& path, const std::string defaultValue);
+	virtual std::string resolveRelativePath(Poco::Util::AbstractConfiguration* config, const std::string& source, const std::string& path, const std::string defaultValue);
 
 	virtual void setupInclude(Poco::Util::AbstractConfiguration* groupConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& node);
 

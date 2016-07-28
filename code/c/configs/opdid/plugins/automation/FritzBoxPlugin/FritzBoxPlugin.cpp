@@ -220,8 +220,8 @@ void FritzDECT200Switch::configure(Poco::Util::AbstractConfiguration* portConfig
 	this->plugin->opdid->configureDigitalPort(portConfig, this);
 
 	// get actor identification number (required)
-	this->ain = plugin->opdid->getConfigString(portConfig, "AIN", "", true);
-	std::string group = plugin->opdid->getConfigString(portConfig, "Group", "", false);
+	this->ain = plugin->opdid->getConfigString(portConfig, this->ID(), "AIN", "", true);
+	std::string group = plugin->opdid->getConfigString(portConfig, this->ID(), "Group", "", false);
 	if (group != "") {
 		this->setGroup(group);
 	}
@@ -279,7 +279,7 @@ FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin* plugin, const char* id) : o
 
 void FritzDECT200Power::configure(Poco::Util::AbstractConfiguration* portConfig) {
 	// get actor identification number (required)
-	this->ain = plugin->opdid->getConfigString(portConfig, "AIN", "", true);
+	this->ain = plugin->opdid->getConfigString(portConfig, this->ID(), "AIN", "", true);
 
 	// setting PowerHidden takes precedende
 	if (portConfig->has("PowerHidden"))
@@ -308,7 +308,7 @@ void FritzDECT200Power::configure(Poco::Util::AbstractConfiguration* portConfig)
 	if (unit != "") {
 		this->setUnit(unit);
 	}
-	std::string group = plugin->opdid->getConfigString(portConfig, "PowerGroup", portConfig->getString("Group", ""), false);
+	std::string group = plugin->opdid->getConfigString(portConfig, this->ID(), "PowerGroup", portConfig->getString("Group", ""), false);
 	if (group != "") {
 		this->setGroup(group);
 	}
@@ -360,7 +360,7 @@ FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin* plugin, const char* id) :
 
 void FritzDECT200Energy::configure(Poco::Util::AbstractConfiguration* portConfig) {
 	// get actor identification number (required)
-	this->ain = plugin->opdid->getConfigString(portConfig, "AIN", "", true);
+	this->ain = plugin->opdid->getConfigString(portConfig, this->ID(), "AIN", "", true);
 
 	// setting EnergyHidden takes precedende
 	if (portConfig->has("EnergyHidden"))
@@ -389,7 +389,7 @@ void FritzDECT200Energy::configure(Poco::Util::AbstractConfiguration* portConfig
 	if (unit != "") {
 		this->setUnit(unit);
 	}
-	std::string group = plugin->opdid->getConfigString(portConfig, "EnergyGroup", portConfig->getString("Group", ""), false);
+	std::string group = plugin->opdid->getConfigString(portConfig, this->ID(), "EnergyGroup", portConfig->getString("Group", ""), false);
 	if (group != "") {
 		this->setGroup(group);
 	}
@@ -696,10 +696,10 @@ void FritzBoxPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std:
 	// abstractOPDID->log("Test Response: " + this->getResponse("1234567z", "äbc"));
 
 	// get host and credentials
-	this->host = abstractOPDID->getConfigString(nodeConfig, "Host", "", true);
+	this->host = abstractOPDID->getConfigString(nodeConfig, node, "Host", "", true);
 	this->port = nodeConfig->getInt("Port", 80);
-	this->user = abstractOPDID->getConfigString(nodeConfig, "User", "", true);
-	this->password = abstractOPDID->getConfigString(nodeConfig, "Password", "", true);
+	this->user = abstractOPDID->getConfigString(nodeConfig, node, "User", "", true);
+	this->password = abstractOPDID->getConfigString(nodeConfig, node, "Password", "", true);
 	this->timeoutSeconds = nodeConfig->getInt("Timeout", this->timeoutSeconds);
 
 	// store main node's group (will become the default of ports)
@@ -758,7 +758,7 @@ void FritzBoxPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std:
 		Poco::Util::AbstractConfiguration* portConfig = config->createView(nodeName);
 
 		// get port type (required)
-		std::string portType = abstractOPDID->getConfigString(portConfig, "Type", "", true);
+		std::string portType = abstractOPDID->getConfigString(portConfig, nodeName, "Type", "", true);
 
 		if (portType == "FritzDECT200") {
 			// setup the switch port instance and add it

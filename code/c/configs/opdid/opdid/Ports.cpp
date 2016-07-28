@@ -427,13 +427,13 @@ void SelectorPort::configure(Poco::Util::AbstractConfiguration* config) {
 
 	this->selectPortStr = config->getString("SelectPort", "");
 	if (this->selectPortStr == "")
-		throw Poco::DataException("You have to specify the SelectPort");
+		throw Poco::DataException(this->ID() + ": You have to specify the SelectPort");
 
 	this->outputPortStr = config->getString("OutputPorts", "");
 
 	int pos = config->getInt("Position", -1);
 	if ((pos < 0) || (pos > 65535))
-		throw Poco::DataException("You have to specify a SelectPort position that is greater than -1 and lower than 65536");
+		throw Poco::DataException(this->ID() + ": You have to specify a SelectPort position that is greater than -1 and lower than 65536");
 
 	this->position = pos;
 }
@@ -473,7 +473,7 @@ void SelectorPort::prepare() {
 
 	// check position range
 	if (this->position > this->selectPort->getMaxPosition())
-		throw Poco::DataException(this->ID() + ": The specified selector position exceeds the maximum of port " + this->selectPort->getID() + ": " + to_string(this->selectPort->getMaxPosition()));
+		throw Poco::DataException(this->ID() + ": The specified selector position exceeds the maximum of port " + this->selectPort->ID() + ": " + to_string(this->selectPort->getMaxPosition()));
 }
 
 uint8_t SelectorPort::doWork(uint8_t canSend)  {
@@ -529,7 +529,7 @@ void ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configureDigitalPort(config, this);	
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
-	this->inputPortStr = this->opdid->getConfigString(config, "InputPorts", "", true);
+	this->inputPortStr = this->opdid->getConfigString(config, this->ID(), "InputPorts", "", true);
 	this->negate = config->getBool("Negate", false);
 }
 
@@ -619,7 +619,7 @@ void SerialStreamingPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configureStreamingPort(config, this);
 	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
 
-	std::string serialPortName = this->opdid->getConfigString(config, "SerialPort", "", true);
+	std::string serialPortName = this->opdid->getConfigString(config, this->ID(), "SerialPort", "", true);
 	int baudRate = config->getInt("BaudRate", 9600);
 	std::string protocol = config->getString("Protocol", "8N1");
 	// int timeout = config->getInt("Timeout", 100);
@@ -792,7 +792,7 @@ void LoggerPort::configure(Poco::Util::AbstractConfiguration* config) {
 	} else
 		throw Poco::DataException(this->ID() + ": The OutputFile setting must be specified");
 
-	this->portsToLogStr = this->opdid->getConfigString(config, "Ports", "", true);
+	this->portsToLogStr = this->opdid->getConfigString(config, this->ID(), "Ports", "", true);
 }
 
 int LoggerPort::write(char* /*bytes*/, size_t /*length*/) {
@@ -877,8 +877,8 @@ void FaderPort::configure(Poco::Util::AbstractConfiguration* config) {
 	} else
 		throw Poco::DataException(this->ID() + ": Illegal value for 'SwitchOffAction', expected 'SetToLeft', 'SetToRight', or 'None': " + switchOffActionStr);
 
-	this->outputPortStr = opdid->getConfigString(config, "OutputPorts", "", true);
-	this->endSwitchesStr = opdid->getConfigString(config, "EndSwitches", "", false);
+	this->outputPortStr = opdid->getConfigString(config, this->ID(), "OutputPorts", "", true);
+	this->endSwitchesStr = opdid->getConfigString(config, this->ID(), "EndSwitches", "", false);
 
 	this->opdid->configurePort(config, this, 0);
 }
@@ -1445,12 +1445,12 @@ FilePort::~FilePort() {
 void FilePort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
 	this->opdid->configureDigitalPort(config, this);
 
-	this->filePath = opdid->getConfigString(config, "File", "", true);
+	this->filePath = opdid->getConfigString(config, this->ID(), "File", "", true);
 
 	// read port node, create configuration view and setup the port according to the specified type
-	std::string portNode = opdid->getConfigString(config, "PortNode", "", true);
+	std::string portNode = opdid->getConfigString(config, this->ID(), "PortNode", "", true);
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = parentConfig->createView(portNode);
-	std::string portType = opdid->getConfigString(nodeConfig, "Type", "", true);
+	std::string portType = opdid->getConfigString(nodeConfig, this->ID(), "Type", "", true);
 	if (portType == "DigitalPort") {
 		this->portType = DIGITAL_PORT;
 		this->valuePort = new opdi::DigitalPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
@@ -1857,7 +1857,7 @@ AggregatorPort::~AggregatorPort() {
 void AggregatorPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
 	this->opdid->configureDigitalPort(config, this);
 
-	this->sourcePortID = this->opdid->getConfigString(config, "SourcePort", "", true);
+	this->sourcePortID = this->opdid->getConfigString(config, this->ID(), "SourcePort", "", true);
 
 	this->queryInterval = config->getInt("Interval", 0);
 	if (this->queryInterval <= 0) {
@@ -1875,7 +1875,7 @@ void AggregatorPort::configure(Poco::Util::AbstractConfiguration* config, Poco::
 	this->allowedErrors = config->getInt("AllowedErrors", this->allowedErrors);
 
 	this->setHistory = config->getBool("SetHistory", this->setHistory);
-	this->historyPortID = this->opdid->getConfigString(config, "HistoryPort", "", false);
+	this->historyPortID = this->opdid->getConfigString(config, this->ID(), "HistoryPort", "", false);
 
 	// enumerate calculations
 	this->logVerbose(std::string("Enumerating Aggregator calculations: ") + this->ID() + ".Calculations");
@@ -1925,7 +1925,7 @@ void AggregatorPort::configure(Poco::Util::AbstractConfiguration* config, Poco::
 		Poco::AutoPtr<Poco::Util::AbstractConfiguration> calculationConfig = parentConfig->createView(nodeName);
 
 		// get type (required)
-		std::string type = this->opdid->getConfigString(calculationConfig, "Type", "", true);
+		std::string type = this->opdid->getConfigString(calculationConfig, nodeName, "Type", "", true);
 
 		// type must be "DialPort"
 		if (type != "DialPort")

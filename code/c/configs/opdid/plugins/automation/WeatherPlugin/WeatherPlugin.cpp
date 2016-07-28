@@ -114,10 +114,10 @@ void WeatherGaugePort::configure(Poco::Util::AbstractConfiguration* nodeConfig, 
 	opdid->configureDialPort(nodeConfig, this);
 	this->logVerbosity = opdid->getConfigLogVerbosity(nodeConfig, defaultLogVerbosity);
 
-	this->dataElement = opdid->getConfigString(nodeConfig, "DataElement", "", true);
-	this->regexMatch = opdid->getConfigString(nodeConfig, "RegexMatch", "", false);
-	this->regexReplace = opdid->getConfigString(nodeConfig, "RegexReplace", "", false);
-	this->replaceBy = opdid->getConfigString(nodeConfig, "ReplaceBy", "", false);
+	this->dataElement = opdid->getConfigString(nodeConfig, this->ID(), "DataElement", "", true);
+	this->regexMatch = opdid->getConfigString(nodeConfig, this->ID(), "RegexMatch", "", false);
+	this->regexReplace = opdid->getConfigString(nodeConfig, this->ID(), "RegexReplace", "", false);
+	this->replaceBy = opdid->getConfigString(nodeConfig, this->ID(), "ReplaceBy", "", false);
 	this->numerator = nodeConfig->getInt("Numerator", this->numerator);
 	this->denominator = nodeConfig->getInt("Denominator", this->denominator);
 	if (this->denominator == 0) 
@@ -289,8 +289,8 @@ void WeatherPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::
 
 	this->logVerbosity = opdid->getConfigLogVerbosity(nodeConfig, opdid::AbstractOPDID::UNKNOWN);
 
-	this->url = abstractOPDID->getConfigString(nodeConfig, "Url", "", true);
-	this->provider = abstractOPDID->getConfigString(nodeConfig, "Provider", "", true);
+	this->url = abstractOPDID->getConfigString(nodeConfig, node, "Url", "", true);
+	this->provider = abstractOPDID->getConfigString(nodeConfig, node, "Provider", "", true);
 
 	if (this->provider == "Weewx") {
 		// configure xpath for default skin
@@ -365,7 +365,7 @@ void WeatherPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::
 		Poco::Util::AbstractConfiguration* portConfig = config->createView(nodeName);
 
 		// get port type (required)
-		std::string portType = abstractOPDID->getConfigString(portConfig, "Type", "", true);
+		std::string portType = abstractOPDID->getConfigString(portConfig, nodeName, "Type", "", true);
 
 		if (portType == "WeatherGaugePort") {
 

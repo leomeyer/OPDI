@@ -433,7 +433,7 @@ void WindowPort::setCurrentState(WindowState state) {
 			default: break;
 			}
 
-			this->logDebug(std::string(this->id) + ": Notifying status port: " + this->statusPort->getID() + ": new position = " + to_string((int)selPortPos));
+			this->logDebug(std::string(this->id) + ": Notifying status port: " + this->statusPort->ID() + ": new position = " + to_string((int)selPortPos));
 
 			this->statusPort->setPosition(selPortPos);
 		}
@@ -983,13 +983,13 @@ void WindowPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::s
 	port->enableDelay = nodeConfig->getInt("EnableDelay", 0);
 
 	// read control mode
-	std::string controlMode = abstractOPDID->getConfigString(nodeConfig, "ControlMode", "", true);
+	std::string controlMode = abstractOPDID->getConfigString(nodeConfig, node, "ControlMode", "", true);
 	if (controlMode == "H-Bridge") {
 		this->opdid->logVerbose("Configuring WindowPlugin port " + node + " in H-Bridge Mode");
 		port->mode = WindowPort::H_BRIDGE;
 		// motorA and motorB are required
-		port->motorA = abstractOPDID->getConfigString(nodeConfig, "MotorA", "", true);
-		port->motorB = abstractOPDID->getConfigString(nodeConfig, "MotorB", "", true);
+		port->motorA = abstractOPDID->getConfigString(nodeConfig, node, "MotorA", "", true);
+		port->motorB = abstractOPDID->getConfigString(nodeConfig, node, "MotorB", "", true);
 		if (nodeConfig->getInt("MotorDelay", 0) < 0)
 			throw Poco::DataException("MotorDelay may not be negative: " + abstractOPDID->to_string(port->motorDelay));
 		port->motorDelay = nodeConfig->getInt("MotorDelay", 0);
@@ -1000,13 +1000,13 @@ void WindowPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::s
 		this->opdid->logVerbose("Configuring WindowPlugin port " + node + " in Serial Relay Mode");
 		port->mode = WindowPort::SERIAL_RELAY;
 		// direction and enable ports are required
-		port->direction = abstractOPDID->getConfigString(nodeConfig, "Direction", "", true);
-		port->enable = abstractOPDID->getConfigString(nodeConfig, "Enable", "", true);
+		port->direction = abstractOPDID->getConfigString(nodeConfig, node, "Direction", "", true);
+		port->enable = abstractOPDID->getConfigString(nodeConfig, node, "Enable", "", true);
 	} else
 		throw Poco::DataException("ControlMode setting not supported; expected 'H-Bridge' or 'SerialRelay'", controlMode);
 
 	// read additional configuration parameters
-	port->sensor = abstractOPDID->getConfigString(nodeConfig, "Sensor", "", false);
+	port->sensor = abstractOPDID->getConfigString(nodeConfig, node, "Sensor", "", false);
 	port->sensorClosed = (uint8_t)nodeConfig->getInt("SensorClosed", 1);
 	if (port->sensorClosed > 1)
 		throw Poco::DataException("SensorClosed must be either 0 or 1: " + abstractOPDID->to_string(port->sensorClosed));
@@ -1022,16 +1022,16 @@ void WindowPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::s
 	port->closingTime = nodeConfig->getInt64("ClosingTime", port->openingTime);
 	if (port->closingTime <= 0)
 		throw Poco::DataException("ClosingTime must be greater than 0: " + abstractOPDID->to_string(port->closingTime));
-	port->autoOpen = abstractOPDID->getConfigString(nodeConfig, "AutoOpen", "", false);
-	port->autoClose = abstractOPDID->getConfigString(nodeConfig, "AutoClose", "", false);
-	port->forceOpen = abstractOPDID->getConfigString(nodeConfig, "ForceOpen", "", false);
-	port->forceClose = abstractOPDID->getConfigString(nodeConfig, "ForceClose", "", false);
+	port->autoOpen = abstractOPDID->getConfigString(nodeConfig, node, "AutoOpen", "", false);
+	port->autoClose = abstractOPDID->getConfigString(nodeConfig, node, "AutoClose", "", false);
+	port->forceOpen = abstractOPDID->getConfigString(nodeConfig, node, "ForceOpen", "", false);
+	port->forceClose = abstractOPDID->getConfigString(nodeConfig, node, "ForceClose", "", false);
 	if ((port->forceOpen != "") && (port->forceClose != ""))
 		throw Poco::DataException("You cannot use ForceOpen and ForceClose at the same time");
-	port->statusPortStr = abstractOPDID->getConfigString(nodeConfig, "StatusPort", "", false);
-	port->errorPortStr = abstractOPDID->getConfigString(nodeConfig, "ErrorPorts", "", false);
-	port->resetPortStr = abstractOPDID->getConfigString(nodeConfig, "ResetPorts", "", false);
-	std::string resetTo = abstractOPDID->getConfigString(nodeConfig, "ResetTo", "Off", false);
+	port->statusPortStr = abstractOPDID->getConfigString(nodeConfig, node, "StatusPort", "", false);
+	port->errorPortStr = abstractOPDID->getConfigString(nodeConfig, node, "ErrorPorts", "", false);
+	port->resetPortStr = abstractOPDID->getConfigString(nodeConfig, node, "ResetPorts", "", false);
+	std::string resetTo = abstractOPDID->getConfigString(nodeConfig, node, "ResetTo", "Off", false);
 	if (resetTo == "Closed") {
 		port->resetTo = WindowPort::RESET_TO_CLOSED;
 	} else if (resetTo == "Open") {

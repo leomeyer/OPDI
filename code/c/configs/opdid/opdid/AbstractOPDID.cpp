@@ -222,10 +222,10 @@ Poco::Util::AbstractConfiguration* AbstractOPDID::readConfiguration(const std::s
 	return result;
 }
 
-std::string AbstractOPDID::getConfigString(Poco::Util::AbstractConfiguration* config, const std::string &key, const std::string &defaultValue, const bool isRequired) {
+std::string AbstractOPDID::getConfigString(Poco::Util::AbstractConfiguration* config, const std::string &section, const std::string &key, const std::string &defaultValue, const bool isRequired) {
 	if (isRequired) {
 		if (!config->hasProperty(key)) {
-			throw Poco::DataException("Expected configuration parameter not found", key);
+			throw Poco::DataException("Expected configuration parameter not found in section '" + section + "'", key);
 		}
 	}
 	return config->getString(key, defaultValue);
@@ -496,7 +496,7 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration* g
 	this->logVerbose("Setting up general configuration");
 
 	// initialize persistent configuration if specified
-	std::string persistentFile = this->getConfigString(general, "PersistentConfig", "", false);
+	std::string persistentFile = this->getConfigString(general, "General", "PersistentConfig", "", false);
 	if (persistentFile != "") {
 		// determine CWD-relative path depending on location of config file
 		std::string configFilePath = general->getString(OPDID_CONFIG_FILE_SETTING, "");
@@ -522,10 +522,10 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration* g
 		this->persistentConfigFile = persistentFile;
 	}
 
-	this->heartbeatFile = this->getConfigString(general, "HeartbeatFile", "", false);
+	this->heartbeatFile = this->getConfigString(general, "General", "HeartbeatFile", "", false);
 	this->targetFramesPerSecond = general->getInt("TargetFPS", this->targetFramesPerSecond);
 
-	std::string slaveName = this->getConfigString(general, "SlaveName", "", true);
+	std::string slaveName = this->getConfigString(general, "General", "SlaveName", "", true);
 	int messageTimeout = general->getInt("MessageTimeout", OPDI_DEFAULT_MESSAGE_TIMEOUT);
 	if ((messageTimeout < 0) || (messageTimeout > 65535))
 			throw Poco::InvalidArgumentException("MessageTimeout must be greater than 0 and may not exceed 65535", to_string(messageTimeout));
@@ -596,7 +596,7 @@ void AbstractOPDID::configureAuthentication(Poco::Util::AbstractConfiguration* c
 /** Reads common properties from the configuration and configures the port group. */
 void AbstractOPDID::configureGroup(Poco::Util::AbstractConfiguration* groupConfig, opdi::PortGroup* group, int defaultFlags) {
 	// the default label is the port ID
-	std::string portLabel = this->getConfigString(groupConfig, "Label", group->getID(), false);
+	std::string portLabel = this->getConfigString(groupConfig, group->getID(), "Label", group->getID(), false);
 	group->setLabel(portLabel.c_str());
 
 	int flags = groupConfig->getInt("Flags", -1);
@@ -609,11 +609,11 @@ void AbstractOPDID::configureGroup(Poco::Util::AbstractConfiguration* groupConfi
 			group->setFlags(defaultFlags);
 
 	// extended properties
-	std::string icon = this->getConfigString(groupConfig, "Icon", "", false);
+	std::string icon = this->getConfigString(groupConfig, group->getID(), "Icon", "", false);
 	if (icon != "") {
 		group->setIcon(icon);
 	}
-	std::string parent = this->getConfigString(groupConfig, "Parent", "", false);
+	std::string parent = this->getConfigString(groupConfig, group->getID(), "Parent", "", false);
 	if (parent != "") {
 		group->setParent(parent.c_str());
 	}
@@ -628,9 +628,9 @@ void AbstractOPDID::setupGroup(Poco::Util::AbstractConfiguration* groupConfig, c
 	this->addPortGroup(portGroup);
 }
 
-std::string AbstractOPDID::resolveRelativePath(Poco::Util::AbstractConfiguration* config, const std::string& path, const std::string defaultValue) {
+std::string AbstractOPDID::resolveRelativePath(Poco::Util::AbstractConfiguration* config, const std::string& source, const std::string& path, const std::string defaultValue) {
 	// determine path type
-	std::string relativeTo = this->getConfigString(config, "RelativeTo", defaultValue, false);
+	std::string relativeTo = this->getConfigString(config, source, "RelativeTo", defaultValue, false);
 
 	if (relativeTo == "CWD") {
 		Poco::Path filePath(path);
@@ -672,7 +672,7 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration* config, Poco
 	this->logVerbose("Setting up include: " + node);
 
 	// filename must be present; include files are by default relative to the current configuration file
-	std::string filename = this->resolveRelativePath(config, this->getConfigString(config, "Filename", "", true), "Config");
+	std::string filename = this->resolveRelativePath(config, node, this->getConfigString(config, node, "Filename", "", true), "Config");
 
 	// read parameters and build a map, based on the environment parameters
 	std::map<std::string, std::string> parameters;
@@ -733,10 +733,10 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration* portConfig,
 	port->setPersistent(portConfig->getBool("Persistent", false));
 
 	// the default label is the port ID
-	std::string portLabel = this->getConfigString(portConfig, "Label", port->getID(), false);
+	std::string portLabel = this->getConfigString(portConfig, port->ID(), "Label", port->ID(), false);
 	port->setLabel(portLabel.c_str());
 
-	std::string portDirCaps = this->getConfigString(portConfig, "DirCaps", "", false);
+	std::string portDirCaps = this->getConfigString(portConfig, port->ID(), "DirCaps", "", false);
 	if (portDirCaps == "Input") {
 		port->setDirCaps(OPDI_PORTDIRCAP_INPUT);
 	} else if (portDirCaps == "Output") {
@@ -755,7 +755,7 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration* portConfig,
 		if (defaultFlags > 0)
 			port->setFlags(defaultFlags);
 
-	std::string refreshMode = this->getConfigString(portConfig, "RefreshMode", "", false);
+	std::string refreshMode = this->getConfigString(portConfig, port->ID(), "RefreshMode", "", false);
 	if (refreshMode == "Off") {
 		port->setRefreshMode(opdi::Port::RefreshMode::REFRESH_OFF);
 	} else
@@ -778,34 +778,34 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration* portConfig,
 	}
 
 	// extended properties
-	std::string unit = this->getConfigString(portConfig, "Unit", "", false);
+	std::string unit = this->getConfigString(portConfig, port->ID(), "Unit", "", false);
 	if (unit != "") {
 		port->setUnit(unit);
 	}
-	std::string icon = this->getConfigString(portConfig, "Icon", "", false);
+	std::string icon = this->getConfigString(portConfig, port->ID(), "Icon", "", false);
 	if (icon != "") {
 		port->setIcon(icon);
 	}
-	std::string group = this->getConfigString(portConfig, "Group", "", false);
+	std::string group = this->getConfigString(portConfig, port->ID(), "Group", "", false);
 	if (group != "") {
 		port->setGroup(group);
 	}
 
-	port->tag = this->getConfigString(portConfig, "Tag", "", false);
+	port->tag = this->getConfigString(portConfig, port->ID(), "Tag", "", false);
 
 	port->orderID = portConfig->getInt("OrderID", -1);
 
-	port->onChangeIntPortsStr = this->getConfigString(portConfig, "OnChangeInt", "", false);
-	port->onChangeUserPortsStr = this->getConfigString(portConfig, "OnChangeUser", "", false);
+	port->onChangeIntPortsStr = this->getConfigString(portConfig, port->ID(), "OnChangeInt", "", false);
+	port->onChangeUserPortsStr = this->getConfigString(portConfig, port->ID(), "OnChangeUser", "", false);
 }
 
 void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration* portConfig, opdi::DigitalPort* port, bool stateOnly) {
 	if (!stateOnly)
 		this->configurePort(portConfig, port, 0);
 
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->ID());
 
-	std::string portMode = this->getConfigString(stateConfig, "Mode", "", false);
+	std::string portMode = this->getConfigString(stateConfig, port->ID(), "Mode", "", false);
 	if (portMode == "Input") {
 		port->setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
 	} else if (portMode == "Input with pullup") {
@@ -817,7 +817,7 @@ void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration* port
 	} else if (portMode != "")
 		throw Poco::DataException("Unknown Mode specified; expected 'Input', 'Input with pullup', 'Input with pulldown', or 'Output'", portMode);
 
-	std::string portLine = this->getConfigString(stateConfig, "Line", "", false);
+	std::string portLine = this->getConfigString(stateConfig, port->ID(), "Line", "", false);
 	if (portLine == "High") {
 		port->setLine(1);
 	} else if (portLine == "Low") {
@@ -849,9 +849,9 @@ void AbstractOPDID::configureAnalogPort(Poco::Util::AbstractConfiguration* portC
 			OPDI_ANALOG_PORT_REFERENCE_INT |
 			OPDI_ANALOG_PORT_REFERENCE_EXT);
 
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->ID());
 
-	std::string mode = this->getConfigString(stateConfig, "Mode", "", false);
+	std::string mode = this->getConfigString(stateConfig, port->ID(), "Mode", "", false);
 	if (mode == "Input")
 		port->setMode(0);
 	else if (mode == "Output")
@@ -885,7 +885,7 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration* portC
 		this->configurePort(portConfig, port, 0);
 
 		// the select port requires a prefix or section "<portID>.Items"
-		Poco::AutoPtr<Poco::Util::AbstractConfiguration> portItems = parentConfig->createView(std::string(port->getID()) + ".Items");
+		Poco::AutoPtr<Poco::Util::AbstractConfiguration> portItems = parentConfig->createView(std::string(port->ID()) + ".Items");
 
 		// get ordered list of items
 		Poco::Util::AbstractConfiguration::Keys itemKeys;
@@ -915,7 +915,7 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration* portC
 		}
 
 		if (orderedItems.size() == 0)
-			throw Poco::DataException("The select port " + std::string(port->getID()) + " requires at least one item in its config section", std::string(port->getID()) + ".Items");
+			throw Poco::DataException("The select port " + std::string(port->ID()) + " requires at least one item in its config section", std::string(port->ID()) + ".Items");
 
 		// go through items, create ordered list of char* items
 		std::vector<const char*> charItems;
@@ -931,7 +931,7 @@ void AbstractOPDID::configureSelectPort(Poco::Util::AbstractConfiguration* portC
 		port->setItems(&charItems[0]);
 	}
 
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->ID());
 
 	if (stateConfig->getString("Position", "") != "") {
 		int16_t position = stateConfig->getInt("Position", 0);
@@ -999,7 +999,7 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 		}
 	}
 
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->getID());
+	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->ID());
 
 	int64_t position = stateConfig->getInt64("Position", port->getMin());
 	// set port error to invalid if the value is out of range
@@ -1179,12 +1179,12 @@ void AbstractOPDID::setupNode(Poco::Util::AbstractConfiguration* config, const s
 	// create node section view
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
 
-	std::string nodeType = this->getConfigString(nodeConfig, "Type", "", true);
+	std::string nodeType = this->getConfigString(nodeConfig, node, "Type", "", true);
 	if (nodeType == "Plugin") {
 		// get driver information
-		std::string nodeDriver = this->getConfigString(nodeConfig, "Driver", "", true);
+		std::string nodeDriver = this->getConfigString(nodeConfig, node, "Driver", "", true);
 		// plugins are by default relative to the current working directory
-		nodeDriver = this->resolveRelativePath(nodeConfig, nodeDriver, "CWD");
+		nodeDriver = this->resolveRelativePath(nodeConfig, node, nodeDriver, "CWD");
 
 		this->logVerbose("Loading plugin driver: " + nodeDriver);
 
@@ -1322,10 +1322,10 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration* config) {
 
 int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration* config, bool testMode) {
 	this->logVerbose(std::string("Setting up connection for slave: ") + this->slaveName);
-	std::string connectionType = this->getConfigString(config, "Type", "", true);
+	std::string connectionType = this->getConfigString(config, "Connection", "Type", "", true);
 
 	if (connectionType == "TCP") {
-		std::string interface_ = this->getConfigString(config, "Interface", "*", false);
+		std::string interface_ = this->getConfigString(config, "Connection", "Interface", "*", false);
 		int port = config->getInt("Port", DEFAULT_TCP_PORT);
 
 		if (testMode)
@@ -1477,20 +1477,18 @@ uint8_t AbstractOPDID::refresh(opdi::Port** ports) {
 			return result;
 	}
 
-	if (this->logVerbosity >= VERBOSE) {
-		if (ports == nullptr) {
-			this->allPortsRefreshed(this);
-			this->logDebug("Processed refresh for all ports");
-			return OPDI_STATUS_OK;
-		}
+	if (ports == nullptr) {
+		this->allPortsRefreshed(this);
+		this->logDebug("Processed refresh for all ports");
+		return OPDI_STATUS_OK;
+	}
 
-		opdi::Port* port = ports[0];
-		uint8_t i = 0;
-		while (port != nullptr) {
-			this->portRefreshed(this, port);
-			this->logDebug("Processed refresh for port: " + port->ID());
-			port = ports[++i];
-		}
+	opdi::Port* port = ports[0];
+	uint8_t i = 0;
+	while (port != nullptr) {
+		this->portRefreshed(this, port);
+		this->logDebug("Processed refresh for port: " + port->ID());
+		port = ports[++i];
 	}
 
 	return OPDI_STATUS_OK;
@@ -1506,7 +1504,7 @@ void AbstractOPDID::savePersistentConfig() {
 
 void AbstractOPDID::persist(opdi::Port* port) {
 	if (this->persistentConfig == nullptr) {
-		this->logWarning(std::string("Unable to persist state for port ") + port->getID() + ": No configuration file specified; use 'PersistentConfig' in the General configuration section");
+		this->logWarning(std::string("Unable to persist state for port ") + port->ID() + ": No configuration file specified; use 'PersistentConfig' in the General configuration section");
 		return;
 	}
 

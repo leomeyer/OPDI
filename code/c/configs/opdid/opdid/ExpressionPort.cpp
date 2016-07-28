@@ -35,11 +35,11 @@ void ExpressionPort::configure(Poco::Util::AbstractConfiguration* config) {
 
 	this->expressionStr = config->getString("Expression", "");
 	if (this->expressionStr == "")
-		throw Poco::DataException("You have to specify an Expression");
+		throw Poco::DataException(this->ID() + ": You have to specify an Expression");
 
 	this->outputPortStr = config->getString("OutputPorts", "");
 	if (this->outputPortStr == "")
-		throw Poco::DataException("You have to specify at least one output port in the OutputPorts setting");
+		throw Poco::DataException(this->ID() + ": You have to specify at least one output port in the OutputPorts setting");
 
 	this->numIterations = config->getInt64("Iterations", 0);
 
@@ -131,7 +131,7 @@ bool ExpressionPort::prepareVariables(bool duringSetup) {
 		}
 
 		// add reference to the port value (by port ID)
-		if (!this->symbol_table.add_variable(port->getID(), this->portValues[i]))
+		if (!this->symbol_table.add_variable(port->ID(), this->portValues[i]))
 			return false;
 	}
 

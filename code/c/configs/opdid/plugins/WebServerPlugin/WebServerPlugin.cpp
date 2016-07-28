@@ -18,6 +18,10 @@
 #define OPDID_NO_INTTYPES
 #include <mongoose.h>
 
+#ifdef _WINDOWS
+#include <windows.h>
+#endif
+
 namespace {
 
 ////////////////////////////////////////////////////////////////////////
@@ -174,7 +178,7 @@ Poco::JSON::Object WebServerPlugin::jsonGetPortState(opdi::Port* port) {
 
 Poco::JSON::Object WebServerPlugin::jsonGetPortInfo(opdi::Port* port) {
 	Poco::JSON::Object result;
-	result.set("id", port->getID());
+	result.set("id", port->ID());
 	result.set("type", port->getType());
 	result.set("label", port->getLabel());
 	result.set("dirCaps", port->getDirCaps());
@@ -573,6 +577,7 @@ void WebServerPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
 
 	abstractOPDID->configureDigitalPort(nodeConfig, this, false);
+	this->logVerbosity = abstractOPDID->getConfigLogVerbosity(nodeConfig, opdid::AbstractOPDID::UNKNOWN);
 
 	// get web server configuration
 	this->httpPort = nodeConfig->getString("Port", this->httpPort);
@@ -614,14 +619,26 @@ void WebServerPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std
 		this->s_http_server_opts.ip_acl = this->ipACL.c_str();
 
 	this->logVerbose("Setting up web server at: " + this->httpPort);
+
+	const char* errorString[256];
+	struct mg_bind_opts opts;
+	opts.user_data = nullptr;
+	opts.flags = 0;
+	opts.error_string = errorString;
 		
 	// setup web server
 	mg_mgr_init(&this->mgr, nullptr);
-	this->nc = mg_bind(&this->mgr, this->httpPort.c_str(), ev_handler);
+	this->nc = mg_bind_opt(&this->mgr, this->httpPort.c_str(), ev_handler, opts);
 	
-	if (this->nc == nullptr)		
-		throw Poco::ApplicationException(this->ID() + ": Unable to setup web server: " + strerror(errno));
-	
+	if (this->nc == nullptr)
+#ifdef linux
+		throw Poco::ApplicationException(this->ID() + ": Unable to setup web server: " + *errorString + ": " + strerror(errno));
+#elif _WINDOWS
+		throw Poco::ApplicationException(this->ID() + ": Unable to setup web server: " + *errorString);
+#else
+#error Platform not defined
+#endif
+
 	// set HTTP server parameters
 	mg_set_protocol_http_websocket(this->nc);
 
