@@ -243,11 +243,11 @@ void AbstractOPDID::log(const std::string& text) {
 	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
 
-	std::string msg = (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text;
+	std::string msg = "[" + this->getTimestampStr() + "] " + (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text;
 	if (this->logger != nullptr) {
 		this->logger->information(msg);
 	} else {
-		this->println("[" + this->getTimestampStr() + "] " + msg);
+		this->println(msg);
 	}
 }
 
@@ -255,22 +255,22 @@ void AbstractOPDID::logErr(const std::string& message) {
 	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
 
-	std::string msg = "ERROR: " + message;
+	std::string msg = "[" + this->getTimestampStr() + "] " + "ERROR: " + message;
 	if (this->logger != nullptr) {
 		this->logger->error(msg);
 	}
-	this->printlne("[" + this->getTimestampStr() + "] " + msg);
+	this->printlne(msg);
 }
 
 void AbstractOPDID::logWarn(const std::string& message) {
 	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
 
-	std::string msg = "WARNING: " + message;
+	std::string msg = "[" + this->getTimestampStr() + "] " + "WARNING: " + message;
 	if (this->logger != nullptr) {
 		this->logger->warning(msg);
 	}
-	this->printlne("[" + this->getTimestampStr() + "] " + msg);
+	this->printlne(msg);
 }
 
 int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<std::string, std::string>& environment) {

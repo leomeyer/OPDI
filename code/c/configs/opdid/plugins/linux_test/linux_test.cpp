@@ -57,18 +57,15 @@ void LinuxTestOPDIDPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, cons
 	} else
 		throw Poco::DataException("This plugin supports only node type 'DigitalPort'", portType);
 
-	if (this->opdid->logVerbosity == opdid::AbstractOPDID::VERBOSE)
-		this->opdid->logVerbose("LinuxTestOPDIDPlugin setup completed successfully as node " + node);
+	this->opdid->logVerbose("LinuxTestOPDIDPlugin setup completed successfully as node " + node);
 }
 
 void LinuxTestOPDIDPlugin::masterConnected() {
-	if (this->opdid->logVerbosity != opdid::AbstractOPDID::QUIET)
-		this->opdid->logNormal("Test plugin: master connected");
+	this->opdid->logNormal("Test plugin: master connected");
 }
 
 void LinuxTestOPDIDPlugin::masterDisconnected() {
-	if (this->opdid->logVerbosity != opdid::AbstractOPDID::QUIET)
-		this->opdid->logNormal("Test plugin: master disconnected");
+	this->opdid->logNormal("Test plugin: master disconnected");
 }
 
 extern "C" IOPDIDPlugin* GetOPDIDPluginInstance(int majorVersion, int minorVersion, int patchVersion) {

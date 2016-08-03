@@ -357,8 +357,7 @@ int LinuxOPDID::setupTCP(std::string /*interface_*/, int port) {
 	int sleepRemainderAdjustCount = 0;
 
 	while (true) {
-        if (Opdi->logVerbosity != QUIET)
-			this->log(std::string("Listening for a connection on TCP port ") + this->to_string(port));
+		this->logNormal(std::string("Listening for a connection on TCP port ") + this->to_string(port));
 
 		while (true) {
 
@@ -398,11 +397,10 @@ int LinuxOPDID::setupTCP(std::string /*interface_*/, int port) {
 						usleep(sleepRemainderBase - elapsed);
 					}
 				} else
-					this->log(std::string("Error accepting connection: ") + this->to_string(errno));
+					this->logNormal(std::string("Error accepting connection: ") + this->to_string(errno));
 			} else {
 
-				if (Opdi->logVerbosity != QUIET)
-					this->log((std::string("Connection attempt from ") + std::string(inet_ntoa(cli_addr.sin_addr))).c_str());
+				this->logNormal((std::string("Connection attempt from ") + std::string(inet_ntoa(cli_addr.sin_addr))).c_str());
 
 				err = HandleTCPConnection(newsockfd);
 
@@ -417,8 +415,7 @@ int LinuxOPDID::setupTCP(std::string /*interface_*/, int port) {
 				if (this->shutdownRequested)
 					return OPDI_SHUTDOWN;
 
-				if (Opdi->logVerbosity != QUIET)
-					this->log(std::string("Result: ") + this->getOPDIResult(err));
+				this->logVerbose(std::string("Result: ") + this->getOPDIResult(err));
 
 				break;
 			}

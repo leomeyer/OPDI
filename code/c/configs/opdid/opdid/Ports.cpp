@@ -2002,7 +2002,7 @@ void AggregatorPort::setLine(uint8_t newLine, ChangeSource changeSource) {
 // CounterPort
 ///////////////////////////////////////////////////////////////////////////////
 
-CounterPort::CounterPort(AbstractOPDID* opdid, const char* id) : opdi::DialPort(id), periodMs(opdid, 1000), increment(opdid, 1) {
+CounterPort::CounterPort(AbstractOPDID* opdid, const char* id) : opdi::DialPort(id), increment(opdid, 1), periodMs(opdid, 1000) {
 	this->opdid = opdid;
 	this->lastActionTime = 0;
 }
@@ -2010,8 +2010,8 @@ CounterPort::CounterPort(AbstractOPDID* opdid, const char* id) : opdi::DialPort(
 void CounterPort::configure(Poco::Util::AbstractConfiguration* nodeConfig) {
 	this->opdid->configureDialPort(nodeConfig, this);
 
-	this->periodMs.initialize(this, "Period", nodeConfig->getString("Period", this->to_string(this->periodMs.value())));
 	this->increment.initialize(this, "Increment", nodeConfig->getString("Increment", this->to_string(this->increment.value())));
+	this->periodMs.initialize(this, "Period", nodeConfig->getString("Period", this->to_string(this->periodMs.value())));
 }
 
 void CounterPort::prepare() {

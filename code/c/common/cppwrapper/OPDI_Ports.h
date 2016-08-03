@@ -7,6 +7,7 @@
 
 #include "Poco/Exception.h"
 #include "Poco/RegularExpression.h"
+#include "Poco/NumberParser.h"
 
 #include "opdi_platformtypes.h"
 #include "opdi_configspecs.h"
