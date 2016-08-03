@@ -32,14 +32,14 @@
 #include "opdi_platformfuncs.h"
 
 #include "AbstractOPDID.h"
-#include "PortFunctions.h"
 
 namespace {
 
 /** Interface for weather ports */
-class WeatherPort : protected opdid::PortFunctions {
+class WeatherPort {
+	std::string id;
 public:
-	WeatherPort(std::string id) : opdid::PortFunctions(id) {};
+	WeatherPort(std::string id) : id(id) {};
 
 	virtual std::string getDataElement(void) = 0;
 
@@ -59,6 +59,8 @@ public:
 class WeatherGaugePort : public opdi::DialPort, public WeatherPort {
 
 protected:
+	opdid::AbstractOPDID* opdid;
+		
 	bool isValid;
 	mutable bool lastRequestedValidState;
 	std::string dataElement;
@@ -78,7 +80,7 @@ public:
 
 	virtual std::string getDataElement(void);
 
-	virtual void configure(Poco::Util::AbstractConfiguration* nodeConfig, opdid::AbstractOPDID::LogVerbosity defaultLogVerbosity);
+	virtual void configure(Poco::Util::AbstractConfiguration* nodeConfig, opdi::LogVerbosity defaultLogVerbosity);
 
 	virtual void invalidate(void);
 
@@ -110,7 +112,7 @@ std::string WeatherGaugePort::getDataElement(void){
 	return this->dataElement;
 }
 
-void WeatherGaugePort::configure(Poco::Util::AbstractConfiguration* nodeConfig, opdid::AbstractOPDID::LogVerbosity defaultLogVerbosity) {
+void WeatherGaugePort::configure(Poco::Util::AbstractConfiguration* nodeConfig, opdi::LogVerbosity defaultLogVerbosity) {
 	opdid->configureDialPort(nodeConfig, this);
 	this->logVerbosity = opdid->getConfigLogVerbosity(nodeConfig, defaultLogVerbosity);
 
@@ -244,7 +246,7 @@ class WeatherPlugin : public IOPDIDPlugin, public opdid::IOPDIDConnectionListene
 protected:
 	std::string nodeID;
 
-	opdid::AbstractOPDID::LogVerbosity logVerbosity;
+	opdi::LogVerbosity logVerbosity;
 
 	std::string url;
 	int timeoutSeconds;
@@ -287,7 +289,7 @@ void WeatherPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
 
-	this->logVerbosity = opdid->getConfigLogVerbosity(nodeConfig, opdid::AbstractOPDID::UNKNOWN);
+	this->logVerbosity = opdid->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
 
 	this->url = abstractOPDID->getConfigString(nodeConfig, node, "Url", "", true);
 	this->provider = abstractOPDID->getConfigString(nodeConfig, node, "Provider", "", true);

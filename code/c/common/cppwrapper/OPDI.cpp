@@ -539,4 +539,85 @@ opdi::SelectPort* OPDI::findSelectPort(const std::string& configPort, const std:
 	return (opdi::SelectPort*)port;
 }
 
+void OPDI::logWarning(const std::string& message) {
+	if (this->logVerbosity >= LogVerbosity::NORMAL) {
+		this->logWarn(message);
+	}
+}
+
+void OPDI::logError(const std::string& message) {
+	this->logErr(message);
+}
+
+void OPDI::logNormal(const std::string& message, LogVerbosity verbosity) {
+	// supplied log verbosity takes precedence
+	LogVerbosity lv = (verbosity != LogVerbosity::UNKNOWN ? verbosity : this->logVerbosity);
+	if (lv >= LogVerbosity::NORMAL) {
+		this->log(message);
+	}
+}
+
+void OPDI::logVerbose(const std::string& message, LogVerbosity verbosity) {
+	// supplied log verbosity takes precedence
+	LogVerbosity lv = (verbosity != LogVerbosity::UNKNOWN ? verbosity : this->logVerbosity);
+	if (lv >= LogVerbosity::VERBOSE) {
+		this->log(message);
+	}
+}
+
+void OPDI::logDebug(const std::string& message, LogVerbosity verbosity) {
+	// supplied log verbosity takes precedence
+	LogVerbosity lv = (verbosity != LogVerbosity::UNKNOWN ? verbosity : this->logVerbosity);
+	if (lv >= LogVerbosity::DEBUG) {
+		this->log(message);
+	}
+}
+
+void OPDI::logExtreme(const std::string& message, LogVerbosity verbosity) {
+	// supplied log verbosity takes precedence
+	LogVerbosity lv = (verbosity != LogVerbosity::UNKNOWN ? verbosity : this->logVerbosity);
+	if (lv >= LogVerbosity::EXTREME) {
+		this->log(message);
+	}
+}
+
+double OPDI::getPortValue(opdi::Port* port) const {
+	double value = 0;
+
+	// evaluation depends on port type
+	if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
+		// digital port: Low = 0; High = 1
+		uint8_t mode;
+		uint8_t line;
+		((opdi::DigitalPort*)port)->getState(&mode, &line);
+		value = line;
+	}
+	else
+		if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+			// analog port: relative value (0..1)
+			value = ((opdi::AnalogPort*)port)->getRelativeValue();
+		}
+		else
+			if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+				// dial port: absolute value
+				int64_t position;
+				((opdi::DialPort*)port)->getState(&position);
+				value = (double)position;
+			}
+			else
+				if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+					// select port: current position number
+					uint16_t position;
+					((opdi::SelectPort*)port)->getState(&position);
+					value = position;
+				}
+				else
+					// port type not supported
+					throw Poco::Exception("Port type not supported");
+
+	return value;
+}
+
+
+
 }		// namespace opdi

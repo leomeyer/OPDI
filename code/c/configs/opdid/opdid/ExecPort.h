@@ -9,7 +9,7 @@
 
 #include <memory>
 
-#include "PortFunctions.h"
+#include "AbstractOPDID.h"
 
 namespace opdid {
 
@@ -33,7 +33,7 @@ namespace opdid {
 *   If the parameter ForceKill is true a running process is killed if it is still running when the
 *   same process is to be started again.
 */
-class ExecPort : public opdi::DigitalPort, protected PortFunctions {
+class ExecPort : public opdi::DigitalPort {
 protected:
 
 	enum ChangeType {
@@ -87,6 +87,8 @@ protected:
 		}
 	};
 
+protected:
+	opdid::AbstractOPDID* opdid;
 	std::string programName;
 	std::string parameters;
 	ChangeType changeType;

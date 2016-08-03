@@ -6,11 +6,21 @@
 #include <sstream>
 
 #include "Poco/Exception.h"
+#include "Poco/RegularExpression.h"
 
 #include "opdi_platformtypes.h"
 #include "opdi_configspecs.h"
 
 namespace opdi {
+
+	enum class LogVerbosity {
+		UNKNOWN,
+		QUIET,
+		NORMAL,
+		VERBOSE,
+		DEBUG,
+		EXTREME
+	};
 
 class OPDI;
 class Port;
@@ -75,6 +85,8 @@ protected:
 
 	// If a port is readonly its state cannot be changed by the master.
 	bool readonly;
+
+	LogVerbosity logVerbosity;
 
 	Error error;
 
@@ -158,6 +170,31 @@ protected:
 	* handle the onChange* functionality. */
 	virtual void handleStateChange(ChangeSource changeSource);
 
+	virtual Port* findPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+
+	virtual void findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, PortList& portList);
+
+	virtual DigitalPort* findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+
+	virtual void findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, DigitalPortList& portList);
+
+	virtual AnalogPort* findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+
+	virtual void findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, AnalogPortList& portList);
+
+	virtual SelectPort* findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+
+	virtual void logWarning(const std::string& message);
+
+	virtual void logNormal(const std::string& message);
+
+	virtual void logVerbose(const std::string& message);
+
+	virtual void logDebug(const std::string& message);
+
+	virtual void logExtreme(const std::string& message);
+
+	std::string getChangeSourceText(ChangeSource changeSource);
 public:
 
 	/** Virtual destructor for the port. */
@@ -252,6 +289,8 @@ public:
 	virtual std::string getExtendedState(void) const;
 
 	virtual std::string getExtendedInfo(void) const;
+
+	virtual void setLogVerbosity(LogVerbosity newLogVerbosity);
 
 	virtual RefreshMode getRefreshMode(void);
 
@@ -551,5 +590,177 @@ public:
 	// value is less than 1 it is considered an (implementation specific) error.
 	virtual int read(char* result) = 0;
 };
+
+/** This class wraps either a fixed value or a port name. It is used when port configuration parameters
+*   can be either fixed or dynamic values.
+*   A port name can be followed by a double value in brackets. This indicates that the port's value
+*   should be scaled, i. e. multiplied, with the given factor. This is especially useful when the value
+*   of an analog port, which is by definition always between 0 and 1 inclusive, should be mapped to
+*   a different range of numbers.
+*   The port name can be optionally followed by a slash (/) plus a double value that specifies the value
+*   in case the port returns an error. This allows for a reasonable reaction in case port errors are to
+*   be expected. If this value is omitted the error will be propagated via an exception to the caller
+*   which must then be react to the error condition. The error default can be prohibited.
+*   Syntax examples:
+*   10               - fixed value 10
+*   MyPort1          - dynamic value of MyPort1
+*   MyPort1(100)     - dynamic value of MyPort1, multiplied by 100
+*   MyPort1/0        - dynamic value of MyPort1, 0 in case of an error
+*   MyPort1(100)/0   - dynamic value of MyPort1, multiplied by 100, 0 in case of an error
+**/
+template<typename T>
+class ValueResolver {
+
+	OPDI* opdi;
+	Port* origin;
+	std::string paramName;
+	std::string portID;
+	bool useScaleValue;
+	double scaleValue;
+	bool useErrorDefault;
+	T errorDefault;
+	mutable opdi::Port* port;
+	bool isFixed;
+	T fixedValue;
+
+public:
+	ValueResolver(OPDI* opdi) {
+		this->opdi = opdi;
+		this->fixedValue = 0;
+		this->isFixed = false;
+		this->useScaleValue = false;
+		this->scaleValue = 0;
+		this->useErrorDefault = false;
+		this->errorDefault = 0;
+	}
+
+	ValueResolver(OPDI* opdi, T initialValue) : ValueResolver(opdi) {
+		this->isFixed = true;
+		this->fixedValue = initialValue;
+	}
+
+	void initialize(Port* origin, const std::string& paramName, const std::string& value, bool allowErrorDefault = true) {
+		this->origin = origin;
+		this->useScaleValue = false;
+		this->useErrorDefault = false;
+		this->port = nullptr;
+
+		this->opdi->logDebug(origin->ID() + ": Parsing ValueResolver expression of parameter '" + paramName + "': " + value);
+		// try to convert the value to a double
+		double d;
+		if (Poco::NumberParser::tryParseFloat(value, d)) {
+			this->fixedValue = (T)d;
+			this->isFixed = true;
+			this->opdi->logDebug(origin->ID() + ": ValueResolver expression resolved to fixed value: " + this->opdi->to_string(value));
+		}
+		else {
+			this->isFixed = false;
+			Poco::RegularExpression::MatchVec matches;
+			std::string portName;
+			std::string scaleStr;
+			std::string defaultStr;
+			// try to match full syntax
+			Poco::RegularExpression reFull("(.*)\\((.*)\\)\\/(.*)");
+			if (reFull.match(value, 0, matches) == 4) {
+				if (!allowErrorDefault)
+					throw Poco::ApplicationException(origin->ID() + ": Parameter " + paramName + ": Specifying an error default value is not allowed: " + value);
+				portName = value.substr(matches[1].offset, matches[1].length);
+				scaleStr = value.substr(matches[2].offset, matches[2].length);
+				defaultStr = value.substr(matches[3].offset, matches[3].length);
+			}
+			else {
+				// try to match default value syntax
+				Poco::RegularExpression reDefault("(.*)\\/(.*)");
+				if (reDefault.match(value, 0, matches) == 3) {
+					if (!allowErrorDefault)
+						throw Poco::ApplicationException(origin->ID() + ": Parameter " + paramName + ": Specifying an error default value is not allowed: " + value);
+					portName = value.substr(matches[1].offset, matches[1].length);
+					defaultStr = value.substr(matches[2].offset, matches[2].length);
+				}
+				else {
+					// try to match scale value syntax
+					Poco::RegularExpression reScale("(.*)\\((.*)\\)");
+					if (reScale.match(value, 0, matches) == 3) {
+						portName = value.substr(matches[1].offset, matches[1].length);
+						scaleStr = value.substr(matches[2].offset, matches[2].length);
+					}
+					else {
+						// could not match a pattern - use value as port name
+						portName = value;
+					}
+				}
+			}
+			// parse values if specified
+			if (scaleStr != "") {
+				if (Poco::NumberParser::tryParseFloat(scaleStr, this->scaleValue)) {
+					this->useScaleValue = true;
+				}
+				else
+					throw Poco::ApplicationException(origin->ID() + ": Parameter " + paramName + ": Invalid scale value specified; must be numeric: " + scaleStr);
+			}
+			if (defaultStr != "") {
+				double e;
+				if (Poco::NumberParser::tryParseFloat(defaultStr, e)) {
+					this->errorDefault = (T)e;
+					this->useErrorDefault = true;
+				}
+				else
+					throw Poco::ApplicationException(origin->ID() + ": Parameter " + paramName + ": Invalid error default value specified; must be numeric: " + defaultStr);
+			}
+
+			this->portID = portName;
+
+			this->opdi->logDebug(origin->ID() + ": ValueResolver expression resolved to port ID: " + this->portID
+				+ (this->useScaleValue ? ", scale by " + this->opdi->to_string(this->scaleValue) : "")
+				+ (this->useErrorDefault ? ", error default is " + this->opdi->to_string(this->errorDefault) : ""));
+		}
+	}
+
+	bool validate(T min, T max) const {
+		// no fixed value? assume it's valid
+		if (!this->isFixed)
+			return true;
+
+		return ((this->fixedValue >= min) && (this->fixedValue <= max));
+	}
+
+	T value() const {
+		if (isFixed)
+			return fixedValue;
+		else {
+			// port not yet resolved?
+			if (this->port == nullptr) {
+				if (this->portID == "")
+					throw Poco::ApplicationException(this->origin->ID() + ": Parameter " + paramName + ": ValueResolver not initialized (programming error)");
+				// try to resolve the port
+				this->port = this->opdi->findPort(this->origin->ID(), this->paramName, this->portID, true);
+			}
+			// resolve port value to a double
+			double result = 0;
+
+			try {
+				result = this->opdi->getPortValue(this->port);
+			}
+			catch (Poco::Exception &pe) {
+				this->opdi->logExtreme(this->origin->ID() + ": Unable to get the value of the port " + port->ID() + ": " + pe.message());
+				if (this->useErrorDefault) {
+					return this->errorDefault;
+				}
+				else
+					// propagate exception
+					throw Poco::ApplicationException(this->origin->ID() + ": Unable to get the value of the port " + port->ID() + ": " + pe.message());
+			}
+
+			// scale?
+			if (this->useScaleValue) {
+				result *= this->scaleValue;
+			}
+
+			return (T)result;
+		}
+	}
+};
+
+
 
 }	// namespace opdi

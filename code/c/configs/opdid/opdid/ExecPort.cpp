@@ -8,7 +8,7 @@ namespace opdid {
 // Exec Port
 ///////////////////////////////////////////////////////////////////////////////
 
-ExecPort::ExecPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id), waiter(*this, &ExecPort::waitForProcessEnd) {
+ExecPort::ExecPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), waiter(*this, &ExecPort::waitForProcessEnd) {
 	this->opdid = opdid;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -29,7 +29,7 @@ ExecPort::~ExecPort() {
 
 void ExecPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configurePort(config, this, 0);
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	std::string changeTypeStr = config->getString("ChangeType", "");
 	if (changeTypeStr == "ChangedToHigh") {

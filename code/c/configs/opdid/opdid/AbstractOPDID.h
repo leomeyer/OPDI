@@ -101,18 +101,11 @@ protected:
 	/** Outputs a log message with a timestamp. */
 	virtual void log(const std::string& text);
 
+	virtual void logErr(const std::string& message);
+
+	virtual void logWarn(const std::string& message);
 public:
 
-	enum LogVerbosity {
-		UNKNOWN,
-		QUIET,
-		NORMAL,
-		VERBOSE,
-		DEBUG,
-		EXTREME
-	};
-
-	AbstractOPDID::LogVerbosity logVerbosity;
 	std::string timestampFormat;
 
 	Poco::BasicEvent<void> allPortsRefreshed;
@@ -166,25 +159,6 @@ public:
 	/** Outputs the specified error text to an implementation-dependent error output with an appended line break. */
 	virtual void printlne(const std::string& text);
 
-	/** Converts a given object to a string. */
-	template <class T> inline std::string to_string(const T& t) const;
-
-	virtual void logWarning(const std::string& message);
-
-	virtual void logError(const std::string& message);
-
-	// log if this object's verbosity is greater or equal than normal (supplied verbosity takes precedence)
-	virtual void logNormal(const std::string& message, AbstractOPDID::LogVerbosity verbosity = UNKNOWN);
-
-	// log if this object's verbosity is greater or equal than verbose (supplied verbosity takes precedence)
-	virtual void logVerbose(const std::string& message, AbstractOPDID::LogVerbosity verbosity = UNKNOWN);
-
-	// log if this object's verbosity is greater or equal than debug (supplied verbosity takes precedence)
-	virtual void logDebug(const std::string& message, AbstractOPDID::LogVerbosity verbosity = UNKNOWN);
-
-	// log if this object's verbosity is greater or equal than extreme (supplied verbosity takes precedence)
-	virtual void logExtreme(const std::string& message, AbstractOPDID::LogVerbosity verbosity = UNKNOWN);
-
 	/** Starts processing the supplied arguments. */
 	virtual int startup(const std::vector<std::string>& args, const std::map<std::string, std::string>& environment);
 
@@ -193,7 +167,7 @@ public:
 	 *  Use this mechanism to avoid resource conflicts. */
 	virtual void lockResource(const std::string& resourceID, const std::string& lockerID);
 
-	virtual LogVerbosity getConfigLogVerbosity(Poco::Util::AbstractConfiguration* config, LogVerbosity defaultVerbosity);
+	virtual opdi::LogVerbosity getConfigLogVerbosity(Poco::Util::AbstractConfiguration* config, opdi::LogVerbosity defaultVerbosity);
 
 	/** Returns the configuration that should be used for querying a port's state. This is the baseConfig if no
 	 *  persistent configuration has been specified, or a layered configuration otherwise.
@@ -309,20 +283,10 @@ public:
 	/** Returns a string representing the port state; empty in case of errors. */
 	virtual std::string getPortStateStr(opdi::Port* port) const;
 
-	/** Returns a double representing the port value; throws errors if they occur. */
-	virtual double getPortValue(opdi::Port* port) const;
-
 	virtual std::string getDeviceInfo(void);
 
 	virtual void getEnvironment(std::map<std::string, std::string>& mapToFill);
 };
-
-
-template <class T> inline std::string AbstractOPDID::to_string(const T& t) const {
-	std::stringstream ss;
-	ss << t;
-	return ss.str();
-}
 
 }		// namespace opdid
 

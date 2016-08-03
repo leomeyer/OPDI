@@ -261,6 +261,11 @@ std::string Port::getExtendedInfo() const {
 	return this->extendedInfo;
 }
 
+void Port::setLogVerbosity(LogVerbosity newLogVerbosity)
+{
+	this->logVerbosity = newLogVerbosity;
+}
+
 std::string Port::getExtendedState() const {
 	if (this->history.empty())
 		return "";
@@ -355,6 +360,91 @@ Port::~Port() {
 		free(this->data);
 }
 
+// find function delegates
+
+Port * Port::findPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required)
+{
+	return this->opdi->findPort(configPort, setting, portID, required);
+}
+
+void Port::findPorts(const std::string & configPort, const std::string & setting, const std::string & portIDs, PortList & portList)
+{
+	this->opdi->findPorts(configPort, setting, portIDs, portList);
+}
+
+DigitalPort * Port::findDigitalPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required)
+{
+	return this->opdi->findDigitalPort(configPort, setting, portID, required);
+}
+
+void Port::findDigitalPorts(const std::string & configPort, const std::string & setting, const std::string & portIDs, DigitalPortList & portList)
+{
+	this->opdi->findDigitalPorts(configPort, setting, portIDs, portList);
+}
+
+AnalogPort * Port::findAnalogPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required)
+{
+	return this->opdi->findAnalogPort(configPort, setting, portID, required);
+}
+
+void Port::findAnalogPorts(const std::string & configPort, const std::string & setting, const std::string & portIDs, AnalogPortList & portList)
+{
+	this->opdi->findAnalogPorts(configPort, setting, portIDs, portList);
+}
+
+SelectPort * Port::findSelectPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required)
+{
+	return this->opdi->findSelectPort(configPort, setting, portID, required);
+}
+
+void Port::logWarning(const std::string& message) {
+	if (this->opdi == nullptr)
+		return;
+	if ((this->logVerbosity == LogVerbosity::UNKNOWN) || (this->logVerbosity > LogVerbosity::QUIET)) {
+		this->opdi->logWarning(this->ID() + ": " + message);
+	}
+}
+
+void Port::logNormal(const std::string& message) {
+	if (this->opdi == nullptr)
+		return;
+	if ((this->logVerbosity == LogVerbosity::UNKNOWN) || (this->logVerbosity >= LogVerbosity::NORMAL)) {
+		this->opdi->logNormal(this->ID() + ": " + message, this->logVerbosity);
+	}
+}
+
+void Port::logVerbose(const std::string& message) {
+	if (this->opdi == nullptr)
+		return;
+	if ((this->logVerbosity == LogVerbosity::UNKNOWN) || (this->logVerbosity >= LogVerbosity::VERBOSE)) {
+		this->opdi->logVerbose(this->ID() + ": " + message, this->logVerbosity);
+	}
+}
+
+void Port::logDebug(const std::string& message) {
+	if (this->opdi == nullptr)
+		return;
+	if ((this->logVerbosity == LogVerbosity::UNKNOWN) || (this->logVerbosity >= LogVerbosity::DEBUG)) {
+		this->opdi->logDebug(this->ID() + ": " + message, this->logVerbosity);
+	}
+}
+
+void Port::logExtreme(const std::string& message) {
+	if (this->opdi == nullptr)
+		return;
+	if ((this->logVerbosity == LogVerbosity::UNKNOWN) || (this->logVerbosity >= LogVerbosity::EXTREME)) {
+		this->opdi->logExtreme(this->ID() + ": " + message, this->logVerbosity);
+	}
+}
+
+std::string Port::getChangeSourceText(ChangeSource changeSource)
+{
+	switch (changeSource) {
+	case ChangeSource::CHANGESOURCE_INT: return "Internal";
+	case ChangeSource::CHANGESOURCE_USER: return "User";
+	default: return "<unknown>";
+	}
+}
 
 PortGroup::PortGroup(const char* id) {
 	this->data = nullptr;
@@ -504,7 +594,7 @@ void DigitalPort::setDirCaps(const char* dirCaps) {
 		mode = 3;
 }
 
-void DigitalPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
+void DigitalPort::setMode(uint8_t mode, ChangeSource changeSource) {
 	if (mode > 3)
 		throw PortError(this->ID() + ": Digital port mode not supported: " + this->to_string((int)mode));
 
@@ -545,9 +635,11 @@ void DigitalPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 		newMode = 3;
 	}
 	if (newMode > -1) {
-		if (newMode != this->mode)
-			this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
-		this->mode = newMode;
+		if (newMode != this->mode) {
+			this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+			this->mode = newMode;
+			this->logDebug("DigitalPort Mode changed to: " + this->to_string((int)this->mode) + " by: " + this->getChangeSourceText(changeSource));
+		}
 		if (persistent && (this->opdi != nullptr))
 			this->opdi->persist(this);
 	}
@@ -559,9 +651,11 @@ void DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 	if (this->error != Error::VALUE_OK)
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (line != this->line);
-	if (changed)
-		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
-	this->line = line;
+	if (changed) {
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->line = line;
+		this->logDebug("DigitalPort Line changed to: " + this->to_string((int)this->line) + " by: " + this->getChangeSourceText(changeSource));
+	}
 	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
@@ -620,12 +714,14 @@ AnalogPort::AnalogPort(const char* id, const char* label, const char* dircaps, c
 AnalogPort::~AnalogPort() {
 }
 
-void AnalogPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
+void AnalogPort::setMode(uint8_t mode, ChangeSource changeSource) {
 	if (mode > 2)
 		throw PortError(this->ID() + ": Analog port mode not supported: " + this->to_string((int)mode));
-	if (mode != this->mode)
-		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
-	this->mode = mode;
+	if (mode != this->mode) {
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->mode = mode;
+		this->logDebug("AnalogPort Mode changed to: " + this->to_string((int)this->mode) + " by: " + this->getChangeSourceText(changeSource));
+	}
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }
@@ -638,7 +734,7 @@ int32_t AnalogPort::validateValue(int32_t value) const {
 	return value;
 }
 
-void AnalogPort::setResolution(uint8_t resolution, ChangeSource /*changeSource*/) {
+void AnalogPort::setResolution(uint8_t resolution, ChangeSource changeSource) {
 	if (resolution < 8 || resolution > 12)
 		throw PortError(this->ID() + ": Analog port resolution not supported; allowed values are 8..12 (bits): " + this->to_string((int)resolution));
 	// check whether the resolution is supported
@@ -648,10 +744,11 @@ void AnalogPort::setResolution(uint8_t resolution, ChangeSource /*changeSource*/
 		|| ((resolution == 11) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_11) != OPDI_ANALOG_PORT_RESOLUTION_11))
 		|| ((resolution == 12) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_12) != OPDI_ANALOG_PORT_RESOLUTION_12)))
 		throw PortError(this->ID() + ": Analog port resolution not supported (port flags): " + this->to_string((int)resolution));
-	if (resolution != this->resolution)
-		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
-	this->resolution = resolution;
-
+	if (resolution != this->resolution) {
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->resolution = resolution;
+		this->logDebug("AnalogPort Resolution changed to: " + this->to_string((int)this->resolution) + " by: " + this->getChangeSourceText(changeSource));
+	}
 	if (this->mode != 0)
 		this->setValue(this->value);
 	else
@@ -659,12 +756,14 @@ void AnalogPort::setResolution(uint8_t resolution, ChangeSource /*changeSource*/
 			this->opdi->persist(this);
 }
 
-void AnalogPort::setReference(uint8_t reference, ChangeSource /*changeSource*/) {
+void AnalogPort::setReference(uint8_t reference, ChangeSource changeSource) {
 	if (reference > 2)
 		throw PortError(this->ID() + ": Analog port reference not supported: " + this->to_string((int)reference));
-	if (reference != this->reference)
-		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
-	this->reference = reference;
+	if (reference != this->reference) {
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->reference = reference;
+		this->logDebug("AnalogPort Reference changed to: " + this->to_string((int)this->reference) + " by: " + this->getChangeSourceText(changeSource));
+	}
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
 }
@@ -675,9 +774,11 @@ void AnalogPort::setValue(int32_t value, ChangeSource changeSource) {
 	if (this->error != Error::VALUE_OK)
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (newValue != this->value);
-	if (changed)
-		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
-	this->value = newValue;
+	if (changed) {
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->value = newValue;
+		this->logDebug("AnalogPort Value changed to: " + this->to_string((int)this->value) + " by: " + this->getChangeSourceText(changeSource));
+	}
 	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
@@ -800,9 +901,11 @@ void SelectPort::setPosition(uint16_t position, ChangeSource changeSource) {
 	if (this->error != Error::VALUE_OK)
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (position != this->position);
-	if (changed)
-		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
-	this->position = position;
+	if (changed) {
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->position = position;
+		this->logDebug("SelectPort Position changed to: " + this->to_string(this->position) + " by: " + this->getChangeSourceText(changeSource));
+	}
 	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);
@@ -899,9 +1002,11 @@ void DialPort::setPosition(int64_t position, ChangeSource changeSource) {
 	if (this->error != Error::VALUE_OK)
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (newPosition != this->position);
-	if (changed)
-		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
-	this->position = position;
+	if (changed) {
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->position = position;
+		this->logDebug("DialPort Position changed to: " + this->to_string(this->position) + " by: " + this->getChangeSourceText(changeSource));
+	}
 	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))
 		this->opdi->persist(this);

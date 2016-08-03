@@ -13,7 +13,6 @@
 #include "opdi_platformfuncs.h"
 
 #include "AbstractOPDID.h"
-#include "PortFunctions.h"
 
 #define OPDID_NO_INTTYPES
 #include <mongoose.h>
@@ -28,7 +27,7 @@ namespace {
 // Plugin main class
 ////////////////////////////////////////////////////////////////////////
 
-class WebServerPlugin : public IOPDIDPlugin, public opdid::IOPDIDConnectionListener, public opdi::DigitalPort, protected opdid::PortFunctions {
+class WebServerPlugin : public IOPDIDPlugin, public opdid::IOPDIDConnectionListener, public opdi::DigitalPort {
 
 	class InvalidRequestException : public Poco::Exception
 	{
@@ -42,6 +41,7 @@ class WebServerPlugin : public IOPDIDPlugin, public opdid::IOPDIDConnectionListe
 		explicit MethodNotFoundException(std::string message): Poco::Exception(message) {};
 	};
 
+	opdid::AbstractOPDID* opdid;
 	// web server management structures
 	struct mg_mgr mgr;
 	struct mg_connection* nc;
@@ -59,7 +59,7 @@ class WebServerPlugin : public IOPDIDPlugin, public opdid::IOPDIDConnectionListe
 	std::string jsonRpcUrl;
 
 public:
-	WebServerPlugin(): opdi::DigitalPort("WebServerPlugin"), opdid::PortFunctions("WebServerPlugin"), mgr() {
+	WebServerPlugin(): opdi::DigitalPort("WebServerPlugin"), mgr() {
 		memset(&this->s_http_server_opts, 0, sizeof(mg_serve_http_opts));
 		this->httpPort = "8080";
 		this->documentRoot = ".";
@@ -212,7 +212,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcGetPortInfo(struct mg_connection* /*n
 	if (portIDStr == "")
 		throw Poco::InvalidArgumentException("Method getPortData: parameter portID is missing");
 
-	opdi::Port* port = this->opdid->findPortByID(portIDStr.c_str());
+	opdi::Port* port = this->opdi->findPortByID(portIDStr.c_str());
 	if (port == NULL)
 		throw Poco::InvalidArgumentException(std::string("Method getPortData: port not found: ") + portIDStr);
 
@@ -222,7 +222,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcGetPortInfo(struct mg_connection* /*n
 Poco::JSON::Array WebServerPlugin::jsonGetPortList() {
 	// return an array of port objects
 	Poco::JSON::Array result;
-	opdi::PortList pl = this->opdid->getPorts();
+	opdi::PortList pl = this->opdi->getPorts();
 	auto it = pl.begin();
 	auto ite = pl.end();
 	while (it != ite) {
@@ -237,7 +237,7 @@ Poco::JSON::Array WebServerPlugin::jsonGetPortList() {
 Poco::JSON::Array WebServerPlugin::jsonGetPortGroups() {
 	// return an array of group objects
 	Poco::JSON::Array result;
-	opdi::PortGroupList gl = this->opdid->getPortGroups();
+	opdi::PortGroupList gl = this->opdi->getPortGroups();
 	auto it = gl.begin();
 	auto ite = gl.end();
 	while (it != ite) {
@@ -257,7 +257,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcGetDeviceInfo(struct mg_connection* /
 	// sub-groups will be contained in its subgroups member
 	Poco::JSON::Object result;
 
-	result.set("name", this->opdid->getSlaveName());
+	result.set("name", this->opdi->getSlaveName());
 	result.set("ports", this->jsonGetPortList());
 	result.set("groups", this->jsonGetPortGroups());
 	result.set("info", this->opdid->getDeviceInfo());
@@ -275,7 +275,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetDigitalState(struct mg_connection*
 	if (portIDStr == "")
 		throw Poco::InvalidArgumentException("Method setDigitalState: parameter portID is missing");
 
-	opdi::Port* port = this->opdid->findPortByID(portIDStr.c_str());
+	opdi::Port* port = this->opdi->findPortByID(portIDStr.c_str());
 	if (port == NULL)
 		throw Poco::InvalidArgumentException(std::string("Method setDigitalState: port not found: ") + portIDStr);
 
@@ -305,7 +305,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetAnalogValue(struct mg_connection* 
 	if (portIDStr == "")
 		throw Poco::InvalidArgumentException("Method setAnalogValue: parameter portID is missing");
 
-	opdi::Port* port = this->opdid->findPortByID(portIDStr.c_str());
+	opdi::Port* port = this->opdi->findPortByID(portIDStr.c_str());
 	if (port == NULL)
 		throw Poco::InvalidArgumentException(std::string("Method setAnalogValue: port not found: ") + portIDStr);
 
@@ -332,7 +332,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetDialPosition(struct mg_connection*
 	if (portIDStr == "")
 		throw Poco::InvalidArgumentException("Method setDialPosition: parameter portID is missing");
 
-	opdi::Port* port = this->opdid->findPortByID(portIDStr.c_str());
+	opdi::Port* port = this->opdi->findPortByID(portIDStr.c_str());
 	if (port == NULL)
 		throw Poco::InvalidArgumentException(std::string("Method setDialPosition: port not found: ") + portIDStr);
 
@@ -359,7 +359,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetSelectPosition(struct mg_connectio
 	if (portIDStr == "")
 		throw Poco::InvalidArgumentException("Method setSelectPosition: parameter portID is missing");
 
-	opdi::Port* port = this->opdid->findPortByID(portIDStr.c_str());
+	opdi::Port* port = this->opdi->findPortByID(portIDStr.c_str());
 	if (port == NULL)
 		throw Poco::InvalidArgumentException(std::string("Method setSelectPosition: port not found: ") + portIDStr);
 
@@ -565,9 +565,9 @@ void WebServerPlugin::onPortRefreshed(const void* /*pSender*/, opdi::Port*& port
 }
 
 void WebServerPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration* config) {
+	this->opdi = abstractOPDID;
 	this->opdid = abstractOPDID;
 	this->setID(node.c_str());
-	this->portFunctionID = node;
 
 	Poco::JSON::Object response;
 	std::stringstream sOut;
@@ -577,7 +577,7 @@ void WebServerPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
 
 	abstractOPDID->configureDigitalPort(nodeConfig, this, false);
-	this->logVerbosity = abstractOPDID->getConfigLogVerbosity(nodeConfig, opdid::AbstractOPDID::UNKNOWN);
+	this->logVerbosity = abstractOPDID->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
 
 	// get web server configuration
 	this->httpPort = nodeConfig->getString("Port", this->httpPort);
@@ -645,7 +645,7 @@ void WebServerPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std
 	this->logVerbose("WebServerPlugin setup completed successfully at: " + this->httpPort);
 	
 	// register port (necessary for doWork to be called regularly)
-	this->opdid->addPort(this);
+	this->opdi->addPort(this);
 
 	// register port refresh events (for websocket broadcasts)
 	this->opdid->allPortsRefreshed += Poco::delegate(this, &WebServerPlugin::onAllPortsRefreshed);

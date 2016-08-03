@@ -132,7 +132,6 @@
     <ClInclude Include="ExpressionPort.h" />
     <ClInclude Include="OPDIDConfigurationFile.h" />
     <ClInclude Include="opdi_configspecs.h" />
-    <ClInclude Include="PortFunctions.h" />
     <ClInclude Include="Ports.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="SunRiseSet.h" />
@@ -164,7 +163,6 @@
     <ClCompile Include="ExpressionPort.cpp" />
     <ClCompile Include="OPDIDConfigurationFile.cpp" />
     <ClCompile Include="opdid_win.cpp" />
-    <ClCompile Include="PortFunctions.cpp" />
     <ClCompile Include="Ports.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="SunRiseSet.cpp" />

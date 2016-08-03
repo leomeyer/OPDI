@@ -47,9 +47,6 @@
     <ClCompile Include="WeatherPlugin.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdid\PortFunctions.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.txt">

@@ -12,7 +12,7 @@ namespace opdid {
 // Expression Port
 ///////////////////////////////////////////////////////////////////////////////
 
-ExpressionPort::ExpressionPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+ExpressionPort::ExpressionPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdid = opdid;
 	this->numIterations = 0;
 	this->fallbackSpecified = false;
@@ -31,7 +31,7 @@ ExpressionPort::~ExpressionPort() {
 
 void ExpressionPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configurePort(config, this, 0);
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	this->expressionStr = config->getString("Expression", "");
 	if (this->expressionStr == "")
@@ -62,8 +62,8 @@ void ExpressionPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of an ExpressionPort cannot be changed");
 }
 
-void ExpressionPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
-	opdi::DigitalPort::setLine(line);
+void ExpressionPort::setLine(uint8_t line, ChangeSource changeSource) {
+	opdi::DigitalPort::setLine(line, changeSource);
 
 	// if the line has been set to High, start the iterations
 	if (line == 1) {

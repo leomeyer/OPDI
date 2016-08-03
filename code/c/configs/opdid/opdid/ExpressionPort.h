@@ -6,11 +6,14 @@
 #include <cstdio>
 
 #include "Poco/Util/AbstractConfiguration.h"
+#include "Poco/Timestamp.h"
+
+#include "AbstractOPDID.h"
+
+#include "opdi_configspecs.h"
 
 // expression evaluation library
 #include <exprtk.hpp>
-
-#include "PortFunctions.h"
 
 namespace opdid {
 
@@ -68,9 +71,10 @@ struct timestamp_func : public exprtk::ifunction<double>
 	}
 };
 
-class ExpressionPort : public opdi::DigitalPort, protected PortFunctions {
+class ExpressionPort : public opdi::DigitalPort {
 protected:
 
+	opdid::AbstractOPDID* opdid;
 	std::string expressionStr;
 
 	std::vector<double> portValues;	// holds the values of the ports for the expression evaluation

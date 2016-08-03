@@ -18,7 +18,7 @@
 #include "opdi_constants.h"
 #include "opdi_port.h"
 
-#include "PortFunctions.h"
+#include "AbstractOPDID.h"
 
 namespace opdid {
 
@@ -46,7 +46,7 @@ namespace opdid {
 * You can also specify inverted output ports who will be updated with the negated
 * state of this port.
 */
-class LogicPort : public opdi::DigitalPort, protected opdid::PortFunctions {
+class LogicPort : public opdi::DigitalPort {
 protected:
 	enum LogicFunction {
 		UNKNOWN,
@@ -58,6 +58,7 @@ protected:
 		EXACT
 	};
 
+	opdid::AbstractOPDID* opdid;
 	LogicFunction function;
 	size_t funcN;
 	bool negate;
@@ -99,12 +100,13 @@ public:
 * The output can be normal or inverted. There are two lists of output digital
 * ports which receive the normal or inverted output respectively.
 */
-class PulsePort : public opdi::DigitalPort, protected opdid::PortFunctions {
+class PulsePort : public opdi::DigitalPort {
 protected:
+	opdid::AbstractOPDID* opdid;
 	bool negate;
-	ValueResolver<int32_t> period;
-	ValueResolver<double> dutyCycle;
-	ValueResolver<int32_t> pulses;
+	opdi::ValueResolver<int32_t> period;
+	opdi::ValueResolver<double> dutyCycle;
+	opdi::ValueResolver<int32_t> pulses;
 	int8_t disabledState;
 	std::string enablePortStr;
 	std::string outputPortStr;
@@ -141,8 +143,9 @@ public:
 *   is in the specified position and Low otherwise. If set to High it will switch
 *   the select port to the specified position. If set to Low, it will do nothing.
 */
-class SelectorPort : public opdi::DigitalPort, protected opdid::PortFunctions {
+class SelectorPort : public opdi::DigitalPort {
 protected:
+	opdid::AbstractOPDID* opdid;
 	std::string selectPortStr;
 	opdi::SelectPort* selectPort;
 	std::string outputPortStr;
@@ -176,8 +179,9 @@ public:
 *   method returns true, the state of this port will be High and Low otherwise.
 *   The logic level can be negated.
 */
-class ErrorDetectorPort : public opdi::DigitalPort, protected opdid::PortFunctions {
+class ErrorDetectorPort : public opdi::DigitalPort {
 protected:
+	opdid::AbstractOPDID* opdid;
 	bool negate;
 	std::string inputPortStr;
 	opdi::PortList inputPorts;
@@ -204,7 +208,7 @@ public:
 
 /** Defines a serial streaming port that supports streaming from and to a serial port device.
  */
-class SerialStreamingPort : public opdi::StreamingPort, protected opdid::PortFunctions {
+class SerialStreamingPort : public opdi::StreamingPort {
 friend class OPDI;
 
 protected:
@@ -216,6 +220,7 @@ protected:
 
 	Mode mode;
 
+	opdid::AbstractOPDID* opdid;
 	ctb::IOBase* device;
 	ctb::SerialPort* serialPort;
 
@@ -243,7 +248,7 @@ public:
 
 /** Defines a streaming port that can log port states and optionally write them to a log file.
  */
-class LoggerPort : public opdi::StreamingPort, protected opdid::PortFunctions {
+class LoggerPort : public opdi::StreamingPort {
 friend class OPDI;
 
 protected:
@@ -251,6 +256,7 @@ protected:
 		CSV
 	};
 
+	opdid::AbstractOPDID* opdid;
 	uint32_t logPeriod;
 	Format format;
 	std::string separator;
@@ -297,7 +303,7 @@ public:
 * If ReturnToLeft is specified as true, the output port is set to the current value of Left
 * when switched off.
 */
-class FaderPort : public opdi::DigitalPort, protected opdid::PortFunctions {
+class FaderPort : public opdi::DigitalPort {
 protected:
 	enum FaderMode {
 		LINEAR,
@@ -310,10 +316,11 @@ protected:
 		SET_TO_RIGHT
 	};
 
+	opdid::AbstractOPDID* opdid;
 	FaderMode mode;
-	ValueResolver<double> leftValue;
-	ValueResolver<double> rightValue;
-	ValueResolver<int> durationMsValue;
+	opdi::ValueResolver<double> leftValue;
+	opdi::ValueResolver<double> rightValue;
+	opdi::ValueResolver<int> durationMsValue;
 	double left;
 	double right;
 	int durationMs;
@@ -361,9 +368,11 @@ public:
 * The SceneSelectPort automatically sends a "Refresh all" message to a connected master when
 * a scene has been selected.
 */
-class SceneSelectPort : public opdi::SelectPort, protected opdid::PortFunctions {
+class SceneSelectPort : public opdi::SelectPort {
 protected:
 	typedef std::vector<std::string> FileList;
+
+	opdid::AbstractOPDID* opdid;
 	FileList fileList;
 	std::string configFilePath;
 
@@ -410,7 +419,7 @@ public:
 * If the FilePort is active (High) when such a state change occurs the state of the value port
 * is written to the specified file.
 */
-class FilePort : public opdi::DigitalPort, protected opdid::PortFunctions {
+class FilePort : public opdi::DigitalPort {
 protected:
 
 	enum PortType {
@@ -437,6 +446,7 @@ protected:
 		}
 	};
 
+	opdid::AbstractOPDID* opdid;
 	std::string filePath;
 	Poco::File directory;
 	opdi::Port* valuePort;
@@ -505,7 +515,7 @@ public:
 * specified interval the values are read into the list.
 * This behavior can be used to preserve values in between OPDID restarts.
 */
-class AggregatorPort : public opdi::DigitalPort, public opdid::PortFunctions {
+class AggregatorPort : public opdi::DigitalPort {
 friend class AbstractOPDID;
 protected:
 	enum Algorithm {
@@ -525,7 +535,9 @@ protected:
 
 		void calculate(AggregatorPort* aggregator);
 	};
+	friend class AggregatorPort::Calculation;
 
+	opdid::AbstractOPDID* opdid;
 	std::string sourcePortID;
 	opdi::Port* sourcePort;
 	int64_t queryInterval;
@@ -549,7 +561,7 @@ protected:
 
 	virtual void persist(void) override;
 
-	void resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity, bool clearPersistent = true);
+	void resetValues(std::string reason, opdi::LogVerbosity logVerbosity, bool clearPersistent = true);
 
 public:
 	AggregatorPort(AbstractOPDID* opdid, const char* id);
@@ -572,11 +584,12 @@ public:
 *   A CounterPort can also count the events detected by a TriggerPort.
 *   In this case, set the period to a value below 0 to only count the detected state changes.
 */
-class CounterPort : public opdi::DialPort, public opdid::PortFunctions {
+class CounterPort : public opdi::DialPort {
 
 protected:
-	ValueResolver<int64_t> increment;
-	ValueResolver<int64_t> periodMs;
+	opdid::AbstractOPDID* opdid;
+	opdi::ValueResolver<int64_t> increment;
+	opdi::ValueResolver<int64_t> periodMs;
 
 	uint64_t lastActionTime;
 public:
@@ -608,7 +621,7 @@ public:
 * No change is performed the first time a DigitalPort is read when its current
 * state is unknown. A port that returns an error will also be set to "unknown".
 */
-class TriggerPort : public opdi::DigitalPort, public opdid::PortFunctions {
+class TriggerPort : public opdi::DigitalPort {
 protected:
 
 	enum TriggerType {
@@ -629,6 +642,7 @@ protected:
 		HIGH
 	};
 
+	opdid::AbstractOPDID* opdid;
 	typedef Poco::Tuple<opdi::DigitalPort*, PortState> PortData;
 	typedef std::vector<PortData> PortDataList;
 

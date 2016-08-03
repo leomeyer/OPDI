@@ -45,9 +45,6 @@
     <ClCompile Include="..\..\..\..\libraries\Mongoose\mongoose-master\mongoose.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\opdid\PortFunctions.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\common\cppwrapper\OPDI_Ports.h">

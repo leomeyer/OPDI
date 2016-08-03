@@ -61,7 +61,7 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->minorVersion = OPDID_MINOR_VERSION;
 	this->patchVersion = OPDID_PATCH_VERSION;
 
-	this->logVerbosity = NORMAL;
+	this->logVerbosity = opdi::LogVerbosity::NORMAL;
 	this->persistentConfig = nullptr;
 
 	this->logger = nullptr;
@@ -176,7 +176,7 @@ void AbstractOPDID::removeConnectionListener(IOPDIDConnectionListener* listener)
 }
 
 void AbstractOPDID::sayHello(void) {
-	if (this->logVerbosity == QUIET)
+	if (this->logVerbosity == opdi::LogVerbosity::QUIET)
 		return;
 
 	this->logNormal("OPDID version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion) + " (c) Leo Meyer 2015");
@@ -243,30 +243,15 @@ void AbstractOPDID::log(const std::string& text) {
 	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
 
-	std::string msg = "[" + this->getTimestampStr() + "] " + (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text;
+	std::string msg = (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text;
 	if (this->logger != nullptr) {
 		this->logger->information(msg);
 	} else {
-		this->println(msg);
+		this->println("[" + this->getTimestampStr() + "] " + msg);
 	}
 }
 
-void AbstractOPDID::logWarning(const std::string& message) {
-	// suppress warnings?
-	if (this->logVerbosity == QUIET)
-		return;
-
-	// Important: log must be thread-safe.
-	Poco::Mutex::ScopedLock(this->mutex);
-
-	std::string msg = "[" + this->getTimestampStr() + "] WARNING: " + message;
-	if (this->logger != nullptr) {
-		this->logger->warning(msg);
-	}
-	this->printlne(msg);
-}
-
-void AbstractOPDID::logError(const std::string& message) {
+void AbstractOPDID::logErr(const std::string& message) {
 	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
 
@@ -277,36 +262,15 @@ void AbstractOPDID::logError(const std::string& message) {
 	this->printlne("[" + this->getTimestampStr() + "] " + msg);
 }
 
-void AbstractOPDID::logNormal(const std::string& message, AbstractOPDID::LogVerbosity verbosity) {
-	// supplied log verbosity takes precedence
-	AbstractOPDID::LogVerbosity lv = (verbosity != AbstractOPDID::UNKNOWN ? verbosity : this->logVerbosity);
-	if (lv >= AbstractOPDID::NORMAL) {
-		this->log(message);
-	}
-}
+void AbstractOPDID::logWarn(const std::string& message) {
+	// Important: log must be thread-safe.
+	Poco::Mutex::ScopedLock(this->mutex);
 
-void AbstractOPDID::logVerbose(const std::string& message, LogVerbosity verbosity) {
-	// supplied log verbosity takes precedence
-	AbstractOPDID::LogVerbosity lv = (verbosity != AbstractOPDID::UNKNOWN ? verbosity : this->logVerbosity);
-	if (lv >= AbstractOPDID::VERBOSE) {
-		this->log(message);
+	std::string msg = "WARNING: " + message;
+	if (this->logger != nullptr) {
+		this->logger->warning(msg);
 	}
-}
-
-void AbstractOPDID::logDebug(const std::string& message, LogVerbosity verbosity) {
-	// supplied log verbosity takes precedence
-	AbstractOPDID::LogVerbosity lv = (verbosity != AbstractOPDID::UNKNOWN ? verbosity : this->logVerbosity);
-	if (lv >= AbstractOPDID::DEBUG) {
-		this->log(message);
-	}
-}
-
-void AbstractOPDID::logExtreme(const std::string& message, LogVerbosity verbosity) {
-	// supplied log verbosity takes precedence
-	AbstractOPDID::LogVerbosity lv = (verbosity != AbstractOPDID::UNKNOWN ? verbosity : this->logVerbosity);
-	if (lv >= AbstractOPDID::EXTREME) {
-		this->log(message);
-	}
+	this->printlne("[" + this->getTimestampStr() + "] " + msg);
 }
 
 int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<std::string, std::string>& environment) {
@@ -329,21 +293,21 @@ int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<
 			return 0;
 		} else
 		if (args.at(i) == "--version") {
-			this->logVerbosity = VERBOSE;
+			this->logVerbosity = opdi::LogVerbosity::VERBOSE;
 			this->sayHello();
 			return 0;
 		} else
 		if (args.at(i) == "-d") {
-			this->logVerbosity = DEBUG;
+			this->logVerbosity = opdi::LogVerbosity::DEBUG;
 		} else
 		if (args.at(i) == "-e") {
-			this->logVerbosity = EXTREME;
+			this->logVerbosity = opdi::LogVerbosity::EXTREME;
 		} else
 		if (args.at(i) == "-v") {
-			this->logVerbosity = VERBOSE;
+			this->logVerbosity = opdi::LogVerbosity::VERBOSE;
 		} else
 		if (args.at(i) == "-q") {
-			this->logVerbosity = QUIET;
+			this->logVerbosity = opdi::LogVerbosity::QUIET;
 		} else
 		if (args.at(i) == "-t") {
 			testMode = true;
@@ -394,7 +358,7 @@ int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<
 
 	this->sayHello();
 
-	if (this->logVerbosity >= AbstractOPDID::DEBUG) {
+	if (this->logVerbosity >= opdi::LogVerbosity::DEBUG) {
 		this->logDebug("Using configuration file '" + configFile + "' with the following parameters:");
 		auto it = this->environment.begin();
 		auto ite = this->environment.end();
@@ -447,24 +411,24 @@ void AbstractOPDID::lockResource(const std::string& resourceID, const std::strin
 	this->lockedResources[resourceID] = lockerID;
 }
 
-AbstractOPDID::LogVerbosity AbstractOPDID::getConfigLogVerbosity(Poco::Util::AbstractConfiguration* config, LogVerbosity defaultVerbosity) {
+opdi::LogVerbosity AbstractOPDID::getConfigLogVerbosity(Poco::Util::AbstractConfiguration* config, opdi::LogVerbosity defaultVerbosity) {
 	std::string logVerbosityStr = config->getString("LogVerbosity", "");
 
 	if ((logVerbosityStr != "")) {
 		if (logVerbosityStr == "Quiet") {
-			return QUIET;
+			return opdi::LogVerbosity::QUIET;
 		} else
 		if (logVerbosityStr == "Normal") {
-			return NORMAL;
+			return opdi::LogVerbosity::NORMAL;
 		} else
 		if (logVerbosityStr == "Verbose") {
-			return VERBOSE;
+			return opdi::LogVerbosity::VERBOSE;
 		} else
 		if (logVerbosityStr == "Debug") {
-			return DEBUG;
+			return opdi::LogVerbosity::DEBUG;
 		} else
 		if (logVerbosityStr == "Extreme") {
-			return EXTREME;
+			return opdi::LogVerbosity::EXTREME;
 		} else
 			throw Poco::InvalidArgumentException("Verbosity level unknown (expected one of 'Quiet', 'Normal', 'Verbose', 'Debug' or 'Extreme')", logVerbosityStr);
 	}
@@ -536,8 +500,8 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration* g
 	this->deviceInfo = general->getString("DeviceInfo", "");
 
 	// set log verbosity only if it's not already set
-	if (this->logVerbosity == NORMAL) {
-		this->logVerbosity = this->getConfigLogVerbosity(general, NORMAL);
+	if (this->logVerbosity == opdi::LogVerbosity::NORMAL) {
+		this->logVerbosity = this->getConfigLogVerbosity(general, opdi::LogVerbosity::NORMAL);
 	}
 
 	this->allowHiddenPorts = general->getBool("AllowHidden", true);
@@ -699,7 +663,7 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration* config, Poco
 
 	this->logVerbose(node + ": Processing include file: " + filename);
 
-	if (this->logVerbosity >= AbstractOPDID::DEBUG) {
+	if (this->logVerbosity >= opdi::LogVerbosity::DEBUG) {
 		this->logDebug(node + ": Include file parameters:");
 		auto it = parameters.begin();
 		auto ite = parameters.end();
@@ -713,7 +677,7 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration* config, Poco
 	// setup the root node of the included configuration
 	this->setupRoot(includeConfig);
 
-	if (this->logVerbosity >= VERBOSE) {
+	if (this->logVerbosity >= opdi::LogVerbosity::VERBOSE) {
 		this->logVerbose(node + ": Include file " + filename + " processed successfully.");
 		std::string configFilePath = parentConfig->getString(OPDID_CONFIG_FILE_SETTING, "");
 		if (configFilePath != "")
@@ -797,6 +761,8 @@ void AbstractOPDID::configurePort(Poco::Util::AbstractConfiguration* portConfig,
 
 	port->onChangeIntPortsStr = this->getConfigString(portConfig, port->ID(), "OnChangeInt", "", false);
 	port->onChangeUserPortsStr = this->getConfigString(portConfig, port->ID(), "OnChangeUser", "", false);
+
+	port->setLogVerbosity(this->getConfigLogVerbosity(portConfig, this->logVerbosity));
 }
 
 void AbstractOPDID::configureDigitalPort(Poco::Util::AbstractConfiguration* portConfig, opdi::DigitalPort* port, bool stateOnly) {
@@ -987,7 +953,7 @@ void AbstractOPDID::configureDialPort(Poco::Util::AbstractConfiguration* portCon
 			aggPort->setHidden(true);
 			// set the standard log verbosity of hidden automatic aggregators to "Normal" because they can sometimes generate a log of log spam
 			// if the dial port's log verbosity is defined, the aggregator uses the same value
-			aggPort->logVerbosity = this->getConfigLogVerbosity(portConfig, NORMAL);
+			aggPort->logVerbosity = this->getConfigLogVerbosity(portConfig, opdi::LogVerbosity::NORMAL);
 			// Auto-Aggregators are persistent to not lose values over a restart (requires a persistent config file to work)
 			aggPort->setPersistent(true);
 			// add the port
@@ -1301,7 +1267,7 @@ void AbstractOPDID::setupRoot(Poco::Util::AbstractConfiguration* config) {
 	}
 
 	// warn if no nodes found
-	if ((orderedNodes.size() == 0) && (this->logVerbosity >= NORMAL)) {
+	if ((orderedNodes.size() == 0) && (this->logVerbosity >= opdi::LogVerbosity::NORMAL)) {
 		// get file name
 		std::string filename = config->getString(OPDID_CONFIG_FILE_SETTING, "");
 		if (filename == "")
@@ -1412,7 +1378,7 @@ uint8_t AbstractOPDID::waiting(uint8_t canSend) {
 
 		// ignore first calculation results
 		if (this->framesPerSecond > 0) {
-			if (this->logVerbosity >= EXTREME) {
+			if (this->logVerbosity >= opdi::LogVerbosity::EXTREME) {
 				this->logExtreme("Elapsed processing time: " + this->to_string(this->totalMicroseconds) + " us");
 				this->logExtreme("Loop iterations per second: " + this->to_string(this->framesPerSecond));
 				this->logExtreme("Processing time average per iteration: " + this->to_string(procAverageUsPerCall) + " us");
@@ -1622,39 +1588,6 @@ std::string AbstractOPDID::getPortStateStr(opdi::Port* port) const {
 	}
 }
 
-double AbstractOPDID::getPortValue(opdi::Port* port) const {
-	double value = 0;
-
-	// evaluation depends on port type
-	if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
-		// digital port: Low = 0; High = 1
-		uint8_t mode;
-		uint8_t line;
-		((opdi::DigitalPort*)port)->getState(&mode, &line);
-		value = line;
-	} else
-	if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
-		// analog port: relative value (0..1)
-		value = ((opdi::AnalogPort*)port)->getRelativeValue();
-	} else
-	if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
-		// dial port: absolute value
-		int64_t position;
-		((opdi::DialPort*)port)->getState(&position);
-		value = (double)position;
-	} else
-	if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
-		// select port: current position number
-		uint16_t position;
-		((opdi::SelectPort*)port)->getState(&position);
-		value = position;
-	} else
-		// port type not supported
-		throw Poco::Exception("Port type not supported");
-
-	return value;
-}
-
 std::string AbstractOPDID::getDeviceInfo(void) {
 	return this->deviceInfo;
 }
@@ -1727,8 +1660,6 @@ uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char* buffer, siz
  *
  */
 uint8_t opdi_debug_msg(const char* message, uint8_t direction) {
-	if (Opdi->logVerbosity < opdid::AbstractOPDID::DEBUG)
-		return OPDI_STATUS_OK;
 	std::string dirChar = "-";
 	if (direction == OPDI_DIR_INCOMING)
 		dirChar = ">";

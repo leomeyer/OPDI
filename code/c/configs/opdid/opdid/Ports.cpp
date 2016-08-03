@@ -26,7 +26,7 @@ namespace opdid {
 // Logic Port
 ///////////////////////////////////////////////////////////////////////////////
 
-LogicPort::LogicPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+LogicPort::LogicPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdid = opdid;
 	this->function = UNKNOWN;
 	this->funcN = -1;
@@ -44,7 +44,7 @@ LogicPort::~LogicPort() {
 
 void LogicPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configurePort(config, this, 0);
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	std::string function = config->getString("Function", "OR");
 
@@ -223,7 +223,7 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 // Pulse Port
 ///////////////////////////////////////////////////////////////////////////////
 
-PulsePort::PulsePort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+PulsePort::PulsePort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), period(opdid), dutyCycle(opdid), pulses(opdid) {
 	this->opdid = opdid;
 	this->negate = false;
 
@@ -242,7 +242,7 @@ PulsePort::~PulsePort() {
 
 void PulsePort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configurePort(config, this, 0);
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	this->negate = config->getBool("Negate", false);
 
@@ -410,7 +410,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 // Selector Port
 ///////////////////////////////////////////////////////////////////////////////
 
-SelectorPort::SelectorPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+SelectorPort::SelectorPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdid = opdid;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -423,7 +423,7 @@ SelectorPort::~SelectorPort() {
 
 void SelectorPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configurePort(config, this, 0);
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	this->selectPortStr = config->getString("SelectPort", "");
 	if (this->selectPortStr == "")
@@ -446,8 +446,8 @@ void SelectorPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of a SelectorPort cannot be changed");
 }
 
-void SelectorPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
-	opdi::DigitalPort::setLine(line);
+void SelectorPort::setLine(uint8_t line, ChangeSource changeSource) {
+	opdi::DigitalPort::setLine(line, changeSource);
 	if (this->line == 1) {
 		this->logDebug("Setting Port " + this->selectPort->ID() + " to position " + to_string(this->position));
 		// set the specified select port to the specified position
@@ -513,7 +513,7 @@ uint8_t SelectorPort::doWork(uint8_t canSend)  {
 // Error Detector Port
 ///////////////////////////////////////////////////////////////////////////////
 
-ErrorDetectorPort::ErrorDetectorPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_INPUT, 0), PortFunctions(id) {
+ErrorDetectorPort::ErrorDetectorPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_INPUT, 0) {
 	this->opdid = opdid;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
@@ -527,7 +527,7 @@ ErrorDetectorPort::~ErrorDetectorPort() {
 
 void ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configureDigitalPort(config, this);	
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	this->inputPortStr = this->opdid->getConfigString(config, this->ID(), "InputPorts", "", true);
 	this->negate = config->getBool("Negate", false);
@@ -583,7 +583,7 @@ uint8_t ErrorDetectorPort::doWork(uint8_t canSend)  {
 // Serial Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
 
-SerialStreamingPort::SerialStreamingPort(AbstractOPDID* opdid, const char* id) : opdi::StreamingPort(id), PortFunctions(id) {
+SerialStreamingPort::SerialStreamingPort(AbstractOPDID* opdid, const char* id) : opdi::StreamingPort(id) {
 	this->opdid = opdid;
 	this->mode = PASS_THROUGH;
 	this->device = nullptr;
@@ -617,7 +617,7 @@ uint8_t SerialStreamingPort::doWork(uint8_t canSend)  {
 
 void SerialStreamingPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configureStreamingPort(config, this);
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	std::string serialPortName = this->opdid->getConfigString(config, this->ID(), "SerialPort", "", true);
 	int baudRate = config->getInt("BaudRate", 9600);
@@ -694,7 +694,7 @@ bool SerialStreamingPort::hasError(void) const {
 // Logger Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
 
-LoggerPort::LoggerPort(AbstractOPDID* opdid, const char* id) : opdi::StreamingPort(id), PortFunctions(id) {
+LoggerPort::LoggerPort(AbstractOPDID* opdid, const char* id) : opdi::StreamingPort(id) {
 	this->opdid = opdid;
 	this->logPeriod = 10000;		// default: 10 seconds
 	this->writeHeader = true;
@@ -771,7 +771,7 @@ uint8_t LoggerPort::doWork(uint8_t canSend)  {
 
 void LoggerPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configureStreamingPort(config, this);
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	this->logPeriod = config->getInt("Period", this->logPeriod);
 	this->separator = config->getString("Separator", this->separator);
@@ -818,7 +818,7 @@ bool LoggerPort::hasError(void) const {
 // Fader Port
 ///////////////////////////////////////////////////////////////////////////////
 
-FaderPort::FaderPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+FaderPort::FaderPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), leftValue(opdid), rightValue(opdid), durationMsValue(opdid) {
 	this->opdid = opdid;
 	this->mode = LINEAR;
 	this->lastValue = -1;
@@ -833,7 +833,7 @@ FaderPort::~FaderPort() {
 }
 
 void FaderPort::configure(Poco::Util::AbstractConfiguration* config) {
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	std::string modeStr = config->getString("FadeMode", "");
 	if (modeStr == "Linear") 
@@ -891,7 +891,7 @@ void FaderPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The mode of a FaderPort cannot be changed");
 }
 
-void FaderPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
+void FaderPort::setLine(uint8_t line, ChangeSource changeSource) {
 	uint8_t oldline = this->line;
 	if ((oldline == 0) && (line == 1)) {
 		// store current values on start (might be resolved by ValueResolvers, and we don't want them to change during fading
@@ -904,14 +904,14 @@ void FaderPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 		if (this->durationMs < 5) {
 			this->logDebug("Refusing to fade because duration is impracticably low: " + to_string(this->durationMs));
 		} else {
-			opdi::DigitalPort::setLine(line);
+			opdi::DigitalPort::setLine(line, changeSource);
 			this->startTime = Poco::Timestamp();
 			// cause correct log output
 			this->lastValue = -1;
 			this->logDebug("Start fading at " + to_string(this->left) + "% with a duration of " + to_string(this->durationMs) + " ms");
 		}
 	} else {
-		opdi::DigitalPort::setLine(line);
+		opdi::DigitalPort::setLine(line, changeSource);
 		// switched off?
 		if (oldline != this->line) {
 			this->logDebug("Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
@@ -1048,7 +1048,7 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 // SceneSelectPort
 ///////////////////////////////////////////////////////////////////////////////
 
-SceneSelectPort::SceneSelectPort(AbstractOPDID* opdid, const char* id) : opdi::SelectPort(id), PortFunctions(id) {
+SceneSelectPort::SceneSelectPort(AbstractOPDID* opdid, const char* id) : opdi::SelectPort(id) {
 	this->opdid = opdid;
 	this->positionSet = false;
 }
@@ -1057,7 +1057,7 @@ SceneSelectPort::~SceneSelectPort() {
 }
 
 void SceneSelectPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	// remember configuration file path (scene files are always relative to the configuration file)
 	this->configFilePath = config->getString(OPDID_CONFIG_FILE_SETTING);
@@ -1153,7 +1153,7 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 		std::map<std::string, std::string> parameters;
 		this->opdid->getEnvironment(parameters);
 
-		if (this->logVerbosity >= AbstractOPDID::DEBUG) {
+		if (this->logVerbosity >= opdi::LogVerbosity::DEBUG) {
 			this->logDebug("Scene file parameters:");
 			auto it = parameters.begin();
 			auto ite = parameters.end();
@@ -1216,8 +1216,8 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void SceneSelectPort::setPosition(uint16_t position, ChangeSource /*changeSource*/) {
-	opdi::SelectPort::setPosition(position);
+void SceneSelectPort::setPosition(uint16_t position, ChangeSource changeSource) {
+	opdi::SelectPort::setPosition(position, changeSource);
 
 	this->positionSet = true;
 }
@@ -1418,7 +1418,7 @@ void FilePort::writeContent() {
 	fos.close();
 }
 
-FilePort::FilePort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id), PortFunctions(id) {
+FilePort::FilePort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id) {
 	this->opdid = opdid;
 	this->directoryWatcher = nullptr;
 	this->reloadDelayMs = 0;
@@ -1665,15 +1665,15 @@ void AggregatorPort::persist() {
 	}
 }
 
-void AggregatorPort::resetValues(std::string reason, AbstractOPDID::LogVerbosity logVerbosity, bool clearPersistent) {
+void AggregatorPort::resetValues(std::string reason, opdi::LogVerbosity logVerbosity, bool clearPersistent) {
 	switch (logVerbosity) {
-	case AbstractOPDID::EXTREME:
+	case opdi::LogVerbosity::EXTREME:
 		this->logExtreme("Resetting aggregator; values are now unavailable because: " + reason); break;
-	case AbstractOPDID::DEBUG:
+	case opdi::LogVerbosity::DEBUG:
 		this->logDebug("Resetting aggregator; values are now unavailable because: " + reason); break;
-	case AbstractOPDID::VERBOSE:
+	case opdi::LogVerbosity::VERBOSE:
 		this->logVerbose("Resetting aggregator; values are now unavailable because: " + reason); break;
-	case AbstractOPDID::NORMAL:
+	case opdi::LogVerbosity::NORMAL:
 		this->logNormal("Resetting aggregator; values are now unavailable because: " + reason); break;
 	default: break;
 	}
@@ -1736,7 +1736,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 					catch (Poco::Exception& e) {
 						// any error causes a reset and aborts processing
 						this->lastQueryTime = 0;
-						this->resetValues("An error occurred deserializing persisted values: " + e.message(), AbstractOPDID::NORMAL);
+						this->resetValues("An error occurred deserializing persisted values: " + e.message(), opdi::LogVerbosity::NORMAL);
 						break;
 					}
 				}	// read values
@@ -1771,7 +1771,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 			else {
 				// avoid logging too many messages
 				if (this->values.size() > 0) {
-					this->resetValues("Querying the source port " + this->sourcePort->ID() + " resulted in an error: " + e.message(), AbstractOPDID::VERBOSE);
+					this->resetValues("Querying the source port " + this->sourcePort->ID() + " resulted in an error: " + e.message(), opdi::LogVerbosity::VERBOSE);
 				}
 				return OPDI_STATUS_OK;
 			}
@@ -1803,7 +1803,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 					// an invalid value invalidates the whole calculation
 					// avoid logging too many messages
 					if (this->values.size() > 0) {
-						this->resetValues("The value was outside of the specified limits", AbstractOPDID::VERBOSE);
+						this->resetValues("The value was outside of the specified limits", opdi::LogVerbosity::VERBOSE);
 					}
 					return OPDI_STATUS_OK;
 				}
@@ -1830,7 +1830,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-AggregatorPort::AggregatorPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id), PortFunctions(id) {
+AggregatorPort::AggregatorPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id) {
 	this->opdid = opdid;
 	this->multiplier = 1;
 	// default: allow all values (set absolute limits very high)
@@ -1977,7 +1977,7 @@ void AggregatorPort::configure(Poco::Util::AbstractConfiguration* config, Poco::
 	this->values.reserve(this->totalValues);
 
 	// set initial state
-	this->resetValues("Setting initial state", AbstractOPDID::VERBOSE, false);
+	this->resetValues("Setting initial state", opdi::LogVerbosity::VERBOSE, false);
 }
 
 void AggregatorPort::prepare() {
@@ -1991,23 +1991,19 @@ void AggregatorPort::prepare() {
 		this->historyPort = this->findPort(this->getID(), "HistoryPort", this->historyPortID, true);
 }
 
-void AggregatorPort::setLine(uint8_t newLine, ChangeSource /*changeSource*/) {
+void AggregatorPort::setLine(uint8_t newLine, ChangeSource changeSource) {
 	// if being deactivated, reset values and ports to error
 	if ((this->line == 1) && (newLine == 0))
-		this->resetValues("Aggregator was deactivated", AbstractOPDID::VERBOSE);
-	opdi::DigitalPort::setLine(newLine);
+		this->resetValues("Aggregator was deactivated", opdi::LogVerbosity::VERBOSE);
+	opdi::DigitalPort::setLine(newLine, changeSource);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // CounterPort
 ///////////////////////////////////////////////////////////////////////////////
 
-CounterPort::CounterPort(AbstractOPDID* opdid, const char* id) : opdi::DialPort(id), PortFunctions(id) {
+CounterPort::CounterPort(AbstractOPDID* opdid, const char* id) : opdi::DialPort(id), periodMs(opdid, 1000), increment(opdid, 1) {
 	this->opdid = opdid;
-	// default: increment by one
-	this->increment = { 1 };
-	// default: period is one second
-	this->periodMs = { 1000 };
 	this->lastActionTime = 0;
 }
 
@@ -2047,7 +2043,7 @@ uint8_t CounterPort::doWork(uint8_t canSend) {
 // TriggerPort
 ///////////////////////////////////////////////////////////////////////////////
 
-TriggerPort::TriggerPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+TriggerPort::TriggerPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdid = opdid;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -2058,7 +2054,7 @@ TriggerPort::TriggerPort(AbstractOPDID* opdid, const char* id) : opdi::DigitalPo
 
 void TriggerPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->opdid->configurePort(config, this, 0);
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	std::string triggerTypeStr = config->getString("Trigger", "RisingEdge");
 	if (triggerTypeStr == "RisingEdge")
@@ -2095,8 +2091,8 @@ void TriggerPort::configure(Poco::Util::AbstractConfiguration* config) {
 	this->counterPortStr = config->getString("CounterPort", "");
 }
 
-void TriggerPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
-	opdi::DigitalPort::setLine(line);
+void TriggerPort::setLine(uint8_t line, ChangeSource changeSource) {
+	opdi::DigitalPort::setLine(line, changeSource);
 
 	// deactivated?
 	if (line == 0) {

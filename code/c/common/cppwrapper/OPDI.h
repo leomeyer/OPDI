@@ -70,7 +70,15 @@ protected:
 	// May return OPDI_STATUS_OK to cancel the shutdown. Any other value stops message processing.
 	uint8_t shutdownInternal(void);
 
+	LogVerbosity logVerbosity;
+
+	virtual void log(const std::string& message) = 0;
+
+	virtual void logErr(const std::string& message) = 0;
+
+	virtual void logWarn(const std::string& message) = 0;
 public:
+
 	// indicates that the OPDI system should shutdown
 	bool shutdownRequested;
 
@@ -99,7 +107,6 @@ public:
 
 	virtual uint8_t setUsername(const std::string& userName);
 	virtual uint8_t setPassword(const std::string& password);
-
 	virtual std::string getExtendedDeviceInfo(void);
 
 	virtual std::string getExtendedPortInfo(char* portID, uint8_t* code);
@@ -204,7 +211,36 @@ public:
 	virtual void findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::AnalogPortList& portList);
 
 	virtual opdi::SelectPort* findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+
+	virtual void logWarning(const std::string& message);
+
+	virtual void logError(const std::string& message);
+
+	// log if this object's verbosity is greater or equal than normal (supplied verbosity takes precedence)
+	virtual void logNormal(const std::string& message, LogVerbosity verbosity = LogVerbosity::UNKNOWN);
+
+	// log if this object's verbosity is greater or equal than verbose (supplied verbosity takes precedence)
+	virtual void logVerbose(const std::string& message, LogVerbosity verbosity = LogVerbosity::UNKNOWN);
+
+	// log if this object's verbosity is greater or equal than debug (supplied verbosity takes precedence)
+	virtual void logDebug(const std::string& message, LogVerbosity verbosity = LogVerbosity::UNKNOWN);
+
+	// log if this object's verbosity is greater or equal than extreme (supplied verbosity takes precedence)
+	virtual void logExtreme(const std::string& message, LogVerbosity verbosity = LogVerbosity::UNKNOWN);
+
+	/** Returns a double representing the port value; throws errors if they occur. */
+	virtual double getPortValue(opdi::Port* port) const;
+
+	/** Converts a given object to a string. */
+	template <class T> inline std::string to_string(const T& t) const;
+
 };
+
+template <class T> inline std::string OPDI::to_string(const T& t) const {
+	std::stringstream ss;
+	ss << t;
+	return ss.str();
+}
 
 }		// namespace opdi
 

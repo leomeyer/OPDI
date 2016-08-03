@@ -6,7 +6,7 @@
 #include "Poco/Util/AbstractConfiguration.h"
 #include "Poco/TimedNotificationQueue.h"
 
-#include "PortFunctions.h"
+#include "AbstractOPDID.h"
 
 namespace opdid {
 
@@ -57,7 +57,7 @@ namespace opdid {
 	*   for the event manually. There can be more than one manual schedule. The port must not be added
 	*   through the Root configuration section but is instead created by this port.
 	*/
-	class TimerPort : public opdi::DigitalPort, protected opdid::PortFunctions {
+	class TimerPort : public opdi::DigitalPort {
 
 	protected:
 
@@ -176,6 +176,8 @@ namespace opdid {
 				this->deactivate = deactivate;
 			};
 		};
+
+		AbstractOPDID* opdid;
 
 		typedef std::vector<Schedule> ScheduleList;
 		ScheduleList schedules;

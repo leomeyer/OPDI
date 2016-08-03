@@ -178,15 +178,15 @@ int TimerPort::ScheduleComponent::getMaximum(void) {
 }
 
 
-void TimerPort::ManualSchedulePort::setPosition(int64_t position, ChangeSource /*changeSource*/) {
-	DialPort::setPosition(position);
+void TimerPort::ManualSchedulePort::setPosition(int64_t position, ChangeSource changeSource) {
+	DialPort::setPosition(position, changeSource);
 
 	// notify timer port: schedule has changed
 	this->timerPort->recalculateSchedules();
 }
 
 
-TimerPort::TimerPort(AbstractOPDID* opdid, const char* id) : DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), PortFunctions(id) {
+TimerPort::TimerPort(AbstractOPDID* opdid, const char* id) : DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdid = opdid;
 
 	DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -212,7 +212,7 @@ TimerPort::~TimerPort() {
 
 void TimerPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
 	this->opdid->configureDigitalPort(config, this);
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	this->outputPortStr = this->opdid->getConfigString(config, this->ID(), "OutputPorts", "", true);
 	this->propagateSwitchOff = config->getBool("PropagateSwitchOff", false);
@@ -831,10 +831,10 @@ void TimerPort::recalculateSchedules(Schedule* activatingSchedule) {
 	this->refreshRequired = true;
 }
 
-void TimerPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
+void TimerPort::setLine(uint8_t line, ChangeSource changeSource) {
 	bool wasLow = (this->line == 0);
 
-	DigitalPort::setLine(line);
+	DigitalPort::setLine(line, changeSource);
 
 	// set to Low?
 	if (this->line == 0) {

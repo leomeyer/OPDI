@@ -28,7 +28,6 @@
 #include "opdi_platformfuncs.h"
 
 #include "AbstractOPDID.h"
-#include "PortFunctions.h"
 
 #define INVALID_SID		"0000000000000000"
 
@@ -36,9 +35,10 @@ namespace {
 
 	class FritzBoxPlugin;
 
-	class FritzPort : protected opdid::PortFunctions {
+	class FritzPort  {
+		std::string id;
 	public:
-		FritzPort(std::string id) : opdid::PortFunctions(id) {};
+		FritzPort(std::string id) : id(id) {};
 
 		virtual void query() = 0;
 	};
@@ -88,7 +88,7 @@ namespace {
 
 		std::string sid;
 
-		opdid::AbstractOPDID::LogVerbosity logVerbosity;
+		opdi::LogVerbosity logVerbosity;
 
 		typedef std::vector<FritzPort*> FritzPorts;
 		FritzPorts fritzPorts;
@@ -706,7 +706,7 @@ void FritzBoxPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std:
 	std::string group = nodeConfig->getString("Group", "");
 
 	// store main node's verbosity level (will become the default of ports)
-	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdid::AbstractOPDID::UNKNOWN);
+	this->logVerbosity = this->opdid->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->opdid->logVerbose("Enumerating FritzBox devices: " + node + ".Devices", this->logVerbosity);
@@ -763,7 +763,6 @@ void FritzBoxPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std:
 		if (portType == "FritzDECT200") {
 			// setup the switch port instance and add it
 			FritzDECT200Switch* switchPort = new FritzDECT200Switch(this, nodeName.c_str());
-			switchPort->opdid = this->opdid;
 			// set default group: FritzBox's node's group
 			switchPort->setGroup(group);
 			switchPort->configure(portConfig);
@@ -774,7 +773,6 @@ void FritzBoxPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std:
 
 			// setup the energy port instance and add it
 			FritzDECT200Energy* energyPort = new FritzDECT200Energy(this, (nodeName + "Energy").c_str());
-			switchPort->opdid = this->opdid;
 			// set default group: FritzBox's node's group
 			energyPort->setGroup(group);
 			energyPort->configure(portConfig);
@@ -785,7 +783,6 @@ void FritzBoxPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std:
 
 			// setup the power port instance and add it
 			FritzDECT200Power* powerPort = new FritzDECT200Power(this, (nodeName + "Power").c_str());
-			switchPort->opdid = this->opdid;
 			// set default group: FritzBox's node's group
 			powerPort->setGroup(group);
 			powerPort->configure(portConfig);

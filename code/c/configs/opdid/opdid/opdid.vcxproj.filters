@@ -207,9 +207,6 @@
     <ClInclude Include="ExpressionPort.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="PortFunctions.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="Ports.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
@@ -294,9 +291,6 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="ExpressionPort.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="PortFunctions.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="Ports.cpp">

@@ -86,7 +86,6 @@
     <ClCompile Include="..\..\..\..\common\cppwrapper\OPDI_Ports.cpp" />
     <ClCompile Include="..\..\..\..\libraries\Mongoose\mongoose-master\mongoose.c" />
     <ClCompile Include="..\..\..\..\platforms\win32\opdi_platformfuncs.c" />
-    <ClCompile Include="..\..\opdid\PortFunctions.cpp" />
     <ClCompile Include="WebServerPlugin.cpp" />
   </ItemGroup>
   <ItemGroup>
