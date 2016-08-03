@@ -12,7 +12,8 @@
 
 <p>OPDID is a system service (or "daemon" on Linux) that allows you to remote-control device functions, like
 switching lights on and off, opening and closing windows etc., both manually and automatically. It is typically used
-for home automation but can be used to control and automate other devices or processes as well.</p>
+for home automation but can be used to control and automate other devices or processes as well. OPDID is designed to run
+efficiently on low-cost hardware such as the Raspberry Pi.</p>
 
 <p>For communication with the outside world OPDID requires special drivers that perform the required I/O operations.
 These drivers must support the hardware platform you use. OPDID provides a plugin architecture that makes it easy to develop
@@ -73,7 +74,7 @@ Example: HTML GUI</p>
 a user unless they are read-only. You can think of them as internal variables of the automated system.</p>
 
 <p>GUIs provide ways to set the values of the ports. A Digital port can be changed by clicking on its "switch" icon.
-If a Digital port's value cannot be changed there won't be a switch but some kind of lamp icon. Analog and Dial ports can be
+Analog and Dial ports can be
 changed by clicking on their sliders or via a dialog that can be called via a context menu. The Select port, when clicked,
 displays its items as a menu to choose from:</p>
 
@@ -248,7 +249,9 @@ power socket/energy meter.</p>
 but can be modified or extended to your needs.</p>
 
 <h3>Gertboard plugin</h3>
-<p>The Gertboard plugin is a Raspberry Pi-specific plugin that directly accesses Raspberry Pi and Gertboard I/O hardware
+<p>A Gertboard is an I/O board for the Raspberry Pi (for more information see
+<a href="https://www.element14.com/community/docs/DOC-51726">https://www.element14.com/community/docs/DOC-51726</a>.
+The Gertboard plugin is a Raspberry Pi-specific plugin that directly accesses Raspberry Pi and Gertboard I/O hardware
 and provides port expansion by using the built-in ATMEGA microcontroller. It supports pushbuttons, reading/writing I/O pins,
 and the Gertboard's A/D and D/A converters.</p>
 
