@@ -740,7 +740,7 @@ void GertboardPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std
 
 	// determine pin map to use
 	this->pinMap = (int (*)[][2])&pinMapRev1;
-	std::string revision = abstractOPDID->getConfigString(nodeConfig, "Revision", "1", false);
+	std::string revision = abstractOPDID->getConfigString(nodeConfig, node, "Revision", "1", false);
 	if (revision == "1") {
 		// default
 	} else
@@ -841,7 +841,7 @@ void GertboardPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std
 		Poco::Util::AbstractConfiguration* portConfig = config->createView(nodeName);
 
 		// get port type (required)
-		std::string portType = abstractOPDID->getConfigString(portConfig, "Type", "", true);
+		std::string portType = abstractOPDID->getConfigString(portConfig, nodeName, "Type", "", true);
 
 		if (portType == "DigitalPort") {
 			// read pin number
