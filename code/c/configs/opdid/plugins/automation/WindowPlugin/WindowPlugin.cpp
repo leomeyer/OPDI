@@ -391,7 +391,7 @@ std::string WindowPort::getStateText(WindowState state) {
 
 void WindowPort::setCurrentState(WindowState state) {
 	if (this->currentState != state) {
-		this->logDebug("Changing current state to: " + this->getStateText(state) + this->getMotorStateText());
+		this->logVerbose("Changing current state to: " + this->getStateText(state) + this->getMotorStateText());
 
 		// if set to ERR or ERR is cleared, notify the ErrorPorts
 		bool notifyErrorPorts = (this->currentState == ERR) || (state == ERR);
@@ -504,17 +504,17 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		
 			// check sensors
 			if (this->isSensorClosed() && this->isSensorOpen()) {
-				this->logDebug("Closed sensor signal and open sensor signal detected at the same time");
+				this->logNormal("Closed sensor signal and open sensor signal detected at the same time");
 				this->setCurrentState(ERR);
 			}
 			else
 			if (this->isSensorClosed()) {
-				this->logDebug("Closed sensor signal detected");
+				this->logVerbose("Closed sensor signal detected");
 				this->setCurrentState(CLOSED);
 			}
 			else
 			if (this->isSensorOpen()) {
-				this->logDebug("Open sensor signal detected");
+				this->logVerbose("Open sensor signal detected");
 				this->setCurrentState(OPEN);
 			}
 			else
@@ -533,17 +533,17 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		if ((this->currentState == UNKNOWN_WAITING)) {
 			// check sensors
 			if (this->isSensorClosed() && this->isSensorOpen()) {
-				this->logDebug("Closed sensor signal and open sensor signal detected at the same time");
+				this->logNormal("Closed sensor signal and open sensor signal detected at the same time");
 				this->setCurrentState(ERR);
 			}
 			else
 			if (this->isSensorClosed()) {
-				this->logDebug("Closed sensor signal detected");
+				this->logVerbose("Closed sensor signal detected");
 				this->setCurrentState(CLOSED);
 			}
 			else
 			if (this->isSensorOpen()) {
-				this->logDebug("Open sensor signal detected");
+				this->logVerbose("Open sensor signal detected");
 				this->setCurrentState(OPEN);
 			} else {
 				// do not change current state
@@ -666,7 +666,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			else
 			// sensor open detected?
 			if (this->isSensorOpen()) {
-				this->logDebug("Open sensor signal detected");
+				this->logVerbose("Open sensor signal detected");
 
 				// enable delay specified?
 				if (this->enableDelay > 0) {
@@ -723,7 +723,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			} else
 			// sensor close detected?
 			if (this->isSensorClosed()) {
-				this->logDebug("Closed sensor signal detected");
+				this->logVerbose("Closed sensor signal detected");
 
 				// enable delay specified?
 				if (this->enableDelay > 0) {
@@ -803,17 +803,17 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		if ((this->currentState == UNKNOWN_WAITING)) {
 			// check sensors
 			if (this->isSensorClosed() && this->isSensorOpen()) {
-				this->logDebug("Closed sensor signal and open sensor signal detected at the same time");
+				this->logNormal("Closed sensor signal and open sensor signal detected at the same time");
 				this->setCurrentState(ERR);
 			}
 			else
 			if (this->isSensorClosed()) {
-				this->logDebug("Closed sensor signal detected");
+				this->logVerbose("Closed sensor signal detected");
 				this->setCurrentState(CLOSED);
 			}
 			else
 			if (this->isSensorOpen()) {
-				this->logDebug("Open sensor signal detected");
+				this->logVerbose("Open sensor signal detected");
 				this->setCurrentState(OPEN);
 			}
 			else {
@@ -908,7 +908,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			} else
 			// sensor open detected?
 			if (this->isSensorOpen()) {
-				this->logDebug("Open sensor signal detected");
+				this->logVerbose("Open sensor signal detected");
 
 				// enable delay specified?
 				if (this->enableDelay > 0) {
@@ -946,7 +946,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			} else
 			// sensor close detected?
 			if (this->isSensorClosed()) {
-				this->logDebug("Closed sensor signal detected");
+				this->logVerbose("Closed sensor signal detected");
 				// stop motor immediately
 				this->disableMotor();
 				this->setCurrentState(CLOSED);
