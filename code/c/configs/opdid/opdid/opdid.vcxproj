@@ -95,6 +95,7 @@
     <None Include="webdocroot\strings.js" />
     <None Include="webdocroot\units.json" />
     <None Include="webdocroot\utils.js" />
+    <None Include="window_test.ini" />
     <None Include="win_opdid.ini" />
     <None Include="ReadMe.txt" />
   </ItemGroup>

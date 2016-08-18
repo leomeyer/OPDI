@@ -94,6 +94,9 @@
     <None Include="..\doc\complex_example_2.ini">
       <Filter>Ressourcendateien</Filter>
     </None>
+    <None Include="window_test.ini">
+      <Filter>Ressourcendateien</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

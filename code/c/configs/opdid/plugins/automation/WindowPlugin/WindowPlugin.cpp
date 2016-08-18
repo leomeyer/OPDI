@@ -186,6 +186,7 @@ WindowPort::WindowPort(opdid::AbstractOPDID* opdid, const char* id) : opdi::Sele
 	this->positionAfterClose = -1;
 	this->positionAfterOpen = -1;
 	this->sensorClosedValue = 1;
+	this->sensorOpenValue = 1;
 	this->motorActive = false;
 	this->motorDelay = 0;
 	this->enableDelay = false;
