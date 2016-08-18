@@ -128,7 +128,7 @@ uint8_t AbstractOPDID::idleTimeoutReached(void) {
 
 void AbstractOPDID::protocolCallback(uint8_t protState) {
 	if (protState == OPDI_PROTOCOL_START_HANDSHAKE) {
-		this->logVerbose("Handshake started");
+		this->logDebug("Handshake started");
 	} else
 	if (protState == OPDI_PROTOCOL_CONNECTED) {
 		this->connected();
