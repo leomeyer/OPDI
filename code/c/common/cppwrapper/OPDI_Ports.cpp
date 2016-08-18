@@ -42,9 +42,11 @@ Port::Port(const char* id, const char* type) {
 	this->orderID = -1;
 	this->persistent = false;
 	this->error = Error::VALUE_OK;
+	this->logVerbosity = LogVerbosity::UNKNOWN;
 
 	this->setID(id);
-	strcpy(this->type, type);
+	this->type[0] = type[0];
+	this->type[1] = '\0';
 }
 
 Port::Port(const char* id, const char* label, const char* type, const char* dircaps, int32_t flags, void* ptr) : Port(id, type) {
