@@ -480,7 +480,7 @@ uint8_t GertboardButton::doWork(uint8_t canSend) {
 	// current state different from last submitted state?
 	if (this->lastQueriedState != line) {
 		this->lastQueriedState = line;
-		this->logVerbose(std::string("Gertboard Button change detected (now: ")
+		this->logDebug(std::string("Gertboard Button change detected (now: ")
 			+ (this->lastQueriedState == 0 ? "off" : "on") + ")");
 		// refresh interval not exceeded?
 		if (opdi_get_time_ms() - this->lastRefreshTime > this->refreshInterval) {
@@ -756,6 +756,8 @@ void GertboardPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std
 
 	// if serial device specified, open and configure it
 	if (this->serialDevice != "") {
+		
+		this->opdid->logDebug(node + ": Configuring SerialDevice '" + this->serialDevice + "'");
 
 		// try to lock the serial device as a resource
 		this->opdid->lockResource(this->serialDevice, node);
@@ -784,7 +786,7 @@ void GertboardPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std
 		this->mapAndLockPin(14, node + " SerialDevice Port Expansion");
 		this->mapAndLockPin(15, node + " SerialDevice Port Expansion");
 
-		this->opdid->logVerbose(node + ": SerialDevice " + this->serialDevice + " setup successfully with a timeout of " + this->opdid->to_string(this->serialTimeoutMs) + " ms");
+		this->opdid->logDebug(node + ": SerialDevice " + this->serialDevice + " setup successfully with a timeout of " + this->opdid->to_string(this->serialTimeoutMs) + " ms");
 	}
 
 	// the Gertboard plugin node expects a list of node names that determine the ports that this plugin provides
