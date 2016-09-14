@@ -539,6 +539,11 @@ opdi::SelectPort* OPDI::findSelectPort(const std::string& configPort, const std:
 	return (opdi::SelectPort*)port;
 }
 
+LogVerbosity OPDI::getLogVerbosity(void)
+{
+	return this->logVerbosity;
+}
+
 void OPDI::logWarning(const std::string& message) {
 	if (this->logVerbosity >= LogVerbosity::NORMAL) {
 		this->logWarn(message);

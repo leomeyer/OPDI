@@ -33,176 +33,180 @@
 
 namespace {
 
-	class FritzBoxPlugin;
+class FritzBoxPlugin;
 
-	class FritzPort  {
-		std::string id;
-	public:
-		FritzPort(std::string id) : id(id) {};
+class FritzPort  {
+	std::string id;
+public:
+	FritzPort(std::string id) : id(id) {};
 
-		virtual void query() = 0;
+	virtual void query() = 0;
+};
+
+class ActionNotification : public Poco::Notification {
+public:
+	typedef Poco::AutoPtr<ActionNotification> Ptr;
+
+	enum ActionType {
+		LOGIN,
+		LOGOUT,
+		GETSWITCHSTATE,
+		SETSWITCHSTATEHIGH,
+		SETSWITCHSTATELOW,
+		GETSWITCHPOWER,
+		GETSWITCHENERGY
 	};
 
-	class ActionNotification : public Poco::Notification {
-	public:
-		typedef Poco::AutoPtr<ActionNotification> Ptr;
+	ActionType type;
+	FritzPort* port;
 
-		enum ActionType {
-			LOGIN,
-			LOGOUT,
-			GETSWITCHSTATE,
-			SETSWITCHSTATEHIGH,
-			SETSWITCHSTATELOW,
-			GETSWITCHPOWER,
-			GETSWITCHENERGY
-		};
+	ActionNotification(ActionType type, FritzPort* port);
+};
 
-		ActionType type;
-		FritzPort* port;
+ActionNotification::ActionNotification(ActionType type, FritzPort* port) {
+	this->type = type;
+	this->port = port;
+}
 
-		ActionNotification(ActionType type, FritzPort* port);
-	};
+////////////////////////////////////////////////////////////////////////
+// Plugin main class
+////////////////////////////////////////////////////////////////////////
 
-	ActionNotification::ActionNotification(ActionType type, FritzPort* port) {
-		this->type = type;
-		this->port = port;
-	}
+class FritzBoxPlugin : public IOPDIDPlugin, public opdid::IOPDIDConnectionListener, public Poco::Runnable {
+	friend class FritzDECT200Switch;
+	friend class FritzDECT200Power;
+	friend class FritzDECT200Energy;
 
-	////////////////////////////////////////////////////////////////////////
-	// Plugin main class
-	////////////////////////////////////////////////////////////////////////
+protected:
+	std::string nodeID;
 
-	class FritzBoxPlugin : public IOPDIDPlugin, public opdid::IOPDIDConnectionListener, public Poco::Runnable {
-		friend class FritzDECT200Switch;
-		friend class FritzDECT200Power;
-		friend class FritzDECT200Energy;
+	std::string host;
+	int port;
+	std::string user;
+	std::string password;
+	int timeoutSeconds;
 
-	protected:
-		std::string nodeID;
+	std::string sid;
+	int errorCount;
+	std::string lastErrorMessage;
 
-		std::string host;
-		int port;
-		std::string user;
-		std::string password;
-		int timeoutSeconds;
+	opdi::LogVerbosity logVerbosity;
 
-		std::string sid;
+	typedef std::vector<FritzPort*> FritzPorts;
+	FritzPorts fritzPorts;
 
-		opdi::LogVerbosity logVerbosity;
+	Poco::NotificationQueue queue;
 
-		typedef std::vector<FritzPort*> FritzPorts;
-		FritzPorts fritzPorts;
+	Poco::Thread workThread;
 
-		Poco::NotificationQueue queue;
+	void errorOccurred(const std::string& message);
 
-		Poco::Thread workThread;
+public:
+	opdid::AbstractOPDID* opdid;
 
-	public:
-		opdid::AbstractOPDID* opdid;
+	virtual std::string httpGet(const std::string& url);
 
-		virtual std::string httpGet(const std::string& url);
+	virtual std::string getResponse(const std::string& challenge, const std::string& password);
 
-		virtual std::string getResponse(const std::string& challenge, const std::string& password);
+	virtual std::string getSessionID(const std::string& user, const std::string& password);
 
-		virtual std::string getSessionID(const std::string& user, const std::string& password);
+	virtual std::string getXMLValue(const std::string& xml, const std::string& node);
 
-		virtual std::string getXMLValue(const std::string& xml, const std::string& node);
+	virtual void login(void);
 
-		virtual void login(void);
+	virtual void checkLogin(void);
 
-		virtual void checkLogin(void);
+	virtual void logout(void);
 
-		virtual void logout(void);
+	virtual void getSwitchState(FritzPort* port);
 
-		virtual void getSwitchState(FritzPort* port);
+	virtual void setSwitchState(FritzPort* port, uint8_t line);
 
-		virtual void setSwitchState(FritzPort* port, uint8_t line);
+	virtual void getSwitchEnergy(FritzPort* port);
 
-		virtual void getSwitchEnergy(FritzPort* port);
+	virtual void getSwitchPower(FritzPort* port);
 
-		virtual void getSwitchPower(FritzPort* port);
+	virtual void masterConnected(void) override;
+	virtual void masterDisconnected(void) override;
 
-		virtual void masterConnected(void) override;
-		virtual void masterDisconnected(void) override;
+	virtual void run(void);
 
-		virtual void run(void);
+	virtual void setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration* nodeConfig) override;
+};
 
-		virtual void setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std::string& node, Poco::Util::AbstractConfiguration* nodeConfig) override;
-	};
+////////////////////////////////////////////////////////////////////////
+// Plugin ports
+////////////////////////////////////////////////////////////////////////
 
-	////////////////////////////////////////////////////////////////////////
-	// Plugin ports
-	////////////////////////////////////////////////////////////////////////
+class FritzDECT200Switch : public opdi::DigitalPort, public FritzPort {
+	friend class FritzBoxPlugin;
+protected:
 
-	class FritzDECT200Switch : public opdi::DigitalPort, public FritzPort {
-		friend class FritzBoxPlugin;
-	protected:
+	FritzBoxPlugin* plugin;
+	std::string ain;
 
-		FritzBoxPlugin* plugin;
-		std::string ain;
+	int8_t switchState;
 
-		int8_t switchState;
+	virtual void setSwitchState(int8_t line);
 
-		virtual void setSwitchState(int8_t line);
+public:
+	FritzDECT200Switch(FritzBoxPlugin* plugin, const char* id);
 
-	public:
-		FritzDECT200Switch(FritzBoxPlugin* plugin, const char* id);
+	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
 
-		virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
+	virtual void query() override;
 
-		virtual void query() override;
+	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
-		virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void getState(uint8_t* mode, uint8_t* line) const override;
+};
 
-		virtual void getState(uint8_t* mode, uint8_t* line) const override;
-	};
+class FritzDECT200Power : public opdi::DialPort, public FritzPort {
+	friend class FritzBoxPlugin;
+protected:
 
-	class FritzDECT200Power : public opdi::DialPort, public FritzPort {
-		friend class FritzBoxPlugin;
-	protected:
+	FritzBoxPlugin* plugin;
+	std::string ain;
 
-		FritzBoxPlugin* plugin;
-		std::string ain;
+	int32_t power;
 
-		int32_t power;
+	virtual void setPower(int32_t power);
 
-		virtual void setPower(int32_t power);
+public:
+	FritzDECT200Power(FritzBoxPlugin* plugin, const char* id);
 
-	public:
-		FritzDECT200Power(FritzBoxPlugin* plugin, const char* id);
+	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
 
-		virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
+	virtual void query() override;
 
-		virtual void query() override;
+	virtual void getState(int64_t* position) const override;
 
-		virtual void getState(int64_t* position) const override;
-
-		virtual void doRefresh(void) override;
-	};
+	virtual void doRefresh(void) override;
+};
 
 
-	class FritzDECT200Energy : public opdi::DialPort, public FritzPort {
-		friend class FritzBoxPlugin;
-	protected:
+class FritzDECT200Energy : public opdi::DialPort, public FritzPort {
+	friend class FritzBoxPlugin;
+protected:
 
-		FritzBoxPlugin* plugin;
-		std::string ain;
+	FritzBoxPlugin* plugin;
+	std::string ain;
 
-		int32_t energy;
+	int32_t energy;
 
-		virtual void setEnergy(int32_t energy);
+	virtual void setEnergy(int32_t energy);
 
-	public:
-		FritzDECT200Energy(FritzBoxPlugin* plugin, const char* id);
+public:
+	FritzDECT200Energy(FritzBoxPlugin* plugin, const char* id);
 
-		virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
+	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
 
-		virtual void query() override;
+	virtual void query() override;
 
-		virtual void getState(int64_t* position) const override;
+	virtual void getState(int64_t* position) const override;
 
-		virtual void doRefresh(void) override;
-	};
+	virtual void doRefresh(void) override;
+};
 
 }	// end anonymous namespace
 
@@ -424,10 +428,47 @@ void FritzDECT200Energy::doRefresh(void) {
 	this->query();
 }
 
+////////////////////////////////////////////////////////
+// Plugin implementation
+////////////////////////////////////////////////////////
+
+// Credits: Sir Slick, https://stackoverflow.com/questions/2589096/find-most-significant-bit-left-most-that-is-set-in-a-bit-array
+unsigned int msb32(unsigned int x)
+{
+	static const unsigned int bval[] =
+	{ 0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4 };
+
+	unsigned int r = 0;
+	if (x & 0xFFFF0000) { r += 16 / 1; x >>= 16 / 1; }
+	if (x & 0x0000FF00) { r += 16 / 2; x >>= 16 / 2; }
+	if (x & 0x000000F0) { r += 16 / 4; x >>= 16 / 4; }
+	return r + bval[x];
+}
+
+void FritzBoxPlugin::errorOccurred(const std::string& message) {
+	// this method is for errors that are usually logged in verbosity Normal
+	// identical error message?
+	if (this->lastErrorMessage == message) {
+		this->errorCount++;
+	} else {
+		// different error, reset counter
+		this->errorCount = 1;
+		this->lastErrorMessage = message;
+	}
+	// the error message is output if only the highest bit is set causing exponentially decreasing output frequency
+	// get highest bit
+	unsigned int msb = msb32(this->errorCount);
+	// are the lower bits zero?
+	if ((this->errorCount & ((1 << (msb - 1)) - 1)) == 0) {
+		// add occurrence count if larger than 1
+		this->opdid->logNormal((this->errorCount > 1 ? "(" + this->opdid->to_string(this->errorCount) + ") " : "") + message, this->logVerbosity);
+	}
+}
+
 std::string FritzBoxPlugin::httpGet(const std::string& url) {
+	Poco::URI uri(std::string("http://") + this->host + ":" + this->opdid->to_string(this->port) + url);
 	try {
 		// prepare session
-		Poco::URI uri(std::string("http://") + this->host + ":" + this->opdid->to_string(this->port) + url);
 		Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
 		session.setTimeout(Poco::Timespan(this->timeoutSeconds, 0));
 
@@ -448,20 +489,24 @@ std::string FritzBoxPlugin::httpGet(const std::string& url) {
 		std::istream &is = session.receiveResponse(res);
 
 		if (res.getStatus() != 200) {
-			this->opdid->logVerbose(this->nodeID + ": HTTP GET: " + uri.toString(), this->logVerbosity);
-			this->opdid->logNormal(this->nodeID + ": The server returned an error: " + this->opdid->to_string(res.getStatus()) + " " + res.getReason(), this->logVerbosity);
-
+			this->errorOccurred(this->nodeID + ": HTTP GET: " + uri.toString() + ": The server returned an error: " + this->opdid->to_string(res.getStatus()) + " " + res.getReason());
 			return "";
 		} else
-		this->opdid->logDebug(this->nodeID + ": HTTP Response: " + this->opdid->to_string(res.getStatus()) + " " + res.getReason(), this->logVerbosity);
+			this->opdid->logDebug(this->nodeID + ": HTTP Response: " + this->opdid->to_string(res.getStatus()) + " " + res.getReason(), this->logVerbosity);
 
 		std::stringstream ss;
 
 		Poco::StreamCopier::copyStream(is, ss);
 
+		if (this->errorCount > 0) {
+			this->opdid->logNormal(this->nodeID + ": HTTP GET successful: " + uri.toString(), this->logVerbosity);
+			this->errorCount = 0;
+		} else
+			this->opdid->logDebug(this->nodeID + ": HTTP GET successful: " + uri.toString(), this->logVerbosity);
+
 		return ss.str().erase(ss.str().find_last_not_of("\n") + 1);
 	} catch (Poco::Exception &e) {
-		this->opdid->logNormal(this->nodeID + ": Error during HTTP GET for " + url + ": " + e.message(), this->logVerbosity);
+		this->errorOccurred(this->nodeID + ": Error during HTTP GET for " + uri.toString() + ": " + e.message());
 	}
 
 	return "";
@@ -533,11 +578,14 @@ void FritzBoxPlugin::login(void) {
 	this->sid = this->getSessionID(this->user, this->password);
 
 	if (sid == INVALID_SID) {
-		this->opdid->logNormal(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " failed", this->logVerbosity);
+		this->errorOccurred(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " failed");
 		return;
 	}
-
-	this->opdid->logDebug(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " successful; sid = " + this->sid, this->logVerbosity);
+	if (this->errorCount > 0) {
+		this->opdid->logNormal(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " successful; sid = " + this->sid, this->logVerbosity);
+		this->errorCount = 0;
+	} else
+		this->opdid->logDebug(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " successful; sid = " + this->sid, this->logVerbosity);
 
 	// query ports (post notifications to query)
 	auto it = this->fritzPorts.begin();
@@ -689,6 +737,8 @@ void FritzBoxPlugin::setupPlugin(opdid::AbstractOPDID* abstractOPDID, const std:
 	this->nodeID = node;
 	this->sid = INVALID_SID;			// default; means not connected
 	this->timeoutSeconds = 2;			// short timeout (assume local network)
+
+	this->errorCount = 0;
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
 

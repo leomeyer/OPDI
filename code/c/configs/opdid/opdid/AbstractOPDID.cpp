@@ -61,7 +61,7 @@ AbstractOPDID::AbstractOPDID(void) {
 	this->minorVersion = OPDID_MINOR_VERSION;
 	this->patchVersion = OPDID_PATCH_VERSION;
 
-	this->logVerbosity = opdi::LogVerbosity::NORMAL;
+	this->logVerbosity = opdi::LogVerbosity::UNKNOWN;
 	this->persistentConfig = nullptr;
 
 	this->logger = nullptr;
@@ -179,9 +179,9 @@ void AbstractOPDID::sayHello(void) {
 	if (this->logVerbosity == opdi::LogVerbosity::QUIET)
 		return;
 
-	this->logNormal("OPDID version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion) + " (c) Leo Meyer 2015");
-	this->logVerbose("Build: " + std::string(__DATE__) + " " + std::string(__TIME__));
-	this->logNormal("Running as user: " + this->getCurrentUser());
+	this->logNormal("OPDID version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion) + " (c) Leo Meyer 2015", opdi::LogVerbosity::NORMAL);
+	this->logVerbose("Build: " + std::string(__DATE__) + " " + std::string(__TIME__), opdi::LogVerbosity::VERBOSE);
+	this->logVerbose("Running as user: " + this->getCurrentUser(), opdi::LogVerbosity::VERBOSE);
 }
 
 void AbstractOPDID::showHelp(void) {
@@ -356,10 +356,14 @@ int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<
 	if (configFile == "")
 		throw Poco::SyntaxException("Expected argument: -c <config_file>");
 
+	// load configuration, substituting environment parameters
+	configuration = this->readConfiguration(configFile, this->environment);
+
 	this->sayHello();
+	this->logVerbose("Using configuration file: " + configFile);
 
 	if (this->logVerbosity >= opdi::LogVerbosity::DEBUG) {
-		this->logDebug("Using configuration file '" + configFile + "' with the following parameters:");
+		this->logDebug("Environment parameters:");
 		auto it = this->environment.begin();
 		auto ite = this->environment.end();
 		while (it != ite) {
@@ -367,9 +371,6 @@ int AbstractOPDID::startup(const std::vector<std::string>& args, const std::map<
 			++it;
 		}
 	}
-
-	// load configuration, substituting environment parameters
-	configuration = this->readConfiguration(configFile, this->environment);
 
 	// create view to "General" section
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> general = configuration->createView("General");
@@ -459,6 +460,10 @@ Poco::Util::AbstractConfiguration* AbstractOPDID::getConfigForState(Poco::Util::
 void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration* general) {
 	this->logVerbose("Setting up general configuration");
 
+	// set log verbosity only if it's not already set
+	if (this->logVerbosity == opdi::LogVerbosity::UNKNOWN)
+		this->logVerbosity = this->getConfigLogVerbosity(general, opdi::LogVerbosity::NORMAL);
+
 	// initialize persistent configuration if specified
 	std::string persistentFile = this->getConfigString(general, "General", "PersistentConfig", "", false);
 	if (persistentFile != "") {
@@ -498,11 +503,6 @@ void AbstractOPDID::setGeneralConfiguration(Poco::Util::AbstractConfiguration* g
 	int idleTimeout = general->getInt("IdleTimeout", DEFAULT_IDLETIMEOUT_MS);
 
 	this->deviceInfo = general->getString("DeviceInfo", "");
-
-	// set log verbosity only if it's not already set
-	if (this->logVerbosity == opdi::LogVerbosity::NORMAL) {
-		this->logVerbosity = this->getConfigLogVerbosity(general, opdi::LogVerbosity::NORMAL);
-	}
 
 	this->allowHiddenPorts = general->getBool("AllowHidden", true);
 
