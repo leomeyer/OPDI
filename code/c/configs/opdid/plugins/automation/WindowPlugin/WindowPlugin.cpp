@@ -211,7 +211,7 @@ void WindowPort::setPosition(uint16_t position, ChangeSource changeSource) {
 		opdi::SelectPort::setPosition(position, changeSource);
 		this->positionNewlySet = true;
 
-		std::string info = std::string(this->id) + ": Setting position to " + to_string(position) + " ";
+		std::string info = std::string("Setting position to ") + to_string(position) + " ";
 		switch (position) {
 		case POSITION_OFF:
 			info += "(OFF)";
