@@ -63,4 +63,3 @@ as follows:
 				platforms				- platform specific implementations
 		doc								- OPDI documentation
 
-		
