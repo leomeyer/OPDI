@@ -1292,6 +1292,10 @@ int AbstractOPDID::setupConnection(Poco::Util::AbstractConfiguration* config, bo
 
 	if (connectionType == "TCP") {
 		std::string interface_ = this->getConfigString(config, "Connection", "Interface", "*", false);
+
+		if (interface_ != "*")
+			throw Poco::DataException("Connection interface: Sorry, values other than '*' are currently not supported");
+
 		int port = config->getInt("Port", DEFAULT_TCP_PORT);
 
 		if (testMode)
