@@ -654,7 +654,7 @@ void AbstractOPDID::setupInclude(Poco::Util::AbstractConfiguration* config, Poco
 	for (auto it = paramKeys.begin(), ite = paramKeys.end(); it != ite; ++it) {
 		std::string param = paramConfig->getString(*it, "");
 		// store in the map
-		parameters[*it] = param;
+		parameters[std::string("$") + (*it)] = param;
 	}
 
 	// warn if no parameters
